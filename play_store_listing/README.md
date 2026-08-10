@@ -157,6 +157,36 @@ Two that look like they might apply and do not:
   Everything lives on the device and uninstalling removes it. Say so rather than claiming a
   deletion mechanism that does not exist.
 
+## ACTIVITY_RECOGNITION declaration — Play Console
+
+⚠️ It appears under **Health data permissions**, because Android treats physical activity as
+health-adjacent. Answering *"we provide no health features"* elsewhere is still correct; this
+free-text box is where the non-health use gets explained.
+
+> SwipeWise notifies users when they arrive at a nearby store where one of their credit cards
+> earns extra rewards. It uses activity recognition for one purpose: to tell an actual store
+> visit apart from driving past one.
+>
+> The app subscribes to activity transitions for IN_VEHICLE, STILL and WALKING. When a
+> transition fires, the app records only the most recent activity type and its timestamp. If
+> the latest reading is IN_VEHICLE and less than 30 minutes old, arrival notifications are
+> suppressed — this stops users being alerted at a red light beside a shop they are not
+> visiting. The same signal is used to defer re-registering geofences until the user has
+> stopped driving, which avoids doing location work mid-journey.
+>
+> SwipeWise does not provide health or fitness features. No activity history is collected,
+> stored beyond the single most recent reading, aggregated, or transmitted off the device — the
+> value is written to local app storage and read back by the notification logic. The permission
+> is optional; declining it only makes arrival notifications less accurate.
+
+Accurate as of 2026-08-10 against `ActivityState.kt` (transition subscription, the 30-minute
+`isLikelyDriving` staleness window, SharedPreferences-only storage) and
+`ActivityTransitionReceiver.kt`. **If that logic changes, change this.**
+
+Note the consequence for Data safety: because the reading never leaves the device, it is *not*
+collected, so **Health and fitness stays unticked**. Those two answers are consistent, not
+contradictory — one describes a permission, the other describes transmission.
+
 ## Background location declaration — Play Console → App content → Location permissions
 
 The schedule long pole. Review runs days-to-weeks and is commonly rejected on the first pass,
