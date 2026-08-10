@@ -56,11 +56,14 @@ moment no other rewards app actually owns.
 
 This is a core value, not a marketing line:
 
-- **No backend.** SwipeWise has no server. There's nowhere on our side for your data to go.
+- **No accounts, no user database.** The only SwipeWise-operated service is a stateless
+  Cloudflare Worker that serves the card catalog and looks up nearby stores — it stores
+  nothing you send it, so there's nowhere on our side for your data to accumulate.
 - **On-device only.** Your wallet and its rewards live in a local SQLite database on your
   phone (and, on Pro, your transactions too — same database, same device).
-- **No telemetry.** The app never phones home — not which cards you're shown, which
-  notifications fire, nor what you tap.
+- **No tracking, no ads.** Nothing records which cards you're shown, which notifications
+  fire, or what you tap. Crash reports are the one exception, and carry no wallet, no
+  location and no account.
 - **Location stays yours.** Your precise GPS fix never leaves the device; only a location
   *rounded to ~110 m* is sent to Google Places to find nearby stores.
 - **No account at all.** No sign-up, no email, no password — open the app and use it. Your

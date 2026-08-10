@@ -85,13 +85,27 @@ Answer for the **free** tier — the only thing that goes to Play. There are no 
 than the Pro build would need, because free omits bank connectivity entirely and so has **no
 financial-account data to declare at all**.
 
-- Data is processed **on device**; SwipeWise has **no backend** and collects nothing to its own servers.
-- Location shared with a third party (Google Places) for nearby-store functionality, rounded to ~110 m; no location history.
-- **Approximate + precise location**: collected, not shared beyond the above, not linked to an
-  identity (there isn't one — no account), and used only for app functionality. Declare background
-  use; the in-app prominent disclosure is `NearbyPermissionGate._showAlwaysAllowExplainer`.
-- ⛔ Do **not** declare financial info / transactions / FDX. The free build cannot link a bank —
-  those code paths are compiled out (Phase 1 verified zero aggregator references in the APK).
+- **Approximate + precise location** — *collected and shared*, used only for app functionality,
+  **not** linked to an identity (there isn't one; no account). Rounded to ~110 m before it
+  leaves the device, no history retained. Declare **background** use; the in-app prominent
+  disclosure is `NearbyPermissionGate._showAlwaysAllowExplainer`.
+  Shared with two recipients: the SwipeWise lookup Worker, which forwards it and stores
+  nothing, and Google Places, which answers the query.
+- **Crash logs** *(App activity → Diagnostics)* — collected, not linked to an identity, used
+  for app functionality. ⚠️ **This must be declared.** Firebase Crashlytics is active in every
+  build (`main.dart`) and is never disabled, so the app does send data off-device. Declaring
+  "nothing collected" while shipping Crashlytics is a misdeclaration and a common cause of
+  enforcement. Reports carry a stack trace, device model, OS/app version and a few diagnostic
+  values — never the wallet, coordinates, or an account id.
+- ⛔ Do **not** declare financial info, transactions or FDX. The free build collects none of it.
+
+  ⚠️ **The old justification here was wrong and is worth correcting explicitly:** this used to
+  say those code paths are "compiled out". They are not. The app ships **one binary for both
+  tiers**, so the bank-sync code is present and dormant in every install — a reviewer who
+  decompiles will find it. The correct basis for not declaring is that the shipped build has no
+  aggregator credentials, cannot authenticate, and therefore cannot collect any of it;
+  `SophtronConfig.isConfigured` is false and the sync refuses. Data safety asks what the app
+  *collects*, not what code it contains.
   Declaring collection the app doesn't do is its own policy problem.
 - No analytics / telemetry. See [`../docs/PRIVACY.md`](../docs/PRIVACY.md).
 
@@ -125,10 +139,12 @@ so submit it before the rest of the listing is finished. Rejections are usually 
 > Detection runs on the device. SwipeWise registers native Android geofences for nearby stores
 > and the operating system performs the dwell detection; the app is woken only when an arrival
 > fires. To find which stores are nearby, a latitude/longitude rounded to three decimal places
-> (~110 m) is sent to the Google Places API. No location history is retained: the only position
-> stored at rest is a single row recording where geofences were last registered, overwritten on
-> every refresh and deleted on uninstall. Location is never sent to a SwipeWise server — the
-> app has no backend that receives it.
+> (~110 m) is sent to a stateless SwipeWise lookup service, which forwards it to the Google
+> Places API and returns the results; that service exists so the Google API key is held on a
+> server rather than inside the app, and it stores and logs nothing it receives. No location
+> history is retained anywhere: the only position stored at rest is a single row on the device
+> recording where geofences were last registered, overwritten on every refresh and deleted on
+> uninstall.
 
 ### The demo video — where first passes are lost
 

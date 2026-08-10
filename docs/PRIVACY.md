@@ -38,10 +38,12 @@ later. Until then, none of it applies to you.
   pre-registered zone, the app reads a one-shot location fix on your
   device. Before it asks Google Places for stores near you, the
   latitude/longitude are **rounded to 3 decimal places** (~110 m) — the
-  full-precision fix never leaves the device. Your location is used only
-  for nearby search and the on-device geofences; SwipeWise has no server,
-  so it is never sent anywhere except Google Places, and no location
-  *history* is kept (see *What we never store*).
+  full-precision fix never leaves the device. The rounded coordinate is sent to
+  the SwipeWise lookup service, which forwards it to Google Places and returns
+  the results — it holds the Google API key so the app does not have to, and it
+  neither stores nor logs the coordinate. Your location is used only for nearby
+  search and the on-device geofences, and no location *history* is kept (see
+  *What we never store*).
 - **Foreground vs. background.** "While using the app" permission is
   enough to populate the Stores list. "Allow all the time" is required
   only if you want notifications when you arrive at a registered
@@ -58,23 +60,52 @@ later. Until then, none of it applies to you.
   rounded to ~110 m — when geofences were last registered, overwritten on
   every refresh and used only to detect when you've left the area. It
   never leaves your device and is removed when you uninstall.
-- **Usage telemetry.** The app does not phone home — not which cards
-  you're shown, which notifications fire, nor what you tap. There is no
-  analytics service.
+- **Usage telemetry.** There is no analytics and no advertising. Nothing
+  records which cards you are shown, which notifications fire, or what you tap.
+
+## Crash reports
+
+When the app fails, a crash report goes to **Firebase Crashlytics** so the failure
+can be fixed. This is the only thing SwipeWise sends off your device that is not
+a direct response to something you asked for, so it is worth being precise about
+what it contains.
+
+- **What is sent:** the stack trace, your device model, OS and app version, and
+  a small set of diagnostic values — for example whether a location fix was
+  fresh or stale, how many geofences were registered, and whether Google Play
+  services were available.
+- **What is not sent:** your wallet, your cards, your transactions, your
+  coordinates, your email, or any account identifier. No latitude or longitude
+  is ever attached to a report. (Two of the diagnostic values are *distances* —
+  how far the device had moved, in kilometres — never positions.)
+- **Identity:** reports carry the pseudonymous Firebase installation id that
+  Crashlytics assigns. It is not your local SwipeWise id and is not linked to
+  any account, because there is no account.
+
+Google's handling is covered by <https://firebase.google.com/support/privacy>.
 
 ## Where data goes
 
-- **Google Places API.** Receives your latitude/longitude rounded to
-  ~110 m, the search radius, and a place-type filter. Returns nearby merchants.
-  See <https://policies.google.com/privacy> for their terms.
+- **The SwipeWise lookup service.** A Cloudflare Worker that receives your
+  rounded coordinate, the search radius and a place-type filter, and forwards
+  them to Google Places. It exists so the Google API key lives on a server
+  instead of inside the app. It keeps no record of the request: nothing is
+  written to storage, the response is marked `no-store`, and no request body is
+  logged.
+- **Google Places API.** Receives that same rounded coordinate via the service
+  above, and returns nearby merchants. See <https://policies.google.com/privacy>
+  for their terms.
+- **Firebase Crashlytics.** Receives crash reports as described above.
 - **The catalog service.** The app downloads the public credit-card catalog
   (which cards exist and what they earn). This is a plain file download: the
   request carries no wallet, no location and no identifier, so it says nothing
   about you beyond that some device asked for the catalog.
 - **Your account provider. (Pro only)** Receives auth refresh requests and
   returns card/transaction data. Their privacy policy applies.
-- **No SwipeWise server.** SwipeWise has no backend. There is nowhere on
-  the SwipeWise side for your data to leak to.
+- **No SwipeWise account database.** The only SwipeWise-operated service is the
+  stateless lookup/catalog Worker described above. It has no user accounts, no
+  database and no storage of anything you send it, so there is nowhere on the
+  SwipeWise side for your data to accumulate.
 
 ## Permissions we ask for and why
 

@@ -1,27 +1,27 @@
-SwipeWise tells you which credit card to use at which store, so you earn the most cashback and points on every purchase.
+SwipeWise tells you which credit card to use at which store, so you can earn more cashback and points on every purchase.
 
-Most rewards apps stop at the category — "use this card for groceries." SwipeWise goes a level deeper, down to the store and the brand. Walk into Whole Foods and it tells you to tap the card that earns 5% there, not just "a grocery card." That right-card, right-here, right-now moment is what SwipeWise is built around.
+Most rewards apps stop at the category: "use this card for groceries." SwipeWise goes a level deeper, down to the store and brand. Walk into Whole Foods and SwipeWise tells you which card earns the most rewards there, instead of simply recommending "a grocery card." The right card, right here, right now. That's what SwipeWise is built around.
 
 WHAT YOU GET
 
-• Best card at every store — store- and brand-level recommendations, not generic categories.
-• Arrival nudges — optional notifications surface your best card as you walk into a store, so you never have to open the app or remember a thing.
-• Add your wallet in seconds — pick your cards from a catalog of hundreds of US credit cards. No forms, no card numbers.
-• Every category ranked — see which of your cards wins on dining, groceries, gas, travel and more, including rotating quarterly bonuses and store-specific offers.
-• Payment reminders — an optional nudge before a statement is due.
+• Best card at every store: get store- and brand-level recommendations instead of generic category advice.
+• Arrival nudges: optional notifications surface your best card when you arrive at a store, so you don't have to open the app or remember which card to use.
+• Add your wallet in seconds: choose your cards from a catalog of hundreds of US credit cards. No forms, no card numbers.
+• Every category ranked: see which of your cards earns the most on dining, groceries, gas, travel and more, including rotating quarterly bonuses and store-specific offers.
+• Payment reminders: get an optional reminder before your credit card statement is due.
 
 PRIVATE BY DESIGN
 
-Privacy here isn't a promise, it's the architecture:
+Privacy isn't a promise. It's the architecture:
 
-• No account. No sign-up, no email, no password — open the app and use it.
-• No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions, because it doesn't need them to tell you which card to use.
-• On-device only. Your wallet and your rewards live in a local database on your phone.
-• No telemetry. The app never phones home — not which cards you see, which notifications fire, nor what you tap.
-• Your location stays yours. Your precise GPS fix never leaves the device; only a location rounded to ~110 m is sent to Google Places to find nearby stores, and no location history is kept.
+• No account. No sign-up, no email, no password. Open the app and use it.
+• No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions because it doesn't need them to recommend the right card.
+• On-device only. Your wallet and rewards data are stored in a local database on your phone.
+• No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising and no analytics. The only thing sent off your device is a crash report when the app fails, so it can be fixed — a stack trace and your device model, with no wallet, no location and no account attached.
+• Your location stays yours. Your precise GPS fix never leaves the device. Only a location rounded to ~110 m is used to look up nearby stores through Google Places, nothing about where you have been is stored, and no location is ever attached to a crash report.
 
 OPEN SOURCE
 
 SwipeWise is open source, so you can audit exactly how it handles your data.
 
-Note: SwipeWise is in active development. Android today; iOS later.
+Note: SwipeWise is in active development. Android today. iOS later.
