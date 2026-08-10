@@ -62,28 +62,36 @@ class GooglePlacesProvider implements MerchantSearchProvider {
     'GOOGLE_ANDROID_PACKAGE',
   );
 
-  /// SHA-1 of the certificate this build is signed with, sent as
-  /// `X-Android-Cert` so GCP can match the key's Android restriction.
+  /// A certificate SHA-1 we *assert* in the `X-Android-Cert` header so GCP can
+  /// match the key's Android restriction.
   ///
-  /// ⛔ This **must** come from the keys file, because it differs per build and
-  /// getting it wrong fails silently in exactly the worst place. Confirmed
-  /// 2026-08-09: the old hardcoded default below is the *debug* keystore's
-  /// fingerprint, so every build — including release — was announcing itself as
-  /// the debug cert. The upload key is a different SHA again, and Play App
-  /// Signing re-signs with Google's key, a third. A Play-installed build
-  /// therefore presents a certificate matching none of them, Places rejects the
-  /// request, and the Stores tab is simply empty — in production only, after
-  /// passing every local test.
+  /// Read that again: asserted, not derived. These are raw REST calls, so we set
+  /// the header ourselves and Google never sees how the APK is actually signed.
+  /// (The Maps SDK signs requests natively; `package:http` cannot.) The value
+  /// therefore only has to be a package × cert pair **registered on the key in
+  /// GCP** — it does not have to match this build's real signature, and Play App
+  /// Signing re-signing the upload with Google's own key changes nothing here.
   ///
-  /// Set `GOOGLE_ANDROID_CERT` in each keys file:
-  ///   - debug builds → the debug keystore SHA-1
-  ///     (`keytool -list -v -keystore ~/.android/debug.keystore -storepass android`)
-  ///   - the Play build → the **App signing** SHA-1 from Play Console →
-  ///     Setup → App signing (NOT the upload certificate)
-  /// and register every package × cert pair on the API key in GCP.
+  /// Measured 2026-08-10, from a laptop with no Android app and no signature of
+  /// any kind:
+  ///   - forging `X-Android-Package` + `X-Android-Cert` → **200, real data**
+  ///   - omitting both → **403 `API_KEY_ANDROID_APP_BLOCKED`**
   ///
-  /// The default keeps existing debug builds working unchanged; it is
-  /// deliberately not used for anything else.
+  /// Two consequences worth keeping straight:
+  ///
+  /// 1. There is no "wrong cert breaks production" failure mode for this call
+  ///    style, so long as the pair is registered. An earlier version of this
+  ///    comment warned of exactly that; it assumed platform-level signature
+  ///    verification that does not happen here.
+  /// 2. The restriction is worth close to nothing as a security control. The
+  ///    key, the package name and this SHA all ship inside the same binary, so
+  ///    anyone who unzips the APK has all three and can replay from anywhere —
+  ///    which is what the measurement above literally is. Treat the key as
+  ///    public. The actual fix is routing through the Worker so the key never
+  ///    ships at all; see `HANDOFF.md` §5.
+  ///
+  /// The default below is the debug keystore's SHA-1, which keeps `flutter run`
+  /// working with no keys file.
   static const _kAndroidCert = String.fromEnvironment(
     'GOOGLE_ANDROID_CERT',
     defaultValue: '05e29b39eb58a763a326c1ca43bc3727e5e73c8a',
