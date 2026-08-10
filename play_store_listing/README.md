@@ -79,35 +79,71 @@ Paste from [`short_description.txt`](short_description.txt):
 Paste from [`full_description.txt`](full_description.txt) — single source of truth, edit that
 file (not this one).
 
-## Data safety form (answer to MATCH the description)
+## Data safety form — answer sheet
 
-Answer for the **free** tier — the only thing that goes to Play. There are no product flavors; one binary serves both tiers and Pro unlocks at runtime. It is a much lighter declaration
-than the Pro build would need, because free omits bank connectivity entirely and so has **no
-financial-account data to declare at all**.
+Answer for the app **as submitted**: free tier, no billing SDK, no bank connectivity. Google
+reviews these against the binary, and the three surfaces (this form, the store listing, the
+privacy policy) must agree.
 
-- **Approximate + precise location** — *collected and shared*, used only for app functionality,
-  **not** linked to an identity (there isn't one; no account). Rounded to ~110 m before it
-  leaves the device, no history retained. Declare **background** use; the in-app prominent
-  disclosure is `NearbyPermissionGate._showAlwaysAllowExplainer`.
-  Shared with two recipients: the SwipeWise lookup Worker, which forwards it and stores
-  nothing, and Google Places, which answers the query.
-- **Crash logs** *(App activity → Diagnostics)* — collected, not linked to an identity, used
-  for app functionality. ⚠️ **This must be declared.** Firebase Crashlytics is active in every
-  build (`main.dart`) and is never disabled, so the app does send data off-device. Declaring
-  "nothing collected" while shipping Crashlytics is a misdeclaration and a common cause of
-  enforcement. Reports carry a stack trace, device model, OS/app version and a few diagnostic
-  values — never the wallet, coordinates, or an account id.
-- ⛔ Do **not** declare financial info, transactions or FDX. The free build collects none of it.
+⚠️ **"Collected" means transmitted off the device** — to you *or* a third party. It does not
+mean "stored". Everything SwipeWise keeps in `swipewise.db` stays on the phone and is therefore
+**not** collected. Only two things leave the device.
 
-  ⚠️ **The old justification here was wrong and is worth correcting explicitly:** this used to
-  say those code paths are "compiled out". They are not. The app ships **one binary for both
-  tiers**, so the bank-sync code is present and dormant in every install — a reviewer who
-  decompiles will find it. The correct basis for not declaring is that the shipped build has no
-  aggregator credentials, cannot authenticate, and therefore cannot collect any of it;
-  `SophtronConfig.isConfigured` is false and the sync refuses. Data safety asks what the app
-  *collects*, not what code it contains.
-  Declaring collection the app doesn't do is its own policy problem.
-- No analytics / telemetry. See [`../docs/PRIVACY.md`](../docs/PRIVACY.md).
+### Declare these two data types
+
+| Data type | Collected | Shared | Purpose | Linked to identity? |
+|---|---|---|---|---|
+| **Precise location** (Location) | Yes | **Yes** | App functionality | **No** |
+| **Crash logs** (App info and performance) | Yes | **No** | App functionality | **No** |
+
+Plus, because Crashlytics sends them alongside a crash:
+
+| Data type | Collected | Shared | Purpose | Linked to identity? |
+|---|---|---|---|---|
+| **Diagnostics** (App info and performance) | Yes | No | App functionality | No |
+| **Device or other IDs** | Yes | No | App functionality | No |
+
+### The four answers that are easy to get wrong
+
+**1. Location is *Precise*, not *Approximate*.** The coordinate is rounded to ~110 m before it
+leaves, which sounds approximate — but Google defines *approximate* as an area of **3 km² or
+more**. A 110 m radius is ~0.04 km², so it is still precise by their definition, and the app
+requests `ACCESS_FINE_LOCATION`. Declaring approximate here would be a misdeclaration.
+
+**2. Location is *Shared*; crash logs are not.** Sharing means transfer to a **third party**.
+Google Places is a genuine third party answering a query, so location is shared. Firebase
+Crashlytics is Google acting as **your service provider**, processing on your behalf — which
+Google's own guidance treats as collection, not sharing.
+
+**3. Nothing is *linked to identity*, and that is real, not a technicality.** There is no
+account, no email, no sign-in. The local id never leaves the device. Crashlytics' installation
+id is pseudonymous and tied to no user record.
+
+**4. Do not mark location *ephemeral*.** Our Worker genuinely processes it in memory and stores
+nothing — but the ephemeral option asserts that about the whole path, and Google Places'
+retention is not ours to promise. Ephemeral data is hidden from the listing, so claiming it
+wrongly is exactly the kind of under-disclosure that gets enforced.
+
+### Answer "no" to everything else
+
+Personal info · Financial info · Health and fitness · Messages · Photos and videos · Audio ·
+Files and docs · Calendar · Contacts · App activity · Web browsing history · Purchases.
+
+Two that look like they might apply and do not:
+
+- **Health and fitness** — the app holds `ACTIVITY_RECOGNITION`, but activity is used on-device
+  to tell a real store visit from a traffic stop. Nothing is transmitted, so nothing is collected.
+- **Financial info** — no bank connection, no card numbers, no payments. The bank-sync code
+  ships dormant in the binary, but data safety asks what the app **collects**, and without
+  credentials it collects nothing. (See the note below; the old "compiled out" reasoning was
+  wrong and would not survive a reviewer decompiling.)
+
+### Security section
+
+- **Encrypted in transit:** yes. Every request is HTTPS.
+- **Users can request data deletion:** there is no account and no server-side record to delete.
+  Everything lives on the device and uninstalling removes it. Say so rather than claiming a
+  deletion mechanism that does not exist.
 
 ## Background location declaration — Play Console → App content → Location permissions
 
