@@ -91,17 +91,29 @@ mean "stored". Everything SwipeWise keeps in `swipewise.db` stays on the phone a
 
 ### Declare these two data types
 
-| Data type | Collected | Shared | Purpose | Linked to identity? |
-|---|---|---|---|---|
-| **Precise location** (Location) | Yes | **Yes** | App functionality | **No** |
-| **Crash logs** (App info and performance) | Yes | **No** | App functionality | **No** |
+| Data type | Collected | Shared | Ephemeral | Required? | Purpose | Linked? |
+|---|---|---|---|---|---|---|
+| **Precise location** | Yes | **Yes** | No | **Optional** | App functionality | No |
+| **Crash logs** | Yes | No | No | **Required** | **Analytics** | No |
 
 Plus, because Crashlytics sends them alongside a crash:
 
-| Data type | Collected | Shared | Purpose | Linked to identity? |
-|---|---|---|---|---|
-| **Diagnostics** (App info and performance) | Yes | No | App functionality | No |
-| **Device or other IDs** | Yes | No | App functionality | No |
+| Data type | Collected | Shared | Ephemeral | Required? | Purpose | Linked? |
+|---|---|---|---|---|---|---|
+| **Diagnostics** | Yes | No | No | **Required** | **Analytics** | No |
+| **Device or other IDs** | Yes | No | No | **Required** | **Analytics** | No |
+
+### Two more that are easy to get wrong
+
+**5. Crash data is *Analytics*, not *App functionality*.** It reads like infrastructure, but
+Google's own definition of Analytics says "to monitor app health, to **diagnose and fix bugs or
+crashes**". That is crash reporting described exactly. Location stays App functionality — there
+the data *is* the feature.
+
+**6. Crash data is *required*; location is *optional*.** Location has a permission the user can
+decline or revoke, and the app degrades gracefully — that is the whole point of the disclosure
+dialog. Crashlytics has no in-app toggle and is never disabled, so "users can choose" would be
+false.
 
 ### The four answers that are easy to get wrong
 
