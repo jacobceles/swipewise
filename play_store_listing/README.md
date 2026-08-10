@@ -95,6 +95,65 @@ financial-account data to declare at all**.
   Declaring collection the app doesn't do is its own policy problem.
 - No analytics / telemetry. See [`../docs/PRIVACY.md`](../docs/PRIVACY.md).
 
+## Background location declaration — Play Console → App content → Location permissions
+
+The schedule long pole. Review runs days-to-weeks and is commonly rejected on the first pass,
+so submit it before the rest of the listing is finished. Rejections are usually about the
+**video**, not the app.
+
+### Form answers
+
+**Does your app access location in the background?** Yes — `ACCESS_BACKGROUND_LOCATION`.
+
+**Which feature requires it?**
+
+> Arrival alerts. SwipeWise notifies the user when they arrive at a nearby store where one of
+> the credit cards in their wallet earns extra rewards — for example, arriving at a grocery
+> store where their card earns 5% instead of 1%. The reminder is only useful at the moment of
+> payment, so it has to reach the user when the app is not open.
+
+**Why is foreground-only access insufficient?**
+
+> The alert exists to reach the user as they walk into a shop, when the phone is in their
+> pocket. Foreground-only access would require the user to open the app and keep it on screen
+> at the moment of arrival — by which point they already know where they are, and the
+> recommendation has no value. There is no version of this feature that works while the app is
+> in the foreground.
+
+**How is location handled?** Useful to state, because it pre-empts the obvious follow-up:
+
+> Detection runs on the device. SwipeWise registers native Android geofences for nearby stores
+> and the operating system performs the dwell detection; the app is woken only when an arrival
+> fires. To find which stores are nearby, a latitude/longitude rounded to three decimal places
+> (~110 m) is sent to the Google Places API. No location history is retained: the only position
+> stored at rest is a single row recording where geofences were last registered, overwritten on
+> every refresh and deleted on uninstall. Location is never sent to a SwipeWise server — the
+> app has no backend that receives it.
+
+### The demo video — where first passes are lost
+
+Host it unlisted on YouTube and paste the link. It must show, in this order and unambiguously:
+
+1. **The prominent disclosure, before any system dialog.** This is
+   `NearbyPermissionGate._showAlwaysAllowExplainer` — the dialog titled *"Allow location all the
+   time?"*. Hold on it long enough to read. Its text contains Google's required phrasing,
+   verbatim: *"even when the app is closed or not in use"*.
+2. **The user tapping Continue** — affirmative consent, not a dismissal.
+3. **The Android system permission dialog**, and *Allow all the time* being chosen.
+4. **The feature actually working**: leave the app, and show the arrival notification firing
+   with the recommended card. A screen recording that walks into a registered store, or a
+   mock-location demo, both pass — what fails is a video that shows only the settings screen.
+
+Three things that get first passes rejected, none of which are about the code:
+
+- The video shows the system dialog but never the in-app disclosure. The disclosure is the
+  thing being reviewed; the system dialog is Android's, not yours.
+- The video never demonstrates the background behaviour, so the reviewer cannot see why
+  foreground access would not do.
+- The declared purpose does not match the store listing or the data safety form. Keep all three
+  saying the same thing: arrival alerts for card rewards, nothing about advertising or
+  analytics, because the app does neither.
+
 ## Regenerating assets
 
 - **Icon** — flatten the adaptive foreground on white:
