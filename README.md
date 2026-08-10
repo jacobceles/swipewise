@@ -46,13 +46,8 @@ moment no other rewards app actually owns.
 <table>
   <tr>
     <td align="center"><img src="play_store_listing/screenshots/1-best-card-stores.png" width="220"><br><sub><b>Best card at every store</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/3-transactions.png" width="220"><br><sub><b>Your spending</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/4-breakdown.png" width="220"><br><sub><b>Where it goes</b></sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="play_store_listing/screenshots/5-cards.png" width="220"><br><sub><b>Your whole wallet</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/6-subscriptions.png" width="220"><br><sub><b>Subscriptions, routed</b></sub></td>
     <td align="center"><img src="play_store_listing/screenshots/2-advisor-categories.png" width="220"><br><sub><b>Ranked per category</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/5-cards.png" width="220"><br><sub><b>Your whole wallet</b></sub></td>
   </tr>
 </table>
 </div>
@@ -62,8 +57,8 @@ moment no other rewards app actually owns.
 This is a core value, not a marketing line:
 
 - **No backend.** SwipeWise has no server. There's nowhere on our side for your data to go.
-- **On-device only.** Cards, transactions, and rewards live in a local SQLite database on
-  your phone.
+- **On-device only.** Your wallet and its rewards live in a local SQLite database on your
+  phone (and, on Pro, your transactions too — same database, same device).
 - **No telemetry.** The app never phones home — not which cards you're shown, which
   notifications fire, nor what you tap.
 - **Location stays yours.** Your precise GPS fix never leaves the device; only a location
@@ -75,8 +70,12 @@ Full details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## 🛠️ Built with
 
-Flutter (Material 3) · Riverpod · sqflite · Firebase Auth · Sophtron (FDX-standard bank
-data) · Google Places API + native Android geofencing. Android today; iOS later.
+Flutter (Material 3) · Riverpod · sqflite · Google Places API · native Android geofencing ·
+a Cloudflare Worker serving the rewards catalog. Android today; iOS later.
+
+The Pro path adds Firebase Auth and Sophtron (FDX-standard bank data). That code is in this
+repo and dormant — it needs a server holding the aggregator credentials, which doesn't exist
+yet.
 
 ## 🤝 Open source & contributing
 
@@ -147,7 +146,12 @@ Where it's headed: the [catalog](todo/rewards_catalog.md) and [roadmap](todo/roa
 
 ## 📄 License
 
-[MIT](LICENSE) — do whatever you want with the code. Honestly, anyone can build a
-card-recommender; the hard part (and the real value) is the **data** that makes the
-recommendations good — the brand registry and the rewards catalog — which is where the
-project's curation effort goes.
+[MIT](LICENSE). Use it, fork it, ship it — attribution and the licence text are the only
+conditions.
+
+Worth knowing what you're getting: the app is the whole app, but the **recommendations are
+only as good as the data behind them** — the brand registry and the rewards catalog. Those
+are generated from a separate curation pipeline, and keeping ~223 cards accurate as issuers
+reword their terms is the ongoing work. `assets/vocab/brands.json` is the file to send a PR
+against; card data goes through the pipeline rather than a direct edit
+(see [docs/reward-catalog.md](docs/reward-catalog.md)).
