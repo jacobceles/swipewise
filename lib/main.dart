@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workmanager/workmanager.dart';
 import 'firebase_options.dart';
+import 'api/app_check_service.dart';
 import 'api/catalog_loader.dart';
 import 'api/data_repository.dart';
 import 'api/database_helper.dart';
@@ -34,6 +35,10 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Device attestation for Worker calls. Must also be activated in the headless
+  // geofence isolate below — App Check state is per-isolate.
+  await AppCheckService.activate();
 
   // Route uncaught Flutter framework + async Dart errors to Crashlytics.
   // `onError` covers async zone errors too (Flutter 3.3+), so no
@@ -300,6 +305,12 @@ Future<bool> _runGeofenceReregister() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
+
+  // App Check is per-isolate, and this isolate calls Places through the Worker
+  // via `GooglePlacesProvider` below. Without this the background path is
+  // tokenless: geofences stop re-registering and arrival notifications stop,
+  // with nothing logged. See `AppCheckService`.
+  await AppCheckService.activate();
   final repo = DataRepository();
   final db = await DatabaseHelper().database;
   final users = await db.query('users', limit: 1);

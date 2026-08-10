@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
 
+import '../api/app_check_service.dart';
 import '../api/data_repository.dart';
 import '../util/logger.dart';
 import 'merchant.dart';
@@ -49,10 +50,17 @@ class PlacesUpstreamError implements Exception {
 /// shared between isolates) so the foreground UI and the background geofence
 /// re-register isolate share state rather than diverging.
 class GooglePlacesProvider implements MerchantSearchProvider {
-  GooglePlacesProvider({DataRepository? repo})
-    : _repo = repo ?? DataRepository();
+  GooglePlacesProvider({DataRepository? repo, http.Client? client})
+    : _repo = repo ?? DataRepository(),
+      _client = client ?? http.Client();
 
   final DataRepository _repo;
+
+  /// Injectable so tests can assert *which* host is called and which headers go
+  /// with it. That matters more than it looks: the security property of the
+  /// proxy rollout is "the Places key is never sent to the proxy", and that is
+  /// a property of this header map.
+  final http.Client _client;
 
   static const _kApiKey = String.fromEnvironment('GOOGLE_PLACES_KEY');
   // Android app restriction: GCP key is locked to specific package+cert.
@@ -96,6 +104,17 @@ class GooglePlacesProvider implements MerchantSearchProvider {
     'GOOGLE_ANDROID_CERT',
     defaultValue: '05e29b39eb58a763a326c1ca43bc3727e5e73c8a',
   );
+  /// When set, nearby search goes through the SwipeWise Worker instead of
+  /// straight to Google, and the Places key never ships in the binary.
+  ///
+  /// The direct path is kept as the fallback for exactly one release: it is what
+  /// lets the proxy be rolled out and verified before `GOOGLE_PLACES_KEY` is
+  /// removed from the keys file. Once that removal lands (`HANDOFF.md` §5.5)
+  /// `_kApiKey` is empty, the direct path cannot work, and this branch becomes
+  /// the only one — at which point the fallback should be deleted rather than
+  /// left as dead reassurance.
+  static const _kProxyUrl = String.fromEnvironment('PLACES_PROXY_URL');
+
   static const _serviceName = 'google_places';
   static const _endpoint =
       'https://places.googleapis.com/v1/places:searchNearby';
@@ -114,8 +133,12 @@ class GooglePlacesProvider implements MerchantSearchProvider {
     required int radiusMi,
     Set<String>? categoryIds,
   }) async {
-    if (_kApiKey.isEmpty) {
-      throw Exception('GOOGLE_PLACES_KEY is not set');
+    // A key is required only on the direct path. Once the proxy is the only
+    // route (`HANDOFF.md` §5.5) the key is deliberately absent from the build,
+    // and demanding one here would break nearby search at exactly the moment
+    // the security fix lands.
+    if (_kProxyUrl.isEmpty && _kApiKey.isEmpty) {
+      throw Exception('neither GOOGLE_PLACES_KEY nor PLACES_PROXY_URL is set');
     }
     final breakerState = await _repo.getCircuitBreaker(_serviceName);
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -268,19 +291,33 @@ class GooglePlacesProvider implements MerchantSearchProvider {
       'rankPreference': 'DISTANCE',
     });
 
+    // Proxy when configured, Google directly otherwise. The Worker forwards the
+    // body verbatim and pins the *same* field mask, so the response shape — and
+    // everything below this point — is identical either way.
+    final viaProxy = _kProxyUrl.isNotEmpty;
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (viaProxy) {
+      // Null is a normal outcome (no Play Services, unregistered emulator). Send
+      // no header rather than an empty one, and let the Worker decide: with
+      // enforcement off it serves and logs, with enforcement on it 401s and the
+      // catch below falls back to the direct path.
+      final token = await AppCheckService.token();
+      if (token != null) headers['X-Firebase-AppCheck'] = token;
+    } else {
+      headers['X-Goog-Api-Key'] = _kApiKey;
+      headers['X-Goog-FieldMask'] = _fieldMask;
+      if (_kAndroidPackage.isNotEmpty) {
+        headers['X-Android-Package'] = _kAndroidPackage;
+      }
+      if (_kAndroidCert.isNotEmpty) headers['X-Android-Cert'] = _kAndroidCert;
+    }
+
     final http.Response resp;
     try {
-      resp = await http
+      resp = await _client
           .post(
-            Uri.parse(_endpoint),
-            headers: {
-              'X-Goog-Api-Key': _kApiKey,
-              'Content-Type': 'application/json',
-              'X-Goog-FieldMask': _fieldMask,
-              if (_kAndroidPackage.isNotEmpty)
-                'X-Android-Package': _kAndroidPackage,
-              if (_kAndroidCert.isNotEmpty) 'X-Android-Cert': _kAndroidCert,
-            },
+            Uri.parse(viaProxy ? _kProxyUrl : _endpoint),
+            headers: headers,
             body: body,
           )
           .timeout(const Duration(seconds: 15));
