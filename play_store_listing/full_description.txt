@@ -1,0 +1,27 @@
+SwipeWise tells you which credit card to use at which store, so you earn the most cashback and points on every purchase.
+
+Most rewards apps stop at the category — "use this card for groceries." SwipeWise goes a level deeper, down to the store and the brand. Walk into Whole Foods and it tells you to tap the card that earns 5% there, not just "a grocery card." That right-card, right-here, right-now moment is what SwipeWise is built around.
+
+WHAT YOU GET
+
+• Best card at every store — store- and brand-level recommendations, not generic categories.
+• Arrival nudges — optional notifications surface your best card as you walk into a store, so you never have to open the app or remember a thing.
+• Add your wallet in seconds — pick your cards from a catalog of hundreds of US credit cards. No forms, no card numbers.
+• Every category ranked — see which of your cards wins on dining, groceries, gas, travel and more, including rotating quarterly bonuses and store-specific offers.
+• Payment reminders — an optional nudge before a statement is due.
+
+PRIVATE BY DESIGN
+
+Privacy here isn't a promise, it's the architecture:
+
+• No account. No sign-up, no email, no password — open the app and use it.
+• No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions, because it doesn't need them to tell you which card to use.
+• On-device only. Your wallet and your rewards live in a local database on your phone.
+• No telemetry. The app never phones home — not which cards you see, which notifications fire, nor what you tap.
+• Your location stays yours. Your precise GPS fix never leaves the device; only a location rounded to ~110 m is sent to Google Places to find nearby stores, and no location history is kept.
+
+OPEN SOURCE
+
+SwipeWise is open source, so you can audit exactly how it handles your data.
+
+Note: SwipeWise is in active development. Android today; iOS later.

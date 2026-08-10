@@ -1,0 +1,24 @@
+# Dependencies & build output
+node_modules/
+dist/
+*.log
+
+# Wrangler / Cloudflare local state
+.wrangler/
+.dev.vars
+
+# Publish CLI secrets (R2 credentials)
+.env
+
+# Catalog drop-zone. The committed free.json (the public GitHub-CDN copy of the
+# rewards bundle) is the only source here; everything else is a build artifact:
+#   - the backend engine's extra slices/reports (catalog/chase, manifest.json, …)
+#   - dist/  = the rewritten catalog the publisher uploads (never the source)
+#   - cards/ = the downloaded card-art cache (gated by Actions cache in CI)
+catalog/*
+!catalog/free.json
+cards/
+dist/
+
+# OS
+.DS_Store

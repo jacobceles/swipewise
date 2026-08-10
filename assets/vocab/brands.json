@@ -1,0 +1,6278 @@
+[
+  {
+    "brandId": "whole-foods-market",
+    "displayName": "Whole Foods Market",
+    "category": "grocery",
+    "aliases": [
+      "whole foods"
+    ]
+  },
+  {
+    "brandId": "uber-eats",
+    "displayName": "Uber Eats",
+    "category": "dining",
+    "aliases": [
+      "uber eats"
+    ]
+  },
+  {
+    "brandId": "doordash",
+    "displayName": "DoorDash",
+    "category": "dining",
+    "aliases": [
+      "doordash"
+    ]
+  },
+  {
+    "brandId": "instacart",
+    "displayName": "Instacart",
+    "category": "onlineGrocery",
+    "aliases": [
+      "instacart"
+    ]
+  },
+  {
+    "brandId": "amazon-fresh",
+    "displayName": "Amazon Fresh",
+    "category": "onlineGrocery",
+    "aliases": [
+      "amazon fresh"
+    ]
+  },
+  {
+    "brandId": "amazon",
+    "displayName": "Amazon",
+    "category": "onlineShopping",
+    "aliases": [
+      "amazon"
+    ]
+  },
+  {
+    "brandId": "apple-pay",
+    "displayName": "Apple Pay",
+    "category": "onlineShopping",
+    "aliases": [
+      "apple pay",
+      "apple card"
+    ]
+  },
+  {
+    "brandId": "shell",
+    "displayName": "Shell",
+    "category": "gas",
+    "aliases": [
+      "shell"
+    ]
+  },
+  {
+    "brandId": "mcdonalds",
+    "displayName": "McDonald's",
+    "category": "dining",
+    "aliases": [
+      "mcdonalds",
+      "mcdonald s",
+      "mcdonald"
+    ]
+  },
+  {
+    "brandId": "starbucks",
+    "displayName": "Starbucks",
+    "category": "coffee",
+    "aliases": [
+      "starbucks"
+    ]
+  },
+  {
+    "brandId": "chipotle",
+    "displayName": "Chipotle",
+    "category": "dining",
+    "aliases": [
+      "chipotle",
+      "chipotle mexican grill"
+    ]
+  },
+  {
+    "brandId": "chick-fil-a",
+    "displayName": "Chick-fil-A",
+    "category": "dining",
+    "aliases": [
+      "chick fil a",
+      "chickfila"
+    ]
+  },
+  {
+    "brandId": "taco-bell",
+    "displayName": "Taco Bell",
+    "category": "dining",
+    "aliases": [
+      "taco bell",
+      "tacobell"
+    ]
+  },
+  {
+    "brandId": "subway",
+    "displayName": "Subway",
+    "category": "dining",
+    "aliases": [
+      "subway"
+    ]
+  },
+  {
+    "brandId": "wendys",
+    "displayName": "Wendy's",
+    "category": "dining",
+    "aliases": [
+      "wendys",
+      "wendy s"
+    ]
+  },
+  {
+    "brandId": "burger-king",
+    "displayName": "Burger King",
+    "category": "dining",
+    "aliases": [
+      "burger king",
+      "burgerking"
+    ]
+  },
+  {
+    "brandId": "dominos",
+    "displayName": "Domino's",
+    "category": "dining",
+    "aliases": [
+      "dominos",
+      "domino s",
+      "dominos pizza"
+    ]
+  },
+  {
+    "brandId": "pizza-hut",
+    "displayName": "Pizza Hut",
+    "category": "dining",
+    "aliases": [
+      "pizza hut",
+      "pizzahut"
+    ]
+  },
+  {
+    "brandId": "papa-johns",
+    "displayName": "Papa Johns",
+    "category": "dining",
+    "aliases": [
+      "papa johns",
+      "papa john s",
+      "papajohns"
+    ]
+  },
+  {
+    "brandId": "panera-bread",
+    "displayName": "Panera Bread",
+    "category": "dining",
+    "aliases": [
+      "panera bread",
+      "panera"
+    ]
+  },
+  {
+    "brandId": "sonic-drive-in",
+    "displayName": "Sonic Drive-In",
+    "category": "dining",
+    "aliases": [
+      "sonic drive in",
+      "sonic drivein"
+    ]
+  },
+  {
+    "brandId": "kfc",
+    "displayName": "KFC",
+    "category": "dining",
+    "aliases": [
+      "kfc",
+      "kentucky fried chicken"
+    ]
+  },
+  {
+    "brandId": "olive-garden",
+    "displayName": "Olive Garden",
+    "category": "dining",
+    "aliases": [
+      "olive garden"
+    ]
+  },
+  {
+    "brandId": "applebees",
+    "displayName": "Applebee's",
+    "category": "dining",
+    "aliases": [
+      "applebees",
+      "applebee s"
+    ]
+  },
+  {
+    "brandId": "buffalo-wild-wings",
+    "displayName": "Buffalo Wild Wings",
+    "category": "dining",
+    "aliases": [
+      "buffalo wild wings",
+      "bdubs",
+      "bww"
+    ]
+  },
+  {
+    "brandId": "outback-steakhouse",
+    "displayName": "Outback Steakhouse",
+    "category": "dining",
+    "aliases": [
+      "outback steakhouse",
+      "outback"
+    ]
+  },
+  {
+    "brandId": "texas-roadhouse",
+    "displayName": "Texas Roadhouse",
+    "category": "dining",
+    "aliases": [
+      "texas roadhouse"
+    ]
+  },
+  {
+    "brandId": "red-lobster",
+    "displayName": "Red Lobster",
+    "category": "dining",
+    "aliases": [
+      "red lobster"
+    ]
+  },
+  {
+    "brandId": "chilis",
+    "displayName": "Chili's",
+    "category": "dining",
+    "aliases": [
+      "chilis",
+      "chili s",
+      "chilis grill"
+    ]
+  },
+  {
+    "brandId": "dairy-queen",
+    "displayName": "Dairy Queen",
+    "category": "dining",
+    "aliases": [
+      "dairy queen",
+      "dq"
+    ]
+  },
+  {
+    "brandId": "panda-express",
+    "displayName": "Panda Express",
+    "category": "dining",
+    "aliases": [
+      "panda express"
+    ]
+  },
+  {
+    "brandId": "in-n-out-burger",
+    "displayName": "In-N-Out Burger",
+    "category": "dining",
+    "aliases": [
+      "in n out",
+      "innout",
+      "in n out burger"
+    ]
+  },
+  {
+    "brandId": "five-guys",
+    "displayName": "Five Guys",
+    "category": "dining",
+    "aliases": [
+      "five guys"
+    ]
+  },
+  {
+    "brandId": "jersey-mikes",
+    "displayName": "Jersey Mike's",
+    "category": "dining",
+    "aliases": [
+      "jersey mikes",
+      "jersey mike s"
+    ]
+  },
+  {
+    "brandId": "jimmy-johns",
+    "displayName": "Jimmy John's",
+    "category": "dining",
+    "aliases": [
+      "jimmy johns",
+      "jimmy john s"
+    ]
+  },
+  {
+    "brandId": "arbys",
+    "displayName": "Arby's",
+    "category": "dining",
+    "aliases": [
+      "arbys",
+      "arby s"
+    ]
+  },
+  {
+    "brandId": "jack-in-the-box",
+    "displayName": "Jack in the Box",
+    "category": "dining",
+    "aliases": [
+      "jack in the box",
+      "jackinthebox"
+    ]
+  },
+  {
+    "brandId": "popeyes",
+    "displayName": "Popeyes",
+    "category": "dining",
+    "aliases": [
+      "popeyes",
+      "popeye s"
+    ]
+  },
+  {
+    "brandId": "sweetgreen",
+    "displayName": "Sweetgreen",
+    "category": "dining",
+    "aliases": [
+      "sweetgreen"
+    ]
+  },
+  {
+    "brandId": "cava",
+    "displayName": "CAVA",
+    "category": "dining",
+    "aliases": [
+      "cava"
+    ]
+  },
+  {
+    "brandId": "shake-shack",
+    "displayName": "Shake Shack",
+    "category": "dining",
+    "aliases": [
+      "shake shack"
+    ]
+  },
+  {
+    "brandId": "dunkin",
+    "displayName": "Dunkin'",
+    "category": "coffee",
+    "aliases": [
+      "dunkin",
+      "dunkin donuts",
+      "dunkindonuts"
+    ]
+  },
+  {
+    "brandId": "peets-coffee",
+    "displayName": "Peet's Coffee",
+    "category": "coffee",
+    "aliases": [
+      "peets coffee",
+      "peet s",
+      "peets"
+    ]
+  },
+  {
+    "brandId": "dutch-bros",
+    "displayName": "Dutch Bros",
+    "category": "coffee",
+    "aliases": [
+      "dutch bros",
+      "dutch brothers"
+    ]
+  },
+  {
+    "brandId": "caribou-coffee",
+    "displayName": "Caribou Coffee",
+    "category": "coffee",
+    "aliases": [
+      "caribou coffee",
+      "caribou"
+    ]
+  },
+  {
+    "brandId": "kroger",
+    "displayName": "Kroger",
+    "category": "grocery",
+    "aliases": [
+      "kroger"
+    ]
+  },
+  {
+    "brandId": "safeway",
+    "displayName": "Safeway",
+    "category": "grocery",
+    "aliases": [
+      "safeway"
+    ]
+  },
+  {
+    "brandId": "trader-joes",
+    "displayName": "Trader Joe's",
+    "category": "grocery",
+    "aliases": [
+      "trader joes",
+      "trader joe s"
+    ]
+  },
+  {
+    "brandId": "publix",
+    "displayName": "Publix",
+    "category": "grocery",
+    "aliases": [
+      "publix",
+      "publix super markets"
+    ]
+  },
+  {
+    "brandId": "aldi",
+    "displayName": "ALDI",
+    "category": "grocery",
+    "aliases": [
+      "aldi",
+      "aldi inc"
+    ]
+  },
+  {
+    "brandId": "albertsons",
+    "displayName": "Albertsons",
+    "category": "grocery",
+    "aliases": [
+      "albertsons",
+      "albertson s"
+    ]
+  },
+  {
+    "brandId": "heb",
+    "displayName": "H-E-B",
+    "category": "grocery",
+    "aliases": [
+      "h e b",
+      "heb"
+    ]
+  },
+  {
+    "brandId": "meijer",
+    "displayName": "Meijer",
+    "category": "grocery",
+    "aliases": [
+      "meijer"
+    ]
+  },
+  {
+    "brandId": "wegmans",
+    "displayName": "Wegmans",
+    "category": "grocery",
+    "aliases": [
+      "wegmans",
+      "wegman s"
+    ]
+  },
+  {
+    "brandId": "winn-dixie",
+    "displayName": "Winn-Dixie",
+    "category": "grocery",
+    "aliases": [
+      "winn dixie",
+      "winndixie"
+    ]
+  },
+  {
+    "brandId": "food-lion",
+    "displayName": "Food Lion",
+    "category": "grocery",
+    "aliases": [
+      "food lion"
+    ]
+  },
+  {
+    "brandId": "harris-teeter",
+    "displayName": "Harris Teeter",
+    "category": "grocery",
+    "aliases": [
+      "harris teeter"
+    ]
+  },
+  {
+    "brandId": "giant-eagle",
+    "displayName": "Giant Eagle",
+    "category": "grocery",
+    "aliases": [
+      "giant eagle"
+    ]
+  },
+  {
+    "brandId": "sprouts",
+    "displayName": "Sprouts Farmers Market",
+    "category": "grocery",
+    "aliases": [
+      "sprouts farmers market",
+      "sprouts"
+    ]
+  },
+  {
+    "brandId": "vons",
+    "displayName": "Vons",
+    "category": "grocery",
+    "aliases": [
+      "vons"
+    ]
+  },
+  {
+    "brandId": "ralphs",
+    "displayName": "Ralphs",
+    "category": "grocery",
+    "aliases": [
+      "ralphs",
+      "ralph s"
+    ]
+  },
+  {
+    "brandId": "winco",
+    "displayName": "WinCo Foods",
+    "category": "grocery",
+    "aliases": [
+      "winco foods",
+      "winco"
+    ]
+  },
+  {
+    "brandId": "jewel-osco",
+    "displayName": "Jewel-Osco",
+    "category": "grocery",
+    "aliases": [
+      "jewel osco",
+      "jewelosco"
+    ]
+  },
+  {
+    "brandId": "hy-vee",
+    "displayName": "Hy-Vee",
+    "category": "grocery",
+    "aliases": [
+      "hy vee",
+      "hyvee"
+    ]
+  },
+  {
+    "brandId": "smiths",
+    "displayName": "Smith's",
+    "category": "grocery",
+    "aliases": [
+      "smiths",
+      "smith s",
+      "smiths food and drug"
+    ]
+  },
+  {
+    "brandId": "chevron",
+    "displayName": "Chevron",
+    "category": "gas",
+    "aliases": [
+      "chevron"
+    ]
+  },
+  {
+    "brandId": "exxon",
+    "displayName": "Exxon",
+    "category": "gas",
+    "aliases": [
+      "exxon",
+      "exxonmobil"
+    ]
+  },
+  {
+    "brandId": "mobil",
+    "displayName": "Mobil",
+    "category": "gas",
+    "aliases": [
+      "mobil"
+    ]
+  },
+  {
+    "brandId": "bp",
+    "displayName": "BP",
+    "category": "gas",
+    "aliases": [
+      "bp",
+      "bp gas"
+    ]
+  },
+  {
+    "brandId": "marathon",
+    "displayName": "Marathon",
+    "category": "gas",
+    "aliases": [
+      "marathon petroleum",
+      "marathon gas"
+    ]
+  },
+  {
+    "brandId": "speedway",
+    "displayName": "Speedway",
+    "category": "gas",
+    "aliases": [
+      "speedway"
+    ]
+  },
+  {
+    "brandId": "wawa",
+    "displayName": "Wawa",
+    "category": "gas",
+    "aliases": [
+      "wawa"
+    ]
+  },
+  {
+    "brandId": "sheetz",
+    "displayName": "Sheetz",
+    "category": "gas",
+    "aliases": [
+      "sheetz"
+    ]
+  },
+  {
+    "brandId": "sunoco",
+    "displayName": "Sunoco",
+    "category": "gas",
+    "aliases": [
+      "sunoco"
+    ]
+  },
+  {
+    "brandId": "phillips-66",
+    "displayName": "Phillips 66",
+    "category": "gas",
+    "aliases": [
+      "phillips 66",
+      "phillips66"
+    ]
+  },
+  {
+    "brandId": "conoco",
+    "displayName": "Conoco",
+    "category": "gas",
+    "aliases": [
+      "conoco"
+    ]
+  },
+  {
+    "brandId": "valero",
+    "displayName": "Valero",
+    "category": "gas",
+    "aliases": [
+      "valero"
+    ]
+  },
+  {
+    "brandId": "murphy-usa",
+    "displayName": "Murphy USA",
+    "category": "gas",
+    "aliases": [
+      "murphy usa",
+      "murphy express"
+    ]
+  },
+  {
+    "brandId": "quiktrip",
+    "displayName": "QuikTrip",
+    "category": "gas",
+    "aliases": [
+      "quiktrip",
+      "qt"
+    ]
+  },
+  {
+    "brandId": "bucees",
+    "displayName": "Buc-ee's",
+    "category": "gas",
+    "aliases": [
+      "bucees",
+      "buc ee s"
+    ]
+  },
+  {
+    "brandId": "racetrac",
+    "displayName": "RaceTrac",
+    "category": "gas",
+    "aliases": [
+      "racetrac"
+    ]
+  },
+  {
+    "brandId": "circle-k",
+    "displayName": "Circle K",
+    "category": "gas",
+    "aliases": [
+      "circle k"
+    ]
+  },
+  {
+    "brandId": "ampm",
+    "displayName": "ampm",
+    "category": "gas",
+    "aliases": [
+      "ampm",
+      "am pm"
+    ]
+  },
+  {
+    "brandId": "gulf",
+    "displayName": "Gulf",
+    "category": "gas",
+    "aliases": [
+      "gulf oil",
+      "gulf gas"
+    ]
+  },
+  {
+    "brandId": "sinclair",
+    "displayName": "Sinclair",
+    "category": "gas",
+    "aliases": [
+      "sinclair oil",
+      "sinclair gas"
+    ]
+  },
+  {
+    "brandId": "cvs",
+    "displayName": "CVS Pharmacy",
+    "category": "drugStores",
+    "aliases": [
+      "cvs pharmacy",
+      "cvs"
+    ]
+  },
+  {
+    "brandId": "walgreens",
+    "displayName": "Walgreens",
+    "category": "drugStores",
+    "aliases": [
+      "walgreens",
+      "walgreen"
+    ]
+  },
+  {
+    "brandId": "rite-aid",
+    "displayName": "Rite Aid",
+    "category": "drugStores",
+    "aliases": [
+      "rite aid",
+      "riteaid"
+    ]
+  },
+  {
+    "brandId": "duane-reade",
+    "displayName": "Duane Reade",
+    "category": "drugStores",
+    "aliases": [
+      "duane reade"
+    ]
+  },
+  {
+    "brandId": "netflix",
+    "displayName": "Netflix",
+    "category": "streaming",
+    "aliases": [
+      "netflix",
+      "netflix com"
+    ]
+  },
+  {
+    "brandId": "spotify",
+    "displayName": "Spotify",
+    "category": "streaming",
+    "aliases": [
+      "spotify",
+      "spotify com"
+    ]
+  },
+  {
+    "brandId": "hulu",
+    "displayName": "Hulu",
+    "category": "streaming",
+    "aliases": [
+      "hulu",
+      "hulu com"
+    ]
+  },
+  {
+    "brandId": "disney-plus",
+    "displayName": "Disney+",
+    "category": "streaming",
+    "aliases": [
+      "disney plus",
+      "disneyplus"
+    ]
+  },
+  {
+    "brandId": "max",
+    "displayName": "Max",
+    "category": "streaming",
+    "aliases": [
+      "hbo max",
+      "max subscription"
+    ]
+  },
+  {
+    "brandId": "youtube-premium",
+    "displayName": "YouTube Premium",
+    "category": "streaming",
+    "aliases": [
+      "youtube premium",
+      "youtube tv",
+      "youtube com"
+    ]
+  },
+  {
+    "brandId": "apple-tv",
+    "displayName": "Apple TV",
+    "category": "streaming",
+    "aliases": [
+      "apple tv",
+      "appletv"
+    ]
+  },
+  {
+    "brandId": "amazon-prime-video",
+    "displayName": "Prime Video",
+    "category": "streaming",
+    "aliases": [
+      "prime video"
+    ]
+  },
+  {
+    "brandId": "peacock",
+    "displayName": "Peacock",
+    "category": "streaming",
+    "aliases": [
+      "peacock tv",
+      "peacocktv"
+    ]
+  },
+  {
+    "brandId": "paramount-plus",
+    "displayName": "Paramount+",
+    "category": "streaming",
+    "aliases": [
+      "paramount plus",
+      "paramountplus"
+    ]
+  },
+  {
+    "brandId": "siriusxm",
+    "displayName": "SiriusXM",
+    "category": "streaming",
+    "aliases": [
+      "siriusxm",
+      "sirius xm"
+    ]
+  },
+  {
+    "brandId": "pandora",
+    "displayName": "Pandora",
+    "category": "streaming",
+    "aliases": [
+      "pandora"
+    ]
+  },
+  {
+    "brandId": "twitch",
+    "displayName": "Twitch",
+    "category": "streaming",
+    "aliases": [
+      "twitch tv",
+      "twitch"
+    ]
+  },
+  {
+    "brandId": "amc-theatres",
+    "displayName": "AMC Theatres",
+    "category": "movieTheaters",
+    "aliases": [
+      "amc theatres",
+      "amc theater",
+      "amc"
+    ]
+  },
+  {
+    "brandId": "regal-cinemas",
+    "displayName": "Regal Cinemas",
+    "category": "movieTheaters",
+    "aliases": [
+      "regal cinemas",
+      "regal entertainment"
+    ]
+  },
+  {
+    "brandId": "cinemark",
+    "displayName": "Cinemark",
+    "category": "movieTheaters",
+    "aliases": [
+      "cinemark"
+    ]
+  },
+  {
+    "brandId": "ticketmaster",
+    "displayName": "Ticketmaster",
+    "category": "entertainment",
+    "aliases": [
+      "ticketmaster"
+    ]
+  },
+  {
+    "brandId": "stubhub",
+    "displayName": "StubHub",
+    "category": "entertainment",
+    "aliases": [
+      "stubhub"
+    ]
+  },
+  {
+    "brandId": "seatgeek",
+    "displayName": "SeatGeek",
+    "category": "entertainment",
+    "aliases": [
+      "seatgeek"
+    ]
+  },
+  {
+    "brandId": "topgolf",
+    "displayName": "Topgolf",
+    "category": "entertainment",
+    "aliases": [
+      "topgolf"
+    ]
+  },
+  {
+    "brandId": "dave-and-busters",
+    "displayName": "Dave & Buster's",
+    "category": "entertainment",
+    "aliases": [
+      "dave and busters",
+      "dave busters",
+      "dave buster s"
+    ]
+  },
+  {
+    "brandId": "delta-air-lines",
+    "displayName": "Delta Air Lines",
+    "category": "airlines",
+    "aliases": [
+      "delta air lines",
+      "delta air",
+      "delta flights",
+      "delta purchases"
+    ]
+  },
+  {
+    "brandId": "american-airlines",
+    "displayName": "American Airlines",
+    "category": "airlines",
+    "aliases": [
+      "american airlines",
+      "american air",
+      "american flights",
+      "american purchases"
+    ]
+  },
+  {
+    "brandId": "united-airlines",
+    "displayName": "United Airlines",
+    "category": "airlines",
+    "aliases": [
+      "united airlines",
+      "united air",
+      "united flights",
+      "united purchases"
+    ]
+  },
+  {
+    "brandId": "southwest-airlines",
+    "displayName": "Southwest Airlines",
+    "category": "airlines",
+    "aliases": [
+      "southwest airlines",
+      "southwest air",
+      "southwest airline",
+      "southwest purchases"
+    ]
+  },
+  {
+    "brandId": "jetblue",
+    "displayName": "JetBlue",
+    "category": "airlines",
+    "aliases": [
+      "jetblue airways",
+      "jetblue"
+    ]
+  },
+  {
+    "brandId": "alaska-airlines",
+    "displayName": "Alaska Airlines",
+    "category": "airlines",
+    "aliases": [
+      "alaska airlines",
+      "alaska air"
+    ]
+  },
+  {
+    "brandId": "spirit-airlines",
+    "displayName": "Spirit Airlines",
+    "category": "airlines",
+    "aliases": [
+      "spirit airlines"
+    ]
+  },
+  {
+    "brandId": "frontier-airlines",
+    "displayName": "Frontier Airlines",
+    "category": "airlines",
+    "aliases": [
+      "frontier airlines",
+      "flyfrontier"
+    ]
+  },
+  {
+    "brandId": "hawaiian-airlines",
+    "displayName": "Hawaiian Airlines",
+    "category": "airlines",
+    "aliases": [
+      "hawaiian airlines"
+    ]
+  },
+  {
+    "brandId": "allegiant-air",
+    "displayName": "Allegiant Air",
+    "category": "airlines",
+    "aliases": [
+      "allegiant air"
+    ]
+  },
+  {
+    "brandId": "marriott",
+    "displayName": "Marriott",
+    "category": "hotels",
+    "aliases": [
+      "marriott"
+    ]
+  },
+  {
+    "brandId": "hilton",
+    "displayName": "Hilton",
+    "category": "hotels",
+    "aliases": [
+      "hilton hotels",
+      "hilton"
+    ]
+  },
+  {
+    "brandId": "hyatt",
+    "displayName": "Hyatt",
+    "category": "hotels",
+    "aliases": [
+      "hyatt"
+    ]
+  },
+  {
+    "brandId": "ihg",
+    "displayName": "IHG",
+    "category": "hotels",
+    "aliases": [
+      "ihg",
+      "intercontinental"
+    ]
+  },
+  {
+    "brandId": "wyndham",
+    "displayName": "Wyndham",
+    "category": "hotels",
+    "aliases": [
+      "wyndham",
+      "vacation club"
+    ]
+  },
+  {
+    "brandId": "choice-hotels",
+    "displayName": "Choice Hotels",
+    "category": "hotels",
+    "aliases": [
+      "choice hotels",
+      "choice privileges"
+    ]
+  },
+  {
+    "brandId": "best-western",
+    "displayName": "Best Western",
+    "category": "hotels",
+    "aliases": [
+      "best western"
+    ]
+  },
+  {
+    "brandId": "airbnb",
+    "displayName": "Airbnb",
+    "category": "travel",
+    "aliases": [
+      "airbnb"
+    ]
+  },
+  {
+    "brandId": "vrbo",
+    "displayName": "Vrbo",
+    "category": "travel",
+    "aliases": [
+      "vrbo"
+    ]
+  },
+  {
+    "brandId": "expedia",
+    "displayName": "Expedia",
+    "category": "travel",
+    "aliases": [
+      "expedia",
+      "expedia com"
+    ]
+  },
+  {
+    "brandId": "booking-com",
+    "displayName": "Booking.com",
+    "category": "travel",
+    "aliases": [
+      "booking com"
+    ]
+  },
+  {
+    "brandId": "enterprise",
+    "displayName": "Enterprise",
+    "category": "carRentals",
+    "aliases": [
+      "enterprise rent a car",
+      "enterprise"
+    ]
+  },
+  {
+    "brandId": "hertz",
+    "displayName": "Hertz",
+    "category": "carRentals",
+    "aliases": [
+      "hertz"
+    ]
+  },
+  {
+    "brandId": "avis",
+    "displayName": "Avis",
+    "category": "carRentals",
+    "aliases": [
+      "avis"
+    ]
+  },
+  {
+    "brandId": "budget",
+    "displayName": "Budget",
+    "category": "carRentals",
+    "aliases": [
+      "budget rent a car",
+      "budget"
+    ]
+  },
+  {
+    "brandId": "alamo",
+    "displayName": "Alamo",
+    "category": "carRentals",
+    "aliases": [
+      "alamo rent a car",
+      "alamo"
+    ]
+  },
+  {
+    "brandId": "national-car-rental",
+    "displayName": "National Car Rental",
+    "category": "carRentals",
+    "aliases": [
+      "national car rental"
+    ]
+  },
+  {
+    "brandId": "turo",
+    "displayName": "Turo",
+    "category": "carRentals",
+    "aliases": [
+      "turo"
+    ]
+  },
+  {
+    "brandId": "bjs-wholesale-club",
+    "displayName": "BJ's Wholesale Club",
+    "category": "wholesale",
+    "aliases": [
+      "bjs wholesale",
+      "bj s wholesale",
+      "bjs"
+    ]
+  },
+  {
+    "brandId": "macys",
+    "displayName": "Macy's",
+    "category": "departmentStores",
+    "aliases": [
+      "macys",
+      "macy s"
+    ]
+  },
+  {
+    "brandId": "kohls",
+    "displayName": "Kohl's",
+    "category": "departmentStores",
+    "aliases": [
+      "kohls",
+      "kohl s"
+    ]
+  },
+  {
+    "brandId": "nordstrom",
+    "displayName": "Nordstrom",
+    "category": "departmentStores",
+    "aliases": [
+      "nordstrom",
+      "nordstrom rack"
+    ]
+  },
+  {
+    "brandId": "jcpenney",
+    "displayName": "JCPenney",
+    "category": "departmentStores",
+    "aliases": [
+      "jcpenney",
+      "j c penney"
+    ]
+  },
+  {
+    "brandId": "dillards",
+    "displayName": "Dillard's",
+    "category": "departmentStores",
+    "aliases": [
+      "dillards",
+      "dillard s"
+    ]
+  },
+  {
+    "brandId": "bloomingdales",
+    "displayName": "Bloomingdale's",
+    "category": "departmentStores",
+    "aliases": [
+      "bloomingdales",
+      "bloomingdale s"
+    ]
+  },
+  {
+    "brandId": "tj-maxx",
+    "displayName": "TJ Maxx",
+    "category": "departmentStores",
+    "aliases": [
+      "tj maxx",
+      "t j maxx",
+      "tjmaxx"
+    ]
+  },
+  {
+    "brandId": "marshalls",
+    "displayName": "Marshalls",
+    "category": "departmentStores",
+    "aliases": [
+      "marshalls",
+      "marshall s"
+    ]
+  },
+  {
+    "brandId": "ross",
+    "displayName": "Ross",
+    "category": "departmentStores",
+    "aliases": [
+      "ross dress for less",
+      "ross stores"
+    ]
+  },
+  {
+    "brandId": "verizon",
+    "displayName": "Verizon",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "verizon",
+      "verizon wireless"
+    ]
+  },
+  {
+    "brandId": "att",
+    "displayName": "AT&T",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "at t",
+      "att"
+    ]
+  },
+  {
+    "brandId": "t-mobile",
+    "displayName": "T-Mobile",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "t mobile",
+      "tmobile"
+    ]
+  },
+  {
+    "brandId": "comcast",
+    "displayName": "Comcast",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "comcast"
+    ]
+  },
+  {
+    "brandId": "xfinity",
+    "displayName": "Xfinity",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "xfinity"
+    ]
+  },
+  {
+    "brandId": "spectrum",
+    "displayName": "Spectrum",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "spectrum",
+      "charter spectrum"
+    ]
+  },
+  {
+    "brandId": "cox",
+    "displayName": "Cox",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "cox communications",
+      "cox"
+    ]
+  },
+  {
+    "brandId": "optimum",
+    "displayName": "Optimum",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "optimum"
+    ]
+  },
+  {
+    "brandId": "centurylink",
+    "displayName": "CenturyLink",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "centurylink"
+    ]
+  },
+  {
+    "brandId": "mint-mobile",
+    "displayName": "Mint Mobile",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "mint mobile"
+    ]
+  },
+  {
+    "brandId": "google-fi",
+    "displayName": "Google Fi",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "google fi",
+      "google fi wireless"
+    ]
+  },
+  {
+    "brandId": "amtrak",
+    "displayName": "Amtrak",
+    "category": "transit",
+    "aliases": [
+      "amtrak"
+    ]
+  },
+  {
+    "brandId": "mta",
+    "displayName": "MTA",
+    "category": "transit",
+    "aliases": [
+      "mta",
+      "metro north",
+      "lirr",
+      "mta nyct"
+    ]
+  },
+  {
+    "brandId": "nj-transit",
+    "displayName": "NJ Transit",
+    "category": "transit",
+    "aliases": [
+      "nj transit",
+      "njt"
+    ]
+  },
+  {
+    "brandId": "bart",
+    "displayName": "BART",
+    "category": "transit",
+    "aliases": [
+      "bart",
+      "bay area rapid transit"
+    ]
+  },
+  {
+    "brandId": "wmata",
+    "displayName": "WMATA",
+    "category": "transit",
+    "aliases": [
+      "wmata",
+      "washington metro"
+    ]
+  },
+  {
+    "brandId": "cta",
+    "displayName": "CTA",
+    "category": "transit",
+    "aliases": [
+      "chicago transit authority",
+      "cta"
+    ]
+  },
+  {
+    "brandId": "mbta",
+    "displayName": "MBTA",
+    "category": "transit",
+    "aliases": [
+      "mbta",
+      "massachusetts bay transportation"
+    ]
+  },
+  {
+    "brandId": "tim-hortons",
+    "displayName": "Tim Hortons",
+    "category": "coffee",
+    "aliases": [
+      "tim hortons",
+      "tim horton",
+      "timmies",
+      "tim horton s"
+    ]
+  },
+  {
+    "brandId": "aw-canada",
+    "displayName": "A&W",
+    "category": "dining",
+    "aliases": [
+      "a w",
+      "a w restaurant",
+      "a and w",
+      "a w canada"
+    ]
+  },
+  {
+    "brandId": "swiss-chalet",
+    "displayName": "Swiss Chalet",
+    "category": "dining",
+    "aliases": [
+      "swiss chalet"
+    ]
+  },
+  {
+    "brandId": "harveys",
+    "displayName": "Harvey's",
+    "category": "dining",
+    "aliases": [
+      "harveys",
+      "harvey s"
+    ]
+  },
+  {
+    "brandId": "boston-pizza",
+    "displayName": "Boston Pizza",
+    "category": "dining",
+    "aliases": [
+      "boston pizza"
+    ]
+  },
+  {
+    "brandId": "earls",
+    "displayName": "Earls",
+    "category": "dining",
+    "aliases": [
+      "earls",
+      "earls kitchen"
+    ]
+  },
+  {
+    "brandId": "cactus-club-cafe",
+    "displayName": "Cactus Club Cafe",
+    "category": "dining",
+    "aliases": [
+      "cactus club cafe",
+      "cactus club"
+    ]
+  },
+  {
+    "brandId": "the-keg",
+    "displayName": "The Keg",
+    "category": "dining",
+    "aliases": [
+      "the keg",
+      "keg steakhouse"
+    ]
+  },
+  {
+    "brandId": "montanas",
+    "displayName": "Montana's",
+    "category": "dining",
+    "aliases": [
+      "montanas",
+      "montana s",
+      "montanas bbq"
+    ]
+  },
+  {
+    "brandId": "white-spot",
+    "displayName": "White Spot",
+    "category": "dining",
+    "aliases": [
+      "white spot"
+    ]
+  },
+  {
+    "brandId": "dennys",
+    "displayName": "Denny's",
+    "category": "dining",
+    "aliases": [
+      "dennys",
+      "denny s"
+    ]
+  },
+  {
+    "brandId": "ihop",
+    "displayName": "IHOP",
+    "category": "dining",
+    "aliases": [
+      "ihop",
+      "international house of pancakes"
+    ]
+  },
+  {
+    "brandId": "waffle-house",
+    "displayName": "Waffle House",
+    "category": "dining",
+    "aliases": [
+      "waffle house"
+    ]
+  },
+  {
+    "brandId": "cracker-barrel",
+    "displayName": "Cracker Barrel",
+    "category": "dining",
+    "aliases": [
+      "cracker barrel"
+    ]
+  },
+  {
+    "brandId": "nandos",
+    "displayName": "Nando's",
+    "category": "dining",
+    "aliases": [
+      "nandos",
+      "nando s"
+    ]
+  },
+  {
+    "brandId": "red-robin",
+    "displayName": "Red Robin",
+    "category": "dining",
+    "aliases": [
+      "red robin"
+    ]
+  },
+  {
+    "brandId": "ocharleys",
+    "displayName": "O'Charley's",
+    "category": "dining",
+    "aliases": [
+      "ocharleys",
+      "o charley s",
+      "o charleys"
+    ]
+  },
+  {
+    "brandId": "cheddars",
+    "displayName": "Cheddar's Scratch Kitchen",
+    "category": "dining",
+    "aliases": [
+      "cheddars",
+      "cheddar s",
+      "cheddars scratch kitchen"
+    ]
+  },
+  {
+    "brandId": "bob-evans",
+    "displayName": "Bob Evans",
+    "category": "dining",
+    "aliases": [
+      "bob evans"
+    ]
+  },
+  {
+    "brandId": "ruby-tuesday",
+    "displayName": "Ruby Tuesday",
+    "category": "dining",
+    "aliases": [
+      "ruby tuesday"
+    ]
+  },
+  {
+    "brandId": "carrabbas",
+    "displayName": "Carrabba's Italian Grill",
+    "category": "dining",
+    "aliases": [
+      "carrabbas",
+      "carrabba s"
+    ]
+  },
+  {
+    "brandId": "longhorn-steakhouse",
+    "displayName": "LongHorn Steakhouse",
+    "category": "dining",
+    "aliases": [
+      "longhorn steakhouse",
+      "longhorn"
+    ]
+  },
+  {
+    "brandId": "logans-roadhouse",
+    "displayName": "Logan's Roadhouse",
+    "category": "dining",
+    "aliases": [
+      "logans roadhouse",
+      "logan s roadhouse"
+    ]
+  },
+  {
+    "brandId": "bonefish-grill",
+    "displayName": "Bonefish Grill",
+    "category": "dining",
+    "aliases": [
+      "bonefish grill"
+    ]
+  },
+  {
+    "brandId": "on-the-border",
+    "displayName": "On The Border",
+    "category": "dining",
+    "aliases": [
+      "on the border"
+    ]
+  },
+  {
+    "brandId": "cheesecake-factory",
+    "displayName": "The Cheesecake Factory",
+    "category": "dining",
+    "aliases": [
+      "cheesecake factory",
+      "the cheesecake factory"
+    ]
+  },
+  {
+    "brandId": "bjs-restaurant",
+    "displayName": "BJ's Restaurant & Brewhouse",
+    "category": "dining",
+    "aliases": [
+      "bjs restaurant",
+      "bj s restaurant",
+      "bjs brewhouse"
+    ]
+  },
+  {
+    "brandId": "california-pizza-kitchen",
+    "displayName": "California Pizza Kitchen",
+    "category": "dining",
+    "aliases": [
+      "california pizza kitchen",
+      "cpk"
+    ]
+  },
+  {
+    "brandId": "pf-changs",
+    "displayName": "P.F. Chang's",
+    "category": "dining",
+    "aliases": [
+      "pf changs",
+      "p f changs",
+      "p f chang s"
+    ]
+  },
+  {
+    "brandId": "maggianos",
+    "displayName": "Maggiano's Little Italy",
+    "category": "dining",
+    "aliases": [
+      "maggianos",
+      "maggiano s"
+    ]
+  },
+  {
+    "brandId": "yard-house",
+    "displayName": "Yard House",
+    "category": "dining",
+    "aliases": [
+      "yard house"
+    ]
+  },
+  {
+    "brandId": "tgi-fridays",
+    "displayName": "TGI Fridays",
+    "category": "dining",
+    "aliases": [
+      "tgi fridays",
+      "tgi friday s",
+      "fridays"
+    ]
+  },
+  {
+    "brandId": "hard-rock-cafe",
+    "displayName": "Hard Rock Cafe",
+    "category": "dining",
+    "aliases": [
+      "hard rock cafe",
+      "hard rock"
+    ]
+  },
+  {
+    "brandId": "whataburger",
+    "displayName": "Whataburger",
+    "category": "dining",
+    "aliases": [
+      "whataburger"
+    ]
+  },
+  {
+    "brandId": "culvers",
+    "displayName": "Culver's",
+    "category": "dining",
+    "aliases": [
+      "culvers",
+      "culver s"
+    ]
+  },
+  {
+    "brandId": "carls-jr",
+    "displayName": "Carl's Jr.",
+    "category": "dining",
+    "aliases": [
+      "carls jr",
+      "carl s jr"
+    ]
+  },
+  {
+    "brandId": "hardees",
+    "displayName": "Hardee's",
+    "category": "dining",
+    "aliases": [
+      "hardees",
+      "hardee s"
+    ]
+  },
+  {
+    "brandId": "steak-n-shake",
+    "displayName": "Steak 'n Shake",
+    "category": "dining",
+    "aliases": [
+      "steak n shake",
+      "steak and shake"
+    ]
+  },
+  {
+    "brandId": "freddys",
+    "displayName": "Freddy's",
+    "category": "dining",
+    "aliases": [
+      "freddys",
+      "freddy s",
+      "freddys frozen custard"
+    ]
+  },
+  {
+    "brandId": "krystal",
+    "displayName": "Krystal",
+    "category": "dining",
+    "aliases": [
+      "krystal burger",
+      "krystal"
+    ]
+  },
+  {
+    "brandId": "smashburger",
+    "displayName": "Smashburger",
+    "category": "dining",
+    "aliases": [
+      "smashburger"
+    ]
+  },
+  {
+    "brandId": "fatburger",
+    "displayName": "Fatburger",
+    "category": "dining",
+    "aliases": [
+      "fatburger"
+    ]
+  },
+  {
+    "brandId": "fuddruckers",
+    "displayName": "Fuddruckers",
+    "category": "dining",
+    "aliases": [
+      "fuddruckers"
+    ]
+  },
+  {
+    "brandId": "habit-burger",
+    "displayName": "The Habit Burger Grill",
+    "category": "dining",
+    "aliases": [
+      "habit burger",
+      "the habit"
+    ]
+  },
+  {
+    "brandId": "firehouse-subs",
+    "displayName": "Firehouse Subs",
+    "category": "dining",
+    "aliases": [
+      "firehouse subs"
+    ]
+  },
+  {
+    "brandId": "portillos",
+    "displayName": "Portillo's",
+    "category": "dining",
+    "aliases": [
+      "portillos",
+      "portillo s"
+    ]
+  },
+  {
+    "brandId": "zaxbys",
+    "displayName": "Zaxby's",
+    "category": "dining",
+    "aliases": [
+      "zaxbys",
+      "zaxby s"
+    ]
+  },
+  {
+    "brandId": "bojangles",
+    "displayName": "Bojangles",
+    "category": "dining",
+    "aliases": [
+      "bojangles"
+    ]
+  },
+  {
+    "brandId": "raising-canes",
+    "displayName": "Raising Cane's",
+    "category": "dining",
+    "aliases": [
+      "raising canes",
+      "raising cane s",
+      "canes chicken"
+    ]
+  },
+  {
+    "brandId": "churchs-chicken",
+    "displayName": "Church's Chicken",
+    "category": "dining",
+    "aliases": [
+      "churchs chicken",
+      "church s chicken"
+    ]
+  },
+  {
+    "brandId": "el-pollo-loco",
+    "displayName": "El Pollo Loco",
+    "category": "dining",
+    "aliases": [
+      "el pollo loco"
+    ]
+  },
+  {
+    "brandId": "del-taco",
+    "displayName": "Del Taco",
+    "category": "dining",
+    "aliases": [
+      "del taco"
+    ]
+  },
+  {
+    "brandId": "qdoba",
+    "displayName": "QDOBA",
+    "category": "dining",
+    "aliases": [
+      "qdoba",
+      "qdoba mexican eats"
+    ]
+  },
+  {
+    "brandId": "moes-southwest-grill",
+    "displayName": "Moe's Southwest Grill",
+    "category": "dining",
+    "aliases": [
+      "moes southwest grill",
+      "moe s southwest grill",
+      "moes"
+    ]
+  },
+  {
+    "brandId": "baja-fresh",
+    "displayName": "Baja Fresh",
+    "category": "dining",
+    "aliases": [
+      "baja fresh"
+    ]
+  },
+  {
+    "brandId": "rubios",
+    "displayName": "Rubio's",
+    "category": "dining",
+    "aliases": [
+      "rubios",
+      "rubio s"
+    ]
+  },
+  {
+    "brandId": "quiznos",
+    "displayName": "Quiznos",
+    "category": "dining",
+    "aliases": [
+      "quiznos"
+    ]
+  },
+  {
+    "brandId": "potbelly",
+    "displayName": "Potbelly",
+    "category": "dining",
+    "aliases": [
+      "potbelly",
+      "potbelly sandwich"
+    ]
+  },
+  {
+    "brandId": "schlotzskys",
+    "displayName": "Schlotzsky's",
+    "category": "dining",
+    "aliases": [
+      "schlotzskys",
+      "schlotzsky s"
+    ]
+  },
+  {
+    "brandId": "jasons-deli",
+    "displayName": "Jason's Deli",
+    "category": "dining",
+    "aliases": [
+      "jasons deli",
+      "jason s deli"
+    ]
+  },
+  {
+    "brandId": "mcalisters-deli",
+    "displayName": "McAlister's Deli",
+    "category": "dining",
+    "aliases": [
+      "mcalisters deli",
+      "mcalister s deli",
+      "mcalisters"
+    ]
+  },
+  {
+    "brandId": "corner-bakery",
+    "displayName": "Corner Bakery Cafe",
+    "category": "dining",
+    "aliases": [
+      "corner bakery",
+      "corner bakery cafe"
+    ]
+  },
+  {
+    "brandId": "einstein-bros",
+    "displayName": "Einstein Bros. Bagels",
+    "category": "dining",
+    "aliases": [
+      "einstein bros",
+      "einstein brothers",
+      "einstein bagels"
+    ]
+  },
+  {
+    "brandId": "first-watch",
+    "displayName": "First Watch",
+    "category": "dining",
+    "aliases": [
+      "first watch"
+    ]
+  },
+  {
+    "brandId": "mandarin-restaurant",
+    "displayName": "Mandarin Restaurant",
+    "category": "dining",
+    "aliases": [
+      "mandarin restaurant"
+    ]
+  },
+  {
+    "brandId": "pizzaville",
+    "displayName": "Pizzaville",
+    "category": "dining",
+    "aliases": [
+      "pizzaville"
+    ]
+  },
+  {
+    "brandId": "pizza-pizza",
+    "displayName": "Pizza Pizza",
+    "category": "dining",
+    "aliases": [
+      "pizza pizza"
+    ]
+  },
+  {
+    "brandId": "second-cup",
+    "displayName": "Second Cup",
+    "category": "coffee",
+    "aliases": [
+      "second cup"
+    ]
+  },
+  {
+    "brandId": "coffee-bean-tea-leaf",
+    "displayName": "The Coffee Bean & Tea Leaf",
+    "category": "coffee",
+    "aliases": [
+      "coffee bean tea leaf",
+      "the coffee bean"
+    ]
+  },
+  {
+    "brandId": "scooters-coffee",
+    "displayName": "Scooter's Coffee",
+    "category": "coffee",
+    "aliases": [
+      "scooters coffee",
+      "scooter s coffee"
+    ]
+  },
+  {
+    "brandId": "biggby-coffee",
+    "displayName": "Biggby Coffee",
+    "category": "coffee",
+    "aliases": [
+      "biggby coffee",
+      "biggby"
+    ]
+  },
+  {
+    "brandId": "dunn-brothers",
+    "displayName": "Dunn Brothers Coffee",
+    "category": "coffee",
+    "aliases": [
+      "dunn brothers",
+      "dunn bros"
+    ]
+  },
+  {
+    "brandId": "blue-bottle",
+    "displayName": "Blue Bottle Coffee",
+    "category": "coffee",
+    "aliases": [
+      "blue bottle coffee",
+      "blue bottle"
+    ]
+  },
+  {
+    "brandId": "stumptown",
+    "displayName": "Stumptown Coffee Roasters",
+    "category": "coffee",
+    "aliases": [
+      "stumptown coffee",
+      "stumptown"
+    ]
+  },
+  {
+    "brandId": "intelligentsia",
+    "displayName": "Intelligentsia Coffee",
+    "category": "coffee",
+    "aliases": [
+      "intelligentsia coffee",
+      "intelligentsia"
+    ]
+  },
+  {
+    "brandId": "la-colombe",
+    "displayName": "La Colombe",
+    "category": "coffee",
+    "aliases": [
+      "la colombe",
+      "la colombe coffee"
+    ]
+  },
+  {
+    "brandId": "blenz-coffee",
+    "displayName": "Blenz Coffee",
+    "category": "coffee",
+    "aliases": [
+      "blenz coffee",
+      "blenz"
+    ]
+  },
+  {
+    "brandId": "coffee-time",
+    "displayName": "Coffee Time",
+    "category": "coffee",
+    "aliases": [
+      "coffee time"
+    ]
+  },
+  {
+    "brandId": "robins-donuts",
+    "displayName": "Robin's Donuts",
+    "category": "coffee",
+    "aliases": [
+      "robins donuts",
+      "robin s donuts"
+    ]
+  },
+  {
+    "brandId": "loblaws",
+    "displayName": "Loblaws",
+    "category": "grocery",
+    "aliases": [
+      "loblaws",
+      "loblaw"
+    ]
+  },
+  {
+    "brandId": "sobeys",
+    "displayName": "Sobeys",
+    "category": "grocery",
+    "aliases": [
+      "sobeys",
+      "sobey s"
+    ]
+  },
+  {
+    "brandId": "metro-canada",
+    "displayName": "Metro",
+    "category": "grocery",
+    "aliases": [
+      "metro inc",
+      "metro grocer"
+    ]
+  },
+  {
+    "brandId": "freshco",
+    "displayName": "FreshCo",
+    "category": "grocery",
+    "aliases": [
+      "freshco"
+    ]
+  },
+  {
+    "brandId": "no-frills",
+    "displayName": "No Frills",
+    "category": "grocery",
+    "aliases": [
+      "no frills"
+    ]
+  },
+  {
+    "brandId": "food-basics",
+    "displayName": "Food Basics",
+    "category": "grocery",
+    "aliases": [
+      "food basics"
+    ]
+  },
+  {
+    "brandId": "real-canadian-superstore",
+    "displayName": "Real Canadian Superstore",
+    "category": "grocery",
+    "aliases": [
+      "real canadian superstore",
+      "rcss",
+      "superstore"
+    ]
+  },
+  {
+    "brandId": "save-on-foods",
+    "displayName": "Save-On-Foods",
+    "category": "grocery",
+    "aliases": [
+      "save on foods"
+    ]
+  },
+  {
+    "brandId": "iga",
+    "displayName": "IGA",
+    "category": "grocery",
+    "aliases": [
+      "iga",
+      "iga supermarket"
+    ]
+  },
+  {
+    "brandId": "zehrs",
+    "displayName": "Zehrs",
+    "category": "grocery",
+    "aliases": [
+      "zehrs"
+    ]
+  },
+  {
+    "brandId": "fortinos",
+    "displayName": "Fortinos",
+    "category": "grocery",
+    "aliases": [
+      "fortinos"
+    ]
+  },
+  {
+    "brandId": "provigo",
+    "displayName": "Provigo",
+    "category": "grocery",
+    "aliases": [
+      "provigo"
+    ]
+  },
+  {
+    "brandId": "hannaford",
+    "displayName": "Hannaford",
+    "category": "grocery",
+    "aliases": [
+      "hannaford",
+      "hannaford bros"
+    ]
+  },
+  {
+    "brandId": "stop-and-shop",
+    "displayName": "Stop & Shop",
+    "category": "grocery",
+    "aliases": [
+      "stop and shop",
+      "stop shop"
+    ]
+  },
+  {
+    "brandId": "giant-food",
+    "displayName": "Giant Food",
+    "category": "grocery",
+    "aliases": [
+      "giant food",
+      "giant food stores"
+    ]
+  },
+  {
+    "brandId": "shoprite",
+    "displayName": "ShopRite",
+    "category": "grocery",
+    "aliases": [
+      "shoprite"
+    ]
+  },
+  {
+    "brandId": "weis-markets",
+    "displayName": "Weis Markets",
+    "category": "grocery",
+    "aliases": [
+      "weis markets",
+      "weis"
+    ]
+  },
+  {
+    "brandId": "price-chopper",
+    "displayName": "Price Chopper",
+    "category": "grocery",
+    "aliases": [
+      "price chopper"
+    ]
+  },
+  {
+    "brandId": "acme-markets",
+    "displayName": "Acme Markets",
+    "category": "grocery",
+    "aliases": [
+      "acme markets",
+      "acme"
+    ]
+  },
+  {
+    "brandId": "shaws",
+    "displayName": "Shaw's",
+    "category": "grocery",
+    "aliases": [
+      "shaws",
+      "shaw s"
+    ]
+  },
+  {
+    "brandId": "star-market",
+    "displayName": "Star Market",
+    "category": "grocery",
+    "aliases": [
+      "star market"
+    ]
+  },
+  {
+    "brandId": "market-basket",
+    "displayName": "Market Basket",
+    "category": "grocery",
+    "aliases": [
+      "market basket"
+    ]
+  },
+  {
+    "brandId": "lidl",
+    "displayName": "Lidl",
+    "category": "grocery",
+    "aliases": [
+      "lidl"
+    ]
+  },
+  {
+    "brandId": "save-a-lot",
+    "displayName": "Save A Lot",
+    "category": "grocery",
+    "aliases": [
+      "save a lot",
+      "savealot"
+    ]
+  },
+  {
+    "brandId": "grocery-outlet",
+    "displayName": "Grocery Outlet",
+    "category": "grocery",
+    "aliases": [
+      "grocery outlet"
+    ]
+  },
+  {
+    "brandId": "piggly-wiggly",
+    "displayName": "Piggly Wiggly",
+    "category": "grocery",
+    "aliases": [
+      "piggly wiggly"
+    ]
+  },
+  {
+    "brandId": "ingles",
+    "displayName": "Ingles",
+    "category": "grocery",
+    "aliases": [
+      "ingles",
+      "ingles markets"
+    ]
+  },
+  {
+    "brandId": "cub-foods",
+    "displayName": "Cub Foods",
+    "category": "grocery",
+    "aliases": [
+      "cub foods"
+    ]
+  },
+  {
+    "brandId": "schnucks",
+    "displayName": "Schnucks",
+    "category": "grocery",
+    "aliases": [
+      "schnucks"
+    ]
+  },
+  {
+    "brandId": "woodmans",
+    "displayName": "Woodman's Markets",
+    "category": "grocery",
+    "aliases": [
+      "woodmans",
+      "woodman s"
+    ]
+  },
+  {
+    "brandId": "fred-meyer",
+    "displayName": "Fred Meyer",
+    "category": "grocery",
+    "aliases": [
+      "fred meyer"
+    ]
+  },
+  {
+    "brandId": "qfc",
+    "displayName": "QFC",
+    "category": "grocery",
+    "aliases": [
+      "qfc",
+      "quality food centers"
+    ]
+  },
+  {
+    "brandId": "frys-food",
+    "displayName": "Fry's Food",
+    "category": "grocery",
+    "aliases": [
+      "frys food",
+      "fry s food",
+      "frys electronics"
+    ]
+  },
+  {
+    "brandId": "king-soopers",
+    "displayName": "King Soopers",
+    "category": "grocery",
+    "aliases": [
+      "king soopers"
+    ]
+  },
+  {
+    "brandId": "city-market",
+    "displayName": "City Market",
+    "category": "grocery",
+    "aliases": [
+      "city market"
+    ]
+  },
+  {
+    "brandId": "dillons",
+    "displayName": "Dillons",
+    "category": "grocery",
+    "aliases": [
+      "dillons",
+      "dillon s"
+    ]
+  },
+  {
+    "brandId": "food-4-less",
+    "displayName": "Food 4 Less",
+    "category": "grocery",
+    "aliases": [
+      "food 4 less",
+      "food4less"
+    ]
+  },
+  {
+    "brandId": "marianos",
+    "displayName": "Mariano's",
+    "category": "grocery",
+    "aliases": [
+      "marianos",
+      "mariano s"
+    ]
+  },
+  {
+    "brandId": "randalls",
+    "displayName": "Randalls",
+    "category": "grocery",
+    "aliases": [
+      "randalls",
+      "randall s"
+    ]
+  },
+  {
+    "brandId": "tom-thumb",
+    "displayName": "Tom Thumb",
+    "category": "grocery",
+    "aliases": [
+      "tom thumb"
+    ]
+  },
+  {
+    "brandId": "carrs",
+    "displayName": "Carrs",
+    "category": "grocery",
+    "aliases": [
+      "carrs",
+      "carr s"
+    ]
+  },
+  {
+    "brandId": "central-market",
+    "displayName": "Central Market",
+    "category": "grocery",
+    "aliases": [
+      "central market"
+    ]
+  },
+  {
+    "brandId": "brookshires",
+    "displayName": "Brookshire's",
+    "category": "grocery",
+    "aliases": [
+      "brookshires",
+      "brookshire s"
+    ]
+  },
+  {
+    "brandId": "super-1-foods",
+    "displayName": "Super 1 Foods",
+    "category": "grocery",
+    "aliases": [
+      "super 1 foods"
+    ]
+  },
+  {
+    "brandId": "smart-and-final",
+    "displayName": "Smart & Final",
+    "category": "grocery",
+    "aliases": [
+      "smart and final",
+      "smart final"
+    ]
+  },
+  {
+    "brandId": "stater-bros",
+    "displayName": "Stater Bros. Markets",
+    "category": "grocery",
+    "aliases": [
+      "stater bros",
+      "stater brothers"
+    ]
+  },
+  {
+    "brandId": "bashas",
+    "displayName": "Bashas'",
+    "category": "grocery",
+    "aliases": [
+      "bashas",
+      "basha s"
+    ]
+  },
+  {
+    "brandId": "valumart",
+    "displayName": "Valu-mart",
+    "category": "grocery",
+    "aliases": [
+      "valu mart"
+    ]
+  },
+  {
+    "brandId": "independent",
+    "displayName": "Your Independent Grocer",
+    "category": "grocery",
+    "aliases": [
+      "independent grocer",
+      "your independent grocer"
+    ]
+  },
+  {
+    "brandId": "petro-canada",
+    "displayName": "Petro-Canada",
+    "category": "gas",
+    "aliases": [
+      "petro canada",
+      "petro-canada"
+    ]
+  },
+  {
+    "brandId": "husky-energy",
+    "displayName": "Husky Energy",
+    "category": "gas",
+    "aliases": [
+      "husky energy",
+      "husky gas"
+    ]
+  },
+  {
+    "brandId": "pioneer-energy",
+    "displayName": "Pioneer",
+    "category": "gas",
+    "aliases": [
+      "pioneer gas",
+      "pioneer energy"
+    ]
+  },
+  {
+    "brandId": "canadian-tire-gas",
+    "displayName": "Canadian Tire Gas+",
+    "category": "gas",
+    "aliases": [
+      "canadian tire gas",
+      "gas plus"
+    ]
+  },
+  {
+    "brandId": "ultramar",
+    "displayName": "Ultramar",
+    "category": "gas",
+    "aliases": [
+      "ultramar"
+    ]
+  },
+  {
+    "brandId": "irving-oil",
+    "displayName": "Irving",
+    "category": "gas",
+    "aliases": [
+      "irving oil",
+      "irving gas"
+    ]
+  },
+  {
+    "brandId": "fas-gas",
+    "displayName": "Fas Gas Plus",
+    "category": "gas",
+    "aliases": [
+      "fas gas",
+      "fas gas plus"
+    ]
+  },
+  {
+    "brandId": "texaco",
+    "displayName": "Texaco",
+    "category": "gas",
+    "aliases": [
+      "texaco"
+    ]
+  },
+  {
+    "brandId": "rutters",
+    "displayName": "Rutter's",
+    "category": "gas",
+    "aliases": [
+      "rutters",
+      "rutter s"
+    ]
+  },
+  {
+    "brandId": "getgo",
+    "displayName": "GetGo",
+    "category": "gas",
+    "aliases": [
+      "getgo"
+    ]
+  },
+  {
+    "brandId": "royal-farms",
+    "displayName": "Royal Farms",
+    "category": "gas",
+    "aliases": [
+      "royal farms"
+    ]
+  },
+  {
+    "brandId": "cumberland-farms",
+    "displayName": "Cumberland Farms",
+    "category": "gas",
+    "aliases": [
+      "cumberland farms"
+    ]
+  },
+  {
+    "brandId": "pilot-flying-j",
+    "displayName": "Pilot Flying J",
+    "category": "gas",
+    "aliases": [
+      "pilot flying j",
+      "pilot travel",
+      "flying j"
+    ]
+  },
+  {
+    "brandId": "loves-travel",
+    "displayName": "Love's Travel Stops",
+    "category": "gas",
+    "aliases": [
+      "loves travel",
+      "love s travel",
+      "loves truck"
+    ]
+  },
+  {
+    "brandId": "travelcenters-america",
+    "displayName": "TravelCenters of America",
+    "category": "gas",
+    "aliases": [
+      "travelcenters of america",
+      "ta travel"
+    ]
+  },
+  {
+    "brandId": "thorntons",
+    "displayName": "Thorntons",
+    "category": "gas",
+    "aliases": [
+      "thorntons"
+    ]
+  },
+  {
+    "brandId": "kum-and-go",
+    "displayName": "Kum & Go",
+    "category": "gas",
+    "aliases": [
+      "kum and go",
+      "kum go"
+    ]
+  },
+  {
+    "brandId": "caseys",
+    "displayName": "Casey's",
+    "category": "gas",
+    "aliases": [
+      "caseys",
+      "casey s",
+      "caseys general store"
+    ]
+  },
+  {
+    "brandId": "maverik",
+    "displayName": "Maverik",
+    "category": "gas",
+    "aliases": [
+      "maverik"
+    ]
+  },
+  {
+    "brandId": "cenex",
+    "displayName": "Cenex",
+    "category": "gas",
+    "aliases": [
+      "cenex"
+    ]
+  },
+  {
+    "brandId": "mapco",
+    "displayName": "Mapco",
+    "category": "gas",
+    "aliases": [
+      "mapco"
+    ]
+  },
+  {
+    "brandId": "quickchek",
+    "displayName": "QuickChek",
+    "category": "gas",
+    "aliases": [
+      "quickchek",
+      "quick chek"
+    ]
+  },
+  {
+    "brandId": "hess",
+    "displayName": "Hess",
+    "category": "gas",
+    "aliases": [
+      "hess express",
+      "hess corp",
+      "hess gas"
+    ]
+  },
+  {
+    "brandId": "7-eleven",
+    "displayName": "7-Eleven",
+    "category": "gas",
+    "aliases": [
+      "7 eleven",
+      "7 11"
+    ]
+  },
+  {
+    "brandId": "macs",
+    "displayName": "Mac's",
+    "category": "gas",
+    "aliases": [
+      "macs convenience",
+      "mac s"
+    ]
+  },
+  {
+    "brandId": "couche-tard",
+    "displayName": "Couche-Tard",
+    "category": "gas",
+    "aliases": [
+      "couche tard",
+      "couche-tard"
+    ]
+  },
+  {
+    "brandId": "shoppers-drug-mart",
+    "displayName": "Shoppers Drug Mart",
+    "category": "drugStores",
+    "aliases": [
+      "shoppers drug mart",
+      "shoppers"
+    ]
+  },
+  {
+    "brandId": "london-drugs",
+    "displayName": "London Drugs",
+    "category": "drugStores",
+    "aliases": [
+      "london drugs"
+    ]
+  },
+  {
+    "brandId": "jean-coutu",
+    "displayName": "Jean Coutu",
+    "category": "drugStores",
+    "aliases": [
+      "jean coutu",
+      "pharmacie jean coutu"
+    ]
+  },
+  {
+    "brandId": "rexall",
+    "displayName": "Rexall",
+    "category": "drugStores",
+    "aliases": [
+      "rexall",
+      "rexall pharma"
+    ]
+  },
+  {
+    "brandId": "pharmaprix",
+    "displayName": "Pharmaprix",
+    "category": "drugStores",
+    "aliases": [
+      "pharmaprix"
+    ]
+  },
+  {
+    "brandId": "kinney-drugs",
+    "displayName": "Kinney Drugs",
+    "category": "drugStores",
+    "aliases": [
+      "kinney drugs"
+    ]
+  },
+  {
+    "brandId": "discount-drug-mart",
+    "displayName": "Discount Drug Mart",
+    "category": "drugStores",
+    "aliases": [
+      "discount drug mart"
+    ]
+  },
+  {
+    "brandId": "air-canada",
+    "displayName": "Air Canada",
+    "category": "airlines",
+    "aliases": [
+      "air canada"
+    ]
+  },
+  {
+    "brandId": "westjet",
+    "displayName": "WestJet",
+    "category": "airlines",
+    "aliases": [
+      "westjet"
+    ]
+  },
+  {
+    "brandId": "porter-airlines",
+    "displayName": "Porter Airlines",
+    "category": "airlines",
+    "aliases": [
+      "porter airlines"
+    ]
+  },
+  {
+    "brandId": "flair-airlines",
+    "displayName": "Flair Airlines",
+    "category": "airlines",
+    "aliases": [
+      "flair airlines"
+    ]
+  },
+  {
+    "brandId": "swoop",
+    "displayName": "Swoop",
+    "category": "airlines",
+    "aliases": [
+      "swoop airlines"
+    ]
+  },
+  {
+    "brandId": "air-transat",
+    "displayName": "Air Transat",
+    "category": "airlines",
+    "aliases": [
+      "air transat"
+    ]
+  },
+  {
+    "brandId": "sunwing",
+    "displayName": "Sunwing Airlines",
+    "category": "airlines",
+    "aliases": [
+      "sunwing"
+    ]
+  },
+  {
+    "brandId": "breeze-airways",
+    "displayName": "Breeze Airways",
+    "category": "airlines",
+    "aliases": [
+      "breeze airways"
+    ]
+  },
+  {
+    "brandId": "sun-country",
+    "displayName": "Sun Country Airlines",
+    "category": "airlines",
+    "aliases": [
+      "sun country"
+    ]
+  },
+  {
+    "brandId": "via-rail",
+    "displayName": "VIA Rail",
+    "category": "transit",
+    "aliases": [
+      "via rail"
+    ]
+  },
+  {
+    "brandId": "go-transit",
+    "displayName": "GO Transit",
+    "category": "transit",
+    "aliases": [
+      "go transit"
+    ]
+  },
+  {
+    "brandId": "motel-6",
+    "displayName": "Motel 6",
+    "category": "hotels",
+    "aliases": [
+      "motel 6"
+    ]
+  },
+  {
+    "brandId": "days-inn",
+    "displayName": "Days Inn",
+    "category": "hotels",
+    "aliases": [
+      "days inn"
+    ]
+  },
+  {
+    "brandId": "super-8",
+    "displayName": "Super 8",
+    "category": "hotels",
+    "aliases": [
+      "super 8"
+    ]
+  },
+  {
+    "brandId": "travelodge",
+    "displayName": "Travelodge",
+    "category": "hotels",
+    "aliases": [
+      "travelodge"
+    ]
+  },
+  {
+    "brandId": "la-quinta",
+    "displayName": "La Quinta",
+    "category": "hotels",
+    "aliases": [
+      "la quinta"
+    ]
+  },
+  {
+    "brandId": "red-roof-inn",
+    "displayName": "Red Roof Inn",
+    "category": "hotels",
+    "aliases": [
+      "red roof inn"
+    ]
+  },
+  {
+    "brandId": "hampton-inn",
+    "displayName": "Hampton Inn",
+    "category": "hotels",
+    "aliases": [
+      "hampton inn"
+    ]
+  },
+  {
+    "brandId": "courtyard-marriott",
+    "displayName": "Courtyard by Marriott",
+    "category": "hotels",
+    "aliases": [
+      "courtyard by marriott",
+      "courtyard"
+    ]
+  },
+  {
+    "brandId": "holiday-inn",
+    "displayName": "Holiday Inn",
+    "category": "hotels",
+    "aliases": [
+      "holiday inn"
+    ]
+  },
+  {
+    "brandId": "comfort-inn",
+    "displayName": "Comfort Inn",
+    "category": "hotels",
+    "aliases": [
+      "comfort inn"
+    ]
+  },
+  {
+    "brandId": "doubletree",
+    "displayName": "DoubleTree",
+    "category": "hotels",
+    "aliases": [
+      "doubletree"
+    ]
+  },
+  {
+    "brandId": "fairfield-inn",
+    "displayName": "Fairfield Inn",
+    "category": "hotels",
+    "aliases": [
+      "fairfield inn"
+    ]
+  },
+  {
+    "brandId": "springhill-suites",
+    "displayName": "SpringHill Suites",
+    "category": "hotels",
+    "aliases": [
+      "springhill suites"
+    ]
+  },
+  {
+    "brandId": "residence-inn",
+    "displayName": "Residence Inn",
+    "category": "hotels",
+    "aliases": [
+      "residence inn"
+    ]
+  },
+  {
+    "brandId": "sheraton",
+    "displayName": "Sheraton",
+    "category": "hotels",
+    "aliases": [
+      "sheraton"
+    ]
+  },
+  {
+    "brandId": "westin",
+    "displayName": "Westin",
+    "category": "hotels",
+    "aliases": [
+      "westin"
+    ]
+  },
+  {
+    "brandId": "w-hotels",
+    "displayName": "W Hotels",
+    "category": "hotels",
+    "aliases": [
+      "w hotels"
+    ]
+  },
+  {
+    "brandId": "four-seasons",
+    "displayName": "Four Seasons",
+    "category": "hotels",
+    "aliases": [
+      "four seasons"
+    ]
+  },
+  {
+    "brandId": "ritz-carlton",
+    "displayName": "Ritz-Carlton",
+    "category": "hotels",
+    "aliases": [
+      "ritz carlton",
+      "ritz-carlton"
+    ]
+  },
+  {
+    "brandId": "fairmont",
+    "displayName": "Fairmont",
+    "category": "hotels",
+    "aliases": [
+      "fairmont"
+    ]
+  },
+  {
+    "brandId": "sandman-hotels",
+    "displayName": "Sandman Hotels",
+    "category": "hotels",
+    "aliases": [
+      "sandman hotel"
+    ]
+  },
+  {
+    "brandId": "coast-hotels",
+    "displayName": "Coast Hotels",
+    "category": "hotels",
+    "aliases": [
+      "coast hotels"
+    ]
+  },
+  {
+    "brandId": "thrifty",
+    "displayName": "Thrifty",
+    "category": "carRentals",
+    "aliases": [
+      "thrifty",
+      "thrifty car rental"
+    ]
+  },
+  {
+    "brandId": "dollar-rent-a-car",
+    "displayName": "Dollar Rent A Car",
+    "category": "carRentals",
+    "aliases": [
+      "dollar rent a car",
+      "dollar car rental"
+    ]
+  },
+  {
+    "brandId": "payless-car-rental",
+    "displayName": "Payless Car Rental",
+    "category": "carRentals",
+    "aliases": [
+      "payless car rental"
+    ]
+  },
+  {
+    "brandId": "discount-car-rental",
+    "displayName": "Discount Car and Truck Rentals",
+    "category": "carRentals",
+    "aliases": [
+      "discount car rental",
+      "discount car and truck"
+    ]
+  },
+  {
+    "brandId": "zipcar",
+    "displayName": "Zipcar",
+    "category": "carRentals",
+    "aliases": [
+      "zipcar"
+    ]
+  },
+  {
+    "brandId": "ebay",
+    "displayName": "eBay",
+    "category": "onlineShopping",
+    "aliases": [
+      "ebay",
+      "ebay com"
+    ]
+  },
+  {
+    "brandId": "etsy",
+    "displayName": "Etsy",
+    "category": "onlineShopping",
+    "aliases": [
+      "etsy",
+      "etsy com"
+    ]
+  },
+  {
+    "brandId": "aliexpress",
+    "displayName": "AliExpress",
+    "category": "onlineShopping",
+    "aliases": [
+      "aliexpress"
+    ]
+  },
+  {
+    "brandId": "temu",
+    "displayName": "Temu",
+    "category": "onlineShopping",
+    "aliases": [
+      "temu"
+    ]
+  },
+  {
+    "brandId": "shein",
+    "displayName": "SHEIN",
+    "category": "onlineShopping",
+    "aliases": [
+      "shein"
+    ]
+  },
+  {
+    "brandId": "wayfair",
+    "displayName": "Wayfair",
+    "category": "onlineShopping",
+    "aliases": [
+      "wayfair",
+      "wayfair com",
+      "allmodern",
+      "all modern",
+      "birch lane",
+      "joss main",
+      "perigold"
+    ]
+  },
+  {
+    "brandId": "overstock",
+    "displayName": "Overstock",
+    "category": "onlineShopping",
+    "aliases": [
+      "overstock",
+      "overstock com",
+      "bed bath and beyond"
+    ]
+  },
+  {
+    "brandId": "rakuten",
+    "displayName": "Rakuten",
+    "category": "onlineShopping",
+    "aliases": [
+      "rakuten"
+    ]
+  },
+  {
+    "brandId": "chewy",
+    "displayName": "Chewy",
+    "category": "onlineShopping",
+    "aliases": [
+      "chewy",
+      "chewy com"
+    ]
+  },
+  {
+    "brandId": "zappos",
+    "displayName": "Zappos",
+    "category": "onlineShopping",
+    "aliases": [
+      "zappos",
+      "zappos com"
+    ]
+  },
+  {
+    "brandId": "poshmark",
+    "displayName": "Poshmark",
+    "category": "onlineShopping",
+    "aliases": [
+      "poshmark"
+    ]
+  },
+  {
+    "brandId": "cineplex",
+    "displayName": "Cineplex",
+    "category": "movieTheaters",
+    "aliases": [
+      "cineplex",
+      "cineplex odeon"
+    ]
+  },
+  {
+    "brandId": "landmark-cinemas",
+    "displayName": "Landmark Cinemas",
+    "category": "movieTheaters",
+    "aliases": [
+      "landmark cinemas"
+    ]
+  },
+  {
+    "brandId": "marcus-theatres",
+    "displayName": "Marcus Theatres",
+    "category": "movieTheaters",
+    "aliases": [
+      "marcus theatres",
+      "marcus theater"
+    ]
+  },
+  {
+    "brandId": "alamo-drafthouse",
+    "displayName": "Alamo Drafthouse",
+    "category": "movieTheaters",
+    "aliases": [
+      "alamo drafthouse"
+    ]
+  },
+  {
+    "brandId": "harkins-theatres",
+    "displayName": "Harkins Theatres",
+    "category": "movieTheaters",
+    "aliases": [
+      "harkins theatres",
+      "harkins"
+    ]
+  },
+  {
+    "brandId": "live-nation",
+    "displayName": "Live Nation",
+    "category": "entertainment",
+    "aliases": [
+      "live nation"
+    ]
+  },
+  {
+    "brandId": "capital-one-entertainment",
+    "displayName": "Capital One Entertainment",
+    "category": "entertainment",
+    "aliases": [
+      "capital one entertainment"
+    ]
+  },
+  {
+    "brandId": "axs",
+    "displayName": "AXS",
+    "category": "entertainment",
+    "aliases": [
+      "axs",
+      "axs com"
+    ]
+  },
+  {
+    "brandId": "eventbrite",
+    "displayName": "Eventbrite",
+    "category": "entertainment",
+    "aliases": [
+      "eventbrite"
+    ]
+  },
+  {
+    "brandId": "vivid-seats",
+    "displayName": "Vivid Seats",
+    "category": "entertainment",
+    "aliases": [
+      "vivid seats"
+    ]
+  },
+  {
+    "brandId": "fandango",
+    "displayName": "Fandango",
+    "category": "entertainment",
+    "aliases": [
+      "fandango"
+    ]
+  },
+  {
+    "brandId": "atom-tickets",
+    "displayName": "Atom Tickets",
+    "category": "entertainment",
+    "aliases": [
+      "atom tickets"
+    ]
+  },
+  {
+    "brandId": "main-event",
+    "displayName": "Main Event",
+    "category": "entertainment",
+    "aliases": [
+      "main event"
+    ]
+  },
+  {
+    "brandId": "playstation-network",
+    "displayName": "PlayStation Network",
+    "category": "entertainment",
+    "aliases": [
+      "playstation network",
+      "psn"
+    ]
+  },
+  {
+    "brandId": "xbox-live",
+    "displayName": "Xbox",
+    "category": "entertainment",
+    "aliases": [
+      "xbox",
+      "xbox live"
+    ]
+  },
+  {
+    "brandId": "nintendo-eshop",
+    "displayName": "Nintendo",
+    "category": "entertainment",
+    "aliases": [
+      "nintendo",
+      "nintendo eshop"
+    ]
+  },
+  {
+    "brandId": "ttc",
+    "displayName": "TTC",
+    "category": "transit",
+    "aliases": [
+      "ttc",
+      "toronto transit"
+    ]
+  },
+  {
+    "brandId": "translink",
+    "displayName": "TransLink",
+    "category": "transit",
+    "aliases": [
+      "translink"
+    ]
+  },
+  {
+    "brandId": "stm",
+    "displayName": "STM",
+    "category": "transit",
+    "aliases": [
+      "stm",
+      "societe de transport"
+    ]
+  },
+  {
+    "brandId": "caltrain",
+    "displayName": "Caltrain",
+    "category": "transit",
+    "aliases": [
+      "caltrain"
+    ]
+  },
+  {
+    "brandId": "metrolinx",
+    "displayName": "Metrolinx",
+    "category": "transit",
+    "aliases": [
+      "metrolinx"
+    ]
+  },
+  {
+    "brandId": "canadian-tire",
+    "displayName": "Canadian Tire",
+    "category": "departmentStores",
+    "aliases": [
+      "canadian tire"
+    ]
+  },
+  {
+    "brandId": "hudsons-bay",
+    "displayName": "Hudson's Bay",
+    "category": "departmentStores",
+    "aliases": [
+      "hudsons bay",
+      "hudson s bay",
+      "the bay"
+    ]
+  },
+  {
+    "brandId": "winners",
+    "displayName": "Winners",
+    "category": "departmentStores",
+    "aliases": [
+      "winners"
+    ]
+  },
+  {
+    "brandId": "homesense",
+    "displayName": "HomeSense",
+    "category": "departmentStores",
+    "aliases": [
+      "homesense"
+    ]
+  },
+  {
+    "brandId": "marshalls-canada",
+    "displayName": "Marshalls Canada",
+    "category": "departmentStores",
+    "aliases": [
+      "marshalls canada"
+    ]
+  },
+  {
+    "brandId": "simons",
+    "displayName": "Simons",
+    "category": "departmentStores",
+    "aliases": [
+      "la maison simons",
+      "simons"
+    ]
+  },
+  {
+    "brandId": "giant-tiger",
+    "displayName": "Giant Tiger",
+    "category": "departmentStores",
+    "aliases": [
+      "giant tiger"
+    ]
+  },
+  {
+    "brandId": "marks",
+    "displayName": "Mark's",
+    "category": "departmentStores",
+    "aliases": [
+      "marks work wearhouse",
+      "mark s"
+    ]
+  },
+  {
+    "brandId": "ikea",
+    "displayName": "IKEA",
+    "category": "departmentStores",
+    "aliases": [
+      "ikea"
+    ]
+  },
+  {
+    "brandId": "home-depot",
+    "displayName": "The Home Depot",
+    "category": "departmentStores",
+    "aliases": [
+      "home depot",
+      "the home depot"
+    ]
+  },
+  {
+    "brandId": "lowes",
+    "displayName": "Lowe's",
+    "category": "departmentStores",
+    "aliases": [
+      "lowes",
+      "lowe s"
+    ]
+  },
+  {
+    "brandId": "best-buy",
+    "displayName": "Best Buy",
+    "category": "departmentStores",
+    "aliases": [
+      "best buy"
+    ]
+  },
+  {
+    "brandId": "bell",
+    "displayName": "Bell",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "bell canada",
+      "bell mobility",
+      "bell internet"
+    ]
+  },
+  {
+    "brandId": "rogers",
+    "displayName": "Rogers",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "rogers communications",
+      "rogers wireless"
+    ]
+  },
+  {
+    "brandId": "telus",
+    "displayName": "TELUS",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "telus",
+      "telus mobility"
+    ]
+  },
+  {
+    "brandId": "fido",
+    "displayName": "Fido",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "fido solutions",
+      "fido"
+    ]
+  },
+  {
+    "brandId": "koodo",
+    "displayName": "Koodo",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "koodo",
+      "koodo mobile"
+    ]
+  },
+  {
+    "brandId": "virgin-plus",
+    "displayName": "Virgin Plus",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "virgin plus",
+      "virgin mobile"
+    ]
+  },
+  {
+    "brandId": "freedom-mobile",
+    "displayName": "Freedom Mobile",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "freedom mobile"
+    ]
+  },
+  {
+    "brandId": "videotron",
+    "displayName": "Videotron",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "videotron"
+    ]
+  },
+  {
+    "brandId": "shaw",
+    "displayName": "Shaw",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "shaw communications",
+      "shaw internet"
+    ]
+  },
+  {
+    "brandId": "sasktel",
+    "displayName": "SaskTel",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "sasktel"
+    ]
+  },
+  {
+    "brandId": "baskin-robbins",
+    "displayName": "Baskin-Robbins",
+    "category": "dining",
+    "aliases": [
+      "baskin robbins",
+      "baskin-robbins"
+    ]
+  },
+  {
+    "brandId": "cold-stone",
+    "displayName": "Cold Stone Creamery",
+    "category": "dining",
+    "aliases": [
+      "cold stone",
+      "cold stone creamery"
+    ]
+  },
+  {
+    "brandId": "krispy-kreme",
+    "displayName": "Krispy Kreme",
+    "category": "dining",
+    "aliases": [
+      "krispy kreme"
+    ]
+  },
+  {
+    "brandId": "jamba-juice",
+    "displayName": "Jamba",
+    "category": "dining",
+    "aliases": [
+      "jamba juice",
+      "jamba"
+    ]
+  },
+  {
+    "brandId": "auntie-annes",
+    "displayName": "Auntie Anne's",
+    "category": "dining",
+    "aliases": [
+      "auntie annes",
+      "auntie anne s"
+    ]
+  },
+  {
+    "brandId": "cinnabon",
+    "displayName": "Cinnabon",
+    "category": "dining",
+    "aliases": [
+      "cinnabon"
+    ]
+  },
+  {
+    "brandId": "tim-hortons-us",
+    "displayName": "Tim Hortons (US)",
+    "category": "coffee",
+    "aliases": [
+      "tim hortons",
+      "tim horton",
+      "tim horton s"
+    ]
+  },
+  {
+    "brandId": "taco-cabana",
+    "displayName": "Taco Cabana",
+    "category": "dining",
+    "aliases": [
+      "taco cabana"
+    ]
+  },
+  {
+    "brandId": "taco-johns",
+    "displayName": "Taco John's",
+    "category": "dining",
+    "aliases": [
+      "taco johns",
+      "taco john s"
+    ]
+  },
+  {
+    "brandId": "wienerschnitzel",
+    "displayName": "Wienerschnitzel",
+    "category": "dining",
+    "aliases": [
+      "wienerschnitzel"
+    ]
+  },
+  {
+    "brandId": "in-n-out",
+    "displayName": "In-N-Out Burger",
+    "category": "dining",
+    "aliases": [
+      "in n out",
+      "in-n-out",
+      "innout"
+    ]
+  },
+  {
+    "brandId": "white-castle",
+    "displayName": "White Castle",
+    "category": "dining",
+    "aliases": [
+      "white castle"
+    ]
+  },
+  {
+    "brandId": "checkers",
+    "displayName": "Checkers",
+    "category": "dining",
+    "aliases": [
+      "checkers",
+      "checkers rallys"
+    ]
+  },
+  {
+    "brandId": "rallys",
+    "displayName": "Rally's",
+    "category": "dining",
+    "aliases": [
+      "rallys",
+      "rally s"
+    ]
+  },
+  {
+    "brandId": "bojangles-famous-chicken",
+    "displayName": "Bojangles'",
+    "category": "dining",
+    "aliases": [
+      "bojangles",
+      "bojangles famous chicken"
+    ]
+  },
+  {
+    "brandId": "boston-market",
+    "displayName": "Boston Market",
+    "category": "dining",
+    "aliases": [
+      "boston market"
+    ]
+  },
+  {
+    "brandId": "perkins",
+    "displayName": "Perkins Restaurant & Bakery",
+    "category": "dining",
+    "aliases": [
+      "perkins restaurant",
+      "perkins"
+    ]
+  },
+  {
+    "brandId": "cracker-barrel-old-country-store",
+    "displayName": "Cracker Barrel",
+    "category": "dining",
+    "aliases": [
+      "cracker barrel"
+    ]
+  },
+  {
+    "brandId": "chuck-e-cheese",
+    "displayName": "Chuck E. Cheese",
+    "category": "entertainment",
+    "aliases": [
+      "chuck e cheese",
+      "chuck e cheese s"
+    ]
+  },
+  {
+    "brandId": "ci-cis-pizza",
+    "displayName": "Cicis Pizza",
+    "category": "dining",
+    "aliases": [
+      "cicis",
+      "cicis pizza"
+    ]
+  },
+  {
+    "brandId": "round-table-pizza",
+    "displayName": "Round Table Pizza",
+    "category": "dining",
+    "aliases": [
+      "round table pizza"
+    ]
+  },
+  {
+    "brandId": "mod-pizza",
+    "displayName": "MOD Pizza",
+    "category": "dining",
+    "aliases": [
+      "mod pizza"
+    ]
+  },
+  {
+    "brandId": "blaze-pizza",
+    "displayName": "Blaze Pizza",
+    "category": "dining",
+    "aliases": [
+      "blaze pizza"
+    ]
+  },
+  {
+    "brandId": "marcos-pizza",
+    "displayName": "Marco's Pizza",
+    "category": "dining",
+    "aliases": [
+      "marcos pizza",
+      "marco s pizza"
+    ]
+  },
+  {
+    "brandId": "papa-murphys",
+    "displayName": "Papa Murphy's",
+    "category": "dining",
+    "aliases": [
+      "papa murphys",
+      "papa murphy s"
+    ]
+  },
+  {
+    "brandId": "sbarro",
+    "displayName": "Sbarro",
+    "category": "dining",
+    "aliases": [
+      "sbarro"
+    ]
+  },
+  {
+    "brandId": "mellow-mushroom",
+    "displayName": "Mellow Mushroom",
+    "category": "dining",
+    "aliases": [
+      "mellow mushroom"
+    ]
+  },
+  {
+    "brandId": "freshii",
+    "displayName": "Freshii",
+    "category": "dining",
+    "aliases": [
+      "freshii"
+    ]
+  },
+  {
+    "brandId": "pita-pit",
+    "displayName": "Pita Pit",
+    "category": "dining",
+    "aliases": [
+      "pita pit"
+    ]
+  },
+  {
+    "brandId": "smoothie-king",
+    "displayName": "Smoothie King",
+    "category": "dining",
+    "aliases": [
+      "smoothie king"
+    ]
+  },
+  {
+    "brandId": "tropical-smoothie-cafe",
+    "displayName": "Tropical Smoothie Cafe",
+    "category": "dining",
+    "aliases": [
+      "tropical smoothie",
+      "tropical smoothie cafe"
+    ]
+  },
+  {
+    "brandId": "peets",
+    "displayName": "Peet's Coffee",
+    "category": "coffee",
+    "aliases": [
+      "peets",
+      "peets coffee"
+    ]
+  },
+  {
+    "brandId": "scooters",
+    "displayName": "Scooter's Coffee",
+    "category": "coffee",
+    "aliases": [
+      "scooters coffee"
+    ]
+  },
+  {
+    "brandId": "biggby",
+    "displayName": "Biggby Coffee",
+    "category": "coffee",
+    "aliases": [
+      "biggby coffee"
+    ]
+  },
+  {
+    "brandId": "smart-final",
+    "displayName": "Smart & Final",
+    "category": "grocery",
+    "aliases": [
+      "smart and final",
+      "smart final"
+    ]
+  },
+  {
+    "brandId": "save-mart",
+    "displayName": "Save Mart",
+    "category": "grocery",
+    "aliases": [
+      "save mart"
+    ]
+  },
+  {
+    "brandId": "lucky",
+    "displayName": "Lucky Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "lucky supermarkets",
+      "lucky"
+    ]
+  },
+  {
+    "brandId": "raleys",
+    "displayName": "Raley's",
+    "category": "grocery",
+    "aliases": [
+      "raleys",
+      "raley s"
+    ]
+  },
+  {
+    "brandId": "bel-air",
+    "displayName": "Bel Air Markets",
+    "category": "grocery",
+    "aliases": [
+      "bel air",
+      "bel air markets"
+    ]
+  },
+  {
+    "brandId": "nob-hill",
+    "displayName": "Nob Hill Foods",
+    "category": "grocery",
+    "aliases": [
+      "nob hill foods",
+      "nob hill"
+    ]
+  },
+  {
+    "brandId": "foodmaxx",
+    "displayName": "FoodMaxx",
+    "category": "grocery",
+    "aliases": [
+      "foodmaxx",
+      "food maxx"
+    ]
+  },
+  {
+    "brandId": "fiesta-mart",
+    "displayName": "Fiesta Mart",
+    "category": "grocery",
+    "aliases": [
+      "fiesta mart"
+    ]
+  },
+  {
+    "brandId": "mi-tienda",
+    "displayName": "Mi Tienda",
+    "category": "grocery",
+    "aliases": [
+      "mi tienda"
+    ]
+  },
+  {
+    "brandId": "lowes-foods",
+    "displayName": "Lowe's Foods",
+    "category": "grocery",
+    "aliases": [
+      "lowes foods",
+      "lowe s foods"
+    ]
+  },
+  {
+    "brandId": "bi-lo",
+    "displayName": "BI-LO",
+    "category": "grocery",
+    "aliases": [
+      "bi lo"
+    ]
+  },
+  {
+    "brandId": "harveys-supermarket",
+    "displayName": "Harvey's Supermarket",
+    "category": "grocery",
+    "aliases": [
+      "harveys supermarket",
+      "harvey s supermarket"
+    ]
+  },
+  {
+    "brandId": "frescos",
+    "displayName": "Fresco y Mas",
+    "category": "grocery",
+    "aliases": [
+      "fresco y mas"
+    ]
+  },
+  {
+    "brandId": "sedanos",
+    "displayName": "Sedano's",
+    "category": "grocery",
+    "aliases": [
+      "sedanos",
+      "sedano s"
+    ]
+  },
+  {
+    "brandId": "key-food",
+    "displayName": "Key Food",
+    "category": "grocery",
+    "aliases": [
+      "key food"
+    ]
+  },
+  {
+    "brandId": "c-town",
+    "displayName": "CTown Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "c town",
+      "ctown"
+    ]
+  },
+  {
+    "brandId": "bravo",
+    "displayName": "Bravo Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "bravo supermarkets"
+    ]
+  },
+  {
+    "brandId": "associated",
+    "displayName": "Associated Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "associated supermarkets"
+    ]
+  },
+  {
+    "brandId": "met-food",
+    "displayName": "Met Foodmarkets",
+    "category": "grocery",
+    "aliases": [
+      "met food"
+    ]
+  },
+  {
+    "brandId": "pioneer-supermarkets",
+    "displayName": "Pioneer Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "pioneer supermarkets"
+    ]
+  },
+  {
+    "brandId": "fine-fare",
+    "displayName": "Fine Fare Supermarkets",
+    "category": "grocery",
+    "aliases": [
+      "fine fare"
+    ]
+  },
+  {
+    "brandId": "food-bazaar",
+    "displayName": "Food Bazaar",
+    "category": "grocery",
+    "aliases": [
+      "food bazaar"
+    ]
+  },
+  {
+    "brandId": "western-beef",
+    "displayName": "Western Beef",
+    "category": "grocery",
+    "aliases": [
+      "western beef"
+    ]
+  },
+  {
+    "brandId": "king-kullen",
+    "displayName": "King Kullen",
+    "category": "grocery",
+    "aliases": [
+      "king kullen"
+    ]
+  },
+  {
+    "brandId": "dagostino",
+    "displayName": "D'Agostino",
+    "category": "grocery",
+    "aliases": [
+      "dagostino",
+      "d agostino"
+    ]
+  },
+  {
+    "brandId": "gristedes",
+    "displayName": "Gristedes",
+    "category": "grocery",
+    "aliases": [
+      "gristedes"
+    ]
+  },
+  {
+    "brandId": "fairway",
+    "displayName": "Fairway Market",
+    "category": "grocery",
+    "aliases": [
+      "fairway market",
+      "fairway"
+    ]
+  },
+  {
+    "brandId": "stew-leonards",
+    "displayName": "Stew Leonard's",
+    "category": "grocery",
+    "aliases": [
+      "stew leonards",
+      "stew leonard s"
+    ]
+  },
+  {
+    "brandId": "uncle-giuseppes",
+    "displayName": "Uncle Giuseppe's",
+    "category": "grocery",
+    "aliases": [
+      "uncle giuseppes",
+      "uncle giuseppe s"
+    ]
+  },
+  {
+    "brandId": "boyers",
+    "displayName": "Boyer's Food Markets",
+    "category": "grocery",
+    "aliases": [
+      "boyers",
+      "boyer s"
+    ]
+  },
+  {
+    "brandId": "redners",
+    "displayName": "Redner's Markets",
+    "category": "grocery",
+    "aliases": [
+      "redners",
+      "redner s"
+    ]
+  },
+  {
+    "brandId": "karns",
+    "displayName": "Karns Quality Foods",
+    "category": "grocery",
+    "aliases": [
+      "karns",
+      "karns quality foods"
+    ]
+  },
+  {
+    "brandId": "shurfine",
+    "displayName": "Shurfine",
+    "category": "grocery",
+    "aliases": [
+      "shurfine"
+    ]
+  },
+  {
+    "brandId": "alds",
+    "displayName": "ALDI",
+    "category": "grocery",
+    "aliases": [
+      "aldi"
+    ]
+  },
+  {
+    "brandId": "lidls",
+    "displayName": "Lidl",
+    "category": "grocery",
+    "aliases": [
+      "lidl"
+    ]
+  },
+  {
+    "brandId": "buy-low-foods",
+    "displayName": "Buy-Low Foods",
+    "category": "grocery",
+    "aliases": [
+      "buy low foods"
+    ]
+  },
+  {
+    "brandId": "nesters-market",
+    "displayName": "Nesters Market",
+    "category": "grocery",
+    "aliases": [
+      "nesters market"
+    ]
+  },
+  {
+    "brandId": "urban-fare",
+    "displayName": "Urban Fare",
+    "category": "grocery",
+    "aliases": [
+      "urban fare"
+    ]
+  },
+  {
+    "brandId": "choices-markets",
+    "displayName": "Choices Markets",
+    "category": "grocery",
+    "aliases": [
+      "choices markets"
+    ]
+  },
+  {
+    "brandId": "quality-foods",
+    "displayName": "Quality Foods",
+    "category": "grocery",
+    "aliases": [
+      "quality foods"
+    ]
+  },
+  {
+    "brandId": "thrifty-foods",
+    "displayName": "Thrifty Foods",
+    "category": "grocery",
+    "aliases": [
+      "thrifty foods"
+    ]
+  },
+  {
+    "brandId": "fairway-markets",
+    "displayName": "Fairway Markets (BC)",
+    "category": "grocery",
+    "aliases": [
+      "fairway markets"
+    ]
+  },
+  {
+    "brandId": "co-op-food-stores",
+    "displayName": "Co-op Food Stores",
+    "category": "grocery",
+    "aliases": [
+      "co op food",
+      "co op"
+    ]
+  },
+  {
+    "brandId": "calgary-co-op",
+    "displayName": "Calgary Co-op",
+    "category": "grocery",
+    "aliases": [
+      "calgary co op"
+    ]
+  },
+  {
+    "brandId": "red-river-co-op",
+    "displayName": "Red River Co-op",
+    "category": "grocery",
+    "aliases": [
+      "red river co op"
+    ]
+  },
+  {
+    "brandId": "arco",
+    "displayName": "ARCO",
+    "category": "gas",
+    "aliases": [
+      "arco"
+    ]
+  },
+  {
+    "brandId": "am-pm",
+    "displayName": "ampm",
+    "category": "gas",
+    "aliases": [
+      "ampm",
+      "am pm"
+    ]
+  },
+  {
+    "brandId": "raceway",
+    "displayName": "RaceWay",
+    "category": "gas",
+    "aliases": [
+      "raceway"
+    ]
+  },
+  {
+    "brandId": "kwik-trip",
+    "displayName": "Kwik Trip",
+    "category": "gas",
+    "aliases": [
+      "kwik trip"
+    ]
+  },
+  {
+    "brandId": "kroger-gas",
+    "displayName": "Kroger Gas",
+    "category": "gas",
+    "aliases": [
+      "kroger fuel",
+      "kroger gas"
+    ]
+  },
+  {
+    "brandId": "safeway-gas",
+    "displayName": "Safeway Gas",
+    "category": "gas",
+    "aliases": [
+      "safeway fuel",
+      "safeway gas"
+    ]
+  },
+  {
+    "brandId": "murphy-express",
+    "displayName": "Murphy Express",
+    "category": "gas",
+    "aliases": [
+      "murphy express",
+      "murphy usa"
+    ]
+  },
+  {
+    "brandId": "diamond-shamrock",
+    "displayName": "Diamond Shamrock",
+    "category": "gas",
+    "aliases": [
+      "diamond shamrock"
+    ]
+  },
+  {
+    "brandId": "shamrock",
+    "displayName": "Shamrock",
+    "category": "gas",
+    "aliases": [
+      "shamrock"
+    ]
+  },
+  {
+    "brandId": "clark",
+    "displayName": "Clark",
+    "category": "gas",
+    "aliases": [
+      "clark gas"
+    ]
+  },
+  {
+    "brandId": "crown",
+    "displayName": "Crown",
+    "category": "gas",
+    "aliases": [
+      "crown gas"
+    ]
+  },
+  {
+    "brandId": "superamerica",
+    "displayName": "SuperAmerica",
+    "category": "gas",
+    "aliases": [
+      "superamerica",
+      "sa gas"
+    ]
+  },
+  {
+    "brandId": "holiday-stationstores",
+    "displayName": "Holiday Stationstores",
+    "category": "gas",
+    "aliases": [
+      "holiday stationstores",
+      "holiday gas"
+    ]
+  },
+  {
+    "brandId": "turkey-hill",
+    "displayName": "Turkey Hill",
+    "category": "gas",
+    "aliases": [
+      "turkey hill"
+    ]
+  },
+  {
+    "brandId": "stewarts-shops",
+    "displayName": "Stewart's Shops",
+    "category": "gas",
+    "aliases": [
+      "stewarts shops",
+      "stewart s shops"
+    ]
+  },
+  {
+    "brandId": "fas-mart",
+    "displayName": "Fas Mart",
+    "category": "gas",
+    "aliases": [
+      "fas mart"
+    ]
+  },
+  {
+    "brandId": "stripes",
+    "displayName": "Stripes",
+    "category": "gas",
+    "aliases": [
+      "stripes convenience",
+      "stripes gas"
+    ]
+  },
+  {
+    "brandId": "allsups",
+    "displayName": "Allsup's",
+    "category": "gas",
+    "aliases": [
+      "allsups",
+      "allsup s"
+    ]
+  },
+  {
+    "brandId": "76",
+    "displayName": "76",
+    "category": "gas",
+    "aliases": [
+      "76 gas",
+      "union 76"
+    ]
+  },
+  {
+    "brandId": "esso",
+    "displayName": "Esso",
+    "category": "gas",
+    "aliases": [
+      "esso"
+    ]
+  },
+  {
+    "brandId": "amoco",
+    "displayName": "Amoco",
+    "category": "gas",
+    "aliases": [
+      "amoco"
+    ]
+  },
+  {
+    "brandId": "citgo",
+    "displayName": "CITGO",
+    "category": "gas",
+    "aliases": [
+      "citgo"
+    ]
+  },
+  {
+    "brandId": "menards",
+    "displayName": "Menards",
+    "category": "wholesale",
+    "aliases": [
+      "menards"
+    ]
+  },
+  {
+    "brandId": "bjs-wholesale",
+    "displayName": "BJ's Wholesale Club",
+    "category": "wholesale",
+    "aliases": [
+      "bjs wholesale",
+      "bj s wholesale"
+    ]
+  },
+  {
+    "brandId": "sams-club",
+    "displayName": "Sam's Club",
+    "category": "wholesale",
+    "aliases": [
+      "sams club",
+      "sam s club"
+    ]
+  },
+  {
+    "brandId": "costco-gas",
+    "displayName": "Costco Gasoline",
+    "category": "gas",
+    "aliases": [
+      "costco gas",
+      "costco gasoline",
+      "costco gas stations",
+      "costco fuel"
+    ]
+  },
+  {
+    "brandId": "costco",
+    "displayName": "Costco",
+    "category": "wholesale",
+    "aliases": [
+      "costco",
+      "costco wholesale"
+    ]
+  },
+  {
+    "brandId": "target",
+    "displayName": "Target",
+    "category": "departmentStores",
+    "aliases": [
+      "target"
+    ]
+  },
+  {
+    "brandId": "walmart",
+    "displayName": "Walmart",
+    "category": "departmentStores",
+    "aliases": [
+      "walmart",
+      "wal mart"
+    ]
+  },
+  {
+    "brandId": "nordstrom-rack",
+    "displayName": "Nordstrom Rack",
+    "category": "departmentStores",
+    "aliases": [
+      "nordstrom rack"
+    ]
+  },
+  {
+    "brandId": "neiman-marcus",
+    "displayName": "Neiman Marcus",
+    "category": "departmentStores",
+    "aliases": [
+      "neiman marcus"
+    ]
+  },
+  {
+    "brandId": "saks-fifth-avenue",
+    "displayName": "Saks Fifth Avenue",
+    "category": "departmentStores",
+    "aliases": [
+      "saks fifth avenue",
+      "saks"
+    ]
+  },
+  {
+    "brandId": "homegoods",
+    "displayName": "HomeGoods",
+    "category": "departmentStores",
+    "aliases": [
+      "homegoods"
+    ]
+  },
+  {
+    "brandId": "burlington",
+    "displayName": "Burlington",
+    "category": "departmentStores",
+    "aliases": [
+      "burlington",
+      "burlington coat factory"
+    ]
+  },
+  {
+    "brandId": "big-lots",
+    "displayName": "Big Lots",
+    "category": "departmentStores",
+    "aliases": [
+      "big lots"
+    ]
+  },
+  {
+    "brandId": "ollies",
+    "displayName": "Ollie's Bargain Outlet",
+    "category": "departmentStores",
+    "aliases": [
+      "ollies",
+      "ollie s",
+      "ollies bargain outlet"
+    ]
+  },
+  {
+    "brandId": "dollar-tree",
+    "displayName": "Dollar Tree",
+    "category": "departmentStores",
+    "aliases": [
+      "dollar tree"
+    ]
+  },
+  {
+    "brandId": "dollar-general",
+    "displayName": "Dollar General",
+    "category": "departmentStores",
+    "aliases": [
+      "dollar general"
+    ]
+  },
+  {
+    "brandId": "family-dollar",
+    "displayName": "Family Dollar",
+    "category": "departmentStores",
+    "aliases": [
+      "family dollar"
+    ]
+  },
+  {
+    "brandId": "five-below",
+    "displayName": "Five Below",
+    "category": "departmentStores",
+    "aliases": [
+      "five below"
+    ]
+  },
+  {
+    "brandId": "old-navy",
+    "displayName": "Old Navy",
+    "category": "departmentStores",
+    "aliases": [
+      "old navy"
+    ]
+  },
+  {
+    "brandId": "gap",
+    "displayName": "Gap",
+    "category": "departmentStores",
+    "aliases": [
+      "gap",
+      "the gap"
+    ]
+  },
+  {
+    "brandId": "banana-republic",
+    "displayName": "Banana Republic",
+    "category": "departmentStores",
+    "aliases": [
+      "banana republic"
+    ]
+  },
+  {
+    "brandId": "athleta",
+    "displayName": "Athleta",
+    "category": "departmentStores",
+    "aliases": [
+      "athleta"
+    ]
+  },
+  {
+    "brandId": "h-m",
+    "displayName": "H&M",
+    "category": "departmentStores",
+    "aliases": [
+      "h m",
+      "h and m",
+      "h&m"
+    ]
+  },
+  {
+    "brandId": "zara",
+    "displayName": "Zara",
+    "category": "departmentStores",
+    "aliases": [
+      "zara"
+    ]
+  },
+  {
+    "brandId": "forever-21",
+    "displayName": "Forever 21",
+    "category": "departmentStores",
+    "aliases": [
+      "forever 21",
+      "forever21"
+    ]
+  },
+  {
+    "brandId": "urban-outfitters",
+    "displayName": "Urban Outfitters",
+    "category": "departmentStores",
+    "aliases": [
+      "urban outfitters"
+    ]
+  },
+  {
+    "brandId": "american-eagle",
+    "displayName": "American Eagle",
+    "category": "departmentStores",
+    "aliases": [
+      "american eagle",
+      "aeo"
+    ]
+  },
+  {
+    "brandId": "hollister",
+    "displayName": "Hollister",
+    "category": "departmentStores",
+    "aliases": [
+      "hollister"
+    ]
+  },
+  {
+    "brandId": "abercrombie",
+    "displayName": "Abercrombie & Fitch",
+    "category": "departmentStores",
+    "aliases": [
+      "abercrombie",
+      "abercrombie and fitch"
+    ]
+  },
+  {
+    "brandId": "victorias-secret",
+    "displayName": "Victoria's Secret",
+    "category": "departmentStores",
+    "aliases": [
+      "victorias secret",
+      "victoria s secret"
+    ]
+  },
+  {
+    "brandId": "bath-body-works",
+    "displayName": "Bath & Body Works",
+    "category": "departmentStores",
+    "aliases": [
+      "bath body works",
+      "bath and body works"
+    ]
+  },
+  {
+    "brandId": "sephora",
+    "displayName": "Sephora",
+    "category": "departmentStores",
+    "aliases": [
+      "sephora"
+    ]
+  },
+  {
+    "brandId": "ulta",
+    "displayName": "Ulta Beauty",
+    "category": "departmentStores",
+    "aliases": [
+      "ulta",
+      "ulta beauty"
+    ]
+  },
+  {
+    "brandId": "mac-cosmetics",
+    "displayName": "MAC Cosmetics",
+    "category": "departmentStores",
+    "aliases": [
+      "mac cosmetics"
+    ]
+  },
+  {
+    "brandId": "michaels",
+    "displayName": "Michaels",
+    "category": "departmentStores",
+    "aliases": [
+      "michaels"
+    ]
+  },
+  {
+    "brandId": "joann",
+    "displayName": "JOANN",
+    "category": "departmentStores",
+    "aliases": [
+      "joann",
+      "jo ann",
+      "joann fabrics"
+    ]
+  },
+  {
+    "brandId": "hobby-lobby",
+    "displayName": "Hobby Lobby",
+    "category": "departmentStores",
+    "aliases": [
+      "hobby lobby"
+    ]
+  },
+  {
+    "brandId": "dick-s-sporting-goods",
+    "displayName": "Dick's Sporting Goods",
+    "category": "departmentStores",
+    "aliases": [
+      "dicks sporting goods",
+      "dick s sporting goods",
+      "dicks"
+    ]
+  },
+  {
+    "brandId": "academy-sports",
+    "displayName": "Academy Sports + Outdoors",
+    "category": "departmentStores",
+    "aliases": [
+      "academy sports",
+      "academy sports outdoors"
+    ]
+  },
+  {
+    "brandId": "rei",
+    "displayName": "REI",
+    "category": "departmentStores",
+    "aliases": [
+      "rei",
+      "rei co op"
+    ]
+  },
+  {
+    "brandId": "bass-pro-shops",
+    "displayName": "Bass Pro Shops",
+    "category": "departmentStores",
+    "aliases": [
+      "bass pro shops",
+      "bass pro"
+    ]
+  },
+  {
+    "brandId": "cabelas",
+    "displayName": "Cabela's",
+    "category": "departmentStores",
+    "aliases": [
+      "cabelas",
+      "cabela s"
+    ]
+  },
+  {
+    "brandId": "sportsman-s-warehouse",
+    "displayName": "Sportsman's Warehouse",
+    "category": "departmentStores",
+    "aliases": [
+      "sportsmans warehouse",
+      "sportsman s warehouse"
+    ]
+  },
+  {
+    "brandId": "petco",
+    "displayName": "Petco",
+    "category": "departmentStores",
+    "aliases": [
+      "petco"
+    ]
+  },
+  {
+    "brandId": "petsmart",
+    "displayName": "PetSmart",
+    "category": "departmentStores",
+    "aliases": [
+      "petsmart"
+    ]
+  },
+  {
+    "brandId": "tractor-supply",
+    "displayName": "Tractor Supply Co.",
+    "category": "departmentStores",
+    "aliases": [
+      "tractor supply",
+      "tractor supply co"
+    ]
+  },
+  {
+    "brandId": "fleet-farm",
+    "displayName": "Fleet Farm",
+    "category": "departmentStores",
+    "aliases": [
+      "fleet farm"
+    ]
+  },
+  {
+    "brandId": "mills-fleet-farm",
+    "displayName": "Mills Fleet Farm",
+    "category": "departmentStores",
+    "aliases": [
+      "mills fleet farm"
+    ]
+  },
+  {
+    "brandId": "farm-fleet",
+    "displayName": "Blain's Farm & Fleet",
+    "category": "departmentStores",
+    "aliases": [
+      "blains farm and fleet",
+      "farm fleet"
+    ]
+  },
+  {
+    "brandId": "ace-hardware",
+    "displayName": "Ace Hardware",
+    "category": "departmentStores",
+    "aliases": [
+      "ace hardware"
+    ]
+  },
+  {
+    "brandId": "true-value",
+    "displayName": "True Value",
+    "category": "departmentStores",
+    "aliases": [
+      "true value"
+    ]
+  },
+  {
+    "brandId": "do-it-best",
+    "displayName": "Do it Best",
+    "category": "departmentStores",
+    "aliases": [
+      "do it best"
+    ]
+  },
+  {
+    "brandId": "harbor-freight",
+    "displayName": "Harbor Freight Tools",
+    "category": "departmentStores",
+    "aliases": [
+      "harbor freight",
+      "harbor freight tools"
+    ]
+  },
+  {
+    "brandId": "northern-tool",
+    "displayName": "Northern Tool + Equipment",
+    "category": "departmentStores",
+    "aliases": [
+      "northern tool"
+    ]
+  },
+  {
+    "brandId": "micro-center",
+    "displayName": "Micro Center",
+    "category": "departmentStores",
+    "aliases": [
+      "micro center"
+    ]
+  },
+  {
+    "brandId": "b-h-photo",
+    "displayName": "B&H Photo Video",
+    "category": "departmentStores",
+    "aliases": [
+      "b h photo",
+      "bh photo"
+    ]
+  },
+  {
+    "brandId": "apple-store",
+    "displayName": "Apple Store",
+    "category": "departmentStores",
+    "aliases": [
+      "apple store",
+      "apple retail",
+      "apple"
+    ]
+  },
+  {
+    "brandId": "nike",
+    "displayName": "Nike",
+    "category": "apparel",
+    "aliases": [
+      "nike"
+    ]
+  },
+  {
+    "brandId": "microsoft-store",
+    "displayName": "Microsoft Store",
+    "category": "departmentStores",
+    "aliases": [
+      "microsoft store"
+    ]
+  },
+  {
+    "brandId": "gamestop",
+    "displayName": "GameStop",
+    "category": "departmentStores",
+    "aliases": [
+      "gamestop"
+    ]
+  },
+  {
+    "brandId": "barnes-noble",
+    "displayName": "Barnes & Noble",
+    "category": "departmentStores",
+    "aliases": [
+      "barnes noble",
+      "barnes and noble"
+    ]
+  },
+  {
+    "brandId": "books-a-million",
+    "displayName": "Books-A-Million",
+    "category": "departmentStores",
+    "aliases": [
+      "books a million",
+      "bam"
+    ]
+  },
+  {
+    "brandId": "half-price-books",
+    "displayName": "Half Price Books",
+    "category": "departmentStores",
+    "aliases": [
+      "half price books",
+      "hpb"
+    ]
+  },
+  {
+    "brandId": "indigo",
+    "displayName": "Indigo Books & Music",
+    "category": "departmentStores",
+    "aliases": [
+      "indigo",
+      "chapters indigo"
+    ]
+  },
+  {
+    "brandId": "bartell-drugs",
+    "displayName": "Bartell Drugs",
+    "category": "drugStores",
+    "aliases": [
+      "bartell drugs"
+    ]
+  },
+  {
+    "brandId": "navarro",
+    "displayName": "Navarro Discount Pharmacy",
+    "category": "drugStores",
+    "aliases": [
+      "navarro pharmacy",
+      "navarro"
+    ]
+  },
+  {
+    "brandId": "directv",
+    "displayName": "DIRECTV",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "directv",
+      "direc tv"
+    ]
+  },
+  {
+    "brandId": "dish-network",
+    "displayName": "DISH Network",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "dish network",
+      "dish"
+    ]
+  },
+  {
+    "brandId": "hughesnet",
+    "displayName": "HughesNet",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "hughesnet"
+    ]
+  },
+  {
+    "brandId": "viasat",
+    "displayName": "Viasat",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "viasat"
+    ]
+  },
+  {
+    "brandId": "starlink",
+    "displayName": "Starlink",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "starlink"
+    ]
+  },
+  {
+    "brandId": "frontier-communications",
+    "displayName": "Frontier Communications",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "frontier communications",
+      "frontier"
+    ]
+  },
+  {
+    "brandId": "windstream",
+    "displayName": "Windstream",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "windstream"
+    ]
+  },
+  {
+    "brandId": "lumen",
+    "displayName": "Lumen Technologies",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "lumen",
+      "centurylink",
+      "quantum fiber"
+    ]
+  },
+  {
+    "brandId": "tds-telecom",
+    "displayName": "TDS Telecom",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "tds telecom",
+      "tds"
+    ]
+  },
+  {
+    "brandId": "consolidated-communications",
+    "displayName": "Consolidated Communications",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "consolidated communications",
+      "fidium"
+    ]
+  },
+  {
+    "brandId": "mediacom",
+    "displayName": "Mediacom",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "mediacom"
+    ]
+  },
+  {
+    "brandId": "cable-one",
+    "displayName": "Cable One",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "cable one",
+      "sparklight"
+    ]
+  },
+  {
+    "brandId": "astound-broadband",
+    "displayName": "Astound Broadband",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "astound",
+      "astound broadband"
+    ]
+  },
+  {
+    "brandId": "suddenlink",
+    "displayName": "Suddenlink",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "suddenlink"
+    ]
+  },
+  {
+    "brandId": "wow",
+    "displayName": "WOW!",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "wow internet",
+      "wide open west"
+    ]
+  },
+  {
+    "brandId": "altafiber",
+    "displayName": "Altafiber",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "altafiber",
+      "cincinnati bell"
+    ]
+  },
+  {
+    "brandId": "hawaiian-telcom",
+    "displayName": "Hawaiian Telcom",
+    "category": "phoneAndInternet",
+    "aliases": [
+      "hawaiian telcom"
+    ]
+  },
+  {
+    "brandId": "uber",
+    "displayName": "Uber",
+    "category": "transit",
+    "aliases": [
+      "uber",
+      "uber com"
+    ]
+  },
+  {
+    "brandId": "lyft",
+    "displayName": "Lyft",
+    "category": "transit",
+    "aliases": [
+      "lyft",
+      "lyft inc"
+    ]
+  },
+  {
+    "brandId": "greyhound",
+    "displayName": "Greyhound",
+    "category": "transit",
+    "aliases": [
+      "greyhound",
+      "greyhound lines"
+    ]
+  },
+  {
+    "brandId": "megabus",
+    "displayName": "Megabus",
+    "category": "transit",
+    "aliases": [
+      "megabus"
+    ]
+  },
+  {
+    "brandId": "flixbus",
+    "displayName": "FlixBus",
+    "category": "transit",
+    "aliases": [
+      "flixbus"
+    ]
+  },
+  {
+    "brandId": "peter-pan-bus",
+    "displayName": "Peter Pan Bus Lines",
+    "category": "transit",
+    "aliases": [
+      "peter pan bus",
+      "peter pan"
+    ]
+  },
+  {
+    "brandId": "boltbus",
+    "displayName": "BoltBus",
+    "category": "transit",
+    "aliases": [
+      "boltbus"
+    ]
+  },
+  {
+    "brandId": "metronorth",
+    "displayName": "Metro-North Railroad",
+    "category": "transit",
+    "aliases": [
+      "metro north",
+      "metro-north"
+    ]
+  },
+  {
+    "brandId": "lirr",
+    "displayName": "Long Island Rail Road",
+    "category": "transit",
+    "aliases": [
+      "lirr",
+      "long island rail road"
+    ]
+  },
+  {
+    "brandId": "path-train",
+    "displayName": "PATH",
+    "category": "transit",
+    "aliases": [
+      "path train",
+      "port authority trans hudson"
+    ]
+  },
+  {
+    "brandId": "septa",
+    "displayName": "SEPTA",
+    "category": "transit",
+    "aliases": [
+      "septa"
+    ]
+  },
+  {
+    "brandId": "metra",
+    "displayName": "Metra",
+    "category": "transit",
+    "aliases": [
+      "metra"
+    ]
+  },
+  {
+    "brandId": "muni",
+    "displayName": "Muni",
+    "category": "transit",
+    "aliases": [
+      "muni",
+      "sf muni"
+    ]
+  },
+  {
+    "brandId": "sound-transit",
+    "displayName": "Sound Transit",
+    "category": "transit",
+    "aliases": [
+      "sound transit"
+    ]
+  },
+  {
+    "brandId": "trimet",
+    "displayName": "TriMet",
+    "category": "transit",
+    "aliases": [
+      "trimet"
+    ]
+  },
+  {
+    "brandId": "rtd",
+    "displayName": "RTD",
+    "category": "transit",
+    "aliases": [
+      "rtd",
+      "regional transportation district"
+    ]
+  },
+  {
+    "brandId": "marta",
+    "displayName": "MARTA",
+    "category": "transit",
+    "aliases": [
+      "marta",
+      "metropolitan atlanta rapid transit authority"
+    ]
+  },
+  {
+    "brandId": "dart",
+    "displayName": "DART",
+    "category": "transit",
+    "aliases": [
+      "dart",
+      "dallas area rapid transit"
+    ]
+  },
+  {
+    "brandId": "capmetro",
+    "displayName": "CapMetro",
+    "category": "transit",
+    "aliases": [
+      "capmetro",
+      "capital metro"
+    ]
+  },
+  {
+    "brandId": "via-metropolitan",
+    "displayName": "VIA Metropolitan Transit",
+    "category": "transit",
+    "aliases": [
+      "via metropolitan",
+      "via transit"
+    ]
+  },
+  {
+    "brandId": "metrolink",
+    "displayName": "Metrolink",
+    "category": "transit",
+    "aliases": [
+      "metrolink"
+    ]
+  },
+  {
+    "brandId": "omni-hotels",
+    "displayName": "Omni Hotels & Resorts",
+    "category": "hotels",
+    "aliases": [
+      "omni hotels",
+      "omni"
+    ]
+  },
+  {
+    "brandId": "loews-hotels",
+    "displayName": "Loews Hotels",
+    "category": "hotels",
+    "aliases": [
+      "loews hotels",
+      "loews"
+    ]
+  },
+  {
+    "brandId": "sonesta",
+    "displayName": "Sonesta",
+    "category": "hotels",
+    "aliases": [
+      "sonesta"
+    ]
+  },
+  {
+    "brandId": "kimpton",
+    "displayName": "Kimpton Hotels",
+    "category": "hotels",
+    "aliases": [
+      "kimpton",
+      "kimpton hotels"
+    ]
+  },
+  {
+    "brandId": "banyan-tree",
+    "displayName": "Banyan Tree",
+    "category": "hotels",
+    "aliases": [
+      "banyan tree"
+    ]
+  },
+  {
+    "brandId": "mandarin-oriental",
+    "displayName": "Mandarin Oriental",
+    "category": "hotels",
+    "aliases": [
+      "mandarin oriental"
+    ]
+  },
+  {
+    "brandId": "rosewood",
+    "displayName": "Rosewood Hotels",
+    "category": "hotels",
+    "aliases": [
+      "rosewood hotels",
+      "rosewood"
+    ]
+  },
+  {
+    "brandId": "aman",
+    "displayName": "Aman Resorts",
+    "category": "hotels",
+    "aliases": [
+      "aman resorts",
+      "aman"
+    ]
+  },
+  {
+    "brandId": "six-senses",
+    "displayName": "Six Senses",
+    "category": "hotels",
+    "aliases": [
+      "six senses"
+    ]
+  },
+  {
+    "brandId": "st-regis",
+    "displayName": "St. Regis",
+    "category": "hotels",
+    "aliases": [
+      "st regis"
+    ]
+  },
+  {
+    "brandId": "waldorf-astoria",
+    "displayName": "Waldorf Astoria",
+    "category": "hotels",
+    "aliases": [
+      "waldorf astoria"
+    ]
+  },
+  {
+    "brandId": "conrad-hotels",
+    "displayName": "Conrad Hotels",
+    "category": "hotels",
+    "aliases": [
+      "conrad hotels",
+      "conrad"
+    ]
+  },
+  {
+    "brandId": "intercontinental",
+    "displayName": "InterContinental",
+    "category": "hotels",
+    "aliases": [
+      "intercontinental",
+      "intercontinental hotels"
+    ]
+  },
+  {
+    "brandId": "crowne-plaza",
+    "displayName": "Crowne Plaza",
+    "category": "hotels",
+    "aliases": [
+      "crowne plaza"
+    ]
+  },
+  {
+    "brandId": "hotel-indigo",
+    "displayName": "Hotel Indigo",
+    "category": "hotels",
+    "aliases": [
+      "hotel indigo"
+    ]
+  },
+  {
+    "brandId": "hyatt-regency",
+    "displayName": "Hyatt Regency",
+    "category": "hotels",
+    "aliases": [
+      "hyatt regency"
+    ]
+  },
+  {
+    "brandId": "grand-hyatt",
+    "displayName": "Grand Hyatt",
+    "category": "hotels",
+    "aliases": [
+      "grand hyatt"
+    ]
+  },
+  {
+    "brandId": "park-hyatt",
+    "displayName": "Park Hyatt",
+    "category": "hotels",
+    "aliases": [
+      "park hyatt"
+    ]
+  },
+  {
+    "brandId": "andaz",
+    "displayName": "Andaz",
+    "category": "hotels",
+    "aliases": [
+      "andaz"
+    ]
+  },
+  {
+    "brandId": "thompson-hotels",
+    "displayName": "Thompson Hotels",
+    "category": "hotels",
+    "aliases": [
+      "thompson hotels"
+    ]
+  },
+  {
+    "brandId": "marriott-vacation-club",
+    "displayName": "Marriott Vacation Club",
+    "category": "hotels",
+    "aliases": [
+      "marriott vacation club"
+    ]
+  },
+  {
+    "brandId": "renaissance-hotels",
+    "displayName": "Renaissance Hotels",
+    "category": "hotels",
+    "aliases": [
+      "renaissance hotels"
+    ]
+  },
+  {
+    "brandId": "jw-marriott",
+    "displayName": "JW Marriott",
+    "category": "hotels",
+    "aliases": [
+      "jw marriott"
+    ]
+  },
+  {
+    "brandId": "aloft-hotels",
+    "displayName": "Aloft Hotels",
+    "category": "hotels",
+    "aliases": [
+      "aloft hotels",
+      "aloft"
+    ]
+  },
+  {
+    "brandId": "element-hotels",
+    "displayName": "Element Hotels",
+    "category": "hotels",
+    "aliases": [
+      "element hotels"
+    ]
+  },
+  {
+    "brandId": "moxy-hotels",
+    "displayName": "Moxy Hotels",
+    "category": "hotels",
+    "aliases": [
+      "moxy hotels",
+      "moxy"
+    ]
+  },
+  {
+    "brandId": "ac-hotels",
+    "displayName": "AC Hotels",
+    "category": "hotels",
+    "aliases": [
+      "ac hotels"
+    ]
+  },
+  {
+    "brandId": "autograph-collection",
+    "displayName": "Autograph Collection",
+    "category": "hotels",
+    "aliases": [
+      "autograph collection"
+    ]
+  },
+  {
+    "brandId": "tribute-portfolio",
+    "displayName": "Tribute Portfolio",
+    "category": "hotels",
+    "aliases": [
+      "tribute portfolio"
+    ]
+  },
+  {
+    "brandId": "luxury-collection",
+    "displayName": "The Luxury Collection",
+    "category": "hotels",
+    "aliases": [
+      "the luxury collection"
+    ]
+  },
+  {
+    "brandId": "edition-hotels",
+    "displayName": "EDITION Hotels",
+    "category": "hotels",
+    "aliases": [
+      "edition hotels"
+    ]
+  },
+  {
+    "brandId": "curio-collection",
+    "displayName": "Curio Collection",
+    "category": "hotels",
+    "aliases": [
+      "curio collection"
+    ]
+  },
+  {
+    "brandId": "tapestry-collection",
+    "displayName": "Tapestry Collection",
+    "category": "hotels",
+    "aliases": [
+      "tapestry collection"
+    ]
+  },
+  {
+    "brandId": "canopy-by-hilton",
+    "displayName": "Canopy by Hilton",
+    "category": "hotels",
+    "aliases": [
+      "canopy by hilton"
+    ]
+  },
+  {
+    "brandId": "voco-hotels",
+    "displayName": "voco Hotels",
+    "category": "hotels",
+    "aliases": [
+      "voco hotels"
+    ]
+  },
+  {
+    "brandId": "even-hotels",
+    "displayName": "EVEN Hotels",
+    "category": "hotels",
+    "aliases": [
+      "even hotels"
+    ]
+  },
+  {
+    "brandId": "hualuxe",
+    "displayName": "HUALUXE",
+    "category": "hotels",
+    "aliases": [
+      "hualuxe"
+    ]
+  },
+  {
+    "brandId": "avid-hotels",
+    "displayName": "avid hotels",
+    "category": "hotels",
+    "aliases": [
+      "avid hotels"
+    ]
+  },
+  {
+    "brandId": "holiday-inn-express",
+    "displayName": "Holiday Inn Express",
+    "category": "hotels",
+    "aliases": [
+      "holiday inn express"
+    ]
+  },
+  {
+    "brandId": "candlewood-suites",
+    "displayName": "Candlewood Suites",
+    "category": "hotels",
+    "aliases": [
+      "candlewood suites"
+    ]
+  },
+  {
+    "brandId": "staybridge-suites",
+    "displayName": "Staybridge Suites",
+    "category": "hotels",
+    "aliases": [
+      "staybridge suites"
+    ]
+  },
+  {
+    "brandId": "homewood-suites",
+    "displayName": "Homewood Suites",
+    "category": "hotels",
+    "aliases": [
+      "homewood suites"
+    ]
+  },
+  {
+    "brandId": "home2-suites",
+    "displayName": "Home2 Suites",
+    "category": "hotels",
+    "aliases": [
+      "home2 suites"
+    ]
+  },
+  {
+    "brandId": "embassy-suites",
+    "displayName": "Embassy Suites",
+    "category": "hotels",
+    "aliases": [
+      "embassy suites"
+    ]
+  },
+  {
+    "brandId": "tru-by-hilton",
+    "displayName": "Tru by Hilton",
+    "category": "hotels",
+    "aliases": [
+      "tru by hilton"
+    ]
+  },
+  {
+    "brandId": "towneplace-suites",
+    "displayName": "TownePlace Suites",
+    "category": "hotels",
+    "aliases": [
+      "towneplace suites"
+    ]
+  },
+  {
+    "brandId": "hyatt-place",
+    "displayName": "Hyatt Place",
+    "category": "hotels",
+    "aliases": [
+      "hyatt place"
+    ]
+  },
+  {
+    "brandId": "hyatt-house",
+    "displayName": "Hyatt House",
+    "category": "hotels",
+    "aliases": [
+      "hyatt house"
+    ]
+  },
+  {
+    "brandId": "microtel",
+    "displayName": "Microtel Inn & Suites",
+    "category": "hotels",
+    "aliases": [
+      "microtel"
+    ]
+  },
+  {
+    "brandId": "howard-johnson",
+    "displayName": "Howard Johnson",
+    "category": "hotels",
+    "aliases": [
+      "howard johnson",
+      "hojo"
+    ]
+  },
+  {
+    "brandId": "ramada",
+    "displayName": "Ramada",
+    "category": "hotels",
+    "aliases": [
+      "ramada",
+      "ramada inn"
+    ]
+  },
+  {
+    "brandId": "baymont",
+    "displayName": "Baymont by Wyndham",
+    "category": "hotels",
+    "aliases": [
+      "baymont"
+    ]
+  },
+  {
+    "brandId": "quality-inn",
+    "displayName": "Quality Inn",
+    "category": "hotels",
+    "aliases": [
+      "quality inn"
+    ]
+  },
+  {
+    "brandId": "sleep-inn",
+    "displayName": "Sleep Inn",
+    "category": "hotels",
+    "aliases": [
+      "sleep inn"
+    ]
+  },
+  {
+    "brandId": "clarion",
+    "displayName": "Clarion Hotels",
+    "category": "hotels",
+    "aliases": [
+      "clarion hotels",
+      "clarion inn"
+    ]
+  },
+  {
+    "brandId": "cambria-hotels",
+    "displayName": "Cambria Hotels",
+    "category": "hotels",
+    "aliases": [
+      "cambria hotels"
+    ]
+  },
+  {
+    "brandId": "ascend-hotel-collection",
+    "displayName": "Ascend Hotel Collection",
+    "category": "hotels",
+    "aliases": [
+      "ascend hotel collection"
+    ]
+  },
+  {
+    "brandId": "woodspring-suites",
+    "displayName": "WoodSpring Suites",
+    "category": "hotels",
+    "aliases": [
+      "woodspring suites"
+    ]
+  },
+  {
+    "brandId": "mainstay-suites",
+    "displayName": "MainStay Suites",
+    "category": "hotels",
+    "aliases": [
+      "mainstay suites"
+    ]
+  },
+  {
+    "brandId": "suburban-studios",
+    "displayName": "Suburban Studios",
+    "category": "hotels",
+    "aliases": [
+      "suburban studios",
+      "suburban extended stay"
+    ]
+  },
+  {
+    "brandId": "econo-lodge",
+    "displayName": "Econo Lodge",
+    "category": "hotels",
+    "aliases": [
+      "econo lodge"
+    ]
+  },
+  {
+    "brandId": "rodeway-inn",
+    "displayName": "Rodeway Inn",
+    "category": "hotels",
+    "aliases": [
+      "rodeway inn"
+    ]
+  },
+  {
+    "brandId": "knights-inn",
+    "displayName": "Knights Inn",
+    "category": "hotels",
+    "aliases": [
+      "knights inn"
+    ]
+  },
+  {
+    "brandId": "americas-best-value-inn",
+    "displayName": "Americas Best Value Inn",
+    "category": "hotels",
+    "aliases": [
+      "americas best value inn"
+    ]
+  },
+  {
+    "brandId": "red-lion-hotels",
+    "displayName": "Red Lion Hotels",
+    "category": "hotels",
+    "aliases": [
+      "red lion hotels",
+      "red lion"
+    ]
+  },
+  {
+    "brandId": "guesthouse",
+    "displayName": "GuestHouse",
+    "category": "hotels",
+    "aliases": [
+      "guesthouse",
+      "guest house"
+    ]
+  },
+  {
+    "brandId": "sures-stay",
+    "displayName": "SureStay Hotels",
+    "category": "hotels",
+    "aliases": [
+      "surestay"
+    ]
+  },
+  {
+    "brandId": "best-western-plus",
+    "displayName": "Best Western Plus",
+    "category": "hotels",
+    "aliases": [
+      "best western plus"
+    ]
+  },
+  {
+    "brandId": "best-western-premier",
+    "displayName": "Best Western Premier",
+    "category": "hotels",
+    "aliases": [
+      "best western premier"
+    ]
+  },
+  {
+    "brandId": "vibe-hotel",
+    "displayName": "Vibe Hotel",
+    "category": "hotels",
+    "aliases": [
+      "vibe hotel"
+    ]
+  },
+  {
+    "brandId": "adagio",
+    "displayName": "Aparthotel Adagio",
+    "category": "hotels",
+    "aliases": [
+      "adagio"
+    ]
+  },
+  {
+    "brandId": "mercure",
+    "displayName": "Mercure Hotels",
+    "category": "hotels",
+    "aliases": [
+      "mercure"
+    ]
+  },
+  {
+    "brandId": "novotel",
+    "displayName": "Novotel",
+    "category": "hotels",
+    "aliases": [
+      "novotel"
+    ]
+  },
+  {
+    "brandId": "sofitel",
+    "displayName": "Sofitel",
+    "category": "hotels",
+    "aliases": [
+      "sofitel"
+    ]
+  },
+  {
+    "brandId": "pullman",
+    "displayName": "Pullman Hotels",
+    "category": "hotels",
+    "aliases": [
+      "pullman hotels",
+      "pullman"
+    ]
+  },
+  {
+    "brandId": "mgallery",
+    "displayName": "MGallery",
+    "category": "hotels",
+    "aliases": [
+      "mgallery"
+    ]
+  },
+  {
+    "brandId": "swissotel",
+    "displayName": "Swissotel",
+    "category": "hotels",
+    "aliases": [
+      "swissotel"
+    ]
+  },
+  {
+    "brandId": "raffles",
+    "displayName": "Raffles Hotels",
+    "category": "hotels",
+    "aliases": [
+      "raffles hotels",
+      "raffles"
+    ]
+  },
+  {
+    "brandId": "fairmont-hotels",
+    "displayName": "Fairmont Hotels & Resorts",
+    "category": "hotels",
+    "aliases": [
+      "fairmont hotels",
+      "fairmont"
+    ]
+  },
+  {
+    "brandId": "mantis",
+    "displayName": "Mantis Collection",
+    "category": "hotels",
+    "aliases": [
+      "mantis collection",
+      "mantis"
+    ]
+  },
+  {
+    "brandId": "art-series",
+    "displayName": "Art Series Hotels",
+    "category": "hotels",
+    "aliases": [
+      "art series hotels",
+      "art series"
+    ]
+  },
+  {
+    "brandId": "peppers",
+    "displayName": "Peppers",
+    "category": "hotels",
+    "aliases": [
+      "peppers hotels",
+      "peppers"
+    ]
+  },
+  {
+    "brandId": "mantra",
+    "displayName": "Mantra Hotels",
+    "category": "hotels",
+    "aliases": [
+      "mantra hotels",
+      "mantra"
+    ]
+  },
+  {
+    "brandId": "breakfree",
+    "displayName": "BreakFree",
+    "category": "hotels",
+    "aliases": [
+      "breakfree"
+    ]
+  },
+  {
+    "brandId": "ibis",
+    "displayName": "ibis Hotels",
+    "category": "hotels",
+    "aliases": [
+      "ibis hotels",
+      "ibis"
+    ]
+  },
+  {
+    "brandId": "ibis-styles",
+    "displayName": "ibis Styles",
+    "category": "hotels",
+    "aliases": [
+      "ibis styles"
+    ]
+  },
+  {
+    "brandId": "ibis-budget",
+    "displayName": "ibis budget",
+    "category": "hotels",
+    "aliases": [
+      "ibis budget"
+    ]
+  },
+  {
+    "brandId": "jo-and-joe",
+    "displayName": "JO&JOE",
+    "category": "hotels",
+    "aliases": [
+      "jo and joe",
+      "jo joe",
+      "jo&joe"
+    ]
+  },
+  {
+    "brandId": "hotel-f1",
+    "displayName": "hotelF1",
+    "category": "hotels",
+    "aliases": [
+      "hotelf1",
+      "hotel f1"
+    ]
+  },
+  {
+    "brandId": "emirates",
+    "displayName": "Emirates",
+    "category": "airlines",
+    "aliases": [
+      "emirates"
+    ]
+  },
+  {
+    "brandId": "peloton",
+    "displayName": "Peloton",
+    "category": "fitness",
+    "aliases": [
+      "peloton"
+    ]
+  },
+  {
+    "brandId": "rci",
+    "displayName": "RCI",
+    "category": "hotels",
+    "aliases": [
+      "rci"
+    ]
+  },
+  {
+    "brandId": "capital-vacations",
+    "displayName": "Capital Vacations",
+    "category": "hotels",
+    "aliases": [
+      "capital vacations"
+    ]
+  },
+  {
+    "brandId": "british-airways",
+    "displayName": "British Airways",
+    "category": "airlines",
+    "aliases": [
+      "british airways"
+    ]
+  },
+  {
+    "brandId": "aer-lingus",
+    "displayName": "Aer Lingus",
+    "category": "airlines",
+    "aliases": [
+      "aer lingus"
+    ]
+  },
+  {
+    "brandId": "iberia",
+    "displayName": "Iberia",
+    "category": "airlines",
+    "aliases": [
+      "iberia"
+    ]
+  },
+  {
+    "brandId": "caviar",
+    "displayName": "Caviar",
+    "category": "dining",
+    "aliases": [
+      "caviar"
+    ]
+  },
+  {
+    "brandId": "espn",
+    "displayName": "ESPN",
+    "category": "streaming",
+    "aliases": [
+      "espn"
+    ]
+  },
+  {
+    "brandId": "carnival-cruise-line",
+    "displayName": "Carnival Cruise Line",
+    "category": "travel",
+    "aliases": [
+      "carnival cruise line",
+      "carnival cruise"
+    ]
+  },
+  {
+    "brandId": "hotels-com",
+    "displayName": "Hotels.com",
+    "category": "travel",
+    "aliases": [
+      "hotels com"
+    ]
+  },
+  {
+    "brandId": "grubhub",
+    "displayName": "Grubhub",
+    "category": "dining",
+    "aliases": [
+      "grubhub"
+    ]
+  },
+  {
+    "brandId": "postmates",
+    "displayName": "Postmates",
+    "category": "dining",
+    "aliases": [
+      "postmates"
+    ]
+  },
+  {
+    "brandId": "seamless",
+    "displayName": "Seamless",
+    "category": "dining",
+    "aliases": [
+      "seamless"
+    ]
+  },
+  {
+    "brandId": "delivery-com",
+    "displayName": "Delivery.com",
+    "category": "dining",
+    "aliases": [
+      "delivery com"
+    ]
+  },
+  {
+    "brandId": "audible",
+    "displayName": "Audible",
+    "category": "entertainment",
+    "aliases": [
+      "audible",
+      "audible com"
+    ]
+  },
+  {
+    "brandId": "ll-bean",
+    "displayName": "L.L.Bean",
+    "category": "departmentStores",
+    "aliases": [
+      "l l bean",
+      "ll bean"
+    ]
+  },
+  {
+    "brandId": "paper-source",
+    "displayName": "Paper Source",
+    "category": "departmentStores",
+    "aliases": [
+      "paper source"
+    ]
+  }
+]

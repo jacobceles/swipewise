@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "940339008944",
+    "project_id": "swipewise-e5584",
+    "storage_bucket": "swipewise-e5584.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:940339008944:android:aa99113dba501e8d7ef275",
+        "android_client_info": {
+          "package_name": "com.appsoflife.swipewise"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "940339008944-dci2svdqd5sq1kq14cok6g0m1tvbj21e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appsoflife.swipewise",
+            "certificate_hash": "52c0ef13609605e4732b755585820d4359b5e12b"
+          }
+        },
+        {
+          "client_id": "940339008944-i9fn5hn1ua6l81lr2d1mmkuahfh93s8t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appsoflife.swipewise",
+            "certificate_hash": "05e29b39eb58a763a326c1ca43bc3727e5e73c8a"
+          }
+        },
+        {
+          "client_id": "940339008944-tgs12kunp39hoad2g9d9fnjqrh9a4u6e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appsoflife.swipewise",
+            "certificate_hash": "77742e7bfbc785272d057225d7f9ee6c774709f3"
+          }
+        },
+        {
+          "client_id": "940339008944-p67kpba99toh2kopjsahfqnprad2b1jk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEdfe3xqDTrPOQ6MblWHE2ot9BCXgJry4"
+        },
+        {
+          "current_key": "AIzaSyDZ9F45taaDTRmQ4H5n4OhzCbGMGeXRY-s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "940339008944-p67kpba99toh2kopjsahfqnprad2b1jk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:940339008944:android:a6410217d3bc97bd7ef275",
+        "android_client_info": {
+          "package_name": "com.appsoflife.swipewise.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "940339008944-nuatklqgig6opoosban1q2nsjg6tdotb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appsoflife.swipewise.dev",
+            "certificate_hash": "05e29b39eb58a763a326c1ca43bc3727e5e73c8a"
+          }
+        },
+        {
+          "client_id": "940339008944-p67kpba99toh2kopjsahfqnprad2b1jk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEdfe3xqDTrPOQ6MblWHE2ot9BCXgJry4"
+        },
+        {
+          "current_key": "AIzaSyDZ9F45taaDTRmQ4H5n4OhzCbGMGeXRY-s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "940339008944-p67kpba99toh2kopjsahfqnprad2b1jk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

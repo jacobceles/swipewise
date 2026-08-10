@@ -1,0 +1,12 @@
+{
+  "_comment": "Template. Copy to keys.free.json (drop SOPHTRON_* and SWIPEWISE_PRO) and keys.pro.json (keep everything). Both are gitignored via keys*.json. There are no build flavors: one binary, and the keys file decides which tier a local build behaves as. The PUBLISHED release must be built from keys.free.json \u2014 building it from keys.pro.json yields a working APK containing every credential, which is exactly what tool/verify_release_apk.py exists to catch.",
+  "GOOGLE_PLACES_KEY": "your-google-places-api-key-here",
+  "GOOGLE_ANDROID_PACKAGE": "com.appsoflife.swipewise.dev",
+  "_comment_cert": "SHA-1 of the cert THIS build is signed with, sent as X-Android-Cert. Debug builds: the debug keystore's SHA-1. The Play build: the APP SIGNING SHA-1 from Play Console -> Setup -> App signing, NOT the upload cert. Wrong value = Places rejects every request and the Stores tab is silently empty, in production only.",
+  "GOOGLE_ANDROID_CERT": "05e29b39eb58a763a326c1ca43bc3727e5e73c8a",
+  "R2_BASE_URL": "https://swipewise-api.your-subdomain.workers.dev",
+  "SOPHTRON_USER_ID": "pro-only-your-sophtron-user-id-here",
+  "SOPHTRON_ACCESS_KEY": "pro-only-your-sophtron-access-key-here",
+  "SOPHTRON_CUSTOMER_SALT": "pro-only-your-sophtron-customer-salt-here",
+  "SWIPEWISE_PRO": "true"
+}

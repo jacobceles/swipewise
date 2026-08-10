@@ -1,0 +1,200 @@
+[
+  {
+    "vocabVersion": 1,
+    "minApp": "2.0.0",
+    "_comment": "Vocab document marker (no `id`, so category consumers skip it). vocabVersion: bump when the category SET changes (new ids); the app gates on it. minApp: min app version that fully understands this vocab."
+  },
+  {
+    "id": "dining",
+    "displayName": "Dining",
+    "matcherKeywords": ["dining", "restaurant", "restaurants", "food and drink", "food drink", "pizza", "pizzeria", "takeout", "eligible delivery", "delivery services", "food delivery", "caviar"],
+    "googlePlaceTypes": ["restaurant", "fine_dining_restaurant", "fast_food_restaurant", "bar_and_grill", "lounge_bar", "pizza_restaurant", "sandwich_shop", "food_court", "bakery", "ice_cream_shop", "bar", "catering_service", "meal_takeaway", "meal_delivery", "deli", "diner", "bistro", "brunch_restaurant", "buffet_restaurant", "brewery", "brewpub", "winery", "wine_bar", "cocktail_bar", "pub", "beer_garden", "sports_bar", "gastropub", "night_club", "candy_store", "dessert_shop", "dessert_restaurant", "donut_shop", "bagel_shop", "pastry_shop", "snack_bar", "steak_house"]
+  },
+  {
+    "id": "coffee",
+    "displayName": "Coffee",
+    "matcherKeywords": ["coffee", "coffee shops", "coffee shop", "cafe"],
+    "googlePlaceTypes": ["cafe", "coffee_shop", "coffee_roastery", "coffee_stand", "juice_shop", "tea_house"]
+  },
+  {
+    "id": "grocery",
+    "displayName": "Grocery",
+    "matcherKeywords": ["grocery", "groceries", "grocery stores", "grocery store", "supermarket", "supermarkets"],
+    "googlePlaceTypes": ["grocery_store", "supermarket", "discount_supermarket", "hypermarket", "health_food_store", "convenience_store", "discount_store", "liquor_store", "asian_grocery_store", "butcher_shop", "farmers_market", "food_store", "market"]
+  },
+  {
+    "id": "onlineGrocery",
+    "displayName": "Online Grocery",
+    "matcherKeywords": ["online grocery", "online groceries", "grocery online", "online grocery purchases"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "gas",
+    "displayName": "Gas",
+    "matcherKeywords": ["gas", "gas stations", "gas station", "fuel"],
+    "googlePlaceTypes": ["gas_station"]
+  },
+  {
+    "id": "evCharging",
+    "displayName": "EV Charging",
+    "matcherKeywords": ["ev charging", "ev charging station", "ev charging stations", "electric vehicle charging", "electric vehicle charging station", "electric vehicle charging stations", "electric vehicle chargers", "charging station"],
+    "googlePlaceTypes": ["electric_vehicle_charging_station"]
+  },
+  {
+    "id": "travel",
+    "displayName": "Travel",
+    "matcherKeywords": ["travel", "cruise", "cruises", "cruise line"],
+    "googlePlaceTypes": ["airport", "international_airport"]
+  },
+  {
+    "id": "hotels",
+    "displayName": "Hotels",
+    "matcherKeywords": ["hotel", "hotels", "lodging", "resort", "resorts", "vacation homes", "vacation home", "vacation rentals", "vacation rental"],
+    "googlePlaceTypes": ["hotel", "resort_hotel", "extended_stay_hotel", "lodging", "motel", "bed_and_breakfast", "hostel"]
+  },
+  {
+    "id": "airlines",
+    "displayName": "Airlines",
+    "matcherKeywords": ["airline", "airlines", "airfare", "flight", "flights", "british airways", "aer lingus", "iberia"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "carRentals",
+    "displayName": "Car Rentals",
+    "matcherKeywords": ["rental car", "rental cars", "car rental", "car rentals", "car rental agencies", "car rental agency"],
+    "googlePlaceTypes": ["car_rental"]
+  },
+  {
+    "id": "drugStores",
+    "displayName": "Drug Stores",
+    "matcherKeywords": ["drug store", "drug stores", "drugstore", "drugstores", "pharmacy", "pharmacies"],
+    "googlePlaceTypes": ["pharmacy", "drugstore"]
+  },
+  {
+    "id": "streaming",
+    "displayName": "Streaming",
+    "matcherKeywords": ["streaming", "streaming services", "netflix", "spotify", "hulu", "disney plus", "select streaming", "streaming service"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "entertainment",
+    "displayName": "Entertainment",
+    "matcherKeywords": ["entertainment", "concert", "concerts"],
+    "googlePlaceTypes": ["museum", "art_museum", "history_museum", "art_gallery", "performing_arts_theater", "concert_hall", "live_music_venue", "comedy_club", "opera_house", "amphitheatre", "planetarium", "amusement_park", "amusement_center", "aquarium", "casino", "zoo", "bowling_alley", "stadium", "arena"]
+  },
+  {
+    "id": "movieTheaters",
+    "displayName": "Movie Theaters",
+    "matcherKeywords": ["movie theater", "movie theaters"],
+    "googlePlaceTypes": ["movie_theater"]
+  },
+  {
+    "id": "onlineShopping",
+    "displayName": "Online Shopping",
+    "matcherKeywords": ["online shopping", "ecommerce", "e commerce", "online merchants", "online merchant", "online retail", "online retail purchases"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "wholesale",
+    "displayName": "Wholesale",
+    "matcherKeywords": ["wholesale", "wholesale clubs", "warehouse club", "warehouse clubs"],
+    "googlePlaceTypes": ["warehouse_store", "wholesaler"]
+  },
+  {
+    "id": "transit",
+    "displayName": "Transit",
+    "matcherKeywords": ["transit", "transportation", "train", "trains", "subway", "commuter", "local transit", "commuting", "rideshare", "ride share"],
+    "googlePlaceTypes": ["transit_station", "train_station", "subway_station", "bus_station", "bus_stop", "ferry_terminal"]
+  },
+  {
+    "id": "departmentStores",
+    "displayName": "Department Stores",
+    "matcherKeywords": ["department store", "department stores"],
+    "googlePlaceTypes": ["department_store", "shopping_mall"]
+  },
+  {
+    "id": "phoneAndInternet",
+    "displayName": "Phone & Internet",
+    "matcherKeywords": ["phone", "wireless", "internet", "cable", "phone services", "cable services"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "officeSupply",
+    "displayName": "Office Supply",
+    "matcherKeywords": ["office supply", "office supplies", "office supply store", "office supply stores"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "homeImprovement",
+    "displayName": "Home Improvement",
+    "matcherKeywords": ["home improvement", "home improvement store", "home improvement stores", "furnishings", "home furnishings", "furniture", "furniture stores", "furniture store"],
+    "googlePlaceTypes": ["home_improvement_store", "hardware_store"]
+  },
+  {
+    "id": "fitness",
+    "displayName": "Fitness",
+    "matcherKeywords": ["fitness club", "fitness clubs", "gym", "gyms", "gym membership", "gym memberships"],
+    "googlePlaceTypes": ["gym", "fitness_center", "yoga_studio", "sports_club"]
+  },
+  {
+    "id": "utilities",
+    "displayName": "Utilities",
+    "matcherKeywords": ["utilities", "utility"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "rent",
+    "displayName": "Rent",
+    "matcherKeywords": ["rent", "rent payments", "rent payment", "rental payments", "rental payment"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "advertising",
+    "displayName": "Advertising",
+    "matcherKeywords": ["advertising", "online advertising", "social media advertising", "search engine advertising", "social media and search engine advertising"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "apparel",
+    "displayName": "Apparel",
+    "matcherKeywords": ["apparel", "clothing", "clothing store", "clothing stores", "apparel stores", "retail apparel", "apparel brands", "retail apparel brands"],
+    "googlePlaceTypes": ["clothing_store"]
+  },
+  {
+    "id": "shipping",
+    "displayName": "Shipping",
+    "matcherKeywords": ["shipping", "shipping purchases", "postage", "courier"],
+    "googlePlaceTypes": []
+  },
+  {
+    "id": "electronics",
+    "displayName": "Electronics",
+    "matcherKeywords": ["electronics", "electronics store", "electronics stores"],
+    "googlePlaceTypes": ["electronics_store"]
+  },
+  {
+    "id": "sportingGoods",
+    "displayName": "Sporting Goods",
+    "matcherKeywords": ["sporting goods", "sporting goods store", "sporting goods stores"],
+    "googlePlaceTypes": ["sporting_goods_store"]
+  },
+  {
+    "id": "pets",
+    "displayName": "Pets",
+    "matcherKeywords": ["pets", "pet", "pet store", "pet stores", "pet supplies", "pet shop", "veterinary", "veterinary services", "veterinarian"],
+    "googlePlaceTypes": ["pet_store"]
+  },
+  {
+    "id": "medical",
+    "displayName": "Medical",
+    "matcherKeywords": ["medical", "medical expenses", "medical services", "medical care", "healthcare", "health care"],
+    "googlePlaceTypes": ["hospital", "general_hospital", "doctor", "dentist", "dental_clinic", "medical_clinic", "medical_center", "chiropractor"]
+  },
+  {
+    "id": "other",
+    "displayName": "Other",
+    "appOnly": true,
+    "matcherKeywords": [],
+    "googlePlaceTypes": []
+  }
+]

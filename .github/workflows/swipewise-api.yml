@@ -1,0 +1,74 @@
+# Deploy the SwipeWise read API (the Cloudflare Worker) on every push to main that
+# touches the Worker's code. R2 publishing of the catalog bundles (free + paid) is
+# owned entirely by the backend engine's CI — this repo only serves them and hosts the
+# committed free.json snapshot (a data-only commit deploys nothing here).
+#
+#   deploy-worker — typecheck + test, then `wrangler deploy` the read API
+#
+# Idempotent: an unchanged Worker re-deploys harmlessly. See swipewise-api/README.md
+# for the required repository secrets.
+
+name: swipewise-api
+
+on:
+  push:
+    branches: [main]
+    # Worker code only — NOT catalog/ (free.json is a static snapshot published to
+    # R2 from the backend engine, not from here, so a data refresh shouldn't redeploy).
+    paths:
+      - 'swipewise-api/src/**'
+      - 'swipewise-api/test/**'
+      - 'swipewise-api/scripts/**'
+      - 'swipewise-api/package.json'
+      - 'swipewise-api/package-lock.json'
+      - 'swipewise-api/tsconfig.json'
+      - 'swipewise-api/wrangler.toml'
+      - '.github/workflows/swipewise-api.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: swipewise-api-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: swipewise-api
+
+jobs:
+  deploy-worker:
+    # `workflow_dispatch` can be fired against any branch, which would deploy
+    # that branch's Worker to production with CLOUDFLARE_API_TOKEN. Pin it.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Worker origin for the post-deploy smoke gate. A SECRET, not a variable: the
+    # URL stays out of the public Actions logs (secrets are masked; variables are
+    # printed in the clear) even though the app ships it — same posture as the
+    # backend engine's IMAGE_BASE_URL. Mapped to job env here because GitHub
+    # doesn't allow `secrets.*` in a step `if:`. Unset → the smoke step is skipped.
+    env:
+      WORKER_BASE_URL: ${{ secrets.WORKER_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: swipewise-api/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.R2_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }} # Cloudflare account id
+          workingDirectory: swipewise-api
+          command: deploy
+      # Post-deploy liveness gate: confirm the just-deployed Worker still serves a
+      # coherent catalog (/healthz ok + non-empty /catalog.json whose dataVersion
+      # matches /healthz). Liveness-only — this repo deploys Worker code, not data,
+      # so there's no "just-built" version to compare. Opt-in: set the repo SECRET
+      # WORKER_BASE_URL (mapped to job env above); absent it, this step is skipped.
+      - name: Smoke-test the deployed Worker (liveness)
+        if: env.WORKER_BASE_URL != ''
+        run: npm run smoke

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default app name (production). The debug build type overrides this
+         via resValue("string", "app_name", "SwipeWiseDev") in build.gradle.kts
+         so the launcher label differs between dev and prod installs. -->
+    <string name="app_name">SwipeWise</string>
+</resources>

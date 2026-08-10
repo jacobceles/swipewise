@@ -1,0 +1,10 @@
+[mcp_servers.context-engine]
+command = "/Users/jacobceles/.local/bin/cce"
+args = [
+    "serve",
+    "--project-dir",
+    "/Users/jacobceles/stash/swipewise",
+]
+
+[mcp_servers.gitmcp]
+url = "https://gitmcp.io/docs"

@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^wireframe\.pen$
+      - id: end-of-file-fixer
+        exclude: ^wireframe\.pen$
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=5120']
+
+  - repo: local
+    hooks:
+      - id: flutter-analyze
+        name: flutter analyze
+        entry: flutter analyze
+        language: system
+        pass_filenames: false
+
+      - id: dart-format
+        name: dart format
+        entry: dart format --set-exit-if-changed lib
+        language: system
+        pass_filenames: false

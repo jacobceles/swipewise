@@ -1,0 +1,129 @@
+# Flutter app CI.
+#
+# Two jobs, and the second is the point of the whole file:
+#
+#   analyze-test  — `flutter analyze` + the unit suite. Cheap, runs on every PR.
+#   release-gate  — builds the real release APK and runs `tool/verify_release_apk.py`,
+#                   which fails the build if any aggregator credential reached the
+#                   binary. Push-to-main only, because it needs the real keys.
+#
+# Why the release gate exists: the app ships ONE binary for both tiers (Pro is an
+# in-app subscription, so the Pro code is present and dormant for everyone). The
+# only thing separating the published app from a credential leak is which keys
+# file the release was built with. That is a one-word mistake, it produces a
+# perfectly working APK, and nothing about the artifact looks wrong. So it gets
+# checked mechanically rather than remembered.
+#
+# `flutter clean` before the release build is NOT optional — the release AOT
+# snapshot has been observed going stale, which would make this gate verify an
+# older binary and pass while telling you nothing.
+#
+# ── Repository secrets ───────────────────────────────────────────────────────
+# Everything is a secret, nothing is a variable: this repo is public, and GitHub
+# masks secrets in logs while printing variables in the clear.
+#
+#   KEYS_FREE_JSON  contents of keys.free.json — the ONLY secret this needs.
+#
+# Deliberately NOT here: the aggregator credentials. An earlier version uploaded
+# them so the gate could grep the APK for their exact values, which put live
+# secrets somewhere a bad workflow edit could read them — to catch a mistake
+# that is fully visible in the build *input*. The gate now reads the keys file
+# and refuses if it carries credentials. A secret that does not exist cannot
+# leak. The stronger value-grep still runs locally, where keys.pro.json already
+# is on disk.
+#
+# Fork PRs don't get secrets, which is why release-gate is push-only.
+
+name: app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'android/**'
+      - 'tool/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/app.yml'
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'android/**'
+      - 'tool/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+  workflow_dispatch: {}
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  release-gate:
+    # Two conditions, for two different reasons.
+    #
+    # Not a PR: fork PRs get no secrets at all, so the gate could never run
+    # there — and a same-repo PR *would* receive them, which is not a place to
+    # hand out live aggregator credentials.
+    #
+    # Only on main: `workflow_dispatch` below can otherwise be fired against
+    # ANY branch, which would run whatever workflow and code that branch
+    # contains with the build secret in the environment. Pinning the ref means
+    # a manual re-run still works where you want it (main) and nowhere else.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Restore keys files
+        env:
+          KEYS_FREE_JSON: ${{ secrets.KEYS_FREE_JSON }}
+        run: |
+          if [ -z "$KEYS_FREE_JSON" ]; then
+            echo "::error::KEYS_FREE_JSON is not set — the release gate cannot run."
+            echo "::error::Skipping it silently would be worse than failing, so this"
+            echo "::error::is a hard stop."
+            exit 1
+          fi
+          printf '%s' "$KEYS_FREE_JSON" > keys.free.json
+          python3 -c "import json;json.load(open('keys.free.json'))"
+
+      - run: flutter pub get
+      # Mandatory: a stale AOT snapshot would make the gate below inspect an
+      # older binary and pass without checking anything current.
+      - run: flutter clean
+      - run: flutter pub get
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release \
+            --dart-define-from-file=keys.free.json \
+            --obfuscate --split-debug-info=build/symbols
+
+      - name: Verify no credentials reached the APK
+        run: python3 tool/verify_release_apk.py
+
+      - name: Shred the keys file
+        if: always()
+        run: rm -f keys.free.json
