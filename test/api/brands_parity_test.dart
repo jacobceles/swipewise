@@ -6,7 +6,7 @@ import 'package:swipewise/api/brand_resolver.dart';
 import 'package:swipewise/api/reward_category_mapper.dart';
 
 /// Cross-impl brands-parity guard (B1-D9): the app's [BrandResolver] and the
-/// cardcodex-produced brand data agree on brand slugs.
+/// backend-engine-produced brand data agree on brand slugs.
 ///
 /// Two artifacts, both produced by the backend engine, that must stay in sync:
 ///   - `assets/vocab/brands.json` — the brand registry (brandId -> aliases).

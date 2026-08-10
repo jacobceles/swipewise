@@ -50,3 +50,6 @@ analysis/
 .claude/worktrees/
 # ski skill
 .ski
+
+# Personal local tooling config (absolute home paths, useless to anyone else)
+.codex/
