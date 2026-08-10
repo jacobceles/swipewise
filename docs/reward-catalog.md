@@ -206,7 +206,7 @@ The catalog only **references** the app's vocabularies; it never re-derives them
 
 A rule that references a slug the classifier can't produce is **dead** — no transaction will
 ever carry it. That's why brand/category coverage is a build-time contract (see
-[the slug contract](../todo/rewards_catalog.md#the-slug-contract-brands--categories)). The
+[the slug contract](classifier-and-brands.md)). The
 classifier's `(category, brand_id)` output and these slug vocabularies are unchanged from the
 seed era; only the rate data behind them got richer.
 

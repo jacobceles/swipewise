@@ -115,20 +115,20 @@ app-logic change — the same JSON the catalog API serves. The
 catalog build being produced in its own repo and served the same way. The app *consumes* it;
 it doesn't own it. The classifier *emits* `brand_id`s the
 catalog's `reward_rules` *reference*. See
-[the slug contract](../todo/rewards_catalog.md#the-slug-contract-brands--categories).
+[the slug contract](classifier-and-brands.md).
 
 ## Curation & validation
 
 There's no telemetry feedback loop (the app doesn't collect user transactions). Brand
 coverage is **curation-driven**: ask Gemini for more brands (see
-[`todo/reference_brands_prompt.md`](../todo/reference_brands_prompt.md)) or add a store you
+[`todo/reference_brands_prompt.md`](classifier-and-brands.md)) or add a store you
 hit yourself.
 
 `brands.json` is now produced upstream and served via the [catalog API](../swipewise-api),
 so the **slug contract** is enforced where the data is built (the producer pipeline), not by
 a local app hook: every `category` must be a real `RewardCategory.name`, `brandId`s must be
 unique, and `aliases` non-empty. A rule that references a slug the classifier can't produce is
-dead — see [the slug contract](../todo/rewards_catalog.md#the-slug-contract-brands--categories).
+dead — see [the slug contract](classifier-and-brands.md).
 
 ## Why two category columns on transactions
 

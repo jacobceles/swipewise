@@ -87,16 +87,15 @@ The **app is open source** — fork it, audit the privacy claims, build it yours
   one-line JSON edit (see [docs/classifier-and-brands.md](docs/classifier-and-brands.md)). It's the
   single source of truth — bundled into the app, served via the [catalog API](swipewise-api), and
   read by the catalog engine.
-- [`swipewise-api/catalog/catalog.json`](swipewise-api/catalog/catalog.json) — the reward
+- [`swipewise-api/catalog/free.json`](swipewise-api/catalog/free.json) — the reward
   **catalog** (card products, structured `reward_rules`, point valuations, `product_perks`). This is
   a **generated artifact** built from curated source by a separate engine; editing it directly is
   overwritten on the next publish, so card-data fixes go through the engine, not a PR here. Served to
   the app by the [catalog API](swipewise-api), refreshed without an app release (see
   [docs/reward-catalog.md](docs/reward-catalog.md)).
 
-Good first contributions: add brands you shop at, expand card coverage, or pick up something
-from the [roadmap](todo/roadmap.md). Start with the [architecture
-overview](docs/architecture.md) to see how the pieces fit.
+Good first contributions: add brands you shop at, or expand card coverage. Start with the
+[architecture overview](docs/architecture.md) to see how the pieces fit.
 
 ## 🚀 Get started
 
@@ -107,14 +106,17 @@ its features unlock at runtime rather than at compile time — the Pro code is p
 dormant for everyone, and lights up when the entitlement says so. Which tier a *local* build
 behaves as is decided by the keys file you pass:
 
+`keys.free.json` is **committed** — it holds no credential, only two URLs:
+
 ```json
-// keys.free.json
 {
-  "GOOGLE_PLACES_KEY": "<google-places-api-key>",
-  "GOOGLE_ANDROID_PACKAGE": "com.appsoflife.swipewise.dev",
-  "R2_BASE_URL": "<swipewise-api worker url>"
+  "R2_BASE_URL": "https://swipewise-api.jacobceles.workers.dev",
+  "PLACES_PROXY_URL": "https://swipewise-api.jacobceles.workers.dev/places/nearby"
 }
 ```
+
+Nearby search goes through the Worker, which holds the Google Places key server-side, so no
+Places credential exists in the app to configure or to leak.
 
 ```bash
 flutter run --dart-define-from-file=keys.free.json   # what ships
@@ -122,9 +124,10 @@ flutter run --dart-define-from-file=keys.pro.json    # + bank sync, for developm
 ```
 
 `keys.pro.json` adds `SOPHTRON_USER_ID`, `SOPHTRON_ACCESS_KEY`, `SOPHTRON_CUSTOMER_SALT` and
-`"SWIPEWISE_PRO": "true"`. The published release is built from `keys.free.json`, so the
-aggregator credentials are simply not in it — a value that isn't in the binary can't be
-extracted from it. `tool/verify_release_apk.py` fails the build if they ever are.
+`"SWIPEWISE_PRO": "true"`, and stays untracked. The published release is built from
+`keys.free.json`, so the aggregator credentials are simply not in it — a value that isn't in
+the binary can't be extracted from it. `tool/verify_release_apk.py` fails the build if any
+credential reaches the APK, and runs on every pull request.
 
 Full build/release/keys details: [docs/setup.md](docs/setup.md).
 
@@ -141,8 +144,6 @@ Full build/release/keys details: [docs/setup.md](docs/setup.md).
 | [Database](docs/database.md) | Full SQLite schema |
 | [Setup](docs/setup.md) | Keys, build flags, git hooks, troubleshooting |
 | [Privacy](docs/PRIVACY.md) | What's collected, where it goes, what's never stored |
-
-Where it's headed: the [catalog](todo/rewards_catalog.md) and [roadmap](todo/roadmap.md).
 
 ## 📄 License
 

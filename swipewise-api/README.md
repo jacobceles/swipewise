@@ -69,6 +69,7 @@ npm run deploy   # publish to *.workers.dev (or a custom domain)
 
 | Route | Returns |
 |---|---|
+| `POST /places/nearby` | **Places proxy.** Holds the Google Places key server-side and forwards a Google-shaped body. Requires a Firebase App Check token — see below |
 | `GET /healthz` | liveness + current `catalogVersion`/`dataVersion` |
 | `GET /catalog.json` | the free catalog — rewards slice (R2 passthrough, native ETag) |
 | `GET /paid.json` | full catalog + enrichment — **gated** (`x-api-key`); stubbed/deferred → 402 |
@@ -222,6 +223,9 @@ This repo's **Secrets** (Settings → Secrets and variables → Actions → Secr
 | Secret | What |
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | a token with **Workers Scripts: Edit** (for `wrangler deploy`) |
+| `PLACES_API_KEY` | Google Places key. **Secret** — this is the whole point of the proxy: the key exists here and nowhere in the app |
+| `FIREBASE_PROJECT_NUMBER` | pins the App Check audience to this project. Without it, enforcement would be enforcement in name only, so the route refuses with 500 rather than accept anything |
+| `APPCHECK_ENFORCE` | set to `1` to reject unattested callers with 401. ⚠️ Read as `Boolean(env.APPCHECK_ENFORCE)`, and every non-empty string is truthy in JS — `"0"` still enforces. To disable, **delete the secret** |
 | `R2_ACCOUNT_ID` | your Cloudflare account id (the deploy reads it; falls back to `CLOUDFLARE_ACCOUNT_ID`) |
 
 The R2 S3 credentials (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`,

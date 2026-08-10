@@ -34,7 +34,7 @@ flowchart LR
   **classifier** (recognition) and the **ranker/engine** (rate resolution). It owns the UI,
   sync, and local storage.
 - **The catalog** is a *data product* — card reward rates + the vocabularies they're keyed
-  on. It's built in [its own repo](../todo/rewards_catalog.md#separate-project) (the catalog
+  on. It's built in [its own repo](reward-catalog.md) (the catalog
   pipeline, the backend engine), published to R2 by [`swipewise-api`](../swipewise-api), and
   fetched at runtime from that service's Cloudflare Worker. One versioned JSON build, served
   ETag-gated; the app caches it locally and re-fetches only when it changes.
@@ -72,7 +72,7 @@ vocabularies** — they don't share code:
 
 A rule that references a slug the classifier can't produce is **dead** — no transaction
 will ever carry it. That's why brand/category coverage is a contract, validated at build
-time (see [the slug contract](../todo/rewards_catalog.md#the-slug-contract-brands--categories)).
+time (see [the slug contract](classifier-and-brands.md)).
 
 ## How a swipe becomes a recommendation
 

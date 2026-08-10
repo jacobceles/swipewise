@@ -172,7 +172,17 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 ## Notes
 
 - `ACTIVITY_RECOGNITION` lets the OS distinguish a real dwell from a traffic stop.
-- `GOOGLE_PLACES_KEY` and `GOOGLE_ANDROID_PACKAGE` are baked in at build time via
-  `--dart-define-from-file=keys.json`. The key must have Android app restrictions set in GCP;
-  raw HTTP calls must include `X-Android-Package` / `X-Android-Cert` headers (the provider
-  adds these automatically).
+- **No Places key is baked into the app.** Nearby search posts to `PLACES_PROXY_URL` — the
+  Worker's `/places/nearby` — which holds the Google Places key as a server-side secret and
+  forwards the request. The app attaches a Firebase App Check token (`X-Firebase-AppCheck`);
+  the Worker verifies it against Google's JWKS with the audience pinned to the project, and
+  **rejects unattested callers with 401**.
+- App Check is activated in *both* isolates. Geofence re-registration runs headless and calls
+  Places itself, and App Check state is per-isolate — activating only in `main()` leaves that
+  path tokenless, so geofences silently stop re-registering.
+- Why the proxy exists: the app used to call Google directly with an Android-restricted key.
+  That restriction is matched from `X-Android-Package` / `X-Android-Cert`, which for raw HTTP
+  calls are strings the client sets — and they travelled in the same binary as the key. A
+  `curl` forging both returned real Places data, so the restriction protected nothing. Play
+  Integrity attestation at the Worker replaces it, and unlike a header it cannot be copied out
+  of the APK.

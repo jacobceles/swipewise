@@ -23,7 +23,7 @@ listing* (screenshots go on the *Internal testing* release).
 ## Screenshots — `screenshots/` · all ≤2:1
 
 > ⛔ **Three of these advertise features the shipping app does not have.** The Play build is the
-> **free** flavor, which has no bank linking and therefore no transactions, no spending breakdown
+> **free** tier, which has no bank linking and therefore no transactions, no spending breakdown
 > and no subscription detection. Uploading `3-transactions`, `4-breakdown` or `6-subscriptions`
 > would be a misleading store listing — a policy violation, and a guaranteed 1-star review from
 > anyone who installs expecting them.
@@ -81,7 +81,7 @@ file (not this one).
 
 ## Data safety form (answer to MATCH the description)
 
-Answer for the **free** flavor — the only one that goes to Play. It is a much lighter declaration
+Answer for the **free** tier — the only thing that goes to Play. There are no product flavors; one binary serves both tiers and Pro unlocks at runtime. It is a much lighter declaration
 than the Pro build would need, because free omits bank connectivity entirely and so has **no
 financial-account data to declare at all**.
 

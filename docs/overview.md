@@ -13,5 +13,5 @@ big picture, then drill into whichever subsystem you need.
 | [database.md](database.md) | Full SQLite schema reference |
 | [setup.md](setup.md) | Keys, build flags, git hooks, local-data reset, troubleshooting |
 
-For **forward-looking** design (what's planned, not built) see [`../todo/`](../todo/):
-the [card-rewards catalog](../todo/rewards_catalog.md) spec and the [roadmap](../todo/roadmap.md).
+For **forward-looking** design (what's planned, not built) see [`../docs/`](../docs/):
+the [card-rewards catalog](reward-catalog.md) spec and the [roadmap](architecture.md).

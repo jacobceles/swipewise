@@ -28,24 +28,25 @@ push to main.
 
 ## Keys
 
-Keys are baked in at build time via `--dart-define`, from **two** gitignored files at the
-project root (`keys.example.json` is the template; `.gitignore` covers `keys*.json`):
+Keys are baked in at build time via `--dart-define`, from two files at the project root.
+
+**`keys.free.json` is committed.** It carries no credential — only two URLs that are already
+in every published APK — so a fresh clone builds a working app with nothing to obtain:
 
 ```json
-// keys.free.json — no aggregator credentials, so the shipped app cannot use them
 {
-  "GOOGLE_PLACES_KEY": "<google-places-api-key>",
-  "GOOGLE_ANDROID_PACKAGE": "com.appsoflife.swipewise.dev",
-  "R2_BASE_URL": "https://swipewise-api.<subdomain>.workers.dev"
+  "R2_BASE_URL": "https://swipewise-api.<subdomain>.workers.dev",
+  "PLACES_PROXY_URL": "https://swipewise-api.<subdomain>.workers.dev/places/nearby"
 }
 ```
 
+**`keys.pro.json` is gitignored** (`.gitignore` covers `keys*.json`, with an exception for the
+free file). It adds the aggregator credentials and the tier flag:
+
 ```json
-// keys.pro.json — the above, plus the aggregator creds and the tier flag
 {
-  "GOOGLE_PLACES_KEY": "<google-places-api-key>",
-  "GOOGLE_ANDROID_PACKAGE": "com.appsoflife.swipewise.dev",
   "R2_BASE_URL": "https://swipewise-api.<subdomain>.workers.dev",
+  "PLACES_PROXY_URL": "https://swipewise-api.<subdomain>.workers.dev/places/nearby",
   "SOPHTRON_USER_ID": "<sophtron-user-id>",
   "SOPHTRON_ACCESS_KEY": "<sophtron-access-key>",
   "SOPHTRON_CUSTOMER_SALT": "<random-base64-string>",
@@ -53,15 +54,20 @@ project root (`keys.example.json` is the template; `.gitignore` covers `keys*.js
 }
 ```
 
+⛔ **Never add a Google Places key to either file.** Nearby search goes through the Worker,
+which holds that key server-side. `tool/verify_release_apk.py` fails the build if
+`GOOGLE_PLACES_KEY` appears in the keys file or if any unaccounted Google API key reaches the
+APK, and it runs on every pull request.
+
 Omitting the Sophtron keys from the release file is the entire point: a value that isn't in
 the binary can't be extracted from it. The Pro *code* does ship — it has to, for a
 subscription to unlock it — but it ships with nothing to authenticate with.
 
-- `GOOGLE_PLACES_KEY` — from GCP Console → Credentials. Must have **Android app
-  restrictions** set with the app's package name and SHA-1 cert fingerprint.
-- `GOOGLE_ANDROID_PACKAGE` — the package name sent via `X-Android-Package` header so GCP
-  can verify the key restriction. Use `com.appsoflife.swipewise.dev` for debug builds and
-  `com.appsoflife.swipewise` for release.
+- `PLACES_PROXY_URL` — the Worker's `/places/nearby` route. The app posts a Google-shaped
+  body plus a Firebase App Check token; the Worker verifies the token, adds the Places key it
+  holds as a secret, and forwards. Nothing to configure locally, but note that App Check is
+  **enforced**: a debug build needs its debug token registered in the Firebase console
+  (App Check → Manage debug tokens) or the Stores tab will 401.
 - `R2_BASE_URL` — base URL of the **catalog API** ([`swipewise-api`](../swipewise-api)),
   the Cloudflare Worker the app fetches `catalog.json` and `brands.json` from (e.g.
   `https://swipewise-api.<subdomain>.workers.dev`). The Worker reads those from R2 and
