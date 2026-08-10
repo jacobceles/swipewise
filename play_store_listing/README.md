@@ -193,7 +193,39 @@ The schedule long pole. Review runs days-to-weeks and is commonly rejected on th
 so submit it before the rest of the listing is finished. Rejections are usually about the
 **video**, not the app.
 
-### Form answers
+### The other two declarations that appear alongside it
+
+- **Advertising ID → No.** Verified against the merged release manifest: no `AD_ID` permission,
+  no ads SDK, and nothing pulls one transitively (Crashlytics does not drag in the
+  measurement/ads libraries).
+- **`FOREGROUND_SERVICE_DATA_SYNC` → do not declare it.** The current build does **not** request
+  it; it requests `FOREGROUND_SERVICE_SHORT_SERVICE`. If Play asks, it is reading a previously
+  uploaded build — the pre-split one that still had bank sync. Uploading the current build
+  should clear it. Declaring it would also contradict the privacy policy, which says the
+  permission is Pro-only and absent from the free version.
+
+### Form answers — paste these (both inside the 500-character limit)
+
+**What is the main purpose of your app?**
+
+> SwipeWise tells you which of your own credit cards to use at the store you are standing in, so
+> you earn the most cashback and points. You add your cards from a built-in catalog — there is
+> no bank connection, no account and no card numbers. It compares the reward rates those cards
+> pay at that specific store or brand and shows you the best one. Everything is stored on your
+> device.
+
+**Describe one location-based feature that needs background location.**
+
+> Arrival alerts. SwipeWise registers geofences around nearby stores where one of the user's
+> cards earns extra rewards. When the user arrives and stays, Android wakes the app and it posts
+> a notification naming the best card — for example "You're at Whole Foods, use your Prime Visa
+> for 5%". That reminder is only useful at the moment of payment, with the phone in a pocket, so
+> it has to work when the app is closed or not in use.
+
+Both deliberately use Google's own phrase — *"when the app is closed or not in use"* — and
+describe the same feature as the in-app disclosure, which is what reviewers cross-check.
+
+### Longer-form answers (if a field allows more)
 
 **Does your app access location in the background?** Yes — `ACCESS_BACKGROUND_LOCATION`.
 
