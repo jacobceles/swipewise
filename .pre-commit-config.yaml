@@ -23,3 +23,12 @@ repos:
         entry: dart format --set-exit-if-changed lib
         language: system
         pass_filenames: false
+
+      # Fast feedback only. This does NOT replace the CI run: pre-commit is
+      # bypassable with --no-verify and never runs for anyone else who clones
+      # the repo, so anything that must hold is enforced in CI regardless.
+      - id: flutter-test
+        name: flutter test
+        entry: flutter test
+        language: system
+        pass_filenames: false

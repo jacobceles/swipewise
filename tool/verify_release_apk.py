@@ -48,6 +48,7 @@ Exits non-zero on any failure.
 
 import json
 import os
+import re
 import shutil
 import sys
 import zipfile
@@ -56,10 +57,31 @@ APK = "build/app/outputs/flutter-apk/app-release.apk"
 EXTRACT_TO = "/tmp/swipewise-release-apk-scan"
 
 # Any key whose presence in a release build's keys file is disqualifying.
-CREDENTIAL_KEYS = ("SOPHTRON_USER_ID", "SOPHTRON_ACCESS_KEY", "SOPHTRON_CUSTOMER_SALT")
+#
+# GOOGLE_PLACES_KEY joined this list on 2026-08-10, when Places moved behind the
+# Worker. It is the likeliest regression of the lot: nearby search breaking for
+# an unrelated reason looks exactly like a missing key, and putting it back
+# "just to test" produces a working app that has quietly resumed shipping a
+# credential. The proxy is the fix; the key never needs to return.
+CREDENTIAL_KEYS = (
+    "SOPHTRON_USER_ID",
+    "SOPHTRON_ACCESS_KEY",
+    "SOPHTRON_CUSTOMER_SALT",
+    "GOOGLE_PLACES_KEY",
+)
+
+# Config the release cannot work without. Absence here is not a leak, but it
+# ships an app whose Stores tab is dead, which is worth failing the build over.
+REQUIRED_KEYS = ("PLACES_PROXY_URL", "R2_BASE_URL")
 
 # Derived material — would only appear if credentials were used at build time.
 MUST_BE_ABSENT = {"HMAC auth scheme": "FIApiAUTH"}
+
+# Google API keys legitimately present in a release: the Firebase key the
+# Gradle plugin bakes in from google-services.json. Any OTHER `AIza...` string
+# is an unaccounted credential — most likely a Places key that came back.
+GOOGLE_SERVICES_JSON = "android/app/google-services.json"
+API_KEY_RE = re.compile(rb"AIza[0-9A-Za-z_\-]{35}")
 
 # A binary that shipped nothing would pass every absence check, so pin the
 # features that make this the app rather than an empty shell.
@@ -104,11 +126,19 @@ def main() -> int:
 
     present = [k for k in CREDENTIAL_KEYS if keys.get(k)]
     if present:
-        print(f"  FAIL  carries aggregator credentials: {present}")
+        print(f"  FAIL  carries credentials that must not ship: {present}")
         print("        A release must be built from a keys file without them.")
         failures += 1
     else:
-        print(f"  ok    no aggregator credentials in {keys_path}")
+        print(f"  ok    no disqualifying credentials in {keys_path}")
+
+    missing = [k for k in REQUIRED_KEYS if not keys.get(k)]
+    if missing:
+        print(f"  FAIL  missing required config: {missing}")
+        print("        The build would ship with a dead Stores tab.")
+        failures += 1
+    else:
+        print(f"  ok    required config present: {list(REQUIRED_KEYS)}")
 
     if not os.path.exists(APK):
         print(f"\nNo APK at {APK} — build it first (see this file's docstring).")
@@ -143,6 +173,38 @@ def main() -> int:
     else:
         print("\ndeep scan: SKIPPED — keys.pro.json not present (expected in CI).")
         print("  The input check above is what guards this build.")
+
+    # ── 3b. No Google API key in the binary beyond the ones Firebase bakes in.
+    #     This is the check that would catch GOOGLE_PLACES_KEY coming back: the
+    #     Gradle plugin emits only google-services.json's api_key[0], so any
+    #     other AIza... string arrived some other way and is unaccounted for.
+    print("\nGoogle API keys in the APK:")
+    try:
+        gs = json.load(open(GOOGLE_SERVICES_JSON))
+        allowed = {
+            k["current_key"]
+            for c in gs.get("client", [])
+            for k in c.get("api_key", [])
+        }
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"  FAIL  cannot read {GOOGLE_SERVICES_JSON} ({exc})")
+        allowed = set()
+        failures += 1
+
+    seen: set[str] = set()
+    for blob in blobs:
+        for m in API_KEY_RE.findall(blob):
+            seen.add(m.decode())
+        for m in API_KEY_RE.findall(blob.decode("utf-16-le", "ignore").encode()):
+            seen.add(m.decode())
+    unaccounted = sorted(seen - allowed)
+    for k in sorted(seen & allowed):
+        print(f"  ok    {k[:14]}... (declared in google-services.json)")
+    for k in unaccounted:
+        print(f"  FAIL  {k[:14]}... UNACCOUNTED — not in google-services.json")
+    failures += len(unaccounted)
+    if not seen:
+        print("  ok    none found")
 
     # ── 4. Prove it is still the app.
     print("\npresent in the APK:")

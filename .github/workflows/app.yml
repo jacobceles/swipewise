@@ -3,9 +3,18 @@
 # Two jobs, and the second is the point of the whole file:
 #
 #   analyze-test  — `flutter analyze` + the unit suite. Cheap, runs on every PR.
-#   release-gate  — builds the real release APK and runs `tool/verify_release_apk.py`,
-#                   which fails the build if any aggregator credential reached the
-#                   binary. Push-to-main only, because it needs the real keys.
+#   release-gate  — builds the real release APK and runs `tool/verify_release_apk.py`.
+#                   Push-to-main only, because it needs the keys file.
+#
+# What the gate actually asserts, as of 2026-08-10:
+#   - the keys file carries no SOPHTRON_* and no GOOGLE_PLACES_KEY
+#   - it DOES carry PLACES_PROXY_URL and R2_BASE_URL (absence ships a dead
+#     Stores tab, which is a silent failure worth failing the build over)
+#   - the APK contains no `AIza...` string beyond the Firebase key that
+#     google-services.json declares — this is what catches a Places key
+#     coming back by any route
+#   - no HMAC scheme marker, and the app's own UI strings are still present
+#     so an empty shell cannot pass by satisfying only the absence checks
 #
 # Why the release gate exists: the app ships ONE binary for both tiers (Pro is an
 # in-app subscription, so the Pro code is present and dormant for everyone). The
@@ -23,6 +32,11 @@
 # masks secrets in logs while printing variables in the clear.
 #
 #   KEYS_FREE_JSON  contents of keys.free.json — the ONLY secret this needs.
+#
+# Note that keys.free.json no longer contains a credential at all — since Places
+# moved behind the Worker it holds two public URLs. It stays a secret because
+# that costs nothing and keeps the door open for config that IS sensitive; the
+# gate is what guarantees nothing sensitive creeps in.
 #
 # Deliberately NOT here: the aggregator credentials. An earlier version uploaded
 # them so the gate could grep the APK for their exact values, which put live
