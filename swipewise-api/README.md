@@ -40,8 +40,10 @@ npm install
 npx wrangler login   # one-time, for deploy
 ```
 
-R2 bucket `swipewise-assets`, **fully private** — disable public access; the
-Worker reaches everything through its binding. Object layout (see
+One R2 bucket, **fully private** — disable public access; the Worker reaches
+everything through its binding, so the bucket is never addressed by name from
+outside. (Its name lives in `R2_BUCKET`, alongside the other R2 identifiers this
+README deliberately keeps out of the repo — see the note under Publishing.) Object layout (see
 [`src/layout.ts`](src/layout.ts)):
 
 ```
