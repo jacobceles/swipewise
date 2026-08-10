@@ -27,26 +27,21 @@
 # snapshot has been observed going stale, which would make this gate verify an
 # older binary and pass while telling you nothing.
 #
-# ── Repository secrets ───────────────────────────────────────────────────────
-# Everything is a secret, nothing is a variable: this repo is public, and GitHub
-# masks secrets in logs while printing variables in the clear.
+# ── Secrets ──────────────────────────────────────────────────────────────────
+# None. The gate reads the committed keys.free.json, which holds two public
+# URLs and no credential.
 #
-#   KEYS_FREE_JSON  contents of keys.free.json — the ONLY secret this needs.
+# It used to read a KEYS_FREE_JSON repository secret. That was a second copy of
+# the same config, and on 2026-08-10 the two drifted: the secret still carried
+# the retired GOOGLE_PLACES_KEY, so CI built a release APK with a credential in
+# it. The gate caught that on its first real run — which is the argument for
+# both the gate and for having one source of truth rather than two.
 #
-# Note that keys.free.json no longer contains a credential at all — since Places
-# moved behind the Worker it holds two public URLs. It stays a secret because
-# that costs nothing and keeps the door open for config that IS sensitive; the
-# gate is what guarantees nothing sensitive creeps in.
-#
-# Deliberately NOT here: the aggregator credentials. An earlier version uploaded
-# them so the gate could grep the APK for their exact values, which put live
-# secrets somewhere a bad workflow edit could read them — to catch a mistake
-# that is fully visible in the build *input*. The gate now reads the keys file
-# and refuses if it carries credentials. A secret that does not exist cannot
-# leak. The stronger value-grep still runs locally, where keys.pro.json already
-# is on disk.
-#
-# Fork PRs don't get secrets, which is why release-gate is push-only.
+# The aggregator credentials were never here and must not be: uploading them so
+# the gate could grep for their exact values would put live secrets where a bad
+# workflow edit could read them, to catch a mistake fully visible in the build
+# input. The stronger value-grep still runs locally, where keys.pro.json is on
+# disk.
 
 name: app
 
@@ -88,17 +83,11 @@ jobs:
       - run: flutter test
 
   release-gate:
-    # Two conditions, for two different reasons.
-    #
-    # Not a PR: fork PRs get no secrets at all, so the gate could never run
-    # there — and a same-repo PR *would* receive them, which is not a place to
-    # hand out live aggregator credentials.
-    #
-    # Only on main: `workflow_dispatch` below can otherwise be fired against
-    # ANY branch, which would run whatever workflow and code that branch
-    # contains with the build secret in the environment. Pinning the ref means
-    # a manual re-run still works where you want it (main) and nowhere else.
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # No `if:` guard any more, and that is the point. The gate used to need a
+    # repository secret, which forced it to push-on-main only — so the one check
+    # that catches a credential reaching the binary could not run on the pull
+    # request that introduced it. keys.free.json is now committed and carries no
+    # credential, so this needs nothing privileged and guards every PR too.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -109,19 +98,6 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-
-      - name: Restore keys files
-        env:
-          KEYS_FREE_JSON: ${{ secrets.KEYS_FREE_JSON }}
-        run: |
-          if [ -z "$KEYS_FREE_JSON" ]; then
-            echo "::error::KEYS_FREE_JSON is not set — the release gate cannot run."
-            echo "::error::Skipping it silently would be worse than failing, so this"
-            echo "::error::is a hard stop."
-            exit 1
-          fi
-          printf '%s' "$KEYS_FREE_JSON" > keys.free.json
-          python3 -c "import json;json.load(open('keys.free.json'))"
 
       - run: flutter pub get
       # Mandatory: a stale AOT snapshot would make the gate below inspect an
@@ -138,6 +114,3 @@ jobs:
       - name: Verify no credentials reached the APK
         run: python3 tool/verify_release_apk.py
 
-      - name: Shred the keys file
-        if: always()
-        run: rm -f keys.free.json

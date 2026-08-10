@@ -25,6 +25,15 @@ releases/*.apk
 # it once is unrecoverable — the value stays in the git objects forever.
 keys*.json
 !keys.example.json
+# keys.free.json is COMMITTED on purpose. Since Places moved behind the Worker
+# it holds no credential — only two URLs that are already baked into every
+# published APK. Keeping it as a CI secret meant a second copy of config that
+# could drift from this one, and on 2026-08-10 it did: the secret still carried
+# the retired GOOGLE_PLACES_KEY, so CI built an APK with a credential in it.
+# One source of truth removes that failure mode. The release gate refuses any
+# build whose keys file carries a credential, so this staying clean is enforced,
+# not trusted. keys.pro.json remains ignored by the glob above.
+!keys.free.json
 .env
 *.log
 

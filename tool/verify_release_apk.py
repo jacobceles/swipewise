@@ -113,7 +113,9 @@ def occurrences(blobs: list[bytes], needle: str) -> int:
 
 
 def main() -> int:
-    keys_path = sys.argv[1] if len(sys.argv) > 1 else "keys.free.json"
+    args = [a for a in sys.argv[1:] if a != "--input-only"]
+    input_only = "--input-only" in sys.argv
+    keys_path = args[0] if args else "keys.free.json"
     failures = 0
 
     # ── 1. The build input. This is the check that catches the real mistake.
@@ -139,6 +141,13 @@ def main() -> int:
         failures += 1
     else:
         print(f"  ok    required config present: {list(REQUIRED_KEYS)}")
+
+    if input_only:
+        # Pre-commit path: the keys file is checkable in milliseconds and is
+        # where a credential would first appear. The APK half needs a release
+        # build and stays in CI.
+        print(f"\n{'ALL CLEAR (input only)' if not failures else f'{failures} FAILURE(S)'}")
+        return 1 if failures else 0
 
     if not os.path.exists(APK):
         print(f"\nNo APK at {APK} — build it first (see this file's docstring).")

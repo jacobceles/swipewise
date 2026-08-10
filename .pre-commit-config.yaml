@@ -24,6 +24,15 @@ repos:
         language: system
         pass_filenames: false
 
+      # keys.free.json is committed, so this is the last point before a
+      # credential added to it would be public. Cheap — it reads one file. The
+      # APK half of the same check needs a release build and stays in CI.
+      - id: keys-free-clean
+        name: keys.free.json carries no credentials
+        entry: python3 tool/verify_release_apk.py --input-only
+        language: system
+        pass_filenames: false
+
       # Fast feedback only. This does NOT replace the CI run: pre-commit is
       # bypassable with --no-verify and never runs for anyone else who clones
       # the repo, so anything that must hold is enforced in CI regardless.

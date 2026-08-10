@@ -1,0 +1,4 @@
+{
+  "R2_BASE_URL": "https://swipewise-api.jacobceles.workers.dev",
+  "PLACES_PROXY_URL": "https://swipewise-api.jacobceles.workers.dev/places/nearby"
+}
