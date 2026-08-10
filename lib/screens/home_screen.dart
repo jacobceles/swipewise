@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -76,15 +78,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// Flips `permissionGateCompleteProvider` true on either exit path -
   /// the Stores tab's nearby providers watch this and stay idle until
   /// it's true so their Geolocator request doesn't race the gate.
+  /// Waits for the device-local identity to land.
+  ///
+  /// `_askPermissionsOnce` runs from a post-frame callback on the first build,
+  /// which fires *before* the identity has been read out of SQLite — measured
+  /// at 158ms early on a Pixel 10 Pro. Reading it one-shot there and giving up
+  /// on null is what used to strand the permission gate.
+  Future<String?> _awaitUserId() async {
+    final existing = ref.read(authProvider).userId;
+    if (existing != null) return existing;
+    final completer = Completer<String?>();
+    final sub = ref.listenManual(sessionProvider, (_, next) {
+      if (next.userId != null && !completer.isCompleted) {
+        completer.complete(next.userId);
+      }
+    });
+    try {
+      return await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => null,
+      );
+    } finally {
+      sub.close();
+    }
+  }
+
   Future<void> _askPermissionsOnce() async {
-    final auth = ref.read(authProvider);
-    final userId = auth.userId;
-    if (userId == null) return;
-    final repo = ref.read(dataRepositoryProvider);
-    final settings = SettingsRepository(repo);
     void markGateDone() {
+      if (!mounted) return;
       ref.read(permissionGateCompleteProvider.notifier).markComplete();
     }
+
+    // ⛔ Every exit path must call `markGateDone()`. The Stores tab renders a
+    // loader until this flips, so any path that returns without it leaves the
+    // tab spinning for the whole session — which is exactly what the old
+    // `if (userId == null) return;` did whenever identity lost the race.
+    final userId = await _awaitUserId();
+    if (!mounted) {
+      markGateDone();
+      return;
+    }
+    if (userId == null) {
+      // No identity at all: still release the gate rather than strand the tab.
+      // The nearby providers have their own `userId == null` guard.
+      markGateDone();
+      return;
+    }
+    final repo = ref.read(dataRepositoryProvider);
+    final settings = SettingsRepository(repo);
 
     if (await settings.getPermissionsAsked(userId)) {
       markGateDone();

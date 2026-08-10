@@ -34,6 +34,18 @@ class AppCheckService {
 
   static bool _activated = false;
 
+  /// Neither call may block indefinitely.
+  ///
+  /// Both talk to Google over the network — `activate` registers the provider
+  /// and `getToken` performs a token exchange (for the debug provider, a round
+  /// trip that swaps the debug secret for a real App Check token). Awaiting
+  /// either without a bound turns a slow or unreachable attestation service
+  /// into a hung app: `activate` is awaited before `runApp`, and `token` is
+  /// awaited before every nearby search — which showed up as a Stores tab that
+  /// spun forever while the 15s HTTP timeout, sitting *after* the token fetch,
+  /// never got the chance to fire.
+  static const _timeout = Duration(seconds: 5);
+
   /// Activates App Check for the current isolate. Safe to call more than once
   /// and safe to call in a process that never reaches the network.
   ///
@@ -43,13 +55,16 @@ class AppCheckService {
   static Future<void> activate() async {
     if (_activated) return;
     try {
-      await FirebaseAppCheck.instance.activate(
-        // Play Integrity in release; the debug provider cannot be attested and
-        // is rejected by an enforcing Worker unless its token is registered.
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
-      );
+      await FirebaseAppCheck.instance
+          .activate(
+            // Play Integrity in release; the debug provider cannot be attested
+            // and is rejected by an enforcing Worker unless its token is
+            // registered.
+            androidProvider: kDebugMode
+                ? AndroidProvider.debug
+                : AndroidProvider.playIntegrity,
+          )
+          .timeout(_timeout);
       _activated = true;
     } catch (e) {
       // Swallowed deliberately — see the class doc. A missing token is a
@@ -68,7 +83,7 @@ class AppCheckService {
   /// header" rather than as an error worth surfacing.
   static Future<String?> token() async {
     try {
-      return await FirebaseAppCheck.instance.getToken();
+      return await FirebaseAppCheck.instance.getToken().timeout(_timeout);
     } catch (e) {
       if (kDebugMode) {
         // ignore: avoid_print
