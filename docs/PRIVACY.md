@@ -127,6 +127,24 @@ Permissions at any time. The app degrades gracefully (e.g. denying
 background location keeps the Stores tab working but disables arrival
 notifications).
 
+## Deleting your data
+
+There is no "delete my account" button because there is no account, and no
+server-side record of you to delete.
+
+- **On your device** — your wallet, the local identifier and the single geofence
+  boundary row live in `swipewise.db`. Uninstalling the app removes all of it.
+  Android's *Clear storage* does the same without uninstalling.
+- **Location** — nothing to delete. The lookup service stores and logs nothing,
+  and no location history is kept anywhere.
+- **Crash reports** — these are the only data retained on our behalf, and they
+  are pseudonymous: they are keyed to a Firebase installation id that you do not
+  see and that we cannot map back to a person. That means we could not identify
+  your reports even if you asked us to remove them. They expire on Firebase's
+  own retention schedule.
+
+If you have a question about any of this, the contact route is below.
+
 ## Children
 
 SwipeWise is not intended for children under 13.
