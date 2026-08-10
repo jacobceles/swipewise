@@ -1,15 +1,17 @@
 # SwipeWise Privacy Policy
 
-_Last updated: 2026-08-09._
+_Last updated: 2026-08-10._
 
 SwipeWise is a credit-card recommendation app. This document explains what
 data the app handles, where it goes, and what we never store.
 
-**Which version you have matters.** SwipeWise on Google Play is the free
-version: it has **no account and no bank connectivity**. Sections below marked
-**(Pro only)** describe a separate build distributed privately to testers; if
-you installed from Play, they do not apply to you and the code for them is not
-even present in your app.
+**Which parts apply to you.** SwipeWise on Google Play has **no account and no
+bank connectivity**. Sections below marked **(Pro only)** describe bank-linking
+features planned as a future in-app subscription; they are not available today.
+The app ships as a single binary for both tiers, so that code is present in your
+install but dormant — it holds no credentials and connects to nothing. It is
+documented here in advance so this policy already covers you if you subscribe
+later. Until then, none of it applies to you.
 
 ## What we collect on your device
 
