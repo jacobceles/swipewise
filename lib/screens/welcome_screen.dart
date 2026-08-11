@@ -8,11 +8,12 @@ import '../theme/app_theme.dart';
 
 /// First run: sign in, or skip.
 ///
-/// Signing in unlocks nothing today — it only attaches a Google identity to
-/// the wallet so the profile has a name and the account exists ahead of the
-/// features that will need one. The copy says exactly that rather than
-/// promising backup or Pro, neither of which is built; both are marked
-/// "Soon" instead.
+/// Signing in attaches a Google identity to the wallet. That now unlocks
+/// something real — wallet backup and restore — so the copy describes it
+/// rather than promising it. Cross-device Pro is still unbuilt and stays
+/// marked "Soon": the pill comes off the day a feature ships, never the day
+/// it is planned, because this is the most-read screen in the app and copy
+/// that outruns the build is the kind of lie nobody notices writing.
 ///
 /// Skipping is a first-class choice, not a dismissal: it takes the same path
 /// the app has always taken, keeping the device-local identity minted by
@@ -97,27 +98,25 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  // Deliberately not "your cards stay on this device": that is
-                  // true of this build and becomes false the moment backup
-                  // ships — which is the feature promised two lines below.
-                  // Copy that expires is worse than vague copy, so this says
-                  // what will stay true: signing in is not itself an upload,
-                  // and backup will be a switch the user throws.
+                  // Says what is true of *this* build. Backup shipped, so the
+                  // promise is now a description — but it is still off by
+                  // default, and that is the part worth stating up front.
                   Text(
-                    'Signing in only identifies you. Nothing is uploaded — '
-                    'and when backup arrives, it will be opt-in.',
+                    'Signing in only identifies you. Backup is opt-in — '
+                    'nothing is uploaded unless you turn it on.',
                     style: AppText.bodySm(color: palette.muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 18),
-                  const _SoonRow(
+                  const _BenefitRow(
                     icon: LucideIcons.smartphone,
                     label: 'Restore your wallet on a new phone',
                   ),
                   const SizedBox(height: 12),
-                  const _SoonRow(
+                  const _BenefitRow(
                     icon: LucideIcons.crown,
                     label: 'Carry Pro across your devices',
+                    soon: true,
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 16),
@@ -196,12 +195,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 }
 
-/// A benefit that signing in will unlock, honestly labelled as not yet built.
-class _SoonRow extends StatelessWidget {
-  const _SoonRow({required this.icon, required this.label});
+/// A benefit of signing in. [soon] marks the ones not built yet, so the screen
+/// never claims something the build cannot do — the pill comes off the day the
+/// feature ships, not the day it is planned.
+class _BenefitRow extends StatelessWidget {
+  const _BenefitRow({
+    required this.icon,
+    required this.label,
+    this.soon = false,
+  });
 
   final IconData icon;
   final String label;
+  final bool soon;
 
   @override
   Widget build(BuildContext context) {
@@ -211,15 +217,17 @@ class _SoonRow extends StatelessWidget {
         Icon(icon, size: 18, color: palette.muted),
         const SizedBox(width: 10),
         Expanded(child: Text(label, style: AppText.bodySm())),
-        const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: palette.secondary,
-            borderRadius: BorderRadius.circular(kRadiusPill),
+        if (soon) ...[
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: palette.secondary,
+              borderRadius: BorderRadius.circular(kRadiusPill),
+            ),
+            child: Text('Soon', style: AppText.labelSm(color: palette.muted)),
           ),
-          child: Text('Soon', style: AppText.labelSm(color: palette.muted)),
-        ),
+        ],
       ],
     );
   }

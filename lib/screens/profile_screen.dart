@@ -483,9 +483,9 @@ class _SignInCard extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Your cards live on this device and nothing is uploaded. Signing '
-            'in readies the account for backup and cross-device Pro — both '
-            'coming soon, and backup will be opt-in.',
+            'Sign in to back up your cards and restore them on a new phone. '
+            'Backup is opt-in — nothing is uploaded unless you turn it on. '
+            'Cross-device Pro is coming soon.',
             style: AppText.bodySm(color: palette.muted),
           ),
           if (error != null) ...[
