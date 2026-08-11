@@ -8604,6 +8604,178 @@
                 },
                 {
                   "type": "frame",
+                  "id": "pV8yA",
+                  "name": "Back Up My Wallet",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "i5pHWD",
+                      "name": "Debit Top Row",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "wHH4p",
+                          "name": "Debit Label",
+                          "fill": "$--foreground",
+                          "content": "Back Up My Wallet",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JaXEb",
+                          "name": "Toggle Track",
+                          "width": 48,
+                          "height": 28,
+                          "fill": "$--secondary",
+                          "cornerRadius": 14,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "qDyCn",
+                              "x": 3,
+                              "y": 3,
+                              "name": "Toggle Thumb",
+                              "fill": "$--muted-foreground",
+                              "width": 22,
+                              "height": 22
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "o21Mq",
+                      "name": "Debit Sub Copy",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Keeps a copy of your cards, nicknames and preferences so you can restore them on a new phone. Your transactions are never uploaded.",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EBKHS",
+                  "name": "Back Up Now",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "U4343G",
+                      "name": "Preferred Card Order Label",
+                      "fill": "$--foreground",
+                      "content": "Back Up Now",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "CxCyc",
+                      "name": "Preferred Card Order Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "SUwa1",
+                          "name": "Preferred Card Order Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OCBfN",
+                  "name": "Restore From Backup",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KWrjJ",
+                      "name": "Preferred Card Order Label",
+                      "fill": "$--foreground",
+                      "content": "Restore From Backup",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "SyLEe",
+                      "name": "Preferred Card Order Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "DzRpX",
+                          "name": "Preferred Card Order Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "s84rm",
                   "name": "Search Radius",
                   "width": "fill_container",
@@ -15014,7 +15186,7 @@
           "name": "Logo Strategy Note - Add Bank Popular",
           "width": 300,
           "height": 120,
-          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real Sophtron logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
+          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real aggregator logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
         },
         {
           "type": "note",
@@ -15024,7 +15196,7 @@
           "name": "Logo Strategy Note - Reconnect",
           "width": 300,
           "height": 120,
-          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real Sophtron logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
+          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real aggregator logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
         },
         {
           "type": "frame",
@@ -17463,7 +17635,7 @@
           "name": "Flow Note - Fork",
           "width": 400,
           "height": 170,
-          "content": "NEW FORK. After a bank is picked in Institution Picker, this Connection Method screen asks Automatic vs Manual.\n\n• Automatic → existing Sophtron flow unchanged (Bootstrap Busy → Credentials → Challenges → First Sync).\n• Manual → Select Cards → Card Details → Result.\n\nInstitution Picker itself is visually unchanged; only its on-tap navigation now routes here first instead of straight into Sophtron."
+          "content": "NEW FORK. After a bank is picked in Institution Picker, this Connection Method screen asks Automatic vs Manual.\n\n• Automatic → existing bank-link flow unchanged (Bootstrap Busy → Credentials → Challenges → First Sync).\n• Manual → Select Cards → Card Details → Result.\n\nInstitution Picker itself is visually unchanged; only its on-tap navigation now routes here first instead of straight into the bank-link flow."
         },
         {
           "type": "note",
@@ -32287,7 +32459,7 @@
           "name": "Logo Strategy Note - Cards Updated",
           "width": 300,
           "height": 120,
-          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real Sophtron logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
+          "content": "Logo strategy: Brand-tinted landmark icons are PLACEHOLDERS. Implementation uses real aggregator logo URLs (from the Logo field on each institution). Letter-initial tile is the last-resort fallback when no logo URL exists. The light #F0F0F0 tile background ships as-is for all logo styles."
         }
       ]
     },
