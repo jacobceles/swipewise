@@ -230,6 +230,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final palette = AppPalette.of(context);
     final isPro = ref.watch(proEntitlementProvider);
     final auth = ref.watch(authProvider);
+    // Signed in means "has a Google identity", which is independent of Pro:
+    // anyone can sign in, and a subscriber who skipped it has not. The email
+    // is the marker — `isLoggedIn` is true even for the device-local identity.
+    final signedIn = auth.email != null;
     final defaultScreen = ref.watch(defaultScreenProvider);
     final advisorView = ref.watch(advisorViewProvider);
     final nearbyRadius = ref.watch(nearbyRadiusProvider);
@@ -249,11 +253,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Profile',
                     style: AppText.displayLg().copyWith(fontSize: 28),
                   ),
-                  // Free has no account to sign out of, and `logout()` deletes
-                  // the `users` row — which cascades through every
-                  // user-scoped table. One stray tap would wipe the wallet
-                  // with nothing to sign back into.
-                  if (isPro)
+                  // Offered to anyone holding a Google identity, not just
+                  // Pro. Safe to tap now that `logout()` re-keys onto a local
+                  // id instead of deleting the `users` row — it used to
+                  // cascade through every user-scoped table and wipe the
+                  // wallet.
+                  if (signedIn)
                     GestureDetector(
                       onTap: () => ref.read(authProvider.notifier).logout(),
                       child: Container(
@@ -274,46 +279,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
                 children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                  if (signedIn)
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            // Initials come from a Google account name, which
+                            // a signed-out user doesn't have — their
+                            // identifier is the literal "You", so `_initials`
+                            // rendered "YO" above the word "You".
+                            child: Text(
+                              _initials(auth.identifier),
+                              style: AppText.displayLg(
+                                color: AppColors.onPrimary,
+                              ).copyWith(fontSize: 28),
+                            ),
                           ),
-                          // Initials are derived from a Google account name,
-                          // which free doesn't have — its identifier is the
-                          // literal "You", so `_initials` rendered "YO" above
-                          // the word "You". An icon says the same thing
-                          // ("this is your profile") without pretending to be
-                          // a name.
-                          child: isPro
-                              ? Text(
-                                  _initials(auth.identifier),
-                                  style: AppText.displayLg(
-                                    color: AppColors.onPrimary,
-                                  ).copyWith(fontSize: 28),
-                                )
-                              : const Icon(
-                                  LucideIcons.user,
-                                  size: 34,
-                                  color: AppColors.onPrimary,
-                                ),
-                        ),
-                        if (isPro) ...[
                           const SizedBox(height: 12),
                           Text(
                             auth.identifier ?? '-',
                             style: AppText.bodyMd(color: palette.muted),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
+                      ),
+                    )
+                  else
+                    const _SignInCard(),
                   const SizedBox(height: 28),
                   _SettingsRow(
                     label: 'Default Screen',
@@ -441,6 +439,86 @@ String _dwellSummary(Map<String, int> dwell) {
     if (defaults[e.key] != e.value) return 'Custom';
   }
   return 'Default';
+}
+
+/// Sign-in entry for anyone who skipped the welcome screen.
+///
+/// Signs in in place rather than navigating back to the welcome screen: that
+/// screen is first-run framing built around a choice this user already made,
+/// and returning them to it would read as starting over. The promise here is
+/// the same one the welcome screen makes, and just as hedged — neither backup
+/// nor cross-device Pro exists yet.
+class _SignInCard extends ConsumerWidget {
+  const _SignInCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final auth = ref.watch(authProvider);
+    final error = auth.error;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(kRadiusM),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                LucideIcons.user,
+                size: 20,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 10),
+              Text("You're not signed in", style: AppText.titleMd()),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Your cards live on this device and nothing is uploaded. Signing '
+            'in readies the account for backup and cross-device Pro — both '
+            'coming soon, and backup will be opt-in.',
+            style: AppText.bodySm(color: palette.muted),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Text(error, style: AppText.bodySm(color: palette.red)),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: auth.isLoading
+                  ? null
+                  : () => ref.read(authProvider.notifier).signInWithGoogle(),
+              child: auth.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppColors.onPrimary,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.login, size: 18),
+                        SizedBox(width: 10),
+                        Text('Continue with Google'),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DwellEditorSheet extends ConsumerWidget {

@@ -131,7 +131,13 @@ class _TopBar extends ConsumerWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => context.push(isPro ? '/add-bank' : '/add-cards'),
+            onTap: () {
+              if (!isPro) {
+                context.push('/add-cards');
+              } else if (_canLinkBank(context, ref)) {
+                context.push('/add-bank');
+              }
+            },
             child: Container(
               width: 36,
               height: 36,
@@ -518,7 +524,9 @@ class _BankSectionState extends ConsumerState<_BankSection> {
             height: 44,
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => context.push('/add-bank'),
+              onPressed: () {
+                if (_canLinkBank(context, ref)) context.push('/add-bank');
+              },
               child: const Text('Reconnect bank'),
             ),
           ),
@@ -769,6 +777,28 @@ String _relativeDate(String iso) {
   if (diff.inHours < 24) return '${diff.inHours}h ago';
   if (diff.inDays < 7) return '${diff.inDays}d ago';
   return DateFormat('MMM d, y').format(dt.toLocal());
+}
+
+/// Guards the bank-link entry points on having a Google identity.
+///
+/// The aggregator Customer id is `sha256(email + salt)` — see
+/// `SophtronConfig.deriveCustomerUniqueId` — so linking a bank needs a
+/// signed-in email. Signing in is optional in both tiers now, which means a
+/// Pro user can reach these buttons without one; the link flow would then run
+/// all the way through and sync nothing, because `runSync` bails on a null
+/// `bankCustomerId`. Say it up front instead.
+///
+/// Returns true when linking may proceed, and otherwise explains why not.
+bool _canLinkBank(BuildContext context, WidgetRef ref) {
+  if (ref.read(authProvider).email != null) return true;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Sign in from Profile first — a bank link is tied to your account.',
+      ),
+    ),
+  );
+  return false;
 }
 
 /// Reconnect from the broken bank section (or the bank info sheet) routes
@@ -2294,8 +2324,13 @@ class _EmptyBody extends ConsumerWidget {
             SizedBox(
               width: 200,
               child: ElevatedButton.icon(
-                onPressed: () =>
-                    context.push(isPro ? '/add-bank' : '/add-cards'),
+                onPressed: () {
+                  if (!isPro) {
+                    context.push('/add-cards');
+                  } else if (_canLinkBank(context, ref)) {
+                    context.push('/add-bank');
+                  }
+                },
                 icon: const Icon(LucideIcons.plus, size: 18),
                 label: Text(isPro ? 'Add bank' : 'Add cards'),
               ),

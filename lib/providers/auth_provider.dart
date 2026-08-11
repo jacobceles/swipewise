@@ -239,14 +239,56 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Signs out without deleting anything.
+  ///
+  /// Signing in is optional and reversible, so signing out has to be too. The
+  /// Firebase UID is re-keyed back onto a fresh device-local id — the exact
+  /// reverse of the re-key in [signInWithGoogle] — carrying the wallet, the
+  /// settings and the onboarding flag across intact. Only the Google identity
+  /// is dropped.
+  ///
+  /// This used to be `db.delete('users')`. With `PRAGMA foreign_keys = ON`
+  /// every table in [kUserScopedTables] cascades on that delete, so a single
+  /// tap erased the whole wallet. Nothing is destroyed here, on the device or
+  /// off it: someone changing phones has not asked us to throw their data
+  /// away, and deletion belongs behind an explicit request, not behind the
+  /// sign-out button.
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await FirebaseAuth.instance.signOut();
-    await _ensureGoogleInitialized();
-    await GoogleSignIn.instance.signOut();
+    try {
+      await _ensureGoogleInitialized();
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // Clearing the cached Google account is a convenience — it decides
+      // whether the next sign-in shows the account picker. Firebase is
+      // already signed out above, so failing here must not strand the user
+      // in a half-signed-out state they can't leave.
+    }
+
     final db = await _dbHelper.database;
-    await db.delete('users');
+    final rows = await db.query('users', columns: ['id'], limit: 1);
+    if (rows.isNotEmpty) {
+      var id = rows.first['id'] as String;
+      if (!id.startsWith(kLocalUserIdPrefix)) {
+        final localId = '$kLocalUserIdPrefix${_uuidV4()}';
+        await _dbHelper.reassignUserId(from: id, to: localId);
+        id = localId;
+      }
+      // `reassignUserId` copies the row wholesale, so the Google-derived
+      // fields ride along on the new id and have to be cleared by hand.
+      await db.update(
+        'users',
+        {'identifier': 'You', 'email': null, 'bank_customer_id': null},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+    // Reset before re-reading. `copyWith` reads null as "unchanged", so
+    // `checkStatus` on its own would carry the signed-out email straight back
+    // into the state it just cleared.
     state = AuthState();
+    await checkStatus();
   }
 }
 

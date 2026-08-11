@@ -1,44 +1,24 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'providers/entitlement_provider.dart';
-import 'providers/auth_provider.dart';
-import 'screens/login_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'screens/add_bank_v2_screen.dart';
 import 'screens/add_cards_screen.dart';
-
-class _AuthListenable extends ChangeNotifier {
-  _AuthListenable(Ref ref) {
-    ref.listen<AuthState>(authProvider, (prev, next) {
-      if (prev?.isLoggedIn != next.isLoggedIn) notifyListeners();
-    });
-  }
-}
+import 'theme/app_theme.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final listenable = _AuthListenable(ref);
-
+  // No redirect, and no auth guard. Signing in is optional in both tiers —
+  // it attaches an identity, it does not unlock the app — so there is no
+  // signed-out state to bounce anyone out of. What used to live here as a
+  // Pro-only `/login` redirect is now [_LaunchGate], which decides between
+  // the welcome screen and the app from the user's own answer.
   return GoRouter(
     initialLocation: '/',
-    refreshListenable: listenable,
-    redirect: (context, state) {
-      // Without Pro there is nothing to sign in to: `AuthNotifier` provisions
-      // a device-local identity on first launch, so there is no signed-out
-      // state to guard. Read, not watched — a redirect callback runs per
-      // navigation and re-reads this each time.
-      if (!ref.read(proEntitlementProvider)) return null;
-
-      final isLoggedIn = ref.read(authProvider).isLoggedIn;
-      final isLoggingIn = state.matchedLocation == '/login';
-
-      if (!isLoggedIn && !isLoggingIn) return '/login';
-      if (isLoggedIn && isLoggingIn) return '/';
-      return null;
-    },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/', builder: (context, state) => const _LaunchGate()),
       // Build a wallet straight off the catalog, no bank. The only way to add
       // a card in a free build, and available in Pro too — plenty of cards
       // aren't behind a linkable bank.
@@ -75,3 +55,60 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Chooses between the welcome screen and the app itself.
+///
+/// Done as a widget rather than a `redirect` because the answer comes out of
+/// SQLite: a redirect would have to let `/` build first and then bounce, which
+/// flashes the app — and worse, `HomeScreen` fires the four OS permission
+/// dialogs from its first post-frame callback, so the flash would put system
+/// prompts on screen *before* the user had chosen anything.
+class _LaunchGate extends ConsumerWidget {
+  const _LaunchGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref
+        .watch(onboardingSeenProvider)
+        .when(
+          data: (seen) => seen ? const HomeScreen() : const WelcomeScreen(),
+          loading: () => const _Splash(),
+          // Nothing here is worth an error screen: if the flag can't be read,
+          // offering the choice again is harmless — the cost of asking twice
+          // is far lower than skipping the choice entirely.
+          error: (_, _) => const WelcomeScreen(),
+        );
+  }
+}
+
+/// Held for the few milliseconds it takes to read the onboarding flag.
+///
+/// Deliberately the welcome screen's own hero, so the first frame the user
+/// sees is already in place and neither branch arrives as a jump cut.
+class _Splash extends StatelessWidget {
+  const _Splash();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: SizedBox(
+          width: 88,
+          height: 88,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              LucideIcons.creditCard,
+              size: 38,
+              color: AppColors.onPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

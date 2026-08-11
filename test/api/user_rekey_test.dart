@@ -172,6 +172,72 @@ void main() {
           'on delete — which is why sign-in must never use it',
     );
   });
+
+  // Sign-out runs the same re-key backwards, and this is the assertion that
+  // matters most in the whole file. `logout()` used to be
+  // `db.delete('users')`, which cascades through every table above: one tap
+  // on the sign-out icon and the entire wallet was gone. Signing in is
+  // optional and reversible now, so signing out must destroy nothing — a user
+  // changing phones has not asked us to throw their data away.
+  test('sign-out re-keys back to a local id and loses nothing', () async {
+    final db = await DatabaseHelper().database;
+    await db.insert('users', {
+      'id': 'uid-bbbb',
+      'identifier': 'Jacob',
+      'email': 'someone@example.com',
+      'bank_customer_id': 'derived-customer-id',
+      'auth_time': 1700000000,
+    });
+    for (final table in kUserScopedTables) {
+      await db.insert(table, await _minimalRow(db, table, 'uid-bbbb'));
+    }
+    await db.insert('settings', {
+      'user_id': 'uid-bbbb',
+      'key': 'onboarding_seen',
+      'value': 'true',
+    });
+
+    // Exactly what AuthNotifier.logout does.
+    await DatabaseHelper().reassignUserId(from: 'uid-bbbb', to: 'local:cccc');
+    await db.update(
+      'users',
+      {'identifier': 'You', 'email': null, 'bank_customer_id': null},
+      where: 'id = ?',
+      whereArgs: ['local:cccc'],
+    );
+
+    for (final table in kUserScopedTables) {
+      expect(
+        await _countFor(db, table, 'local:cccc'),
+        greaterThanOrEqualTo(1),
+        reason: '$table was destroyed by signing out',
+      );
+    }
+
+    final onboarding = await db.query(
+      'settings',
+      where: 'user_id = ? AND key = ?',
+      whereArgs: ['local:cccc', 'onboarding_seen'],
+    );
+    expect(
+      onboarding.single['value'],
+      'true',
+      reason: 'signing out must not drop the user back into first-run',
+    );
+
+    final user = (await db.query('users')).single;
+    expect(user['id'], 'local:cccc');
+    expect(
+      user['email'],
+      isNull,
+      reason: 'the Google identity is the one thing sign-out does drop',
+    );
+    expect(
+      user['bank_customer_id'],
+      isNull,
+      reason: 'the derived Customer id is meaningless without the email',
+    );
+  });
 }
 
 Future<int> _countFor(Database db, String table, String userId) async {

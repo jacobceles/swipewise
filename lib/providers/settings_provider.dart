@@ -293,6 +293,55 @@ final permissionGateCompleteProvider =
       PermissionGateCompleteNotifier.new,
     );
 
+/// Whether the first-run welcome screen has already been answered.
+///
+/// `/` renders the welcome screen until this is true, which puts the
+/// sign-in-or-skip choice ahead of everything else — including the four OS
+/// permission dialogs, which only fire once `HomeScreen` builds.
+class OnboardingSeenNotifier extends AsyncNotifier<bool> {
+  /// Sticky for the life of the provider. Signing in re-keys `users.id` from
+  /// the local UUID to the Firebase UID, which changes the value watched
+  /// below and rebuilds this notifier — and that rebuild would re-read the
+  /// flag under the *new* id, where nothing has been written yet, throwing
+  /// the user back to the welcome screen at the exact moment they finished
+  /// with it. Once answered, the answer stands.
+  bool _answered = false;
+
+  @override
+  Future<bool> build() async {
+    if (_answered) return true;
+    final userId = ref.watch(authProvider.select((s) => s.userId));
+    if (userId == null) {
+      // The device-local identity is minted asynchronously on first launch,
+      // so a null id here means "not known yet", not "new user". Answering
+      // false would flash the welcome screen on *every* launch; instead stay
+      // in `loading` and let the watch above rebuild us when the id lands.
+      //
+      // The delay is a floor, not a wait: if identity arrives first this
+      // future is discarded. It only matters when identity never arrives at
+      // all, and then falling through to the welcome screen is the right
+      // failure — it is still skippable. Ten seconds matches the identity
+      // timeout `HomeScreen` uses for the permission gate.
+      return Future<bool>.delayed(const Duration(seconds: 10), () => false);
+    }
+    return _settings.getOnboardingSeen(userId);
+  }
+
+  /// Records that the choice was made, and shows the app immediately rather
+  /// than waiting on the write.
+  Future<void> markSeen() async {
+    final userId = ref.read(authProvider).userId;
+    _answered = true;
+    state = const AsyncData(true);
+    if (userId != null) await _settings.setOnboardingSeen(userId);
+  }
+}
+
+final onboardingSeenProvider =
+    AsyncNotifierProvider<OnboardingSeenNotifier, bool>(
+      OnboardingSeenNotifier.new,
+    );
+
 /// "Include debit accounts" - when ON, Sophtron sync pulls deposit
 /// accounts (checking/savings) alongside credit cards. Default OFF.
 ///

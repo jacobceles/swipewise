@@ -20,6 +20,7 @@ class SettingsRepository {
   static const _kNearbyDwellSecondsByCategory = 'nearby_dwell_by_category';
   static const _kNearbyPlaceTypeIds = 'nearby_place_type_ids';
   static const _kPermissionsAsked = 'permissions_asked';
+  static const _kOnboardingSeen = 'onboarding_seen';
   static const _kCardPreferenceOrder = 'card_preference_order';
   static const _kDismissedRecurringTips = 'dismissed_recurring_tips';
   static const _kIncludeDebitAccounts = 'include_debit_accounts';
@@ -284,6 +285,22 @@ class SettingsRepository {
 
   Future<void> setPermissionsAsked(String userId) =>
       _repo.setSetting(userId, _kPermissionsAsked, 'true');
+
+  /// Whether the first-run welcome screen has been answered — by signing in
+  /// or by skipping. Both count: the point is that the choice was offered,
+  /// not which way it went.
+  ///
+  /// Stored per user rather than per device so it survives the sign-in
+  /// re-key. `settings` is in [kUserScopedTables], so someone who skips and
+  /// later signs in carries this onto their Firebase UID instead of being
+  /// asked all over again.
+  Future<bool> getOnboardingSeen(String userId) async {
+    final raw = await _repo.getSetting(userId, _kOnboardingSeen);
+    return raw == 'true';
+  }
+
+  Future<void> setOnboardingSeen(String userId) =>
+      _repo.setSetting(userId, _kOnboardingSeen, 'true');
 
   /// Whether deposit (checking / savings) accounts are pulled in by Sophtron
   /// sync alongside credit cards. Default OFF - most users only care about
