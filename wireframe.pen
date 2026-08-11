@@ -42885,6 +42885,1092 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "bgEXS",
+      "x": -370,
+      "y": 100,
+      "name": "Welcome",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "qPsIX",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "jRhKs",
+          "name": "Hero Section",
+          "width": "fill_container",
+          "height": 385,
+          "layout": "vertical",
+          "gap": 16,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "i4LQs6",
+              "name": "App Icon",
+              "width": 88,
+              "height": 88,
+              "fill": "$--primary",
+              "cornerRadius": 44,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lVQAK",
+                  "name": "Icon Letter",
+                  "fill": "$--primary-foreground",
+                  "content": "S",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 36,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "aMpY7",
+              "name": "App Name",
+              "fill": "$--foreground",
+              "content": "SwipeWise",
+              "fontFamily": "$--font-primary",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "SCndp",
+              "name": "Tagline",
+              "fill": "$--muted-foreground",
+              "content": "Smart Credit Card Management",
+              "fontFamily": "$--font-primary",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "iJopr",
+          "name": "Bottom Card",
+          "width": "fill_container",
+          "fill": "$--sheet",
+          "cornerRadius": [
+            24,
+            24,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            30,
+            20,
+            34,
+            20
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "fHYqU",
+              "name": "Card Title",
+              "fill": "$--foreground",
+              "content": "Sign in, or skip for now",
+              "fontFamily": "$--font-primary",
+              "fontSize": 20,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "vCaNM",
+              "name": "Card Body",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Signing in only identifies you. Your cards stay on this device either way — nothing is uploaded.",
+              "lineHeight": 1.4,
+              "textAlign": "center",
+              "fontFamily": "$--font-primary",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "S5kQA",
+              "name": "Benefits",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                14,
+                0,
+                2,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "t7B0Mt",
+                  "name": "Restore your wallet on a new phone",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "rmv3j",
+                      "name": "Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "smartphone",
+                      "library": "lucide",
+                      "fill": "$--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NsqJs",
+                      "name": "Label",
+                      "fill": "$--foreground",
+                      "content": "Restore your wallet on a new phone",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "F9GjRF",
+                      "name": "Soon Pill",
+                      "fill": "$--secondary",
+                      "cornerRadius": "$--radius-pill",
+                      "padding": [
+                        3,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "r0HgW",
+                          "name": "Soon Label",
+                          "fill": "$--muted-foreground",
+                          "content": "Soon",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LATsh",
+                  "name": "Carry Pro across your devices",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "t8tjZu",
+                      "name": "Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "crown",
+                      "library": "lucide",
+                      "fill": "$--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PTWit",
+                      "name": "Label",
+                      "fill": "$--foreground",
+                      "content": "Carry Pro across your devices",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "y3Tf0",
+                      "name": "Soon Pill",
+                      "fill": "$--secondary",
+                      "cornerRadius": "$--radius-pill",
+                      "padding": [
+                        3,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "NS2y0",
+                          "name": "Soon Label",
+                          "fill": "$--muted-foreground",
+                          "content": "Soon",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YxKul",
+              "name": "Google Button",
+              "width": "fill_container",
+              "height": 52,
+              "fill": "$--primary",
+              "cornerRadius": "$--radius-m",
+              "gap": 10,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "tkErP",
+                  "name": "Google Icon",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "log-in",
+                  "library": "lucide",
+                  "fill": "$--primary-foreground"
+                },
+                {
+                  "type": "text",
+                  "id": "ZYEIU",
+                  "name": "Google Label",
+                  "fill": "$--primary-foreground",
+                  "content": "Continue with Google",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "O9Hk83",
+              "name": "Skip Button",
+              "width": "fill_container",
+              "height": 52,
+              "cornerRadius": "$--radius-m",
+              "stroke": "$--border",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "M0DhAt",
+                  "name": "Skip Label",
+                  "fill": "$--foreground",
+                  "content": "Skip for now",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "o9f1h",
+              "name": "Footnote",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "You can sign in any time from Profile.",
+              "textAlign": "center",
+              "fontFamily": "$--font-primary",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "X7tfPS",
+      "x": -370,
+      "y": 2200,
+      "name": "Profile - Signed Out",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "padding": [
+        0,
+        0,
+        12,
+        0
+      ],
+      "children": [
+        {
+          "id": "NexSH",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "pVac8",
+          "name": "Top Bar",
+          "width": "fill_container",
+          "padding": [
+            8,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "nA3GX",
+              "name": "Title",
+              "fill": "$--foreground",
+              "content": "Profile",
+              "fontFamily": "Inter",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "WpsL8",
+              "x": 330,
+              "y": 8,
+              "name": "Logout Button",
+              "enabled": false,
+              "width": 40,
+              "height": 40,
+              "fill": "$--secondary",
+              "cornerRadius": 20,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "SBT40",
+                  "name": "Logout Icon",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "log-out",
+                  "library": "lucide",
+                  "fill": "$--muted-foreground"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dVduC",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 28,
+          "padding": [
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "jiyEt",
+              "name": "Sign In Card",
+              "width": "fill_container",
+              "fill": "$--card",
+              "cornerRadius": "$--radius-m",
+              "stroke": "$--border",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "S0uWq",
+                  "name": "Card Head",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "xp56j",
+                      "name": "User Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "user-round",
+                      "library": "lucide",
+                      "fill": "$--primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PdnBZ",
+                      "name": "Head Label",
+                      "fill": "$--foreground",
+                      "content": "You're not signed in",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "d1a51",
+                  "name": "Card Body",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Your cards live on this device and stay there. Sign in to restore them on a new phone and carry Pro across devices — both coming soon.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "vpSkV",
+                  "name": "Google Button",
+                  "width": "fill_container",
+                  "height": 48,
+                  "fill": "$--primary",
+                  "cornerRadius": "$--radius-m",
+                  "gap": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "yeJdq",
+                      "name": "Google Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "log-in",
+                      "library": "lucide",
+                      "fill": "$--primary-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yo4AB",
+                      "name": "Google Label",
+                      "fill": "$--primary-foreground",
+                      "content": "Continue with Google",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Gahie",
+              "name": "Settings List",
+              "width": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jGuZg",
+                  "name": "Default Screen",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txEYf",
+                      "name": "Default Screen Label",
+                      "fill": "$--foreground",
+                      "content": "Default Screen",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "BTuHv",
+                      "name": "Default Screen Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "UcNx4",
+                          "name": "Default Screen Value",
+                          "fill": "$--muted-foreground",
+                          "content": "Transactions",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "D8YHW",
+                          "name": "Default Screen Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "e7Tc5Z",
+                  "name": "Default Advisor View",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MekPl",
+                      "name": "Default Advisor View Label",
+                      "fill": "$--foreground",
+                      "content": "Default Advisor View",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Fjy8H",
+                      "name": "Default Advisor View Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "rvrMI",
+                          "name": "Default Advisor View Value",
+                          "fill": "$--muted-foreground",
+                          "content": "Stores",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "jzRXd",
+                          "name": "Default Advisor View Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Pnb8B",
+                  "name": "Preferred Card Order",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XoLz5",
+                      "name": "Preferred Card Order Label",
+                      "fill": "$--foreground",
+                      "content": "Preferred Card Order",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "c0vvW1",
+                      "name": "Preferred Card Order Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "e0n7i",
+                          "name": "Preferred Card Order Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JPthE",
+                  "name": "Search Radius",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "IQDG2",
+                      "name": "Search Radius Label",
+                      "fill": "$--foreground",
+                      "content": "Search Radius",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J6iLf",
+                      "name": "Search Radius Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "f1SK2",
+                          "name": "Search Radius Value",
+                          "fill": "$--muted-foreground",
+                          "content": "5 mi",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "XPBmz",
+                          "name": "Search Radius Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "odv3j",
+                  "name": "Dwell Time per Category",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "s8sXnT",
+                      "name": "Dwell Time per Category Label",
+                      "fill": "$--foreground",
+                      "content": "Alert Wait Time",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Z6iXNU",
+                      "name": "Dwell Time per Category Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "N9eT3O",
+                          "name": "Dwell Time per Category Value",
+                          "fill": "$--muted-foreground",
+                          "content": "Default",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "x2FNe",
+                          "name": "Dwell Time per Category Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GsVmj",
+                  "name": "Muted Stores",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gcqeg",
+                      "name": "Muted Stores Label",
+                      "fill": "$--foreground",
+                      "content": "Muted Stores",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KFFxx",
+                      "name": "Muted Stores Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "a7QXv",
+                          "name": "Muted Stores Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "x6I8P",
+                  "name": "Recurring Transactions",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "z7iatO",
+                      "name": "Recurring Transactions Label",
+                      "fill": "$--foreground",
+                      "content": "Recurring Transactions",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "U1rBXw",
+                      "name": "Recurring Transactions Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "CCjEm",
+                          "name": "Recurring Transactions Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Mgrsd",
+                  "name": "Include Debit Accounts",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "f0pOm7",
+                      "name": "Debit Top Row",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "gW9WV",
+                          "name": "Debit Label",
+                          "fill": "$--foreground",
+                          "content": "Include Debit Accounts",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MUTg4",
+                          "name": "Toggle Track",
+                          "width": 48,
+                          "height": 28,
+                          "fill": "$--secondary",
+                          "cornerRadius": 14,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "P7qzYF",
+                              "x": 3,
+                              "y": 3,
+                              "name": "Toggle Thumb",
+                              "fill": "$--muted-foreground",
+                              "width": 22,
+                              "height": 22
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "lii4b",
+                      "name": "Debit Sub Copy",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Only credit cards are tracked by default. Enable to include checking & savings across transactions, breakdowns, and totals.",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kMZe3",
+                  "name": "Privacy Policy",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rDbWm",
+                      "name": "Privacy Policy Label",
+                      "fill": "$--foreground",
+                      "content": "Privacy Policy",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "B01JVK",
+                      "name": "Privacy Policy Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "vxOnJ",
+                          "name": "Privacy Policy Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FY6Kp",
+                  "name": "Check for Updates",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "k35r7m",
+                      "name": "Check for Updates Label",
+                      "fill": "$--foreground",
+                      "content": "Check for Updates",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "P9XV4",
+                      "name": "Check for Updates Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "b56EgY",
+                          "name": "Check for Updates Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tuDhC",
+          "type": "ref",
+          "ref": "kr0AR",
+          "name": "Tab Bar",
+          "width": "fill_container",
+          "descendants": {
+            "bVhCd": {
+              "fill": "#FF840026"
+            },
+            "TH8pR": {
+              "fill": "$--primary"
+            },
+            "xh0QM": {
+              "fill": "$--primary"
+            }
+          }
+        }
+      ]
     }
   ],
   "variables": {
