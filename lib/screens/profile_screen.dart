@@ -7,6 +7,8 @@ import '../api/settings_repository.dart';
 import '../providers/entitlement_provider.dart';
 import '../nearby/geofence_channel.dart';
 import '../providers/auth_provider.dart';
+import '../providers/backup_provider.dart';
+import '../sync/wallet_backup_client.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_tab_bar.dart';
@@ -347,6 +349,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
+                  const _BackupSection(),
                   _SettingsRow(
                     label: 'Search Radius',
                     trailing: _ValueChevron(value: '$nearbyRadius mi'),
@@ -740,6 +743,171 @@ class _SettingsRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Wallet backup: the opt-in toggle, plus the two manual directions.
+///
+/// Shown even when it cannot be used, disabled with the reason, rather than
+/// hidden — a feature nobody can find is not a feature, and "sign in to turn
+/// this on" is a better answer than an empty space.
+///
+/// The manual rows exist because automatic restore deliberately only fires
+/// onto an empty wallet. When both sides hold cards there is no safe automatic
+/// answer, so the user picks a direction and is told exactly what it destroys.
+class _BackupSection extends ConsumerStatefulWidget {
+  const _BackupSection();
+
+  @override
+  ConsumerState<_BackupSection> createState() => _BackupSectionState();
+}
+
+class _BackupSectionState extends ConsumerState<_BackupSection> {
+  bool _busy = false;
+
+  void _say(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _run(Future<String> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      _say(await action());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _backUpNow() => _run(() async {
+    final status = await ref.read(walletBackupControllerProvider).backUpNow();
+    return switch (status) {
+      BackupStatus.ok => 'Wallet backed up.',
+      BackupStatus.unavailable => 'Sign in to back up your wallet.',
+      BackupStatus.empty || BackupStatus.failed => "Backup didn't complete.",
+    };
+  });
+
+  Future<void> _restore() async {
+    final confirmed = await _confirm(
+      title: 'Restore from backup?',
+      body:
+          'This replaces the cards, nicknames and preferences on this phone '
+          'with the ones in your backup. Anything here that is not in the '
+          'backup is lost. Your transactions are not affected.',
+      action: 'Restore',
+    );
+    if (!confirmed) return;
+    await _run(() async {
+      final outcome = await ref
+          .read(walletBackupControllerProvider)
+          .restoreNow();
+      return switch (outcome) {
+        RestoreOutcome.restored => 'Wallet restored from backup.',
+        RestoreOutcome.nothingToRestore => 'No backup found for your account.',
+        RestoreOutcome.unavailable => 'Sign in to restore your wallet.',
+        RestoreOutcome.failed => "Restore didn't complete.",
+      };
+    });
+  }
+
+  Future<bool> _confirm({
+    required String title,
+    required String body,
+    required String action,
+  }) async {
+    final palette = AppPalette.of(context);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.sheet,
+        title: Text(title, style: AppText.titleMd()),
+        content: Text(body, style: AppText.bodySm(color: palette.muted)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(action, style: AppText.bodyMd(color: palette.red)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final available = ref.watch(backupAvailableProvider);
+    final enabled = ref.watch(backupEnabledProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: palette.border)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Back Up My Wallet',
+                      style: AppText.bodyMd().copyWith(
+                        fontSize: 16,
+                        color: available ? null : palette.muted,
+                      ),
+                    ),
+                  ),
+                  Switch.adaptive(
+                    value: enabled && available,
+                    onChanged: available && !_busy
+                        ? (v) =>
+                              ref
+                                  .read(backupEnabledProvider.notifier)
+                                  .setEnabled(v)
+                        : null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                available
+                    ? 'Keeps a copy of your cards, nicknames and preferences '
+                          'so you can restore them on a new phone. Your '
+                          'transactions are never uploaded.'
+                    : 'Sign in to turn on backup — a backup has to belong to '
+                          'an account so it can be restored later.',
+                style: AppText.bodySm(color: palette.muted),
+              ),
+            ],
+          ),
+        ),
+        if (available && enabled) ...[
+          _SettingsRow(
+            label: 'Back Up Now',
+            trailing: const _Chevron(),
+            onTap: _busy ? null : _backUpNow,
+          ),
+          _SettingsRow(
+            label: 'Restore From Backup',
+            trailing: const _Chevron(),
+            onTap: _busy ? null : _restore,
+          ),
+        ],
+      ],
     );
   }
 }

@@ -28,6 +28,38 @@ class SettingsRepository {
   static const _kCatalogDataVersion = 'catalog_data_version';
   static const _kPaymentRemindersEnabled = 'payment_reminders_enabled';
   static const _kPaymentReminderLeadDays = 'payment_reminder_lead_days';
+  static const _kBackupEnabled = 'backup_enabled';
+
+  /// Settings keys that belong to the *user* and travel with a wallet backup.
+  ///
+  /// An allowlist, deliberately — not a denylist. Everything else in
+  /// `settings` stays on the device it was written on, and a new key added
+  /// later is device-local until someone consciously adds it here. A denylist
+  /// would leak each new key by default, which is the wrong direction to fail
+  /// for a table that also holds caches and per-device state.
+  ///
+  /// Kept out on purpose:
+  /// * [_kPermissionsAsked] — OS permissions are granted per device.
+  /// * [_kOnboardingSeen] — likewise a per-install fact.
+  /// * [_kBackupEnabled] — restoring a backup must never silently switch
+  ///   backup *on* for the phone receiving it. That has to stay a deliberate
+  ///   act on each device.
+  /// * [_kLastSyncAt], [_kPopularBanksCache], [_kCatalogDataVersion] — caches
+  ///   and bookkeeping about this device, meaningless on another.
+  static const Set<String> syncableSettingsKeys = {
+    _kAutoSync,
+    _kDefaultScreen,
+    _kDefaultAdvisorView,
+    _kNearbyEnabled,
+    _kNearbyRadiusMi,
+    _kNearbyDwellSecondsByCategory,
+    _kNearbyPlaceTypeIds,
+    _kCardPreferenceOrder,
+    _kDismissedRecurringTips,
+    _kIncludeDebitAccounts,
+    _kPaymentRemindersEnabled,
+    _kPaymentReminderLeadDays,
+  };
 
   // Auto sync: default OFF. The background worker also reads this, so the
   // default has to be defined in one place.
@@ -301,6 +333,19 @@ class SettingsRepository {
 
   Future<void> setOnboardingSeen(String userId) =>
       _repo.setSetting(userId, _kOnboardingSeen, 'true');
+
+  /// Whether this device backs the wallet up to the sync service.
+  ///
+  /// Default OFF, and meaningless without a signed-in account to key the
+  /// backup to — the Profile toggle is disabled until then. Nothing leaves
+  /// the device until this is deliberately switched on.
+  Future<bool> getBackupEnabled(String userId) async {
+    final raw = await _repo.getSetting(userId, _kBackupEnabled);
+    return raw == 'true';
+  }
+
+  Future<void> setBackupEnabled(String userId, bool enabled) =>
+      _repo.setSetting(userId, _kBackupEnabled, enabled.toString());
 
   /// Whether deposit (checking / savings) accounts are pulled in by Sophtron
   /// sync alongside credit cards. Default OFF - most users only care about

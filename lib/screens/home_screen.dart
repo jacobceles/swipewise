@@ -9,6 +9,7 @@ import '../providers/entitlement_provider.dart';
 import '../nearby/geofence_channel.dart';
 import '../nearby/nearby_permission_gate.dart';
 import '../providers/auth_provider.dart';
+import '../providers/backup_provider.dart';
 import '../providers/sync_provider.dart';
 import '../providers/data_providers.dart';
 import '../providers/payment_reminder_provider.dart';
@@ -53,7 +54,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _askPermissionsOnce();
       _consumePendingMerchant();
       _topUpPaymentReminders();
+      _maybeRestoreWallet();
     });
+  }
+
+  /// Pulls a wallet backup down onto an empty device.
+  ///
+  /// Fire-and-forget, and silent on every outcome except a successful restore:
+  /// having no backup is the normal case for most launches, and announcing it
+  /// would be noise. The controller decides whether anything should happen at
+  /// all — notably, it refuses to touch a wallet that already has cards.
+  Future<void> _maybeRestoreWallet() async {
+    final outcome = await ref
+        .read(walletBackupControllerProvider)
+        .maybeAutoRestore();
+    if (!mounted || outcome != RestoreOutcome.restored) return;
+    for (final p in syncInvalidatedProviders) {
+      ref.invalidate(p);
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Wallet restored from your backup.')),
+    );
   }
 
   /// Tops up the rolling payment-reminder schedule (N12).
