@@ -48,7 +48,16 @@ class CatalogLoader {
 
   /// The offline floor: a catalog snapshot shipped in the app bundle, loaded when
   /// R2 is unreachable and there's no local cache yet (e.g. a first launch with no
-  /// network). It's the committed free bundle, kept fresh by the pre-commit hook.
+  /// network).
+  ///
+  /// Deliberately allowed to go stale. It is a floor, not a mirror: [hydrateIfNeeded]
+  /// tries R2 on every boot, so this is only ever read by an install that has never
+  /// once fetched successfully, and their first online launch replaces it. Its
+  /// freshness is bounded by the last `make publish` before the release build —
+  /// which is all the freshness it can have anyway, since the APK freezes it at
+  /// build time. A pre-commit hook used to re-sync it on every card edit; that was
+  /// removed because it churned 2.3 MB through git history without changing what
+  /// any user ever saw.
   static const String _bundledCatalogAsset = 'assets/catalog/free.json';
 
   /// Highest catalog `schemaVersion` this build can read. A bundle declaring
