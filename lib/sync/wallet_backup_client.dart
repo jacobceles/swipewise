@@ -43,7 +43,7 @@ class WalletBackupClient {
 
   final http.Client _client;
 
-  static const _kBaseUrl = String.fromEnvironment('SYNC_API_URL');
+  static const _kBaseUrl = String.fromEnvironment('BACKUP_API_URL');
   static const _timeout = Duration(seconds: 20);
 
   /// Whether this build has a sync service at all.
