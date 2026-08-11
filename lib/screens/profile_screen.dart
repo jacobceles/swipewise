@@ -792,6 +792,64 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
     };
   });
 
+  /// Turning backup on uploads this phone's wallet, replacing whatever the
+  /// service holds.
+  ///
+  /// The prompt fires on one condition only: the upload would destroy cards
+  /// that are not on this phone. A backup merely existing is not a reason to
+  /// interrupt — the user already agreed to back up when they made it, and
+  /// re-enabling on the phone that made it loses nothing. The case that
+  /// matters is a *first sign-in on a new phone*, where a thin local wallet
+  /// would overwrite a full one and "restore" would then hand back the wallet
+  /// the user came to escape.
+  Future<void> _toggleBackup(bool enable) async {
+    final notifier = ref.read(backupEnabledProvider.notifier);
+    if (!enable) {
+      await notifier.setEnabled(false);
+      return;
+    }
+
+    setState(() => _busy = true);
+    final RemoteBackupInfo remote;
+    try {
+      remote = await ref.read(walletBackupControllerProvider).remoteInfo();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (!mounted) return;
+
+    if (remote.uploadWouldLoseCards) {
+      final n = remote.cardsNotOnThisPhone;
+      final when = remote.capturedAt == null
+          ? 'Your backup'
+          : 'Your backup from ${_shortDate(remote.capturedAt!)}';
+      final replace = await _confirm(
+        title: 'This would lose cards',
+        body:
+            '$when has $n ${n == 1 ? 'card' : 'cards'} that this phone does '
+            'not. Turning on backup uploads what is here, replacing it — and '
+            'those cards would be gone. To bring them here instead, cancel '
+            'and use Restore From Backup first.',
+        action: 'Replace anyway',
+      );
+      if (!replace) return;
+    }
+
+    // seedBackup: the upload is now something the user has agreed to, either
+    // explicitly above or implicitly because there was nothing to lose.
+    await notifier.setEnabled(true);
+    if (mounted) _say('Wallet backed up.');
+  }
+
+  static String _shortDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final local = d.toLocal();
+    return '${local.day} ${months[local.month - 1]}';
+  }
+
   Future<void> _restore() async {
     final confirmed = await _confirm(
       title: 'Restore from backup?',
@@ -877,12 +935,7 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
                   ),
                   Switch.adaptive(
                     value: enabled && available,
-                    onChanged: available && !_busy
-                        ? (v) =>
-                              ref
-                                  .read(backupEnabledProvider.notifier)
-                                  .setEnabled(v)
-                        : null,
+                    onChanged: available && !_busy ? _toggleBackup : null,
                   ),
                 ],
               ),
@@ -899,18 +952,25 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
             ],
           ),
         ),
-        if (available && enabled) ...[
+        // "Back Up Now" is the upload, so it follows the opt-in.
+        if (available && enabled)
           _SettingsRow(
             label: 'Back Up Now',
             trailing: const _Chevron(),
             onTap: _busy ? null : _backUpNow,
           ),
+        // Restore is NOT gated on the toggle. Pulling your own backup onto
+        // your own signed-in phone needs no opt-in — and gating it was a trap:
+        // the only way to reach Restore was to switch backup on first, which
+        // uploaded this phone's wallet over the very backup you came to
+        // retrieve. Someone arriving on a new phone would have destroyed it
+        // with the tap meant to recover it.
+        if (available)
           _SettingsRow(
             label: 'Restore From Backup',
             trailing: const _Chevron(),
             onTap: _busy ? null : _restore,
           ),
-        ],
       ],
     );
   }

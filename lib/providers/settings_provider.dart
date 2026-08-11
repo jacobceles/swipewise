@@ -324,7 +324,14 @@ class OnboardingSeenNotifier extends AsyncNotifier<bool> {
       // timeout `HomeScreen` uses for the permission gate.
       return Future<bool>.delayed(const Duration(seconds: 10), () => false);
     }
-    return _settings.getOnboardingSeen(userId);
+    final seen = await _settings.getOnboardingSeen(userId);
+    // Re-checked AFTER the await, and that is the whole point. Signing in
+    // re-keys `users.id`, so a rebuild starts the moment the id changes —
+    // which is *before* `markSeen` runs. That rebuild reads the flag under the
+    // new uid (nothing written yet → false) and resolves *after* markSeen set
+    // true, overwriting it and throwing the user back to the welcome screen.
+    // Checking only at the top of build() misses this by construction.
+    return _answered || seen;
   }
 
   /// Records that the choice was made, and shows the app immediately rather
@@ -332,8 +339,11 @@ class OnboardingSeenNotifier extends AsyncNotifier<bool> {
   Future<void> markSeen() async {
     final userId = ref.read(authProvider).userId;
     _answered = true;
-    state = const AsyncData(true);
+    // Written before the state flip, so an in-flight rebuild that re-reads the
+    // database finds `true` rather than racing us to `false`. Belt and braces
+    // with the `_answered` check in `build`.
     if (userId != null) await _settings.setOnboardingSeen(userId);
+    state = const AsyncData(true);
   }
 }
 

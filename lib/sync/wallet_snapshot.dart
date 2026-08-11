@@ -119,6 +119,19 @@ class WalletBackupRepository {
     return (rows.single['n'] as int) == 0;
   }
 
+  /// Card ids on this device, for deciding whether an upload would lose
+  /// anything. Cheaper than a full [capture] when only the ids matter.
+  Future<Set<String>> localCardIds(String userId) async {
+    final db = await _dbHelper.database;
+    final rows = await db.query(
+      'cards',
+      columns: ['id'],
+      where: '$_ownerColumn = ?',
+      whereArgs: [userId],
+    );
+    return rows.map((r) => r['id'] as String).toSet();
+  }
+
   Future<WalletSnapshot> capture(String userId) async {
     final db = await _dbHelper.database;
 

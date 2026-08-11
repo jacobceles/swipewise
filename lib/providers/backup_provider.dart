@@ -36,14 +36,16 @@ class BackupEnabledNotifier extends Notifier<bool> {
     return false;
   }
 
-  Future<void> setEnabled(bool enabled) async {
+  /// [seedBackup] uploads immediately on enable. Callers that have *asked* the
+  /// user about replacing an existing backup pass true; the UI passes false
+  /// when it has not, because switching a toggle is consent to start backing
+  /// up — not consent to destroy a backup made from another phone.
+  Future<void> setEnabled(bool enabled, {bool seedBackup = true}) async {
     final userId = ref.read(authProvider).userId;
     if (userId == null) return;
     state = enabled;
     await _settings.setBackupEnabled(userId, enabled);
-    // Switching it on is itself consent to upload, so seed the service
-    // immediately rather than leaving the first backup until some later edit.
-    if (enabled) {
+    if (enabled && seedBackup) {
       await ref.read(walletBackupControllerProvider).backUpNow();
     }
   }
@@ -75,11 +77,61 @@ final backupAvailableProvider = Provider<bool>((ref) {
 
 enum RestoreOutcome { restored, nothingToRestore, unavailable, failed }
 
+/// What the service already holds, so the UI can warn before overwriting it.
+class RemoteBackupInfo {
+  const RemoteBackupInfo({
+    required this.exists,
+    this.capturedAt,
+    this.cards,
+    this.cardsNotOnThisPhone = 0,
+  });
+
+  final bool exists;
+  final DateTime? capturedAt;
+  final int? cards;
+
+  /// Cards in the backup that this phone does not have.
+  ///
+  /// The only number that justifies interrupting anyone. A backup merely
+  /// *existing* means the user already agreed to back up — re-enabling on the
+  /// same phone is not a new question. Overwriting a backup that holds cards
+  /// they would lose is.
+  final int cardsNotOnThisPhone;
+
+  bool get uploadWouldLoseCards => cardsNotOnThisPhone > 0;
+}
+
 class WalletBackupController {
   WalletBackupController(this._ref);
   final Ref _ref;
 
   String? get _userId => _ref.read(authProvider).userId;
+
+  /// What the service currently holds for this user, if anything.
+  ///
+  /// Exists so the UI can say *what* it is about to overwrite. "Replace your
+  /// backup?" is a question nobody can answer; "replace the backup from
+  /// 9 Aug with 5 cards?" is.
+  Future<RemoteBackupInfo> remoteInfo() async {
+    final userId = _userId;
+    final result = await _ref.read(walletBackupClientProvider).pull();
+    final snapshot = result.snapshot;
+    if (result.status != BackupStatus.ok || snapshot == null || userId == null) {
+      return const RemoteBackupInfo(exists: false);
+    }
+    final here = await _ref
+        .read(walletBackupRepositoryProvider)
+        .localCardIds(userId);
+    final missing = snapshot.cards
+        .where((c) => !here.contains(c['id']))
+        .length;
+    return RemoteBackupInfo(
+      exists: true,
+      capturedAt: snapshot.capturedAt,
+      cards: snapshot.cards.length,
+      cardsNotOnThisPhone: missing,
+    );
+  }
 
   /// Uploads the current wallet, replacing whatever the service holds.
   Future<BackupStatus> backUpNow() async {
