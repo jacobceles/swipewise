@@ -24,7 +24,16 @@ if (hasReleaseKeystore) {
 
 android {
     namespace = "com.appsoflife.swipewise"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned ahead of `flutter.compileSdkVersion` (36) because
+    // permission_handler_android 14 compiles against 37 and Gradle refuses to
+    // build a plugin against a higher SDK than the app.
+    //
+    // The minor is not decoration. From API 36 on, platforms ship as minor
+    // versions — the SDK has `android-37.0` and `android-37.1`, and no plain
+    // `android-37` exists at all — so `compileSdk = 37` alone resolves to
+    // nothing. AGP had to move to 8.13 to understand this split.
+    compileSdk = 37
+    compileSdkMinor = 0
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

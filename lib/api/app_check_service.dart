@@ -60,9 +60,9 @@ class AppCheckService {
             // Play Integrity in release; the debug provider cannot be attested
             // and is rejected by an enforcing Worker unless its token is
             // registered.
-            androidProvider: kDebugMode
-                ? AndroidProvider.debug
-                : AndroidProvider.playIntegrity,
+            providerAndroid: kDebugMode
+                ? const AndroidDebugProvider()
+                : const AndroidPlayIntegrityProvider(),
           )
           .timeout(_timeout);
       _activated = true;

@@ -85,6 +85,28 @@ const String kLocalUserIdPrefix = 'local:';
 class AuthNotifier extends Notifier<AuthState> {
   final _dbHelper = DatabaseHelper();
 
+  /// `google_sign_in` 7 requires exactly one `initialize()` before any other
+  /// call on the singleton. Done lazily rather than from `main()` because
+  /// signing in is optional — someone who skips it never pays for this.
+  ///
+  /// Passing no identifiers is correct on Android: `google-services.json`
+  /// carries the web OAuth client (`client_type: 3`) the platform needs in
+  /// order to hand back an ID token.
+  Future<void>? _googleReady;
+
+  Future<void> _ensureGoogleInitialized() async {
+    final pending = _googleReady ??= GoogleSignIn.instance.initialize();
+    try {
+      await pending;
+    } catch (_) {
+      // Don't cache a failed init — Play Services can be transiently
+      // unavailable, and a cached failure would disable the sign-in button
+      // for the rest of the session.
+      _googleReady = null;
+      rethrow;
+    }
+  }
+
   @override
   AuthState build() {
     Future.microtask(() => checkStatus());
@@ -143,16 +165,24 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        // User cancelled the picker.
-        state = state.copyWith(isLoading: false);
-        return;
+      await _ensureGoogleInitialized();
+      final GoogleSignInAccount googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        // v7 throws where v6 returned null for a dismissed account picker.
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          state = state.copyWith(isLoading: false);
+          return;
+        }
+        rethrow;
       }
-      final googleAuth = await googleUser.authentication;
+      // v7 separates authentication from authorization: `authentication`
+      // carries the ID token and nothing else. Firebase only ever needed the
+      // ID token for a Google credential — the access token this used to pass
+      // was redundant, and no longer obtainable without a scope request.
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        idToken: googleUser.authentication.idToken,
       );
       final userCredential = await FirebaseAuth.instance.signInWithCredential(
         credential,
@@ -212,7 +242,8 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await FirebaseAuth.instance.signOut();
-    await GoogleSignIn().signOut();
+    await _ensureGoogleInitialized();
+    await GoogleSignIn.instance.signOut();
     final db = await _dbHelper.database;
     await db.delete('users');
     state = AuthState();
