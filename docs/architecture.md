@@ -35,7 +35,7 @@ flowchart LR
   sync, and local storage.
 - **The catalog** is a *data product* — card reward rates + the vocabularies they're keyed
   on. It's built in [its own repo](reward-catalog.md) (the catalog
-  pipeline, the backend engine), published to R2 by [`swipewise-api`](../swipewise-api), and
+  pipeline, the backend engine), published to R2 by `swipewise-api`, and
   fetched at runtime from that service's Cloudflare Worker. One versioned JSON build, served
   ETag-gated; the app caches it locally and re-fetches only when it changes.
 - The **classifier never moves to a backend.** It must process every synced transaction,
@@ -44,7 +44,7 @@ flowchart LR
 ## The two data files
 
 Everything reward-related is two files the app **fetches** from the catalog API
-([`swipewise-api`](../swipewise-api)) — not bundled assets. Neither is "owned" by the app —
+(`swipewise-api`) — not bundled assets. Neither is "owned" by the app —
 the app *consumes* both. Each is produced by a **generator tool**; generating a file ≠
 owning it.
 
@@ -128,7 +128,7 @@ category columns ([database.md](database.md)):
 ## How the rewards data is modeled
 
 The rewards data is a properly-modeled **catalog**: the `catalog.json` build, fetched from
-the [catalog API](../swipewise-api) → `CatalogLoader`
+the catalog API → `CatalogLoader`
 hydrates the global catalog tables (`card_products`/`reward_rules`/… ) →
 `CatalogRepository.loadSnapshot()` builds an immutable `CatalogSnapshot` → a pure
 `RewardEngine.resolve()` resolves rates, wrapped by `engine_ranker`. The catalog lives in

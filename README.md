@@ -88,13 +88,13 @@ The **app is open source** — fork it, audit the privacy claims, build it yours
 - [`assets/vocab/brands.json`](assets/vocab/brands.json) — the merchant → category + brand-id
   registry the recommender matches against, and **the file to contribute to**. Adding a store is a
   one-line JSON edit (see [docs/classifier-and-brands.md](docs/classifier-and-brands.md)). It's the
-  single source of truth — bundled into the app, served via the [catalog API](swipewise-api), and
+  single source of truth — bundled into the app, served via the catalog API, and
   read by the catalog engine.
-- [`swipewise-api/catalog/free.json`](swipewise-api/catalog/free.json) — the reward
+- [`assets/catalog/free.json`](assets/catalog/free.json) — the reward
   **catalog** (card products, structured `reward_rules`, point valuations, `product_perks`). This is
   a **generated artifact** built from curated source by a separate engine; editing it directly is
   overwritten on the next publish, so card-data fixes go through the engine, not a PR here. Served to
-  the app by the [catalog API](swipewise-api), refreshed without an app release (see
+  the app by the catalog API, refreshed without an app release (see
   [docs/reward-catalog.md](docs/reward-catalog.md)).
 
 Good first contributions: add brands you shop at, or expand card coverage. Start with the
@@ -142,7 +142,7 @@ Full build/release/keys details: [docs/setup.md](docs/setup.md).
 | [Sophtron sync](docs/sophtron.md) | Bank linking, FDX reads, the sync engine |
 | [Classifier & brands](docs/classifier-and-brands.md) | How a merchant becomes a recommendation |
 | [Reward catalog & engine](docs/reward-catalog.md) | Catalog data → the pure reward engine/ranker |
-| [Catalog API](swipewise-api/README.md) | The Cloudflare Worker that serves the catalog + the CLI that publishes it to R2 |
+| Catalog API *(separate private repo)* | The Cloudflare Worker that serves the catalog + the CLI that publishes it to R2. Server-side code lives outside this repo so user-data infrastructure never shares a deploy with the public catalog API — see [what a wallet backup stores](docs/BACKUP_SCHEMA.md) |
 | [Nearby & geofences](docs/nearby.md) | Google Places search, tile cache, geofences, notifications |
 | [Database](docs/database.md) | Full SQLite schema |
 | [Setup](docs/setup.md) | Keys, build flags, git hooks, troubleshooting |

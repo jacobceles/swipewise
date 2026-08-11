@@ -68,7 +68,7 @@ subscription to unlock it — but it ships with nothing to authenticate with.
   holds as a secret, and forwards. Nothing to configure locally, but note that App Check is
   **enforced**: a debug build needs its debug token registered in the Firebase console
   (App Check → Manage debug tokens) or the Stores tab will 401.
-- `R2_BASE_URL` — base URL of the **catalog API** ([`swipewise-api`](../swipewise-api)),
+- `R2_BASE_URL` — base URL of the **catalog API** (`swipewise-api`),
   the Cloudflare Worker the app fetches `catalog.json` and `brands.json` from (e.g.
   `https://swipewise-api.<subdomain>.workers.dev`). The Worker reads those from R2 and
   serves them ETag-gated; card-art URLs inside the catalog still point at R2's public

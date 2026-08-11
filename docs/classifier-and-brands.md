@@ -85,7 +85,7 @@ nearby path runs the same registry but splits the inputs — see
 
 ## `brands.json` — brand knowledge as data ("Channel B")
 
-`brands.json` (served by the [catalog API](../swipewise-api)) is an array of:
+`brands.json` (served by the catalog API) is an array of:
 
 ```json
 { "brandId": "whole-foods-market", "displayName": "Whole Foods Market",
@@ -111,7 +111,7 @@ app-logic change — the same JSON the catalog API serves. The
 ## Who owns it
 
 `brands.json` is **catalog-domain data** (the merchant-recognition vocabulary), currently
-*generated* by Gemini and *served* by the [catalog API](../swipewise-api) — parallel to the
+*generated* by Gemini and *served* by the catalog API — parallel to the
 catalog build being produced in its own repo and served the same way. The app *consumes* it;
 it doesn't own it. The classifier *emits* `brand_id`s the
 catalog's `reward_rules` *reference*. See
@@ -124,7 +124,7 @@ coverage is **curation-driven**: ask Gemini for more brands (see
 [`todo/reference_brands_prompt.md`](classifier-and-brands.md)) or add a store you
 hit yourself.
 
-`brands.json` is now produced upstream and served via the [catalog API](../swipewise-api),
+`brands.json` is now produced upstream and served via the catalog API,
 so the **slug contract** is enforced where the data is built (the producer pipeline), not by
 a local app hook: every `category` must be a real `RewardCategory.name`, `brandId`s must be
 unique, and `aliases` non-empty. A rule that references a slug the classifier can't produce is

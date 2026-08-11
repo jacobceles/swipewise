@@ -49,6 +49,15 @@ jobs:
       WORKER_BASE_URL: ${{ secrets.WORKER_BASE_URL }}
     steps:
       - uses: actions/checkout@v7
+      # The catalog bundle this repo's schema guard validates lives in the app
+      # repo (it ships in the APK, so it belongs to whoever bundles it). The
+      # contract test stays here — this repo owns the schema — so CI has to
+      # fetch the artifact it checks. Public repo, so no token is needed.
+      - name: Check out the app repo (for assets/catalog/free.json)
+        uses: actions/checkout@v7
+        with:
+          repository: jacobceles/swipewise
+          path: app-repo
       - uses: actions/setup-node@v7
         with:
           node-version: 20
@@ -57,6 +66,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+        # Pointed explicitly rather than left to the path default, which
+        # assumes the local side-by-side checkout layout.
+        env:
+          CATALOG_FILE: ${{ github.workspace }}/app-repo/assets/catalog/free.json
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         with:

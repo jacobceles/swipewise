@@ -53,13 +53,24 @@ final backupEnabledProvider = NotifierProvider<BackupEnabledNotifier, bool>(
   BackupEnabledNotifier.new,
 );
 
-/// Whether the backup toggle can be operated at all: a configured service and
-/// a signed-in account. Drives the disabled-with-an-explanation state in
-/// Profile rather than hiding the row, so the feature is discoverable before
-/// it is usable.
+/// Whether this build has a sync service at all.
+///
+/// Separate from [backupAvailableProvider] because the two have different
+/// answers in the UI: a build with no service configured has no backup
+/// feature, and should say nothing rather than explain how to enable
+/// something that cannot exist. Only a *configured* build shows the row and
+/// asks the user to sign in.
+final backupSupportedProvider = Provider<bool>(
+  (ref) => WalletBackupClient.isConfigured,
+);
+
+/// Whether the toggle can actually be operated: a configured service *and* a
+/// signed-in account. When this is false but [backupSupportedProvider] is
+/// true, Profile shows the row disabled with the reason rather than hiding
+/// it, so the feature is discoverable before it is usable.
 final backupAvailableProvider = Provider<bool>((ref) {
   final signedIn = ref.watch(authProvider.select((s) => s.email != null));
-  return signedIn && WalletBackupClient.isConfigured;
+  return signedIn && ref.watch(backupSupportedProvider);
 });
 
 enum RestoreOutcome { restored, nothingToRestore, unavailable, failed }

@@ -88,7 +88,7 @@ void main() {
     setUpAll(() {
       // The committed free bundle — the file the app also ships as its in-APK
       // offline fallback (see CatalogLoader._bundledCatalogAsset).
-      final raw = File('swipewise-api/catalog/free.json').readAsStringSync();
+      final raw = File('assets/catalog/free.json').readAsStringSync();
       bundle = jsonDecode(raw) as Map<String, dynamic>;
     });
 

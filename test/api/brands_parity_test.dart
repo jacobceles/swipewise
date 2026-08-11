@@ -70,7 +70,7 @@ void main() {
       // The real cross-impl contract. Collect every `brand` slug the published
       // catalog references and assert the resolver knows each one.
       final catalog =
-          jsonDecode(File('swipewise-api/catalog/free.json').readAsStringSync())
+          jsonDecode(File('assets/catalog/free.json').readAsStringSync())
               as Map<String, dynamic>;
 
       final referenced = <String>{};

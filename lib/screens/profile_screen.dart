@@ -845,6 +845,10 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    // A build with no sync service has no backup feature. Saying "sign in to
+    // turn on backup" there would promise something no amount of signing in
+    // could deliver.
+    if (!ref.watch(backupSupportedProvider)) return const SizedBox.shrink();
     final available = ref.watch(backupAvailableProvider);
     final enabled = ref.watch(backupEnabledProvider);
 

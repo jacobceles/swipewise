@@ -15,7 +15,7 @@ called a *future* state is now reality.
 ## Distribution
 
 The build doesn't ship in the app binary — it's served by
-[`swipewise-api`](../swipewise-api), the catalog service:
+`swipewise-api`, the catalog service:
 
 ```mermaid
 flowchart LR
@@ -29,7 +29,7 @@ flowchart LR
 - **Publish** (`npm run publish:catalog`) downloads each card's art into R2, rewrites
   `image_url` to the R2 public URL, and uploads **only changed** objects (sha256 diff
   against an R2 manifest) — an unchanged catalog costs zero writes.
-- **Serve** — the [Worker](../swipewise-api/src/worker.ts) reads `catalog.json` /
+- **Serve** — the Worker reads `catalog.json` /
   `brands.json` from R2 and serves them ETag-gated, plus derived per-bank, per-card, and
   per-user (`/catalog/resolve`) slices for fetching less per screen.
 - **Consume** — [`remote_asset_service.dart`](../lib/api/remote_asset_service.dart) fetches
@@ -201,7 +201,7 @@ The catalog only **references** the app's vocabularies; it never re-derives them
 - `reward_rules.category` references `RewardCategory` names — the app owns the enum
   ([reward_category.dart](../lib/models/reward_category.dart)).
 - `reward_rules.brand` / `reward_rule_exclusions.brand` reference `brand_id` slugs from
-  `brands.json` (served by the [catalog API](../swipewise-api); see
+  `brands.json` (served by the catalog API; see
   [classifier-and-brands.md](classifier-and-brands.md)).
 
 A rule that references a slug the classifier can't produce is **dead** — no transaction will

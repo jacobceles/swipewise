@@ -98,7 +98,7 @@ flutter:
     - assets/vocab/brands.json
     - assets/vocab/categories.json
     - docs/PRIVACY.md
-    - swipewise-api/catalog/free.json
+    - assets/catalog/free.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

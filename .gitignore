@@ -38,7 +38,11 @@ keys*.json
 *.log
 
 # Workspaces
+# Separate repositories, checked out here only so one editor window covers
+# everything. Each has its own remote and history; none of them belongs to this
+# repo's tree.
 cardcodex/
+swipewise-backend/
 swipewise-attic/
 analysis/
 

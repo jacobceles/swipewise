@@ -49,7 +49,7 @@ class CatalogLoader {
   /// The offline floor: a catalog snapshot shipped in the app bundle, loaded when
   /// R2 is unreachable and there's no local cache yet (e.g. a first launch with no
   /// network). It's the committed free bundle, kept fresh by the pre-commit hook.
-  static const String _bundledCatalogAsset = 'swipewise-api/catalog/free.json';
+  static const String _bundledCatalogAsset = 'assets/catalog/free.json';
 
   /// Highest catalog `schemaVersion` this build can read. A bundle declaring
   /// a higher schema means the app binary is behind the catalog structure.
