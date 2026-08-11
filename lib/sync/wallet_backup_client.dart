@@ -46,7 +46,15 @@ class WalletBackupClient {
   // The account service's base URL — not a backup-specific one. Wallet backup
   // is the first route on it; entitlement joins it at B3-S1, keyed on the same
   // Firebase UID, and will read this same define.
-  static const _kBaseUrl = String.fromEnvironment('ACCOUNT_API_URL');
+  static const _kRawBaseUrl = String.fromEnvironment('ACCOUNT_API_URL');
+
+  /// Trailing slashes stripped, because leaving one on is a silent failure.
+  /// Routes are appended as `$_kBaseUrl/wallet`, so a configured value ending
+  /// in `/` produces `//wallet` — and the Worker matches `pathname` exactly,
+  /// so that 404s. On `GET` the client reads 404 as "no backup yet", meaning a
+  /// misconfigured URL would report an empty backup rather than an error, and
+  /// a restore would quietly do nothing.
+  static final String _kBaseUrl = _kRawBaseUrl.replaceAll(RegExp(r'/+$'), '');
   static const _timeout = Duration(seconds: 20);
 
   /// Whether this build has a sync service at all.
