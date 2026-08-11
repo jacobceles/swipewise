@@ -25,6 +25,7 @@ class WalletSnapshot {
     required this.cardOverrides,
     required this.cardLinks,
     required this.settings,
+    this.mutedMerchants = const [],
   });
 
   /// Bumped when the shape changes incompatibly. The service stores it
@@ -39,13 +40,23 @@ class WalletSnapshot {
   final List<Map<String, Object?>> cardLinks;
   final Map<String, String> settings;
 
+  /// Stores the user silenced for arrival alerts.
+  ///
+  /// The odd one out: `muted_merchants` has no `user_id`, because the native
+  /// geofence receivers read it with no user context. It is carried anyway —
+  /// from the user's side it is a preference sitting in Profile next to ones
+  /// that already travel, and a new phone that starts alerting for every store
+  /// they had silenced reads as a bug, not as a scoping decision.
+  final List<Map<String, Object?>> mutedMerchants;
+
   /// Nothing worth restoring. Used to decide that a pulled backup should not
   /// overwrite a populated device with emptiness.
   bool get isEmpty =>
       cards.isEmpty &&
       cardOverrides.isEmpty &&
       cardLinks.isEmpty &&
-      settings.isEmpty;
+      settings.isEmpty &&
+      mutedMerchants.isEmpty;
 
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,
@@ -54,6 +65,7 @@ class WalletSnapshot {
     'cardOverrides': cardOverrides,
     'cardLinks': cardLinks,
     'settings': settings,
+    'mutedMerchants': mutedMerchants,
   };
 
   factory WalletSnapshot.fromJson(Map<String, Object?> json) {
@@ -70,6 +82,10 @@ class WalletSnapshot {
       cards: rows('cards'),
       cardOverrides: rows('cardOverrides'),
       cardLinks: rows('cardLinks'),
+      // Absent in backups written before muted stores were carried. Defaults
+      // to empty, so an older snapshot restores without them rather than
+      // failing — additive, which is why schemaVersion does not move.
+      mutedMerchants: rows('mutedMerchants'),
       settings: ((json['settings'] as Map?) ?? {}).map(
         (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
       ),
@@ -124,12 +140,17 @@ class WalletBackupRepository {
       whereArgs: [userId],
     );
 
+    // No `user_id` to filter on — the table is device-global by design, so the
+    // whole thing is the user's mute list.
+    final muted = await db.query('muted_merchants');
+
     return WalletSnapshot(
       schemaVersion: WalletSnapshot.currentSchemaVersion,
       capturedAt: DateTime.now().toUtc(),
       cards: await table('cards'),
       cardOverrides: await table('card_overrides'),
       cardLinks: await table('card_links'),
+      mutedMerchants: muted.map((r) => {...r}).toList(growable: false),
       settings: {
         for (final row in settingRows)
           if (SettingsRepository.syncableSettingsKeys.contains(row['key']))
@@ -161,6 +182,7 @@ class WalletBackupRepository {
     final cardCols = await columnsOf('cards');
     final overrideCols = await columnsOf('card_overrides');
     final linkCols = await columnsOf('card_links');
+    final mutedCols = await columnsOf('muted_merchants');
 
     await db.transaction((txn) async {
       for (final table in ['cards', 'card_overrides', 'card_links']) {
@@ -171,18 +193,21 @@ class WalletBackupRepository {
         );
       }
 
+      // `scoped` false for the one table with no `user_id` to stamp.
       Future<void> insertAll(
         String table,
         List<Map<String, Object?>> rows,
-        Set<String> allowed,
-      ) async {
+        Set<String> allowed, {
+        bool scoped = true,
+      }) async {
         for (final row in rows) {
-          final clean = <String, Object?>{_ownerColumn: userId};
+          final clean = <String, Object?>{if (scoped) _ownerColumn: userId};
           for (final entry in row.entries) {
             if (entry.key == _ownerColumn) continue;
             if (!allowed.contains(entry.key)) continue;
             clean[entry.key] = entry.value;
           }
+          if (clean.isEmpty) continue;
           await txn.insert(
             table,
             clean,
@@ -194,6 +219,16 @@ class WalletBackupRepository {
       await insertAll('cards', snapshot.cards, cardCols);
       await insertAll('card_overrides', snapshot.cardOverrides, overrideCols);
       await insertAll('card_links', snapshot.cardLinks, linkCols);
+
+      // Device-global, so the delete is unfiltered — there is no user whose
+      // mutes these are, only this device's. Replaced wholesale like the rest.
+      await txn.delete('muted_merchants');
+      await insertAll(
+        'muted_merchants',
+        snapshot.mutedMerchants,
+        mutedCols,
+        scoped: false,
+      );
 
       // Filtered again on the way in. The payload arrives over the network,
       // so it is untrusted input: without this, a stale or tampered backup

@@ -238,6 +238,82 @@ void main() {
     );
   });
 
+  // The one table in the snapshot with no `user_id`. It is device-global
+  // because the native geofence receivers read it without a user context —
+  // but from the user's side it is a preference in Profile, so it travels.
+  test('muted stores survive a capture/restore round trip', () async {
+    final repo = WalletBackupRepository();
+    final db = await DatabaseHelper().database;
+    await db.insert('muted_merchants', {
+      'merchant_id': 'place-123',
+      'name': 'Starbucks on Main',
+      'muted_at': 1700000000,
+    });
+
+    final snapshot = WalletSnapshot.fromJson(
+      jsonDecode(jsonEncode((await repo.capture(userId)).toJson()))
+          as Map<String, Object?>,
+    );
+    expect(snapshot.mutedMerchants, hasLength(1));
+
+    await db.delete('muted_merchants'); // a fresh device
+    await repo.apply(snapshot, userId: userId);
+
+    final restored = (await db.query('muted_merchants')).single;
+    expect(restored['merchant_id'], 'place-123');
+    expect(restored['name'], 'Starbucks on Main');
+  });
+
+  test('restoring replaces this device mute list rather than merging', () async {
+    final repo = WalletBackupRepository();
+    final db = await DatabaseHelper().database;
+    await db.insert('muted_merchants', {
+      'merchant_id': 'stale-local',
+      'name': 'Somewhere else',
+      'muted_at': 1,
+    });
+
+    await repo.apply(
+      WalletSnapshot(
+        schemaVersion: WalletSnapshot.currentSchemaVersion,
+        capturedAt: DateTime.utc(2026),
+        cards: const [],
+        cardOverrides: const [],
+        cardLinks: const [],
+        settings: const {},
+        mutedMerchants: const [
+          {'merchant_id': 'place-123', 'name': 'Starbucks', 'muted_at': 2},
+        ],
+      ),
+      userId: userId,
+    );
+
+    final rows = await db.query('muted_merchants');
+    expect(rows, hasLength(1));
+    expect(rows.single['merchant_id'], 'place-123');
+  });
+
+  test('a backup written before muted stores existed still restores', () async {
+    // Older payload: no `mutedMerchants` key at all. Additive change, so this
+    // must degrade to "no mutes" rather than throwing.
+    final snapshot = WalletSnapshot.fromJson({
+      'schemaVersion': 1,
+      'capturedAt': '2026-01-01T00:00:00.000Z',
+      'cards': const [
+        {'id': 'card-1', 'source': 'manual', 'name': 'Sapphire'},
+      ],
+      'cardOverrides': const [],
+      'cardLinks': const [],
+      'settings': const {},
+    });
+
+    expect(snapshot.mutedMerchants, isEmpty);
+    await WalletBackupRepository().apply(snapshot, userId: userId);
+
+    final db = await DatabaseHelper().database;
+    expect((await db.query('cards')).single['name'], 'Sapphire');
+  });
+
   test('isWalletEmpty is what gates automatic restore', () async {
     final repo = WalletBackupRepository();
     expect(await repo.isWalletEmpty(userId), isTrue);

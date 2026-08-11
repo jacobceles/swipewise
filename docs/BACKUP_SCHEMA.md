@@ -17,6 +17,7 @@ guarantees below are enforced by tests in
 | `card_overrides` | Your edits to those cards | nickname, manual credit limit, statement due day, per-card reminder settings |
 | `card_links` | Which catalog product each card maps to | product id, how it was matched, confidence |
 | `settings` | Your preferences — **allowlisted, see below** | default screen, search radius, preferred card order, reminder lead time |
+| `muted_merchants` | Stores you silenced for arrival alerts | the place id and name of each muted store |
 
 Plus two pieces of bookkeeping: a schema version, and the timestamp the backup was taken.
 
@@ -30,6 +31,12 @@ Plus two pieces of bookkeeping: a schema version, and the timestamp the backup w
   bank ever provides.
 - **Location, or anything derived from it.** Nearby-store lookups happen on the device and are
   never part of a backup.
+
+> `muted_merchants` is the one table here with no user column — it is device-level, because
+> the Android geofence receivers read it without a user context. It is still backed up: from
+> your side it is a preference, and a new phone that starts alerting for every store you had
+> silenced would look broken. Restoring **replaces** this device's mute list rather than
+> merging into it.
 
 ## Settings: an allowlist, not a blocklist
 
