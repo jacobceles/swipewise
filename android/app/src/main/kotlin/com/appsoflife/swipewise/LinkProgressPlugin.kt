@@ -3,6 +3,7 @@ package com.appsoflife.swipewise
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -77,6 +78,8 @@ class LinkProgressPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun ensureChannel() {
+        // Channels arrived in API 26; below that NotificationCompat posts without one.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (nm.getNotificationChannel(CHANNEL_ID) == null) {
             val ch = NotificationChannel(

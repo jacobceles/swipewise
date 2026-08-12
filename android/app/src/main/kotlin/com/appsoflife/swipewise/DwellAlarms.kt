@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.SystemClock
 
 /// One-shot dwell timers, one per merchant geofence. Armed on geofence
@@ -26,10 +27,18 @@ object DwellAlarms {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = pendingIntent(context, geofenceId)
         val at = SystemClock.elapsedRealtime() + dwellSeconds * 1000L
-        val exact = try {
-            am.canScheduleExactAlarms()
-        } catch (_: Exception) {
-            false
+        // canScheduleExactAlarms() is API 31+. Below that, exact alarms need no
+        // permission, so the answer is simply yes. The try/catch below it does NOT
+        // stand in for this check: calling a method that does not exist throws
+        // NoSuchMethodError, an Error rather than an Exception, so it goes uncaught.
+        val exact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                am.canScheduleExactAlarms()
+            } catch (_: Exception) {
+                false
+            }
+        } else {
+            true
         }
         try {
             if (exact) {
