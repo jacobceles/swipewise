@@ -69,8 +69,8 @@ for every user; survives user-scoped wipes. See [reward-catalog.md](reward-catal
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `point_systems` | a points/miles currency + its cents-per-point valuation | `point_system_id` PK, `display_name`, `baseline_cent_value`, `valuation_source`, `valuation_updated_at` |
-| `card_products` | the issuer's marketed card | `card_product_id` PK, `issuer`, `display_name`, `network`, `annual_fee_usd`, `foreign_tx_fee_pct`, `image_url`, `catalog_version`, `retired_at` |
+| `point_systems` | a points/miles currency + its cents-per-point valuation | `point_system_id` PK, `display_name`, `baseline_cent_value`, `valuation_source`, `valuation_updated_at`, `currency` (NULL = USD; CAD values are compared numerically, never FX-converted) |
+| `card_products` | the issuer's marketed card | `card_product_id` PK, `issuer`, `display_name`, `network`, `annual_fee_usd`, `foreign_tx_fee_pct`, `image_url`, `catalog_version`, `retired_at`, `country`, `currency` (both NULL on pre-Canada catalogs, read as US/USD) |
 | `reward_rules` | one polymorphic earn rule per row | `rule_id` PK, `card_product_id`→products, `kind`, `category`, `brand`, `rate`, `point_system_id`→point_systems, `valid_from/to`, `rotation_year/quarter`, `requires_activation`, `cap_spend_amount_usd`, `cap_period`, `cap_group`, `notes`, `excluded_categories` (JSON array of RewardCategory names the rule does *not* extend to via the travel- or gas-superset match — e.g. Costco's `travel` excludes `transit`, or a `gas` rule excludes `evCharging`; added in schema v5) |
 | `reward_rule_exclusions` | brand carve-outs for a rule | PK `(rule_id→reward_rules, brand)` |
 | `product_perks` | card benefits/credits (replaces `card_perks`) | PK `(card_product_id→products, perk_id)`, `kind`, `title`, `description`, `frequency`, `value_estimate`, `calendar_max_year_amount`, `how_to_earn`, `image_uri`, `redemption_url` |

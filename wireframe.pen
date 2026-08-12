@@ -7377,6 +7377,65 @@
                 },
                 {
                   "type": "frame",
+                  "id": "bEkMD",
+                  "name": "Card Country",
+                  "width": "fill_container",
+                  "stroke": "$--border",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xUgAk",
+                      "name": "Card Country Label",
+                      "fill": "$--foreground",
+                      "content": "Card Country",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "C2EKVV",
+                      "name": "Card Country Right",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "e7vsq0",
+                          "name": "Card Country Value",
+                          "fill": "$--muted-foreground",
+                          "content": "United States",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "H2HsH",
+                          "name": "Card Country Chevron",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "chevron-right",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "GvE9V",
                   "name": "Preferred Card Order",
                   "width": "fill_container",
