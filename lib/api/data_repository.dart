@@ -49,7 +49,7 @@ class DataRepository {
   /// Card surface (queries, overrides, perks, orphan recovery).
   final CardRepository cards;
 
-  /// Transactions read surface (paged list, breakdown, drilldown,
+  /// Transactions read surface (paged list, drilldown,
   /// recurring detection, merchant summary).
   final TransactionRepository transactions;
 
@@ -118,18 +118,6 @@ class DataRepository {
 
   Future<Map<String, String?>> categoryIconMap() =>
       transactions.categoryIconMap();
-
-  Future<BreakdownSummary> queryBreakdown(
-    String userId,
-    List<String> cardIds, {
-    DateTime? startDate,
-    DateTime? endDate,
-  }) => transactions.queryBreakdown(
-    userId,
-    cardIds,
-    startDate: startDate,
-    endDate: endDate,
-  );
 
   Future<RecurringPaymentsSummary> queryRecurringPayments(String userId) =>
       transactions.queryRecurringPayments(userId);

@@ -71,7 +71,7 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
     // every sync, but without a sync-coupled dependency `build` never re-runs
     // to pull the recomputed rankings — it kept showing pre-sync data (e.g. the
     // old best card for a category) until app relaunch. Watching the sync state
-    // (same pattern as Cards/Breakdown) gives it that rebuild trigger.
+    // (same pattern as Cards) gives it that rebuild trigger.
     ref.watch(bankSyncProvider);
     final tilesAsync = ref.watch(categoryTilesProvider);
     final AdvisorView view = _viewOverride ?? ref.watch(advisorViewProvider);

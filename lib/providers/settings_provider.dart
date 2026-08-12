@@ -20,8 +20,6 @@ String defaultScreenLabel(DefaultScreen s) {
       return 'Transactions';
     case DefaultScreen.cards:
       return 'Cards';
-    case DefaultScreen.breakdown:
-      return 'Breakdown';
     case DefaultScreen.advisor:
       return 'Advisor';
     case DefaultScreen.profile:

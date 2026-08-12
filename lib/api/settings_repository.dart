@@ -408,6 +408,6 @@ class SettingsRepository {
       _repo.setSetting(userId, _kCatalogDataVersion, version.toString());
 }
 
-enum DefaultScreen { transactions, cards, breakdown, advisor, profile }
+enum DefaultScreen { transactions, cards, advisor, profile }
 
 enum AdvisorView { stores, categories, brands }

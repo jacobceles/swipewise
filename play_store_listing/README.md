@@ -23,8 +23,8 @@ listing* (screenshots go on the *Internal testing* release).
 ## Screenshots — `screenshots/` · all ≤2:1
 
 > ⛔ **Three of these advertise features the shipping app does not have.** The Play build is the
-> **free** tier, which has no bank linking and therefore no transactions, no spending breakdown
-> and no subscription detection. Uploading `3-transactions`, `4-breakdown` or `6-subscriptions`
+> **free** tier, which has no bank linking and therefore no transactions and no subscription
+> detection. Uploading `3-transactions` or `6-subscriptions`
 > would be a misleading store listing — a policy violation, and a guaranteed 1-star review from
 > anyone who installs expecting them.
 >
@@ -41,7 +41,6 @@ Named in suggested carousel order (drag to reorder in Play Console).
     <td><img src="screenshots/2-advisor-categories.png" width="150" alt="Per-category card ranking"></td>
     <td><img src="screenshots/5-cards.png" width="150" alt="Cards"></td>
     <td><img src="screenshots/3-transactions.png" width="150" alt="Transactions — PRO ONLY"></td>
-    <td><img src="screenshots/4-breakdown.png" width="150" alt="Spending breakdown — PRO ONLY"></td>
     <td><img src="screenshots/6-subscriptions.png" width="150" alt="Subscriptions — PRO ONLY"></td>
   </tr>
   <tr align="center">

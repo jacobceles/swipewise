@@ -29,7 +29,7 @@ class _FirstSyncBodyState extends ConsumerState<FirstSyncBody> {
   // ("try this") so users learn the app while they wait. Add or reorder
   // here; the carousel timer + paging logic doesn't depend on count.
   static const _tips = <String>[
-    'Tap any card to see its full rewards breakdown by category',
+    'Tap any card to see its full rewards by category',
     'Try pulling down to refresh your cards anytime',
     'Use the Advisor tab to find the best card at nearby stores',
     'Set quarterly bonus categories from the cards screen',

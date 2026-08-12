@@ -9,7 +9,7 @@ import 'package:swipewise/widgets/app_tab_bar.dart';
 /// build doesn't have yields `indexOf == -1`, which throws inside
 /// `IndexedStack` rather than failing anywhere legible.
 void main() {
-  test('without Pro, exactly the two transaction-backed tabs are absent', () {
+  test('without Pro, the transaction-backed tab is absent', () {
     expect(shellTabs(false), [
       ShellTab.cards,
       ShellTab.advisor,
@@ -17,12 +17,12 @@ void main() {
     ]);
   });
 
-  test('with Pro, all five appear and the shared order is preserved', () {
-    // Pro inserts its tabs, it does not reshuffle: Cards still precedes
+  test('with Pro, all four appear and the shared order is preserved', () {
+    // Pro inserts its tab, it does not reshuffle: Cards still precedes
     // Advisor which still precedes Profile, so a user who subscribes does not
     // find their tab bar rearranged underneath them.
     final pro = shellTabs(true);
-    expect(pro, hasLength(5));
+    expect(pro, hasLength(4));
     expect(
       pro.where((t) => shellTabs(false).contains(t)).toList(),
       shellTabs(false),
@@ -70,14 +70,10 @@ void main() {
       effectiveDefaultScreen(DefaultScreen.transactions, isPro: false),
       DefaultScreen.advisor,
     );
-    expect(
-      effectiveDefaultScreen(DefaultScreen.breakdown, isPro: false),
-      DefaultScreen.advisor,
-    );
     // ...and a Pro user keeps theirs.
     expect(
-      effectiveDefaultScreen(DefaultScreen.breakdown, isPro: true),
-      DefaultScreen.breakdown,
+      effectiveDefaultScreen(DefaultScreen.transactions, isPro: true),
+      DefaultScreen.transactions,
     );
     for (final s in [
       DefaultScreen.cards,

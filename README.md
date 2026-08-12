@@ -37,7 +37,7 @@ moment no other rewards app actually owns.
   transactions never leave the device. (More below.)
 
 > **Pro (not yet on sale).** Bank linking via the FDX open-finance standard, real transaction
-> history, monthly spending breakdown and recurring-charge routing are built, and the service
+> history and recurring-charge routing are built, and the service
 > that holds the aggregator credentials is live. What is missing is billing — entitlement is
 > granted by hand today. See [the tier model](docs/setup.md#tiers--one-binary-runtime-entitlement).
 

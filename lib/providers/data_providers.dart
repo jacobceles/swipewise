@@ -48,7 +48,7 @@ class TxFilter {
   final DateTime? startDate;
   final DateTime? endDate;
 
-  /// When true, restrict to debits (spend). Used by the breakdown
+  /// When true, restrict to debits (spend). Used by the spend
   /// drilldown so its list matches the spend-only category totals;
   /// the main history leaves it false to show all activity.
   final bool spendOnly;
@@ -270,23 +270,6 @@ final earliestTransactionDateProvider = FutureProvider<DateTime?>((ref) async {
   final repo = ref.watch(dataRepositoryProvider);
   return repo.getEarliestTransactionDate(auth.userId!);
 });
-
-final breakdownProvider =
-    FutureProvider.family<
-      BreakdownSummary,
-      ({List<String> cardIds, DateTime? startDate, DateTime? endDate})
-    >((ref, arg) async {
-      final auth = ref.watch(sessionProvider);
-      if (!auth.isLoggedIn) throw Exception("Not logged in");
-
-      final repo = ref.watch(dataRepositoryProvider);
-      return await repo.queryBreakdown(
-        auth.userId!,
-        arg.cardIds,
-        startDate: arg.startDate,
-        endDate: arg.endDate,
-      );
-    });
 
 /// Issuers the user can pick from when building a wallet by hand.
 ///
@@ -801,7 +784,6 @@ final List<ProviderOrFamily> syncInvalidatedProviders = [
   pagedTransactionsProvider,
   cardsProvider,
   bankConnectionsByInstitutionIdProvider,
-  breakdownProvider,
   monthlyTrendProvider,
   categoriesProvider,
   lastSyncProvider,

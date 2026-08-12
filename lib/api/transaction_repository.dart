@@ -8,7 +8,7 @@ import '../models/transaction.dart' as model;
 import 'database_helper.dart';
 import 'types.dart';
 
-/// Owns the transactions-table read surface — paged list, breakdown
+/// Owns the transactions-table read surface — paged list
 /// rollups, monthly trend, category drilldown, merchant summary, and the
 /// detected-recurring-payment summary.
 ///
@@ -241,107 +241,6 @@ class TransactionRepository {
       for (final r in rows)
         ((r['name'] as String?) ?? '').toLowerCase(): r['icon_id'] as String?,
     };
-  }
-
-  Future<BreakdownSummary> queryBreakdown(
-    String userId,
-    List<String> cardIds, {
-    DateTime? startDate,
-    DateTime? endDate,
-  }) async {
-    final db = await _dbHelper.database;
-    String cardFilter = '';
-    List<dynamic> params = [userId];
-
-    if (cardIds.isNotEmpty) {
-      final placeholders = List.filled(cardIds.length, '?').join(',');
-      cardFilter = ' AND card_id IN ($placeholders)';
-      params.addAll(cardIds);
-    }
-    if (startDate != null) {
-      cardFilter += ' AND posted_at >= ?';
-      params.add(startDate.toIso8601String());
-    }
-    if (endDate != null) {
-      cardFilter += ' AND posted_at <= ?';
-      params.add(endDate.toIso8601String());
-    }
-
-    final cfRow = await db.rawQuery('''
-      SELECT
-        SUM(CASE WHEN type = 'DEBIT' THEN ABS(amount) ELSE 0 END) as spent,
-        SUM(CASE WHEN type = 'DEBIT' THEN 1 ELSE 0 END) as spent_count,
-        SUM(CASE WHEN type = 'CREDIT' THEN ABS(amount) ELSE 0 END) as credited
-      FROM transactions
-      WHERE user_id = ? $cardFilter
-    ''', params);
-
-    final spent = (cfRow.first['spent'] as num?)?.toDouble() ?? 0.0;
-    final credited = (cfRow.first['credited'] as num?)?.toDouble() ?? 0.0;
-
-    final categories = await db.rawQuery('''
-      SELECT COALESCE(category, 'Uncategorized') as category, SUM(ABS(amount)) as total
-      FROM transactions
-      WHERE user_id = ? AND type = 'DEBIT' $cardFilter
-      GROUP BY category ORDER BY total DESC
-    ''', params);
-
-    final topMerchantRows = await db.rawQuery('''
-      SELECT COALESCE(merchant, name, 'Unknown') as merchant, SUM(ABS(amount)) as total
-      FROM transactions
-      WHERE user_id = ? AND type = 'DEBIT' $cardFilter
-      GROUP BY merchant ORDER BY total DESC LIMIT 1
-    ''', params);
-
-    final spentCount = (cfRow.first['spent_count'] as num?)?.toInt() ?? 0;
-    final avgTx = spentCount == 0 ? 0.0 : spent / spentCount;
-
-    // Period-over-period variance: compare the selected range against the
-    // immediately-preceding window of equal length. `spent` above is already
-    // the selected-range total; here we sum the previous window using the card
-    // filter only — NOT the selected date bounds, which would intersect the
-    // previous window to empty and force a misleading 0%.
-    double variance = 0.0;
-    if (startDate != null && endDate != null) {
-      final prevStart = startDate.subtract(endDate.difference(startDate));
-      String cardOnly = '';
-      final prevParams = <dynamic>[userId];
-      if (cardIds.isNotEmpty) {
-        final ph = List.filled(cardIds.length, '?').join(',');
-        cardOnly = ' AND card_id IN ($ph)';
-        prevParams.addAll(cardIds);
-      }
-      prevParams.add(prevStart.toIso8601String());
-      prevParams.add(startDate.toIso8601String());
-      final prevRows = await db.rawQuery('''
-        SELECT SUM(CASE WHEN type = 'DEBIT' THEN ABS(amount) ELSE 0 END) as prev_spent
-        FROM transactions
-        WHERE user_id = ? $cardOnly AND posted_at >= ? AND posted_at < ?
-      ''', prevParams);
-      final prevSpent =
-          (prevRows.first['prev_spent'] as num?)?.toDouble() ?? 0.0;
-      variance = prevSpent == 0 ? 0.0 : ((spent - prevSpent) / prevSpent) * 100;
-    }
-
-    return BreakdownSummary(
-      cashFlow: CashFlow(
-        spent: spent,
-        credited: credited,
-        spentCount: spentCount,
-      ),
-      avgTransaction: avgTx,
-      topMerchant: topMerchantRows.isEmpty
-          ? null
-          : topMerchantRows.first['merchant'] as String?,
-      periodVariancePct: variance,
-      byCategory: [
-        for (final c in categories)
-          CategoryBreakdownRow(
-            category: c['category'] as String,
-            total: (c['total'] as num?)?.toDouble() ?? 0,
-          ),
-      ],
-    );
   }
 
   /// The user's home currency — the most common non-empty transaction currency

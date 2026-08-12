@@ -1143,7 +1143,7 @@ class _IncludeDebitAccountsRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Only credit cards are tracked by default. Enable to include '
-            'checking & savings across transactions, breakdowns, and totals.',
+            'checking & savings across transactions and totals.',
             style: AppText.bodySm(color: palette.muted),
           ),
         ],

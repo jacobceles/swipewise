@@ -18,27 +18,6 @@ class CashFlow {
   double get net => spent - credited;
 }
 
-class CategoryBreakdownRow {
-  const CategoryBreakdownRow({required this.category, required this.total});
-  final String category;
-  final double total;
-}
-
-class BreakdownSummary {
-  const BreakdownSummary({
-    required this.cashFlow,
-    required this.avgTransaction,
-    required this.topMerchant,
-    required this.periodVariancePct,
-    required this.byCategory,
-  });
-  final CashFlow cashFlow;
-  final double avgTransaction;
-  final String? topMerchant;
-  final double periodVariancePct;
-  final List<CategoryBreakdownRow> byCategory;
-}
-
 class CategoryDrilldown {
   const CategoryDrilldown({
     required this.totalSpent,

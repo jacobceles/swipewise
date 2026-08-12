@@ -3,11 +3,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/settings_repository.dart';
 import '../theme/app_theme.dart';
 
-enum ShellTab { transactions, cards, breakdown, advisor, profile }
+enum ShellTab { transactions, cards, advisor, profile }
 
 /// The tabs this user has, in bar order.
 ///
-/// Without Pro, Transactions and Breakdown are absent: both read the
+/// Without Pro, Transactions is absent: it reads the
 /// `transactions` table, which only bank sync ever fills, so they would be
 /// permanently empty rather than merely unpopulated.
 ///
@@ -21,7 +21,6 @@ List<ShellTab> shellTabs(bool isPro) => isPro
     ? const [
         ShellTab.transactions,
         ShellTab.cards,
-        ShellTab.breakdown,
         ShellTab.advisor,
         ShellTab.profile,
       ]
@@ -33,7 +32,6 @@ List<ShellTab> shellTabs(bool isPro) => isPro
 ShellTab shellTabForDefaultScreen(DefaultScreen s) => switch (s) {
   DefaultScreen.transactions => ShellTab.transactions,
   DefaultScreen.cards => ShellTab.cards,
-  DefaultScreen.breakdown => ShellTab.breakdown,
   DefaultScreen.advisor => ShellTab.advisor,
   DefaultScreen.profile => ShellTab.profile,
 };
@@ -71,7 +69,6 @@ class AppTabBar extends StatelessWidget {
   static const _labels = <ShellTab, (IconData, String)>{
     ShellTab.transactions: (LucideIcons.receiptText, 'Transactions'),
     ShellTab.cards: (LucideIcons.creditCard, 'Cards'),
-    ShellTab.breakdown: (LucideIcons.chartColumn, 'Breakdown'),
     ShellTab.advisor: (LucideIcons.lightbulb, 'Advisor'),
     ShellTab.profile: (LucideIcons.user, 'Profile'),
   };

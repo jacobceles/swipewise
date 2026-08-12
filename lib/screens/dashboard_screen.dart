@@ -218,7 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Off-screen in the HomeScreen IndexedStack: built once and kept mounted.
     // pagedTransactionsProvider is invalidated at the end of every sync, but
     // without a sync-coupled dependency this tab doesn't re-run `build` to pull
-    // the fresh page. Watching the sync state (same pattern as Cards/Breakdown)
+    // the fresh page. Watching the sync state (same pattern as Cards)
     // gives it that rebuild trigger.
     ref.watch(bankSyncProvider);
     final txAsync = ref.watch(pagedTransactionsProvider(_filter));

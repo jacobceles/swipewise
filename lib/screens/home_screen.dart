@@ -20,7 +20,6 @@ import '../widgets/app_tab_bar.dart';
 import 'dashboard_screen.dart';
 import 'cards_screen.dart';
 import 'advisor_screen.dart';
-import 'breakdown_screen.dart';
 import 'disambiguation_sheet.dart';
 import 'profile_screen.dart';
 import 'reward_ranking_sheet.dart';
@@ -209,7 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ///
   /// The stored value can name a tab that doesn't exist here — the shipped
   /// default is `transactions`, and a user who upgrades free → Pro → free
-  /// could have saved `breakdown`. Falling through to Advisor keeps the
+  /// could have saved a tab this build lacks. Falling through to Advisor keeps the
   /// setting honest instead of indexing into a tab bar that has no such
   /// entry; Advisor is the free build's whole point, so it's the right
   /// landing spot regardless.
@@ -373,7 +372,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final children = <Widget>[
       if (isPro) const DashboardScreen(),
       const CardsScreen(),
-      if (isPro) const BreakdownScreen(),
       const AdvisorScreen(),
       const ProfileScreen(),
     ];
