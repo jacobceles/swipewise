@@ -1549,6 +1549,43 @@
     ]
   },
   {
+    "brandId": "st-hubert",
+    "displayName": "St-Hubert",
+    "category": "dining",
+    "aliases": [
+      "st hubert",
+      "rotisserie st-hubert",
+      "saint hubert"
+    ]
+  },
+  {
+    "brandId": "milestones",
+    "displayName": "Milestones",
+    "category": "dining",
+    "aliases": [
+      "milestones grill and bar"
+    ]
+  },
+  {
+    "brandId": "kelseys",
+    "displayName": "Kelseys",
+    "category": "dining",
+    "aliases": [
+      "kelseys original roadhouse",
+      "kelsey s"
+    ]
+  },
+  {
+    "brandId": "mary-browns",
+    "displayName": "Mary Brown's",
+    "category": "dining",
+    "aliases": [
+      "mary browns",
+      "mary brown s",
+      "mary browns chicken"
+    ]
+  },
+  {
     "brandId": "dennys",
     "displayName": "Denny's",
     "category": "dining",
@@ -2258,6 +2295,77 @@
     ]
   },
   {
+    "brandId": "farm-boy",
+    "displayName": "Farm Boy",
+    "category": "grocery",
+    "aliases": [
+      "farm boy"
+    ]
+  },
+  {
+    "brandId": "longos",
+    "displayName": "Longo's",
+    "category": "grocery",
+    "aliases": [
+      "longos",
+      "longo s"
+    ]
+  },
+  {
+    "brandId": "maxi",
+    "displayName": "Maxi",
+    "category": "grocery",
+    "aliases": [
+      "maxi et cie",
+      "maxi and cie"
+    ]
+  },
+  {
+    "brandId": "t-and-t",
+    "displayName": "T&T Supermarket",
+    "category": "grocery",
+    "aliases": [
+      "t&t",
+      "t and t",
+      "tnt supermarket"
+    ]
+  },
+  {
+    "brandId": "lcbo",
+    "displayName": "LCBO",
+    "category": "grocery",
+    "aliases": [
+      "liquor control board of ontario"
+    ]
+  },
+  {
+    "brandId": "the-beer-store",
+    "displayName": "The Beer Store",
+    "category": "grocery",
+    "aliases": [
+      "beer store"
+    ]
+  },
+  {
+    "brandId": "saq",
+    "displayName": "SAQ",
+    "category": "grocery",
+    "aliases": [
+      "societe des alcools du quebec",
+      "quebec liquor board"
+    ]
+  },
+  {
+    "brandId": "bc-liquor-stores",
+    "displayName": "BC Liquor Stores",
+    "category": "grocery",
+    "aliases": [
+      "bc liquor store",
+      "bcldb",
+      "liquor distribution branch"
+    ]
+  },
+  {
     "brandId": "hannaford",
     "displayName": "Hannaford",
     "category": "grocery",
@@ -2635,6 +2743,14 @@
     "aliases": [
       "fas gas",
       "fas gas plus"
+    ]
+  },
+  {
+    "brandId": "on-the-run",
+    "displayName": "On the Run",
+    "category": "gas",
+    "aliases": [
+      "otr"
     ]
   },
   {
@@ -3518,6 +3634,14 @@
     ]
   },
   {
+    "brandId": "dollarama",
+    "displayName": "Dollarama",
+    "category": "departmentStores",
+    "aliases": [
+      "dollarama"
+    ]
+  },
+  {
     "brandId": "ikea",
     "displayName": "IKEA",
     "category": "departmentStores",
@@ -3637,6 +3761,79 @@
     "category": "phoneAndInternet",
     "aliases": [
       "sasktel"
+    ]
+  },
+  {
+    "brandId": "sport-chek",
+    "displayName": "Sport Chek",
+    "category": "sportingGoods",
+    "aliases": [
+      "sportchek"
+    ]
+  },
+  {
+    "brandId": "atmosphere",
+    "displayName": "Atmosphere",
+    "category": "sportingGoods",
+    "aliases": [
+      "atmosphere outdoor gear"
+    ]
+  },
+  {
+    "brandId": "princess-auto",
+    "displayName": "Princess Auto",
+    "category": "homeImprovement",
+    "aliases": [
+      "princess auto"
+    ]
+  },
+  {
+    "brandId": "home-hardware",
+    "displayName": "Home Hardware",
+    "category": "homeImprovement",
+    "aliases": [
+      "home hardware building centre"
+    ]
+  },
+  {
+    "brandId": "rona",
+    "displayName": "RONA",
+    "category": "homeImprovement",
+    "aliases": [
+      "rona hardware"
+    ]
+  },
+  {
+    "brandId": "reno-depot",
+    "displayName": "Reno-Depot",
+    "category": "homeImprovement",
+    "aliases": [
+      "reno depot"
+    ]
+  },
+  {
+    "brandId": "structube",
+    "displayName": "Structube",
+    "category": "homeImprovement",
+    "aliases": [
+      "structube"
+    ]
+  },
+  {
+    "brandId": "the-source",
+    "displayName": "The Source",
+    "category": "electronics",
+    "aliases": [
+      "the source electronics",
+      "source electronics"
+    ]
+  },
+  {
+    "brandId": "visions-electronics",
+    "displayName": "Visions Electronics",
+    "category": "electronics",
+    "aliases": [
+      "visions"
     ]
   },
   {
