@@ -14,7 +14,7 @@ PRIVATE BY DESIGN
 
 Privacy isn't a promise. It's the architecture:
 
-• No account. No sign-up, no email, no password. Open the app and use it.
+• No account needed. No sign-up, no email, no password — open the app and use it. Signing in with Google is offered, never required, and only backs up your wallet if you ask it to.
 • No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions because it doesn't need them to recommend the right card.
 • On-device only. Your wallet and rewards data are stored in a local database on your phone.
 • No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising and no analytics. The only thing sent off your device is a crash report when the app fails, so it can be fixed — a stack trace and your device model, with no wallet, no location and no account attached.

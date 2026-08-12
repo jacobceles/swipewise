@@ -169,11 +169,12 @@ required. Purpose: app functionality (it is the account). Linked to identity: ye
 ### Security section
 
 - **Encrypted in transit:** yes. Every request is HTTPS.
-- **CHANGED — Users can request data deletion:** the old answer said there is no account and
-  nothing server-side to delete. Accounts and server-side rows both exist now, so that answer
-  is false. Google requires an in-app route **and** a public web URL once an app supports
-  account creation. **This is a blocker for the next submission, not a "later" item.**
-  Uninstalling still removes everything local, but it no longer removes a backup.
+- **CHANGED — Users can request data deletion: yes.** The old answer said there is no account
+  and nothing server-side to delete; accounts and server-side rows both exist now. Both routes
+  Google requires are in place — in-app at **Profile → Delete my account**, and the web URL
+  **https://jacobcelestine.com/swipewise/delete_account.html**, which is what goes in the form.
+  Note for the answer: uninstalling still removes everything local, but it does *not* remove a
+  wallet backup — only account deletion does.
 
 ## ACTIVITY_RECOGNITION declaration — Play Console
 
