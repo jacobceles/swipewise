@@ -146,6 +146,8 @@ class CardProduct {
     this.imageUrl,
     required this.catalogVersion,
     this.retiredAt,
+    this.country,
+    this.currency,
   });
 
   final String id;
@@ -157,6 +159,20 @@ class CardProduct {
   final String? imageUrl;
   final String catalogVersion;
   final String? retiredAt;
+
+  /// ISO country the product is sold in. NULL on catalogs published before
+  /// Canada, where every card was American — read it as 'US'.
+  final String? country;
+
+  /// The card's own currency ('USD' | 'CAD'). NULL reads as 'USD'.
+  ///
+  /// Reward values are NOT converted between currencies: a CAD program is
+  /// valued in CAD cents and compared numerically against USD cents. That is
+  /// exact for a wallet held in one country, and the deliberate trade-off is a
+  /// mixed US+CA wallet, where the cross-border comparison is off by the FX
+  /// rate. Adding an FX rate would put a value that goes stale between
+  /// catalog publishes in front of every ranking.
+  final String? currency;
 }
 
 /// Immutable in-memory catalog the engine resolves against. Built once from

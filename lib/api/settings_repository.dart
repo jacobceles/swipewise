@@ -7,6 +7,14 @@ import 'data_repository.dart';
 /// exactly one read and one write method here so the default and the
 /// serialization shape are colocated - no string-comparison drift between
 /// the UI and the background worker.
+/// "Show every country the catalog carries" — not a country code, so it can
+/// never collide with one.
+const String catalogCountryAll = 'ALL';
+
+/// Countries the catalog actually covers. The picker offers these; anything
+/// else the device locale reports falls back to the first entry.
+const List<String> catalogCountries = ['US', 'CA'];
+
 class SettingsRepository {
   SettingsRepository(this._repo);
   final DataRepository _repo;
@@ -29,6 +37,7 @@ class SettingsRepository {
   static const _kPaymentReminderLeadDays = 'payment_reminder_lead_days';
   static const _kBackupEnabled = 'backup_enabled';
   static const _kProCached = 'pro_cached';
+  static const _kCatalogCountry = 'catalog_country';
 
   /// Settings keys that belong to the *user* and travel with a wallet backup.
   ///
@@ -63,7 +72,22 @@ class SettingsRepository {
     _kIncludeDebitAccounts,
     _kPaymentRemindersEnabled,
     _kPaymentReminderLeadDays,
+    _kCatalogCountry,
   };
+
+  /// Which country's cards the picker offers. `'US'`, `'CA'`, or
+  /// [catalogCountryAll] for every country the catalog carries.
+  ///
+  /// Stored rather than re-derived on each launch: the default comes from the
+  /// device locale, but somebody who overrode it — a Canadian holding US cards,
+  /// say — must not have that choice quietly undone by a SIM swap or a trip.
+  /// Unset means "never chosen", which is what lets the locale supply the
+  /// default exactly once.
+  Future<String?> getCatalogCountry(String userId) =>
+      _repo.getSetting(userId, _kCatalogCountry);
+
+  Future<void> setCatalogCountry(String userId, String value) =>
+      _repo.setSetting(userId, _kCatalogCountry, value);
 
   // Default screen on launch.
   Future<DefaultScreen> getDefaultScreen(String userId) async {

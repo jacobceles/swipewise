@@ -7,6 +7,7 @@ import '../models/reward_category.dart';
 import 'database_helper.dart';
 import 'reward_category_mapper.dart';
 import 'reward_engine.dart';
+import 'settings_repository.dart';
 import 'types.dart';
 
 /// One synced card bound to a catalog product — the input the engine ranks.
@@ -196,18 +197,41 @@ class CatalogRepository {
 
   /// Catalog products for an issuer (case-insensitive), for the Identify
   /// Card picker. Null/empty issuer returns the whole catalog.
-  Future<List<CardProduct>> productsForIssuer(String? issuer) async {
+  Future<List<CardProduct>> productsForIssuer(
+    String? issuer, {
+    String? country,
+  }) async {
     final db = await _dbHelper.database;
-    final rows = (issuer == null || issuer.trim().isEmpty)
-        ? await db.query('card_products', orderBy: 'display_name')
-        : await db.query(
-            'card_products',
-            where: 'LOWER(issuer) = ?',
-            whereArgs: [issuer.trim().toLowerCase()],
-            orderBy: 'display_name',
-          );
+    final clauses = <String>[];
+    final args = <Object?>[];
+    if (issuer != null && issuer.trim().isNotEmpty) {
+      clauses.add('LOWER(issuer) = ?');
+      args.add(issuer.trim().toLowerCase());
+    }
+    final countryClause = _countryClause(country);
+    if (countryClause != null) {
+      clauses.add(countryClause);
+      args.add(country);
+    }
+    final rows = await db.query(
+      'card_products',
+      where: clauses.isEmpty ? null : clauses.join(' AND '),
+      whereArgs: clauses.isEmpty ? null : args,
+      orderBy: 'display_name',
+    );
     return rows.map(_product).toList(growable: false);
   }
+
+  /// `null` when no filtering applies — no country asked for, or [catalogCountryAll].
+  ///
+  /// `COALESCE(country, 'US')` is what makes this safe against an older catalog:
+  /// bundles published before Canada carry no `country` at all, and every card
+  /// in them is American, so a NULL reads as US rather than dropping the whole
+  /// catalog out of the picker.
+  static String? _countryClause(String? country) =>
+      (country == null || country == catalogCountryAll)
+      ? null
+      : "COALESCE(country, 'US') = ?";
 
   /// Every issuer in the catalog, for the wallet flow's issuer picker.
   ///
@@ -215,17 +239,19 @@ class CatalogRepository {
   /// issuer's count, and an issuer whose whole line-up is retired shouldn't
   /// appear at all. The image is just the first product that has art
   /// (~95% of the catalog does), used to make the row scannable.
-  Future<List<CatalogIssuer>> issuers() async {
+  Future<List<CatalogIssuer>> issuers({String? country}) async {
     final db = await _dbHelper.database;
+    final countryClause = _countryClause(country);
     final rows = await db.rawQuery('''
       SELECT issuer,
              COUNT(*) AS product_count,
              MIN(image_url) AS image_url
       FROM card_products
       WHERE retired_at IS NULL
+            ${countryClause == null ? '' : 'AND $countryClause'}
       GROUP BY issuer
       ORDER BY issuer COLLATE NOCASE
-    ''');
+    ''', countryClause == null ? null : [country]);
     return [
       for (final r in rows)
         CatalogIssuer(
@@ -480,6 +506,8 @@ class CatalogRepository {
     imageUrl: r['image_url'] as String?,
     catalogVersion: r['catalog_version'] as String,
     retiredAt: r['retired_at'] as String?,
+    country: r['country'] as String?,
+    currency: r['currency'] as String?,
   );
 
   RewardRule _rule(Map<String, Object?> r) {

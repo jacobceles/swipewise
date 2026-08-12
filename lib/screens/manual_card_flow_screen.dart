@@ -9,6 +9,7 @@ import '../api/catalog_repository.dart';
 import '../api/reward_engine.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_providers.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connect_bank_app_bar.dart';
 
@@ -78,7 +79,13 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
 
   Future<_ProductCatalog> _loadCatalog() async {
     final repo = ref.read(dataRepositoryProvider);
-    final all = await repo.catalog.productsForIssuer(null);
+    // Same country filter as the issuer picker that led here, or an issuer
+    // present in both countries (Amex, Capital One) would list the other
+    // country's cards once you stepped inside it.
+    final all = await repo.catalog.productsForIssuer(
+      null,
+      country: ref.read(catalogCountryProvider),
+    );
     final bank = _normalized(widget.issuerQuery);
     final matches = all.where((product) {
       final issuer = _normalized(product.issuer);

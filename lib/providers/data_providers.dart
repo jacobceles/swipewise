@@ -282,7 +282,10 @@ final earliestTransactionDateProvider = FutureProvider<DateTime?>((ref) async {
 final catalogIssuersProvider = FutureProvider<List<CatalogIssuer>>((ref) async {
   final repo = ref.watch(dataRepositoryProvider);
   await ref.watch(catalogReadyProvider.future);
-  return repo.catalog.issuers();
+  // Watched, not read: changing the country in Profile has to rebuild the
+  // picker, and this provider is what the picker renders from.
+  final country = ref.watch(catalogCountryProvider);
+  return repo.catalog.issuers(country: country);
 });
 
 /// How many cards the wallet already holds per issuer. Watched by the issuer

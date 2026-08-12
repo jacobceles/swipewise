@@ -82,7 +82,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'swipewise.db');
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -283,6 +283,29 @@ class DatabaseHelper {
             'ALTER TABLE card_overrides ADD COLUMN reminder_lead_days INTEGER',
           );
         }
+      }
+    }
+
+    // v14 — country + currency on the catalog, for Canada. Both are additive and
+    // NULL-means-US/USD, so an old bundle keeps importing unchanged; the columns
+    // simply stay empty until a catalog that carries them arrives.
+    if (oldVersion < 14) {
+      final productCols = (await db.rawQuery(
+        'PRAGMA table_info(card_products)',
+      )).map((r) => r['name'] as String).toSet();
+      if (productCols.isNotEmpty) {
+        if (!productCols.contains('country')) {
+          await db.execute('ALTER TABLE card_products ADD COLUMN country TEXT');
+        }
+        if (!productCols.contains('currency')) {
+          await db.execute('ALTER TABLE card_products ADD COLUMN currency TEXT');
+        }
+      }
+      final psCols = (await db.rawQuery(
+        'PRAGMA table_info(point_systems)',
+      )).map((r) => r['name'] as String).toSet();
+      if (psCols.isNotEmpty && !psCols.contains('currency')) {
+        await db.execute('ALTER TABLE point_systems ADD COLUMN currency TEXT');
       }
     }
   }
@@ -815,7 +838,11 @@ class DatabaseHelper {
         display_name TEXT NOT NULL,
         baseline_cent_value REAL NOT NULL,
         valuation_source TEXT,
-        valuation_updated_at TEXT
+        valuation_updated_at TEXT,
+        -- Which currency `baseline_cent_value` is denominated in. NULL = USD.
+        -- Values are NOT converted between currencies — see the ranking note in
+        -- reward_engine.dart.
+        currency TEXT
       )
     ''');
 
@@ -829,7 +856,11 @@ class DatabaseHelper {
         foreign_tx_fee_pct REAL NOT NULL DEFAULT 0.0,
         image_url TEXT,
         catalog_version TEXT NOT NULL,
-        retired_at TEXT
+        retired_at TEXT,
+        -- NULL means US/USD: catalogs published before Canada carried neither
+        -- column, and every card in them was American.
+        country TEXT,
+        currency TEXT
       )
     ''');
 

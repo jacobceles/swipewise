@@ -188,6 +188,7 @@ class CatalogLoader {
     'baseline_cent_value',
     'valuation_source',
     'valuation_updated_at',
+    'currency',
   ];
   static const _cardProductCols = [
     'card_product_id',
@@ -199,6 +200,8 @@ class CatalogLoader {
     'image_url',
     'catalog_version',
     'retired_at',
+    'country',
+    'currency',
   ];
   static const _rewardRuleCols = [
     'rule_id',

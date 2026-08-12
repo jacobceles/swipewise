@@ -47,7 +47,11 @@ deliberately adds it to the list — the failure direction is "didn't sync" rath
 
 Travels: default screen, default advisor view, nearby enabled, search radius,
 dwell time per category, nearby place types, preferred card order, dismissed recurring tips,
-include debit accounts, payment reminders enabled, payment reminder lead days.
+include debit accounts, payment reminders enabled, payment reminder lead days, card country.
+
+Card country travels deliberately: it is a statement about which country's cards you hold,
+not about the handset, so a new phone should inherit it rather than re-guess from the locale
+it happens to boot with.
 
 Deliberately stays on the device:
 

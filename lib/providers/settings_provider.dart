@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_provider.dart';
 import 'data_providers.dart';
@@ -33,6 +35,49 @@ String advisorViewLabel(AdvisorView v) {
 }
 
 final _settings = SettingsRepository(DataRepository());
+
+/// Which country's cards the Add-Cards picker offers.
+///
+/// Unset falls back to the device locale on every read rather than being
+/// written once at first launch: a value only lands in the DB when the user
+/// picks one, so "never chosen" stays distinguishable from "chose US". An
+/// explicit choice then survives travel, a SIM swap or a locale change, which
+/// is the case that actually matters — somebody who deliberately picked the
+/// other country does not want it silently undone.
+class CatalogCountryNotifier extends Notifier<String> {
+  @override
+  String build() {
+    final auth = ref.watch(authProvider);
+    if (auth.userId != null) {
+      Future.microtask(() async {
+        final stored = await _settings.getCatalogCountry(auth.userId!);
+        final value = stored ?? localeCountryDefault();
+        if (state != value) state = value;
+      });
+    }
+    return localeCountryDefault();
+  }
+
+  Future<void> setCountry(String value) async {
+    final userId = ref.read(authProvider).userId;
+    state = value;
+    if (userId != null) await _settings.setCatalogCountry(userId, value);
+  }
+}
+
+/// The device's country if the catalog covers it, else the first country it
+/// does cover. A German locale gets US cards rather than an empty picker.
+String localeCountryDefault() {
+  final cc = PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+  return catalogCountries.contains(cc) ? cc! : catalogCountries.first;
+}
+
+String catalogCountryLabel(String value) => switch (value) {
+  'US' => 'United States',
+  'CA' => 'Canada',
+  catalogCountryAll => 'All countries',
+  _ => value,
+};
 
 class DefaultScreenNotifier extends Notifier<DefaultScreen> {
   @override
@@ -73,6 +118,10 @@ class AdvisorViewNotifier extends Notifier<AdvisorView> {
     if (userId != null) await _settings.setDefaultAdvisorView(userId, v);
   }
 }
+
+final catalogCountryProvider = NotifierProvider<CatalogCountryNotifier, String>(
+  CatalogCountryNotifier.new,
+);
 
 final defaultScreenProvider =
     NotifierProvider<DefaultScreenNotifier, DefaultScreen>(
