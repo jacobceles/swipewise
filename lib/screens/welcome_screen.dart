@@ -8,12 +8,13 @@ import '../theme/app_theme.dart';
 
 /// First run: sign in, or skip.
 ///
-/// Signing in attaches a Google identity to the wallet. That now unlocks
-/// something real — wallet backup and restore — so the copy describes it
-/// rather than promising it. Cross-device Pro is still unbuilt and stays
-/// marked "Soon": the pill comes off the day a feature ships, never the day
-/// it is planned, because this is the most-read screen in the app and copy
-/// that outruns the build is the kind of lie nobody notices writing.
+/// Signing in attaches a Google identity to the wallet, which unlocks backup
+/// and restore. The copy describes that rather than promising it.
+///
+/// Nothing unbuilt is advertised here. A "Carry Pro across your devices — Soon"
+/// row was removed when Pro stopped being something we were about to sell: this
+/// is the most-read screen in the app, and copy that outruns the build is the
+/// kind of lie nobody notices writing.
 ///
 /// Skipping is a first-class choice, not a dismissal: it takes the same path
 /// the app has always taken, keeping the device-local identity minted by
@@ -112,12 +113,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     icon: LucideIcons.smartphone,
                     label: 'Restore your wallet on a new phone',
                   ),
-                  const SizedBox(height: 12),
-                  const _BenefitRow(
-                    icon: LucideIcons.crown,
-                    label: 'Carry Pro across your devices',
-                    soon: true,
-                  ),
+                  // "Carry Pro across your devices — Soon" lived here. Removed
+                  // rather than left pending: Pro is not being sold, so the
+                  // first screen should not advertise it. Restore the row (with
+                  // `soon: true`) when billing ships.
+
                   if (error != null) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -199,15 +199,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 /// never claims something the build cannot do — the pill comes off the day the
 /// feature ships, not the day it is planned.
 class _BenefitRow extends StatelessWidget {
-  const _BenefitRow({
-    required this.icon,
-    required this.label,
-    this.soon = false,
-  });
+  const _BenefitRow({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
-  final bool soon;
 
   @override
   Widget build(BuildContext context) {
@@ -217,17 +212,6 @@ class _BenefitRow extends StatelessWidget {
         Icon(icon, size: 18, color: palette.muted),
         const SizedBox(width: 10),
         Expanded(child: Text(label, style: AppText.bodySm())),
-        if (soon) ...[
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: palette.secondary,
-              borderRadius: BorderRadius.circular(kRadiusPill),
-            ),
-            child: Text('Soon', style: AppText.labelSm(color: palette.muted)),
-          ),
-        ],
       ],
     );
   }
