@@ -55,10 +55,17 @@ void main() {
     return container;
   }
 
-  test('these tests describe a user without Pro', () {
+  test('these tests describe a user without Pro', () async {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     expect(c.read(proEntitlementProvider), isFalse);
+    // Reading entitlement now mounts `authProvider` — it watches identity so
+    // it can key its cache and re-check on sign-in — and that build fires
+    // `checkStatus` in a microtask with several async gaps. Await the same
+    // call, then drain, exactly as `launch()` does: pumping alone proves
+    // nothing, because sqflite-ffi answers from another isolate.
+    await c.read(authProvider.notifier).checkStatus();
+    await pumpEventQueue();
   });
 
   test('first launch mints a local identity and signs the user in', () async {

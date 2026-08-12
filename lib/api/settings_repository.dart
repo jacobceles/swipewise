@@ -29,6 +29,7 @@ class SettingsRepository {
   static const _kPaymentRemindersEnabled = 'payment_reminders_enabled';
   static const _kPaymentReminderLeadDays = 'payment_reminder_lead_days';
   static const _kBackupEnabled = 'backup_enabled';
+  static const _kProCached = 'pro_cached';
 
   /// Settings keys that belong to the *user* and travel with a wallet backup.
   ///
@@ -44,6 +45,11 @@ class SettingsRepository {
   /// * [_kBackupEnabled] — restoring a backup must never silently switch
   ///   backup *on* for the phone receiving it. That has to stay a deliberate
   ///   act on each device.
+  /// * [_kProCached] — ⚠️ the one that would actually matter. If the cached
+  ///   entitlement travelled, restoring a backup onto another phone would show
+  ///   Pro there: a "copy my backup to upgrade" path. Harmless in the sense
+  ///   that the server still refuses the data, but not something to leave
+  ///   lying around.
   /// * [_kLastSyncAt], [_kPopularBanksCache], [_kCatalogDataVersion] — caches
   ///   and bookkeeping about this device, meaningless on another.
   static const Set<String> syncableSettingsKeys = {
@@ -346,6 +352,22 @@ class SettingsRepository {
 
   Future<void> setBackupEnabled(String userId, bool enabled) =>
       _repo.setSetting(userId, _kBackupEnabled, enabled.toString());
+
+  /// Last known answer to "is this user Pro?", so a launch without network
+  /// does not demote a paying subscriber.
+  ///
+  /// Trusted indefinitely while offline, and downgraded only when the server
+  /// explicitly says otherwise. A stale `true` can never hand out free
+  /// service — every Pro feature's data comes from the account service, which
+  /// checks entitlement itself — so the cost of trusting it too long is empty
+  /// screens, while the cost of expiring it is stranding someone on a plane.
+  Future<bool> getProCached(String userId) async {
+    final raw = await _repo.getSetting(userId, _kProCached);
+    return raw == 'true';
+  }
+
+  Future<void> setProCached(String userId, bool isPro) =>
+      _repo.setSetting(userId, _kProCached, isPro.toString());
 
   /// Whether deposit (checking / savings) accounts are pulled in by Sophtron
   /// sync alongside credit cards. Default OFF - most users only care about

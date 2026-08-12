@@ -5,6 +5,9 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'app_check_service.dart';
 import 'sophtron_auth_service.dart';
 
 /// Dart port of `packages/sophtron-adapter/src/apiClient.v2.ts` in
@@ -44,7 +47,10 @@ class BankClient {
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final url = '${SophtronConfig.apiBaseUrl}$path';
+    // Through the account service, never to the aggregator directly. The
+    // Worker checks who is asking, checks they are entitled, refuses anything
+    // off its allowlist, substitutes the Customer id, and only then signs.
+    final url = '${SophtronConfig.accountBaseUrl}/aggregator/$path';
     final encodedBody = body == null ? null : jsonEncode(body);
     final uri = Uri.parse(url);
     final upperMethod = method.toUpperCase();
@@ -56,13 +62,16 @@ class BankClient {
         // Auth header is rebuilt every attempt — the HMAC has no nonce, so
         // re-signing is just paranoia, but it's cheap and ensures we
         // re-derive after any future clock-bound auth scheme change.
+        // Two proofs, no signature. The app cannot sign anything any more —
+        // it says who it is and lets the service decide.
+        final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+        if (idToken == null || idToken.isEmpty) throw MissingSophtronCreds();
         final headers = {
-          'Authorization': buildSophtronAuthHeader(
-            fullUrl: url,
-            httpMethod: upperMethod,
-          ),
+          'Authorization': 'Bearer $idToken',
           if (body != null) 'Content-Type': 'application/json',
         };
+        final appCheck = await AppCheckService.token();
+        if (appCheck != null) headers['X-Firebase-AppCheck'] = appCheck;
         final resp = await switch (upperMethod) {
           'GET' => _http.get(uri, headers: headers).timeout(_kRequestTimeout),
           'POST' =>
@@ -209,69 +218,18 @@ class BankClient {
 
   // ---- Customer ----
 
-  /// Returns the existing Customer for our SOPHTRON_USER_ID, or null.
-  Future<Map<String, dynamic>?> getCustomerByUniqueName(String uniqueId) async {
-    final r = await _request(
-      'GET',
-      'v2/customers?uniqueID=${Uri.encodeQueryComponent(uniqueId)}',
-    );
-    if (r == null) return null;
-    if (r is! List) {
-      throw SophtronProtocolException(
-        path: 'v2/customers',
-        reason: 'expected List, got ${r.runtimeType}',
-      );
-    }
-    if (r.isEmpty) return null;
-    final first = r.first;
-    if (first is! Map<String, dynamic>) {
-      throw SophtronProtocolException(
-        path: 'v2/customers',
-        reason: 'first row not a Map: ${first.runtimeType}',
-      );
-    }
-    return first;
-  }
-
-  /// One-time call when a user first signs in. Idempotent at the call site
-  /// (use `getCustomerByUniqueName` first); Sophtron's behavior on a second
-  /// `POST` is not documented.
-  Future<Map<String, dynamic>> createCustomer(String uniqueId) async {
-    final r = await _request(
-      'POST',
-      'v2/customers',
-      body: {
-        'UniqueID': uniqueId,
-        'Source': 'swipewise',
-        'Name': 'Swipewise_Customer',
-      },
-    );
-    if (r is! Map<String, dynamic>) {
-      throw SophtronProtocolException(
-        path: 'v2/customers',
-        reason: 'createCustomer returned ${r.runtimeType}',
-      );
-    }
-    return r;
-  }
-
-  /// Convenience: look up or create. Mirrors UCW's `ResolveUserId`.
-  Future<String> resolveCustomerId(String uniqueId) async {
-    final existing = await getCustomerByUniqueName(uniqueId);
-    if (existing != null) {
-      final cid = (existing['CustomerID'] ?? existing['ID'])?.toString();
-      if (cid != null && cid.isNotEmpty) return cid;
-    }
-    final created = await createCustomer(uniqueId);
-    final cid = (created['CustomerID'] ?? created['ID'])?.toString();
-    if (cid == null || cid.isEmpty) {
-      throw SophtronProtocolException(
-        path: 'v2/customers',
-        reason: 'createCustomer did not return a CustomerID',
-      );
-    }
-    return cid;
-  }
+  /// The Customer id to use in every subsequent path.
+  ///
+  /// Always the `~me` placeholder. Customer lookup and creation moved to the
+  /// account service, which resolves it from the verified token — so the app
+  /// never learns its own Customer id and cannot name anyone else's. The
+  /// `uniqueId` argument is ignored and kept only so callers did not have to
+  /// change; it used to be `sha256(email | salt)` and no longer exists.
+  ///
+  /// This is what makes tampering structurally impossible rather than a check
+  /// somebody has to remember: there is no customer field in any request.
+  Future<String> resolveCustomerId(String uniqueId) async =>
+      SophtronConfig.meToken;
 
   // ---- Member (the linked bank) ----
 

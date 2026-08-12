@@ -6,7 +6,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sqflite/sqflite.dart';
 import '../api/database_helper.dart';
 import '../api/sophtron_auth_service.dart';
-import 'entitlement_provider.dart';
 
 class AuthState {
   final bool isLoggedIn;
@@ -117,7 +116,15 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true);
     final db = await _dbHelper.database;
     var rows = await db.query('users', limit: 1);
-    if (rows.isEmpty && !ref.read(proEntitlementProvider)) {
+    // Unconditional. This used to skip minting a local identity for Pro,
+    // because Pro forced a login and would always have a Firebase row — but
+    // signing in is optional in both tiers now, so a Pro user who skips needs
+    // a local identity exactly like anyone else.
+    //
+    // Reading entitlement here also created a cycle once entitlement started
+    // depending on identity: auth -> entitlement -> auth. Riverpod caught it
+    // as a CircularDependencyError.
+    if (rows.isEmpty) {
       await _createLocalIdentity(db);
       rows = await db.query('users', limit: 1);
     }
@@ -192,9 +199,16 @@ class AuthNotifier extends Notifier<AuthState> {
       // The Sophtron Customer id is meaningless without bank sync, so it is
       // only derived when the user actually has Pro. Left null otherwise,
       // which is what makes `runSync` bail early for everyone else.
-      final uniqueId = ref.read(proEntitlementProvider)
-          ? SophtronConfig.deriveCustomerUniqueId(email)
-          : null;
+      // Marks "this account exists server-side"; whether it may link a bank
+      // is the account service's call, not ours. It used to be
+      // sha256(email + salt) — the value the aggregator keyed the Customer on,
+      // which made the salt unrotatable forever. The service stores the real
+      // mapping now, so this only has to be non-null, and the uid is the
+      // stable, non-secret way to say so.
+      //
+      // No longer conditional on entitlement: reading it here would recreate
+      // the auth -> entitlement -> auth cycle.
+      final uniqueId = firebaseUser.uid;
       final db = await _dbHelper.database;
       final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
