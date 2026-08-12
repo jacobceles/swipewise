@@ -16,7 +16,6 @@ import '../widgets/app_tab_bar.dart';
 import 'card_preference_screen.dart';
 import 'notification_settings_screen.dart';
 import 'muted_stores_screen.dart';
-import 'privacy_policy_screen.dart';
 import 'subscriptions_screen.dart';
 
 /// Wireframe `YUfiL` - Profile tab. Hero block with initials avatar +
@@ -89,6 +88,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
     if (picked != null) {
       await ref.read(nearbyRadiusProvider.notifier).set(picked);
+    }
+  }
+
+  /// Opens the hosted privacy policy.
+  ///
+  /// Deliberately not a bundled copy. There used to be one — `docs/PRIVACY.md`
+  /// shipped as an asset and rendered in-app — which meant the policy existed
+  /// twice, by hand, and the two drifted: the in-app copy still said "no
+  /// account and no server-side record of you" after both had become false.
+  /// One source, at the URL Google Play already points at, cannot drift.
+  ///
+  /// The cost is that it needs a network connection, which is the same trade
+  /// `Check for Updates` already makes.
+  Future<void> _openPrivacyPolicy() async {
+    final uri = Uri.parse(
+      'https://jacobcelestine.com/swipewise/privacy_policy.html',
+    );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open the privacy policy")),
+      );
     }
   }
 
@@ -509,11 +530,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _SettingsRow(
                     label: 'Privacy Policy',
                     trailing: const _Chevron(),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const PrivacyPolicyScreen(),
-                      ),
-                    ),
+                    onTap: _openPrivacyPolicy,
                   ),
                   _SettingsRow(
                     label: 'Check for Updates',

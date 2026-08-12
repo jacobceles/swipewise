@@ -279,7 +279,7 @@ class NearbyPermissionGate {
   ///
   /// The third paragraph is not padding: the disclosure has to be *accurate*,
   /// and location does leave the device — a coarse fix goes to Google Places.
-  /// It matches `docs/PRIVACY.md`; change both together.
+  /// It must match the hosted privacy policy; change both together.
   ///
   /// `true` = user opted in (we then trigger the OS flow, which on this
   /// minSdk deep-links to the per-app Location settings page); `false` = user

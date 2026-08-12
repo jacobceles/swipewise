@@ -74,7 +74,7 @@ This is a core value, not a marketing line:
   location and no account.
 - **Location stays yours.** Your precise GPS fix never leaves the device; only a location
   *rounded to ~110 m* is sent to Google Places to find nearby stores.
-Full details: [docs/PRIVACY.md](docs/PRIVACY.md).
+Full details: [Privacy Policy](https://jacobcelestine.com/swipewise/privacy_policy.html).
 
 ## 🛠️ Built with
 
@@ -141,7 +141,7 @@ Full build/release/keys details: [docs/setup.md](docs/setup.md).
 | [Nearby & geofences](docs/nearby.md) | Google Places search, tile cache, geofences, notifications |
 | [Database](docs/database.md) | Full SQLite schema |
 | [Setup](docs/setup.md) | Keys, build flags, git hooks, troubleshooting |
-| [Privacy](docs/PRIVACY.md) | What's collected, where it goes, what's never stored |
+| [Privacy](https://jacobcelestine.com/swipewise/privacy_policy.html) | What's collected, where it goes, what's never stored. Hosted, not bundled — one copy, so it cannot drift from what the app does |
 
 ## 📄 License
 

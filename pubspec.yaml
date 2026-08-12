@@ -46,7 +46,6 @@ dependencies:
   crypto: ^3.0.7
   pool: ^1.5.1
   geolocator: ^14.0.3
-  flutter_markdown_plus: ^1.0.12
   permission_handler: ^13.0.0
   lucide_icons_flutter: ^3.1.15
   google_fonts: ^8.2.1
@@ -97,7 +96,6 @@ flutter:
     - assets/logo.png
     - assets/vocab/brands.json
     - assets/vocab/categories.json
-    - docs/PRIVACY.md
     - assets/catalog/free.json
 
   # To add assets to your application, add an assets section, like this:
