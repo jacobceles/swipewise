@@ -5,19 +5,26 @@ surfaces: **V2** for the connect lifecycle (no FDX connect surface exists) and *
 (FDX-standard)** for all account/transaction reads, isolated behind one mapper so the
 aggregator is swappable.
 
-## Auth
+## Auth — the app signs nothing
 
-All requests are HMAC-SHA256 signed. [`sophtron_auth_service.dart`](../lib/api/sophtron_auth_service.dart):
+Requests go to the **account service**, not to the aggregator. The app sends who it is; the
+service checks entitlement, refuses anything off its allowlist, substitutes the Customer id
+and signs with credentials the app has never seen.
 
-- **`buildSophtronAuthHeader()`** builds `Authorization: FIApiAUTH:<userId>:<sig>:<authPath>`.
-  Plaintext signed = `<METHOD>\n<authPath>`; key = base64-decoded `SOPHTRON_ACCESS_KEY`;
-  `authPath` = the last `/` segment + query, lowercased.
-- **`SophtronConfig`** holds the three build-time constants (`--dart-define`):
-  `SOPHTRON_USER_ID`, `SOPHTRON_ACCESS_KEY` (the app's API-account credentials, shared
-  across installs), and `SOPHTRON_CUSTOMER_SALT`.
-- **`deriveCustomerUniqueId(email)`** = `sha256("${email.trim().toLowerCase()}|$salt")`.
-  This is the reinstall-recovery key: same email → same Customer → all its Members. The
-  salt keeps the derivation non-reproducible from the email alone.
+- **`BankClient._request`** calls `${ACCOUNT_API_URL}/aggregator/<path>` with two headers: a
+  Firebase ID token (*which user*) and an App Check token (*a genuine install*). No HMAC, no
+  `Authorization: FIApiAUTH:…`, no aggregator credentials — none of that exists in the app.
+- **`resolveCustomerId()` returns the literal `~me`.** The app cannot name a Customer: it
+  writes a placeholder and the server substitutes the id it looked up from the token. There is
+  no customer field in any request, which makes tampering structurally impossible rather than
+  a check somebody has to remember.
+- **There is no customer salt.** The id used to be `sha256(email | salt)` because there was no
+  server to remember one — which made the salt unrotatable forever, since changing it orphans
+  every bank link. The service stores the mapping in `sophtron_customers` instead.
+
+The HMAC scheme itself, the path allowlist and the job-ownership check now live in the
+account service (`swipewise-backend/swipewise-account/src/aggregator.ts`), along with the
+tests that pin them.
 
 ## Connect flow (V2) — the MFA state machine
 

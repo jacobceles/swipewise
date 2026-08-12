@@ -81,13 +81,25 @@ file (not this one).
 
 ## Data safety form — answer sheet
 
-Answer for the app **as submitted**: free tier, no billing SDK, no bank connectivity. Google
-reviews these against the binary, and the three surfaces (this form, the store listing, the
-privacy policy) must agree.
+> ⚠️ **REVIEW BEFORE THE NEXT SUBMISSION — 2026-08-12.** This sheet was written when the app
+> had no accounts and sent nothing off the device. Both are now false: sign-in is available
+> (optional) and wallet backup is available (opt-in). Answers marked **CHANGED** below were
+> filed under the old premise and are wrong in the Play Console today. The authoritative list
+> of what backup uploads is [`docs/BACKUP_SCHEMA.md`](../docs/BACKUP_SCHEMA.md) — answer from
+> it rather than re-deriving, and keep the two in step.
+
+Answer for the app **as submitted**: free tier, no billing SDK. Google reviews these against
+the binary, and the three surfaces (this form, the store listing, the privacy policy) must
+agree.
 
 ⚠️ **"Collected" means transmitted off the device** — to you *or* a third party. It does not
-mean "stored". Everything SwipeWise keeps in `swipewise.db` stays on the phone and is therefore
-**not** collected. Only two things leave the device.
+mean "stored". Everything SwipeWise keeps in `swipewise.db` stays on the phone unless the user
+turns backup on.
+
+**CHANGED — what now leaves the device:** the two originals below, plus, *for a user who signs
+in*, their email and user id; plus, *for a user who also enables backup*, their cards, card
+nicknames/edits, catalog links, preferences and muted stores. Transactions still never leave —
+that claim is intact and there is a test enforcing it.
 
 ### Declare these two data types
 
@@ -145,17 +157,24 @@ Two that look like they might apply and do not:
 
 - **Health and fitness** — the app holds `ACTIVITY_RECOGNITION`, but activity is used on-device
   to tell a real store visit from a traffic stop. Nothing is transmitted, so nothing is collected.
-- **Financial info** — no bank connection, no card numbers, no payments. The bank-sync code
-  ships dormant in the binary, but data safety asks what the app **collects**, and without
-  credentials it collects nothing. (See the note below; the old "compiled out" reasoning was
-  wrong and would not survive a reviewer decompiling.)
+- **Financial info** — no card numbers and no payments. Card *products* a user owns (e.g.
+  "Chase Sapphire Preferred") do leave the device in a backup, which is closer to a preference
+  than a financial record, but decide it deliberately rather than by omission. Bank
+  connectivity remains unavailable to anyone without an entitlement, which is granted by hand.
+
+**CHANGED — Personal info → Email address.** Collected for users who sign in. Optional, not
+required. Purpose: app functionality (it is the account). Linked to identity: yes.
+
+**CHANGED — User IDs.** Same shape: collected when signed in, optional, app functionality.
 
 ### Security section
 
 - **Encrypted in transit:** yes. Every request is HTTPS.
-- **Users can request data deletion:** there is no account and no server-side record to delete.
-  Everything lives on the device and uninstalling removes it. Say so rather than claiming a
-  deletion mechanism that does not exist.
+- **CHANGED — Users can request data deletion:** the old answer said there is no account and
+  nothing server-side to delete. Accounts and server-side rows both exist now, so that answer
+  is false. Google requires an in-app route **and** a public web URL once an app supports
+  account creation. **This is a blocker for the next submission, not a "later" item.**
+  Uninstalling still removes everything local, but it no longer removes a backup.
 
 ## ACTIVITY_RECOGNITION declaration — Play Console
 

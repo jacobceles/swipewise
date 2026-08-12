@@ -33,12 +33,13 @@ moment no other rewards app actually owns.
 - 📊 **Every category ranked.** An Advisor that ranks every card you own — by nearby store,
   spend category, or merchant brand, with one search across all three.
 
-> **Pro (not yet available).** Bank linking via the FDX open-finance standard, real
-> transaction history, monthly spending breakdown and recurring-charge routing are built and
-> in this repo, but dormant: they need a server that holds the aggregator credentials, and
-> that doesn't exist yet. See [the split plan](docs/setup.md#tiers--one-binary-runtime-entitlement).
-- 🔒 **Private by design.** Everything lives on your phone. No SwipeWise server, no
-  telemetry, no location history. (More below.)
+- 🔒 **Private by design.** Your wallet lives on your phone; backup is opt-in and your
+  transactions never leave the device. (More below.)
+
+> **Pro (not yet on sale).** Bank linking via the FDX open-finance standard, real transaction
+> history, monthly spending breakdown and recurring-charge routing are built, and the service
+> that holds the aggregator credentials is live. What is missing is billing — entitlement is
+> granted by hand today. See [the tier model](docs/setup.md#tiers--one-binary-runtime-entitlement).
 
 ## 📱 Screens
 
@@ -56,19 +57,23 @@ moment no other rewards app actually owns.
 
 This is a core value, not a marketing line:
 
-- **No accounts, no user database.** The only SwipeWise-operated service is a stateless
-  Cloudflare Worker that serves the card catalog and looks up nearby stores — it stores
-  nothing you send it, so there's nowhere on our side for your data to accumulate.
-- **On-device only.** Your wallet and its rewards live in a local SQLite database on your
-  phone (and, on Pro, your transactions too — same database, same device).
+- **Signing in is optional, and it is not the app.** Skip it and nothing changes — the app
+  works exactly the same, keyed to an id minted on your phone that is never sent anywhere.
+  Sign in and you get an account you can back up to; that is the whole difference.
+- **Backup is opt-in and off by default.** Nothing is uploaded unless you switch it on. When
+  you do, it carries your cards, your edits to them and your preferences —
+  [documented exactly, field by field](docs/BACKUP_SCHEMA.md).
+- **Your transactions never leave the device.** Not in a backup, not ever. Spend history lives
+  in a local SQLite database on your phone and stays there. There is a test asserting a backup
+  payload cannot contain one, because a promise nobody checks is just a sentence.
+- **Bank credentials are not ours to hold.** Linking a bank goes through a service that signs
+  the request; the app carries no aggregator credentials at all, and the service forwards
+  without storing what comes back.
 - **No tracking, no ads.** Nothing records which cards you're shown, which notifications
   fire, or what you tap. Crash reports are the one exception, and carry no wallet, no
   location and no account.
 - **Location stays yours.** Your precise GPS fix never leaves the device; only a location
   *rounded to ~110 m* is sent to Google Places to find nearby stores.
-- **No account at all.** No sign-up, no email, no password — open the app and use it. Your
-  identity is a random id generated on your device that is never sent anywhere.
-
 Full details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## 🛠️ Built with
@@ -76,9 +81,9 @@ Full details: [docs/PRIVACY.md](docs/PRIVACY.md).
 Flutter (Material 3) · Riverpod · sqflite · Google Places API · native Android geofencing ·
 a Cloudflare Worker serving the rewards catalog. Android today; iOS later.
 
-The Pro path adds Firebase Auth and Sophtron (FDX-standard bank data). That code is in this
-repo and dormant — it needs a server holding the aggregator credentials, which doesn't exist
-yet.
+The Pro path adds Firebase Auth and FDX-standard bank data through an aggregator. The app
+holds no aggregator credentials: a Cloudflare Worker over D1 checks who is asking, checks
+they are entitled, and signs on their behalf.
 
 ## 🤝 Open source & contributing
 
@@ -109,28 +114,18 @@ its features unlock at runtime rather than at compile time — the Pro code is p
 dormant for everyone, and lights up when the entitlement says so. Which tier a *local* build
 behaves as is decided by the keys file you pass:
 
-`keys.free.json` is **committed** — it holds no credential, only two URLs:
-
-```json
-{
-  "R2_BASE_URL": "https://swipewise-api.jacobceles.workers.dev",
-  "PLACES_PROXY_URL": "https://swipewise-api.jacobceles.workers.dev/places/nearby"
-}
-```
-
-Nearby search goes through the Worker, which holds the Google Places key server-side, so no
-Places credential exists in the app to configure or to leak.
-
 ```bash
 flutter run --dart-define-from-file=keys.free.json   # what ships
-flutter run --dart-define-from-file=keys.pro.json    # + bank sync, for development
 ```
 
-`keys.pro.json` adds `SOPHTRON_USER_ID`, `SOPHTRON_ACCESS_KEY`, `SOPHTRON_CUSTOMER_SALT` and
-`"SWIPEWISE_PRO": "true"`, and stays untracked. The published release is built from
-`keys.free.json`, so the aggregator credentials are simply not in it — a value that isn't in
-the binary can't be extracted from it. `tool/verify_release_apk.py` fails the build if any
-credential reaches the APK, and runs on every pull request.
+`keys.free.json` is **committed**: it holds three public URLs and no credential. There is
+nothing secret left to put in a build — the Places key and the bank aggregator's credentials
+both live in Cloudflare Workers, and the app talks to those rather than to the services
+directly. `keys.pro.json` now differs only by `"SWIPEWISE_PRO": "true"`, which forces the Pro
+*UI* on for local work; entitlement itself is decided server-side, so the flag grants nothing.
+
+`tool/verify_release_apk.py` fails the build if a credential ever reaches the APK, and runs on
+every pull request — a regression guard now rather than a live risk.
 
 Full build/release/keys details: [docs/setup.md](docs/setup.md).
 
@@ -139,7 +134,7 @@ Full build/release/keys details: [docs/setup.md](docs/setup.md).
 | Doc | Covers |
 |---|---|
 | [Architecture](docs/architecture.md) | How the app, classifier, and catalog fit together |
-| [Sophtron sync](docs/sophtron.md) | Bank linking, FDX reads, the sync engine |
+| [Bank sync](docs/sophtron.md) | Bank linking, FDX reads, the sync engine, and the signing proxy |
 | [Classifier & brands](docs/classifier-and-brands.md) | How a merchant becomes a recommendation |
 | [Reward catalog & engine](docs/reward-catalog.md) | Catalog data → the pure reward engine/ranker |
 | Catalog API *(separate private repo)* | The Cloudflare Worker that serves the catalog + the CLI that publishes it to R2. Server-side code lives outside this repo so user-data infrastructure never shares a deploy with the public catalog API — see [what a wallet backup stores](docs/BACKUP_SCHEMA.md) |

@@ -41,18 +41,21 @@ in every published APK — so a fresh clone builds a working app with nothing to
 ```
 
 **`keys.pro.json` is gitignored** (`.gitignore` covers `keys*.json`, with an exception for the
-free file). It adds the aggregator credentials and the tier flag:
+free file). It adds only the tier flag — there are no credentials left to add:
 
 ```json
 {
   "R2_BASE_URL": "https://swipewise-api.<subdomain>.workers.dev",
   "PLACES_PROXY_URL": "https://swipewise-api.<subdomain>.workers.dev/places/nearby",
-  "SOPHTRON_USER_ID": "<sophtron-user-id>",
-  "SOPHTRON_ACCESS_KEY": "<sophtron-access-key>",
-  "SOPHTRON_CUSTOMER_SALT": "<random-base64-string>",
+  "ACCOUNT_API_URL": "https://swipewise-account.<subdomain>.workers.dev",
   "SWIPEWISE_PRO": "true"
 }
 ```
+
+`SWIPEWISE_PRO` forces the Pro **UI** on for local work and grants nothing: entitlement is
+decided by the account service, which checks it before signing any aggregator call. If your
+account has an entitlement row you are Pro from `keys.free.json` anyway, which is why this
+file is optional.
 
 ⛔ **Never add a Google Places key to either file.** Nearby search goes through the Worker,
 which holds that key server-side. `tool/verify_release_apk.py` fails the build if
@@ -74,12 +77,14 @@ subscription to unlock it — but it ships with nothing to authenticate with.
   serves them ETag-gated; card-art URLs inside the catalog still point at R2's public
   domain directly. See [reward-catalog.md](reward-catalog.md#distribution) for how the
   catalog is published and served.
-- `SOPHTRON_USER_ID` + `SOPHTRON_ACCESS_KEY` — the HMAC API-account credentials, sent on
-  every Sophtron request and shared across all installs of a build (they identify the app's
-  API account, not the human). Get them from sophtron.com → Account → API Keys.
-- `SOPHTRON_CUSTOMER_SALT` — mixed into the `email → Customer uniqueId` hash so the
-  derivation isn't reproducible from the email alone. Generate once with `openssl rand
-  -base64 32` and **keep it stable** — changing it orphans every user's existing Customer.
+- `ACCOUNT_API_URL` — the account service (wallet backup, entitlement, and the aggregator
+  signing proxy). Unset means the app has no backup feature and cannot link a bank; it hides
+  those affordances rather than failing at them.
+
+The aggregator credentials are **not** here and must never come back. They live as Cloudflare
+secrets on the account Worker, which signs on the app's behalf. There is also no customer
+salt any more: the Customer id is stored server-side in `sophtron_customers` rather than
+derived from an email, so there is nothing to keep stable and nothing to leak.
 
 ## Run & build
 
