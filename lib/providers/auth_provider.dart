@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sqflite/sqflite.dart';
+import '../api/account_delete_client.dart';
 import '../api/database_helper.dart';
 import '../api/sophtron_auth_service.dart';
 
@@ -267,6 +268,56 @@ class AuthNotifier extends Notifier<AuthState> {
   /// off it: someone changing phones has not asked us to throw their data
   /// away, and deletion belongs behind an explicit request, not behind the
   /// sign-out button.
+  /// Deletes the account and everything belonging to it, everywhere.
+  ///
+  /// ⚠️ **The order is the whole design, and it cannot be rearranged.**
+  ///
+  /// 1. **Server first.** Removing the wallet backup, entitlement, aggregator
+  ///    Customer mapping and linked banks needs a valid Firebase ID token —
+  ///    which stops existing the instant the Firebase account does. Delete
+  ///    Firebase first and those rows become unreachable orphans: the user is
+  ///    gone, their data is not, and nothing can ever find it again.
+  /// 2. **Then Firebase**, which may demand a fresh sign-in
+  ///    (`requires-recent-login`) and is reported back rather than swallowed.
+  /// 3. **Then local**, which is the only step that cannot fail and the only
+  ///    one the user can redo by uninstalling.
+  ///
+  /// This is also the one place `db.delete('users')` is correct. Everywhere
+  /// else it is the bug that cascades through ten tables and wipes a wallet
+  /// nobody asked to lose; here the cascade *is* the feature.
+  Future<DeleteFailure?> deleteAccount() async {
+    state = state.copyWith(isLoading: true, error: null);
+    final client = AccountDeleteClient();
+
+    final serverFailure = await client.deleteServerSide();
+    if (serverFailure != null) {
+      state = state.copyWith(isLoading: false);
+      return serverFailure;
+    }
+
+    final authFailure = await client.deleteFirebaseUser();
+    if (authFailure != null) {
+      // Server data is already gone; stopping here leaves a Firebase account
+      // with nothing behind it, which the user can retry after re-signing in.
+      state = state.copyWith(isLoading: false);
+      return authFailure;
+    }
+
+    try {
+      await _ensureGoogleInitialized();
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // Cosmetic — only decides whether the next sign-in shows the picker.
+    }
+
+    final db = await _dbHelper.database;
+    await db.delete('users');
+
+    state = AuthState();
+    await checkStatus();
+    return null;
+  }
+
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await FirebaseAuth.instance.signOut();

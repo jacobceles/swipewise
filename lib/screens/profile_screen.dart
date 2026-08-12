@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../api/account_delete_client.dart';
 import '../api/settings_repository.dart';
 import '../providers/entitlement_provider.dart';
 import '../nearby/geofence_channel.dart';
@@ -172,6 +173,99 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  /// Deletes the account and everything belonging to it.
+  ///
+  /// Two barriers, not one: a plain confirm, then a typed word. Everything
+  /// destroyed here is unrecoverable — there is no archived copy and no grace
+  /// window — and a single dialog is too easy to dismiss by reflex.
+  Future<void> _deleteAccount() async {
+    final palette = AppPalette.of(context);
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.sheet,
+        title: Text('Delete your account?', style: AppText.titleMd()),
+        content: Text(
+          'This permanently deletes your account, your backup, any linked '
+          'bank, and everything on this phone including your transactions. '
+          'It cannot be undone, and a deleted wallet cannot be restored.',
+          style: AppText.bodySm(color: palette.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Continue', style: AppText.bodyMd(color: palette.red)),
+          ),
+        ],
+      ),
+    );
+    if (agreed != true || !mounted) return;
+
+    final typed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final controller = TextEditingController();
+        return StatefulBuilder(
+          builder: (ctx, setLocal) => AlertDialog(
+            backgroundColor: AppColors.sheet,
+            title: Text('Type DELETE to confirm', style: AppText.titleMd()),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              onChanged: (_) => setLocal(() {}),
+              decoration: const InputDecoration(hintText: 'DELETE'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: controller.text.trim().toUpperCase() == 'DELETE'
+                    ? () => Navigator.of(ctx).pop(true)
+                    : null,
+                child: Text(
+                  'Delete everything',
+                  style: AppText.bodyMd(
+                    color: controller.text.trim().toUpperCase() == 'DELETE'
+                        ? palette.red
+                        : palette.muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (typed != true || !mounted) return;
+
+    final failure = await ref.read(authProvider.notifier).deleteAccount();
+    if (!mounted) return;
+    if (failure == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your account and data were deleted.')),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(switch (failure) {
+          // Google requires a fresh sign-in before deleting an account. Said
+          // plainly, because "it failed" with no reason is unactionable.
+          DeleteFailure.needsRecentLogin =>
+            'For security, sign in again and then retry deleting.',
+          DeleteFailure.unavailable => 'Sign in first to delete your account.',
+          DeleteFailure.failed => "Couldn't delete your account. Try again.",
+        }),
+      ),
+    );
+  }
+
   Future<void> _openDwellEditor() async {
     await showModalBottomSheet<void>(
       context: context,
@@ -314,23 +408,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     )
                   else
                     const _SignInCard(),
-                  const SizedBox(height: 28),
-                  _SettingsRow(
-                    label: 'Default Screen',
-                    trailing: _ValueChevron(
-                      value: defaultScreenLabel(
-                        effectiveDefaultScreen(defaultScreen, isPro: isPro),
-                      ),
+                  const SizedBox(height: 20),
+
+                  // Grouped rather than one flat list of a dozen rows, which stopped being
+                  // scannable. It also gives a destructive action its own neighbourhood
+                  // instead of a row that looks like "Check for Updates".
+                  //
+                  // The Pro header sits INSIDE the entitlement gate: a free user sees no
+                  // section at all rather than an empty one. Pro is not on sale, so
+                  // advertising a tier nobody can buy is a tease, not information.
+                  const _SectionHeader('Account'),
+                  const _BackupSection(),
+                  if (signedIn)
+                    _SettingsRow(
+                      label: 'Delete My Account',
+                      destructive: true,
+                      trailing: const _Chevron(),
+                      onTap: _deleteAccount,
                     ),
-                    onTap: _pickDefaultScreen,
-                  ),
-                  _SettingsRow(
-                    label: 'Default Advisor View',
-                    trailing: _ValueChevron(
-                      value: advisorViewLabel(advisorView),
-                    ),
-                    onTap: _pickDefaultAdvisorView,
-                  ),
+
+                  const _SectionHeader('Alerts'),
                   _SettingsRow(
                     label: 'Notifications',
                     trailing: const _Chevron(),
@@ -340,16 +437,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
-                  _SettingsRow(
-                    label: 'Preferred Card Order',
-                    trailing: const _Chevron(),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const CardPreferenceScreen(),
-                      ),
-                    ),
-                  ),
-                  const _BackupSection(),
                   _SettingsRow(
                     label: 'Search Radius',
                     trailing: _ValueChevron(value: '$nearbyRadius mi'),
@@ -371,11 +458,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
-                  // Both are bank-sync features: Recurring Transactions reads
-                  // the `transactions` table, and the debit toggle triggers a
-                  // sync. Gated on construction so `SubscriptionsScreen`
-                  // leaves the free binary along with the rest of that path.
+
+                  const _SectionHeader('Display'),
+                  _SettingsRow(
+                    label: 'Default Screen',
+                    trailing: _ValueChevron(
+                      value: defaultScreenLabel(
+                        effectiveDefaultScreen(defaultScreen, isPro: isPro),
+                      ),
+                    ),
+                    onTap: _pickDefaultScreen,
+                  ),
+                  _SettingsRow(
+                    label: 'Default Advisor View',
+                    trailing: _ValueChevron(
+                      value: advisorViewLabel(advisorView),
+                    ),
+                    onTap: _pickDefaultAdvisorView,
+                  ),
+                  _SettingsRow(
+                    label: 'Preferred Card Order',
+                    trailing: const _Chevron(),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CardPreferenceScreen(),
+                      ),
+                    ),
+                  ),
+
                   if (isPro) ...[
+                    const _SectionHeader('Pro'),
                     _SettingsRow(
                       label: 'Recurring Transactions',
                       trailing: const _Chevron(),
@@ -392,6 +504,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           .setEnabled(v),
                     ),
                   ],
+
+                  const _SectionHeader('About'),
                   _SettingsRow(
                     label: 'Privacy Policy',
                     trailing: const _Chevron(),
@@ -719,11 +833,21 @@ class _PickerRow extends StatelessWidget {
 }
 
 class _SettingsRow extends StatelessWidget {
-  const _SettingsRow({required this.label, required this.trailing, this.onTap});
+  const _SettingsRow({
+    required this.label,
+    required this.trailing,
+    this.onTap,
+    this.destructive = false,
+  });
 
   final String label;
   final Widget trailing;
   final VoidCallback? onTap;
+
+  /// Renders in the warning colour. Reserved for actions that destroy
+  /// something — a row that looks like every other row is not a fair warning
+  /// when tapping it deletes an account.
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
@@ -738,7 +862,12 @@ class _SettingsRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: AppText.bodyMd().copyWith(fontSize: 16)),
+            Text(
+              label,
+              style: AppText.bodyMd(
+                color: destructive ? AppPalette.of(context).red : null,
+              ).copyWith(fontSize: 16),
+            ),
             trailing,
           ],
         ),
@@ -1018,6 +1147,31 @@ class _IncludeDebitAccountsRow extends StatelessWidget {
             style: AppText.bodySm(color: palette.muted),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A settings group label.
+///
+/// The list reached a dozen rows, at which point a flat list stops being
+/// scannable. Grouping also carries information the rows cannot: an empty
+/// "Pro" section reads as a tier you do not have, where the same rows simply
+/// missing reads as a bug.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 22, 0, 8),
+      child: Text(
+        label.toUpperCase(),
+        style: AppText.labelSm(
+          color: AppPalette.of(context).muted,
+        ).copyWith(letterSpacing: 1.2, fontWeight: FontWeight.w600),
       ),
     );
   }
