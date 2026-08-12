@@ -42,7 +42,6 @@ dependencies:
   sqflite: ^2.4.3
   path: ^1.9.1
   path_provider: ^2.1.6
-  workmanager: ^0.10.7
   crypto: ^3.0.7
   pool: ^1.5.1
   geolocator: ^14.0.3

@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workmanager/workmanager.dart';
 import 'firebase_options.dart';
 import 'api/app_check_service.dart';
 import 'api/catalog_loader.dart';
@@ -15,10 +14,7 @@ import 'api/database_helper.dart';
 import 'api/remote_asset_service.dart';
 import 'api/reward_category_mapper.dart';
 import 'api/settings_repository.dart';
-import 'background_sync.dart';
-import 'build_config.dart';
 import 'providers/entitlement_provider.dart';
-import 'sync/bank_background_sync.dart';
 import 'nearby/google_places_provider.dart';
 import 'nearby/geofence_manager.dart';
 import 'nearby/location_service.dart';
@@ -58,18 +54,6 @@ Future<void> main() async {
   final remoteAssets = RemoteAssetService();
   await initBrandRegistry(remote: remoteAssets);
   await initCategoryRegistry(remote: remoteAssets);
-
-  // Bank sync only. Reads the build seed rather than the entitlement provider
-  // because `main` runs before any `ProviderScope` exists — and because
-  // WorkManager registration is a process-level concern, not a per-user one.
-  // When entitlement becomes server-backed this moves to the moment a
-  // subscription activates.
-  if (BuildConfig.proSeed) {
-    backgroundSyncTask = runBankBackgroundSync;
-    Workmanager().initialize(callbackDispatcher);
-  }
-  // Periodic task is registered on demand by AutoSyncNotifier when the user
-  // toggles auto-sync on; off by default for new accounts.
 
   runApp(const ProviderScope(child: SwipeWiseApp()));
 }

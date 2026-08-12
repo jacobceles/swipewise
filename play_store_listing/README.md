@@ -216,11 +216,13 @@ so submit it before the rest of the listing is finished. Rejections are usually 
 - **Advertising ID → No.** Verified against the merged release manifest: no `AD_ID` permission,
   no ads SDK, and nothing pulls one transitively (Crashlytics does not drag in the
   measurement/ads libraries).
-- **`FOREGROUND_SERVICE_DATA_SYNC` → do not declare it.** The current build does **not** request
-  it; it requests `FOREGROUND_SERVICE_SHORT_SERVICE`. If Play asks, it is reading a previously
-  uploaded build — the pre-split one that still had bank sync. Uploading the current build
-  should clear it. Declaring it would also contradict the privacy policy, which says the
-  permission is Pro-only and absent from the free version.
+- **`FOREGROUND_SERVICE_DATA_SYNC` → declare it. ⚠️ CHANGED 2026-08-12.** This previously read
+  "do not declare it", which is no longer true: the permission moved into the main manifest,
+  so the release build requests it. Declare it, and describe it as *user-initiated*: the
+  service runs only while a bank link the user started is in flight, including while it waits
+  on an OTP. It is not background data collection — there is no background sync in the app at
+  all. If a prior answer is already filed, this one needs re-answering before the next
+  release.
 
 ### Form answers — paste these (both inside the 500-character limit)
 

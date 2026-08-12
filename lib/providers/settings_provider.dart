@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workmanager/workmanager.dart';
 import 'auth_provider.dart';
 import 'data_providers.dart';
 import 'bank_sync_provider.dart';
@@ -10,9 +7,6 @@ import '../api/settings_repository.dart';
 import '../nearby/place_roots.dart';
 
 export '../api/settings_repository.dart' show DefaultScreen, AdvisorView;
-
-const _kSyncTaskName = 'bankBackgroundSync';
-const _kSyncUniqueName = '1';
 
 String defaultScreenLabel(DefaultScreen s) {
   switch (s) {
@@ -39,47 +33,6 @@ String advisorViewLabel(AdvisorView v) {
 }
 
 final _settings = SettingsRepository(DataRepository());
-
-class AutoSyncNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final auth = ref.watch(authProvider);
-    if (auth.userId != null) {
-      Future.microtask(() async {
-        final loaded = await _settings.getAutoSync(auth.userId!);
-        if (state != loaded) state = loaded;
-        await _applyToWorkManager(loaded);
-      });
-    }
-    return false;
-  }
-
-  Future<void> setEnabled(bool enabled) async {
-    final userId = ref.read(authProvider).userId;
-    state = enabled;
-    if (userId != null) await _settings.setAutoSync(userId, enabled);
-    await _applyToWorkManager(enabled);
-  }
-
-  Future<void> _applyToWorkManager(bool enabled) async {
-    if (enabled) {
-      // setInitialDelay spreads the first sync 0–10 min after registration,
-      // so devices waking on the same OS tick don't all hit the API at the
-      // same instant. Sleeping inside the dispatcher (the prior approach)
-      // held the worker process alive past Android 12's foreground-service
-      // threshold.
-      final jitterSecs = Random().nextInt(10 * 60);
-      await Workmanager().registerPeriodicTask(
-        _kSyncUniqueName,
-        _kSyncTaskName,
-        frequency: const Duration(hours: 8),
-        initialDelay: Duration(seconds: jitterSecs),
-      );
-    } else {
-      await Workmanager().cancelByUniqueName(_kSyncUniqueName);
-    }
-  }
-}
 
 class DefaultScreenNotifier extends Notifier<DefaultScreen> {
   @override
@@ -120,10 +73,6 @@ class AdvisorViewNotifier extends Notifier<AdvisorView> {
     if (userId != null) await _settings.setDefaultAdvisorView(userId, v);
   }
 }
-
-final autoSyncProvider = NotifierProvider<AutoSyncNotifier, bool>(
-  AutoSyncNotifier.new,
-);
 
 final defaultScreenProvider =
     NotifierProvider<DefaultScreenNotifier, DefaultScreen>(

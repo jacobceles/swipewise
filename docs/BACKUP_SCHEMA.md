@@ -45,7 +45,7 @@ wrote it, and any setting added to the app in future is device-local until someo
 deliberately adds it to the list — the failure direction is "didn't sync" rather than
 "leaked".
 
-Travels: auto-sync, default screen, default advisor view, nearby enabled, search radius,
+Travels: default screen, default advisor view, nearby enabled, search radius,
 dwell time per category, nearby place types, preferred card order, dismissed recurring tips,
 include debit accounts, payment reminders enabled, payment reminder lead days.
 

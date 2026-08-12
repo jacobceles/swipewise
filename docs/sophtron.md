@@ -183,8 +183,8 @@ Key behaviors:
 
 [`sync_state_repository.dart`](../lib/api/sync_state_repository.dart):
 
-- **Mutex** (`sync_state` table) — foreground sync and the WorkManager dispatcher both
-  `acquireSyncLock` before running the engine. The holder bumps `heartbeat_at` on every
+- **Mutex** (`sync_state` table) — every sync path `acquireSyncLock` before running the
+  engine. The holder bumps `heartbeat_at` on every
   progress event, so liveness is judged by the heartbeat, not total runtime: a run whose
   heartbeat has lapsed (default 60s, `syncLockLiveness`) is treated as crashed and is
   stealable, while a healthy long sync is never stolen. A 15-min hard cap (`syncLockTtl`)
@@ -200,6 +200,11 @@ Key behaviors:
 - **Circuit breakers** (`api_circuit_breakers`) — cross-isolate breaker state for external
   APIs (e.g. Google Places): N failures → fast-fail for a cooldown window.
 
-Background sync ([background_sync.dart](../lib/background_sync.dart)) uses `workmanager`
-with a 0–10 min random initial delay so devices waking on the same OS tick don't burst.
-Background runs require the `auto_sync` setting on.
+There is no background sync. Syncing is user-initiated — pull-to-refresh, or the sync
+that follows a link. A `workmanager` 8-hourly tick used to exist behind an `auto_sync`
+setting; it was removed on 2026-08-12, having never been reachable (no UI ever set the
+setting, and nothing watched its provider). The mutex above still earns its keep: the
+link's first sync and a pull-to-refresh can still overlap.
+
+`LinkSyncForegroundService` is not background sync — it holds the foreground notification
+so a link *you started* survives you switching apps, including while it waits on an OTP.

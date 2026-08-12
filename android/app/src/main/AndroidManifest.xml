@@ -10,8 +10,16 @@
          a bank link is in progress (and through the first runSync). See
          LinkSyncForegroundService for the why. `dataSync` is the correct
          foreground-service type for sync-driven network work and is what
-         Android 14+ requires the per-type permission for. -->
+         Android 14+ requires the per-type permission for.
+
+         Both are user-initiated: the service runs only while a link the user
+         started is in flight, including the stages where it has to prompt for
+         an OTP or a security answer. It was debug-only while nothing in a
+         release build could start a sync; server-side entitlement grants ended
+         that, and without the per-type permission a granted account on a
+         release build hits a SecurityException mid-link on Android 14+. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <!-- Deterministic app-side dwell timers (DwellAlarms). Denied by default
          on Android 14+; the reliability prompt asks the user to grant it, and
          DwellAlarms degrades to inexact alarms when it isn't. -->

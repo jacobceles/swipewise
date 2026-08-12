@@ -11,7 +11,6 @@ class SettingsRepository {
   SettingsRepository(this._repo);
   final DataRepository _repo;
 
-  static const _kAutoSync = 'auto_sync';
   static const _kDefaultScreen = 'default_screen';
   static const _kDefaultAdvisorView = 'default_advisor_view';
   static const _kLastSyncAt = 'last_sync_at';
@@ -53,7 +52,6 @@ class SettingsRepository {
   /// * [_kLastSyncAt], [_kPopularBanksCache], [_kCatalogDataVersion] — caches
   ///   and bookkeeping about this device, meaningless on another.
   static const Set<String> syncableSettingsKeys = {
-    _kAutoSync,
     _kDefaultScreen,
     _kDefaultAdvisorView,
     _kNearbyEnabled,
@@ -66,16 +64,6 @@ class SettingsRepository {
     _kPaymentRemindersEnabled,
     _kPaymentReminderLeadDays,
   };
-
-  // Auto sync: default OFF. The background worker also reads this, so the
-  // default has to be defined in one place.
-  Future<bool> getAutoSync(String userId) async {
-    final raw = await _repo.getSetting(userId, _kAutoSync);
-    return raw == 'true';
-  }
-
-  Future<void> setAutoSync(String userId, bool enabled) =>
-      _repo.setSetting(userId, _kAutoSync, enabled.toString());
 
   // Default screen on launch.
   Future<DefaultScreen> getDefaultScreen(String userId) async {

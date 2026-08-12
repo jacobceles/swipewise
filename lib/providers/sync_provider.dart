@@ -4,7 +4,7 @@ import 'bank_sync_provider.dart';
 import '../util/logger.dart';
 
 /// Legacy `syncProvider`. Kept as a thin delegate so callers (Dashboard
-/// pull-to-refresh, background_sync, etc.) keep working after the sync
+/// pull-to-refresh, the link's first sync, etc.) keep working after the sync
 /// engine split. Just forwards to `bankSyncProvider`.
 class SyncNotifier extends Notifier<AsyncValue<void>> {
   @override

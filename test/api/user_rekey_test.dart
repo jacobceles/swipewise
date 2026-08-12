@@ -130,12 +130,12 @@ void main() {
     // Same primary key (user_id, key) on both sides — a merge, not a re-key.
     await db.insert('settings', {
       'user_id': 'local:aaaa',
-      'key': 'auto_sync',
+      'key': 'default_screen',
       'value': '1',
     });
     await db.insert('settings', {
       'user_id': 'uid-bbbb',
-      'key': 'auto_sync',
+      'key': 'default_screen',
       'value': '0',
     });
 

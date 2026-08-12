@@ -120,11 +120,10 @@ on-device with the Play build — separate sandbox, separate SQLite db. Both pac
 registered in `google-services.json`; Google Sign-In needs a SHA-1 registered per package or
 it fails on that package alone.
 
-`FOREGROUND_SERVICE_DATA_SYNC` is declared only in
-[`src/debug/AndroidManifest.xml`](../android/app/src/debug/AndroidManifest.xml) — the
-release has no subscription yet, so nothing there can start a sync, and an unusable
-permission is one more thing to justify on the data-safety form. It moves to the main
-manifest in the update that turns Pro on.
+`FOREGROUND_SERVICE_DATA_SYNC` is in the main manifest, and the debug-only overlay that
+used to hold it is gone. It was debug-only while no release build could start a sync;
+server-side entitlement grants ended that, so a granted account on a release build would
+have hit a `SecurityException` mid-link on Android 14+.
 
 ## Local data
 
