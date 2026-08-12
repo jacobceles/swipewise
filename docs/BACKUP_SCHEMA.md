@@ -72,8 +72,17 @@ always yours to resolve with the two manual buttons.
 
 ## Deleting a backup
 
-Signing out never deletes anything, on the device or on the server — changing phones is not a
-request to throw your data away. Deletion is a separate, explicit request.
+Nothing here is deleted as a side effect of anything else. Two actions look like they might
+delete a backup and deliberately do not:
+
+- **Signing out** leaves your data on the phone and your backup on the server. Changing phones
+  is not a request to throw your data away.
+- **Turning backup off** stops further uploads. The copy already stored is kept, so you can
+  still restore it later or onto a new phone — it pauses backup rather than discarding it.
+
+**Deleting your account is what erases it**, along with everything else: *Profile → Delete my
+account*, or the [account deletion page](https://jacobcelestine.com/swipewise/delete_account.html)
+if you no longer have the app.
 
 ## Where it goes
 
