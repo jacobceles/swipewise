@@ -104,6 +104,17 @@ android {
             // Real upload key when key.properties is present; debug key otherwise so
             // contributor builds still work. See docs/setup.md (Release signing).
             signingConfig = signingConfigs.getByName(if (hasReleaseKeystore) "release" else "debug")
+            // AGP 9 turned R8 minification ON by default for release. We ship no keep
+            // rules, and it stripped the Room-generated constructor WorkManager
+            // instantiates reflectively — so every release build crashed on launch
+            // before reaching Flutter:
+            //   Unable to get provider androidx.startup.InitializationProvider
+            //   Caused by: NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl.<init> []
+            // Pinned to the pre-AGP-9 behaviour. Enabling shrinking is worth doing on
+            // purpose later, with keep rules and an on-device launch test — not as a
+            // silent side effect of a toolchain upgrade.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

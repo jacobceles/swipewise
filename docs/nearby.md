@@ -187,9 +187,28 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
   second cache in app code would only fight the SDK's own refresh. What matters is *when* the cold
   round trip happens: the token fetch sits **before** the HTTP timeout, so paying it inside the
   first nearby search reads as a hung Stores tab. `AppCheckService.warm()` starts it at activation
-  in both isolates instead, and a search that fires meanwhile attaches to it. Debug builds log
-  `[app-check] getToken took Nms` — a cached hit is single-digit ms, so anything larger is a real
-  attestation.
+  in both isolates instead, and a search that fires meanwhile attaches to it. Every build logs
+  `SW.appcheck` at WARN when a call exceeds 250 ms — measured **~1.9 s** on a Pixel 10 Pro
+  (2026-08-13), which corroborates the original hand-timed figure.
+- ✅ **Measured end to end on a Pixel 10 Pro, 2026-08-13 — 13 calls, 0 failures:**
+
+  | | |
+  |---|---|
+  | cold round trips | **2** (1,634 ms and 2,562 ms), both during startup |
+  | served from cache | **11** — 3 ms to 224 ms, median well under 70 ms |
+
+  So **successful tokens are cached and an app-level cache would be redundant**, and `warm()` does
+  what it was added for: both cold trips land at launch, and the burst of eight real API calls
+  eight seconds later is entirely warm. One call also demonstrably *attached to an in-flight
+  request* — it returned 224 ms after starting, 10 ms behind the cold trip it joined.
+
+- ⚠️ **A FAILED attestation is not cached, so it repeats on every call**, and once the SDK enters
+  backoff it rejects locally in single-digit ms — which looks exactly like a cache hit unless the
+  log line also states the outcome. That is why `SW.appcheck` always prints `ok`/`FAILED`.
+- ⚠️ Two open threads, neither user-blocking: **why two cold trips** rather than one (the second
+  starts ~26 ms before the first completes, missing the attach window, costing ~2.5 s of startup
+  work), and the **geofence isolate** was never exercised. Absolute timings are the *debug*
+  provider's; Play Integrity measured ~1.9 s, so the same shape at a higher constant.
 - Why the proxy exists: the app used to call Google directly with an Android-restricted key.
   That restriction is matched from `X-Android-Package` / `X-Android-Cert`, which for raw HTTP
   calls are strings the client sets — and they travelled in the same binary as the key. A

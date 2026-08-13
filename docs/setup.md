@@ -68,9 +68,33 @@ subscription to unlock it — but it ships with nothing to authenticate with.
 
 - `PLACES_PROXY_URL` — the Worker's `/places/nearby` route. The app posts a Google-shaped
   body plus a Firebase App Check token; the Worker verifies the token, adds the Places key it
-  holds as a secret, and forwards. Nothing to configure locally, but note that App Check is
-  **enforced**: a debug build needs its debug token registered in the Firebase console
-  (App Check → Manage debug tokens) or the Stores tab will 401.
+  holds as a secret, and forwards.
+
+  ⚠️ **App Check is enforced, and how you test it differs per build type.** Attestation is
+  designed to fail for anything not distributed by Play, so a locally-signed APK never attests:
+
+  | Build | Provider | To make it attest |
+  |---|---|---|
+  | debug (`.dev`) | debug provider | Register the per-install debug secret it prints to logcat on first run (`Enter this debug secret (…)`) at Firebase Console → App Check → **Manage debug tokens** |
+  | release, sideloaded | Play Integrity | **Cannot** — Play Integrity only recognises Play-distributed builds; `getToken` returns `403 App attestation failed` |
+  | release, testable | Play Integrity | Upload via Play **Internal App Sharing** (an install link, Play-signed, no release needed) or the internal-testing track |
+
+  ⛔ **Never add a flag that lets a release build use the debug provider.** It would hand anyone a
+  way to bypass the control that replaced the forgeable `X-Android-Package` header check.
+
+  ⚠️ **A registered debug token dies with the install, and the console name lies about that.**
+  The secret is a random UUID v4 minted by `DebugAppCheckProvider` into app-private storage — not
+  derived from the device — so an uninstall or a clear-data mints a new one and the old console
+  entry is orphaned. Verified 2026-08-13: the same app on the same Pixel produced
+  `0d6389cc-…` before an uninstall and `065364f5-…` after. Naming an entry "Pixel 10 Pro" makes it
+  read as device-scoped, so `403 App attestation failed` with a token "already registered" is the
+  expected symptom, not a misconfiguration. **Re-register after any reinstall, and delete the
+  stale entry** — an orphan is a permanent credential for nothing.
+
+  ⚠️ It is a real credential for the project: whoever holds a registered one can mint valid App
+  Check tokens from anywhere, and the Worker cannot distinguish those from Play Integrity's
+  (`verifyAppCheck` checks signature, `aud`, `iss` and expiry — App Check tokens carry no provider
+  claim). Never commit one; remove it when you are done.
 - `R2_BASE_URL` — base URL of the **catalog API** (`swipewise-api`),
   the Cloudflare Worker the app fetches `catalog.json` and `brands.json` from (e.g.
   `https://swipewise-api.<subdomain>.workers.dev`). The Worker reads those from R2 and
@@ -100,6 +124,25 @@ flutter build apk --release \
   --obfuscate --split-debug-info=build/symbols
 python3 tool/verify_release_apk.py     # gate: fails if the keys file carries credentials
 ```
+
+⚠️⚠️ **A release APK that builds, passes the credential gate and installs can still crash on
+launch — always launch one before believing it.** AGP 9 turned **R8 minification on by default**
+for the release build type. We ship no keep rules, and R8 stripped the Room-generated constructor
+WorkManager instantiates reflectively, so every release build died before reaching Flutter:
+
+```
+java.lang.RuntimeException: Unable to get provider androidx.startup.InitializationProvider
+Caused by: java.lang.NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl.<init> []
+    at androidx.work.WorkManagerInitializer.b(r8-map-id-…)
+```
+
+`isMinifyEnabled = false` / `isShrinkResources = false` in
+[`build.gradle.kts`](../android/app/build.gradle.kts) pins the pre-AGP-9 behaviour. Nothing in the
+Dart toolchain sees this: `flutter analyze` is clean, the unit tests pass, `verify_release_apk.py`
+says ALL CLEAR — it checks for credentials, not for launchability. The obfuscated `r8-map-id-`
+frames in a stack trace are the tell that minification ran. Turning shrinking back on is worth
+doing deliberately, with keep rules and an on-device launch test, but never as a side effect of a
+toolchain upgrade.
 
 ⚠️ **`flutter clean` before any release build you intend to measure.** The release AOT
 snapshot has been observed going stale — source edits silently absent from the APK while the

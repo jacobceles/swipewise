@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
+import '../util/logger.dart';
+
 /// Firebase App Check — device attestation for calls to the SwipeWise Worker.
 ///
 /// ## Why this exists
@@ -48,6 +50,10 @@ class AppCheckService {
   /// never got the chance to fire.
   static const _timeout = Duration(seconds: 5);
 
+  /// Above this, the call went to the network rather than the SDK's cache. The
+  /// SDK caches in storage, so a warm call returns in single-digit ms.
+  static const _slowAttestationMs = 250;
+
   /// Activates App Check for the current isolate. Safe to call more than once
   /// and safe to call in a process that never reaches the network.
   ///
@@ -71,10 +77,7 @@ class AppCheckService {
     } catch (e) {
       // Swallowed deliberately — see the class doc. A missing token is a
       // recoverable state; a crashed isolate is not.
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[app-check] activate failed: $e');
-      }
+      Log.w('appcheck', 'activate failed', e);
     }
   }
 
@@ -104,22 +107,28 @@ class AppCheckService {
   /// header" rather than as an error worth surfacing.
   static Future<String?> token() async {
     final started = DateTime.now();
+    String? token;
     try {
-      return await FirebaseAppCheck.instance.getToken().timeout(_timeout);
+      token = await FirebaseAppCheck.instance.getToken().timeout(_timeout);
+      return token;
     } catch (e) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[app-check] getToken failed: $e');
-      }
+      Log.w('appcheck', 'getToken failed', e);
       return null;
     } finally {
-      // The ~2.2 s figure came from one hand-timed session; this is what turns
-      // the next one into a measurement. A cached hit should be single-digit
-      // milliseconds, so anything else here is a real attestation.
-      if (kDebugMode) {
-        final ms = DateTime.now().difference(started).inMilliseconds;
-        // ignore: avoid_print
-        print('[app-check] getToken took ${ms}ms');
+      final ms = DateTime.now().difference(started).inMilliseconds;
+      // The outcome is part of the measurement, not decoration. Duration alone is
+      // ambiguous in exactly the case you most want to read: once the SDK enters
+      // its backoff after a failed exchange it rejects locally in single-digit
+      // milliseconds, which is indistinguishable from a cache hit unless the line
+      // also says whether a token came back.
+      final outcome = token == null ? 'FAILED' : 'ok';
+      // WARN so it survives a RELEASE build — the only place Play Integrity runs,
+      // since `activate` picks the debug provider under kDebugMode. A cold round
+      // trip and any failure are both worth a line; a warm hit is not.
+      if (ms >= _slowAttestationMs || token == null) {
+        Log.w('appcheck', 'getToken $outcome in ${ms}ms (cold round trip or failure — not a cached hit)');
+      } else {
+        Log.d('appcheck', 'getToken ok in ${ms}ms (cached)');
       }
     }
   }
