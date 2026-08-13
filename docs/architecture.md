@@ -134,3 +134,15 @@ hydrates the global catalog tables (`card_products`/`reward_rules`/… ) →
 `RewardEngine.resolve()` resolves rates, wrapped by `engine_ranker`. The catalog lives in
 its own data-product repo; the app is the consumer. The classifier stays app-side; the
 brand/category vocabularies stay the contract. See [reward-catalog.md](reward-catalog.md).
+
+## The tab shell keeps off-screen tabs alive
+
+`HomeScreen` renders every tab into an `IndexedStack`
+([`home_screen.dart`](../lib/screens/home_screen.dart)), so a tab that is not on screen is still
+mounted — it just never rebuilds.
+
+⚠️ **A data tab therefore goes stale after a sync or an add-bank unless it watches a
+sync-coupled trigger.** Invalidating the provider is not enough on its own: nothing rebuilds an
+off-screen child, so the tab shows pre-sync data until the user happens to visit it and something
+else forces a rebuild. Watch a sync-coupled provider in any tab whose contents a background
+operation can change.

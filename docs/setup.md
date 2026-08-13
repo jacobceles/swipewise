@@ -129,6 +129,12 @@ text scan cannot evaluate. A Gradle probe of the configured build confirms `kotl
 applied to no module at all, so the warning's "future versions of Flutter will fail" does not
 apply to us.
 
+⚠️ **`flutter analyze` does not check Kotlin — run `./gradlew :app:lintDebug` after any `minSdk`
+change.** A high `minSdk` silently legalises `NewApi` calls, so *lowering* it turns them into
+crashes on every newly-reachable device with nothing in the Dart toolchain complaining. The
+36 → 24 change surfaced 13 such errors. Watch for calls that only *look* defended: a
+`try/catch (Exception)` does not catch a missing method, which throws `NoSuchMethodError`.
+
 Debug builds carry an `applicationIdSuffix` of `.dev` (in
 [`build.gradle.kts`](../android/app/build.gradle.kts)), so a local build sits side by side
 on-device with the Play build — separate sandbox, separate SQLite db. Both packages are
@@ -142,9 +148,18 @@ have hit a `SecurityException` mid-link on Android 14+.
 
 ## Local data
 
-The SQLite DB is `swipewise.db`, established in a single `_onCreate` pass
-([database.md](database.md)). To wipe local data, **uninstall + reinstall**. A schema change
-is folded into `_onCreate`, so it also needs a reinstall to take effect locally.
+The SQLite DB is `swipewise.db` ([database.md](database.md)). To wipe local data,
+**uninstall + reinstall**.
+
+⚠️ **A schema change is NOT just an `_onCreate` edit.** The app is in internal testing — real
+installs with real databases exist and they never re-run `_onCreate`. Bump `version` in
+`_initDatabase`, add an `if (oldVersion < N)` block to `_onUpgrade`, **and** mirror the change
+into `_onCreate` so fresh installs land in the same end state. See
+[database.md § Migrations](database.md#migrations).
+
+⚠️ **Never `ConflictAlgorithm.replace` on a parent table** such as `users`. sqflite implements it
+as DELETE + INSERT, which fires `ON DELETE CASCADE` and silently wipes the wallet. Update, then
+insert if the update touched nothing.
 
 To remove a single bank without uninstalling, use **Disconnect** in the bank-info sheet — it
 calls Sophtron `deleteMember` and wipes that bank's local rows.

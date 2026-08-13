@@ -85,6 +85,12 @@ recent purchase appears (as `POSTED`) only once the member is re-scraped (see
 [the sync engine](#the-sync-engine)); credit limit is derived only when both balance +
 available are present, else manual.
 
+⚠️ **These are hard limits, not gaps to close** — nothing in this list arrives with a different
+query, so the features that need them cannot be built from bank data: MCC-first categorization, a
+geo-tagged transaction map, a points/miles ledger derived from bank data, pending badges, and
+FX-bonus detection. (Each *account* does carry its own `currency`, so a USD/CAD multi-currency
+wallet is fine; only cross-currency *FX detection* is out.)
+
 A v3 *read* returns whatever the member's **last job** scraped — passing an earlier
 `startDate` never fetches older data. Getting fresh or deeper data requires running a
 **job**, which the sync engine now triggers on every sync (see below).

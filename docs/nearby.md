@@ -180,6 +180,10 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 - App Check is activated in *both* isolates. Geofence re-registration runs headless and calls
   Places itself, and App Check state is per-isolate — activating only in `main()` leaves that
   path tokenless, so geofences silently stop re-registering.
+- ⚠️ **Attestation is not free, and the cost repeats per isolate.** A Play Integrity round trip
+  measured **~2.2 s**, and six fired in one short session. `AppCheckService.token()` calls
+  `getToken()` on every request with no caching of its own, so each cold isolate pays again — a
+  plausible chunk of a slow Stores tab. Fetch once per session and reuse.
 - Why the proxy exists: the app used to call Google directly with an Android-restricted key.
   That restriction is matched from `X-Android-Package` / `X-Android-Cert`, which for raw HTTP
   calls are strings the client sets — and they travelled in the same binary as the key. A
