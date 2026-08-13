@@ -46,6 +46,14 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    // AGP 9 flipped `android.defaults.buildfeatures.resvalues` from true to
+    // false, so resValue() is off unless a module asks for it. The debug build
+    // type below uses it for the "SwipeWiseDev" launcher label; without this
+    // the dev build silently takes the production app_name from strings.xml.
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.appsoflife.swipewise"

@@ -114,6 +114,21 @@ file write.
 literals are still inlined — true rotation needs a server proxy, which doesn't exist yet).
 `.vscode/launch.json` has one config per keys file, so F5 works once they exist.
 
+**Android toolchain — AGP 9 with built-in Kotlin.** `android.builtInKotlin=true` in
+`android/gradle.properties` is required, not optional: `package_info_plus` guards its KGP
+application on `agpMajor < 9` alone and then configures `KotlinAndroidProjectExtension`
+unconditionally, so on AGP 9 with the flag *off* nothing provides that extension and its build
+fails. The AGP floor is **9.1**, not 9.0, because 9.0 caps at API 36.1 and `permission_handler`
+forces `compileSdk = 37`. `android.newDsl=false` is still set — AGP 10 removes that opt-out.
+
+Every build prints `WARNING: … plugins that apply Kotlin Gradle Plugin (KGP): firebase_app_check`.
+**It is a false positive — don't chase it.** Flutter detects KGP by running a regex over the
+plugin's build file (`FlutterPluginUtils.getSubprojectPluginState`), and that plugin's
+`apply plugin: 'kotlin-android'` sits inside an `if (agpMajor < 9 || !builtInKotlin)` guard the
+text scan cannot evaluate. A Gradle probe of the configured build confirms `kotlin-android` is
+applied to no module at all, so the warning's "future versions of Flutter will fail" does not
+apply to us.
+
 Debug builds carry an `applicationIdSuffix` of `.dev` (in
 [`build.gradle.kts`](../android/app/build.gradle.kts)), so a local build sits side by side
 on-device with the Play build — separate sandbox, separate SQLite db. Both packages are

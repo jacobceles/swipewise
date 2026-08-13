@@ -107,7 +107,7 @@ Good first contributions: add brands you shop at, or expand card coverage. Start
 
 ## 🚀 Get started
 
-Requires the Dart SDK ≥ 3.11.5 (built with Flutter 3.44, stable channel).
+Requires the Dart SDK ≥ 3.12 (built with Flutter 3.47, stable channel).
 
 The app ships as **one binary for both tiers**. Pro is sold as an in-app subscription, so
 its features unlock at runtime rather than at compile time — the Pro code is present and

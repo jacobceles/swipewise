@@ -728,7 +728,12 @@ class BankSyncEngine {
         neverSyncedBefore: neverSyncedBefore,
         createdAtRaw: conn.createdAt,
       )) {
-        return _retireAbandonedMember(
+        // `await` is load-bearing: without it the Future escapes this try and
+        // the `catch (e, st)` below never sees a failed local wipe, so one
+        // bank's DB error would abort the whole sync instead of failing just
+        // this member. `_retireAbandonedMember` swallows the remote delete but
+        // NOT `_repo.deleteMemberData`.
+        return await _retireAbandonedMember(
           client: client,
           customerId: customerId,
           userId: userId,
