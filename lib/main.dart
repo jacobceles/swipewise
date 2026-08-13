@@ -35,6 +35,9 @@ Future<void> main() async {
   // Device attestation for Worker calls. Must also be activated in the headless
   // geofence isolate below — App Check state is per-isolate.
   await AppCheckService.activate();
+  // Start the first attestation now rather than inside the user's first nearby
+  // search, where it shows up as a Stores tab that hangs. Not awaited.
+  AppCheckService.warm();
 
   // Route uncaught Flutter framework + async Dart errors to Crashlytics.
   // `onError` covers async zone errors too (Flutter 3.3+), so no
@@ -295,6 +298,9 @@ Future<bool> _runGeofenceReregister() async {
   // tokenless: geofences stop re-registering and arrival notifications stop,
   // with nothing logged. See `AppCheckService`.
   await AppCheckService.activate();
+  // Overlaps the cold attestation with the DB work below, so the Places call at
+  // the end of this entrypoint finds a token waiting instead of fetching one.
+  AppCheckService.warm();
   final repo = DataRepository();
   final db = await DatabaseHelper().database;
   final users = await db.query('users', limit: 1);

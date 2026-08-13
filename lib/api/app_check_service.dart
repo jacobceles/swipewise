@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
@@ -76,12 +78,32 @@ class AppCheckService {
     }
   }
 
+  /// Starts an attestation now so a later caller doesn't wait for a cold one.
+  ///
+  /// We do NOT cache tokens ourselves. `getToken()` already "will use a cached
+  /// token if found in storage" and "attaches to the most recent in-flight
+  /// request if one is present" — storage, so the cache survives an isolate,
+  /// and in-flight attaching, so concurrent callers share one round trip. A
+  /// second cache on top would only fight the SDK's own refresh.
+  ///
+  /// What is left to fix is *when* the cold round trip happens. A Play Integrity
+  /// attestation was measured at ~2.2 s, and the token fetch sits **before** the
+  /// HTTP timeout in `GooglePlacesProvider` — so paying it inside the user's
+  /// first nearby search reads as a Stores tab that hangs. Kicking it off at
+  /// activation moves that cost next to startup, and any search that fires
+  /// meanwhile attaches to it rather than starting a second one.
+  ///
+  /// Deliberately fire-and-forget: a warm-up that blocks startup would cost more
+  /// than the latency it removes.
+  static void warm() => unawaited(token());
+
   /// The current App Check token, or null if attestation is unavailable.
   ///
   /// Null is a normal outcome (no Play Services, an emulator with no debug
   /// token registered, an offline device), so callers must treat it as "send no
   /// header" rather than as an error worth surfacing.
   static Future<String?> token() async {
+    final started = DateTime.now();
     try {
       return await FirebaseAppCheck.instance.getToken().timeout(_timeout);
     } catch (e) {
@@ -90,6 +112,15 @@ class AppCheckService {
         print('[app-check] getToken failed: $e');
       }
       return null;
+    } finally {
+      // The ~2.2 s figure came from one hand-timed session; this is what turns
+      // the next one into a measurement. A cached hit should be single-digit
+      // milliseconds, so anything else here is a real attestation.
+      if (kDebugMode) {
+        final ms = DateTime.now().difference(started).inMilliseconds;
+        // ignore: avoid_print
+        print('[app-check] getToken took ${ms}ms');
+      }
     }
   }
 
