@@ -6471,5 +6471,249 @@
     "aliases": [
       "paper source"
     ]
+  },
+  {
+    "brandId": "foodland",
+    "displayName": "Foodland",
+    "category": "grocery",
+    "aliases": [
+      "foodland"
+    ]
+  },
+  {
+    "brandId": "pricesmart-foods",
+    "displayName": "PriceSmart Foods",
+    "category": "grocery",
+    "aliases": [
+      "pricesmart foods"
+    ]
+  },
+  {
+    "brandId": "les-marches-tradition",
+    "displayName": "Les Marchés Tradition",
+    "category": "grocery",
+    "aliases": [
+      "les marches tradition",
+      "marches tradition"
+    ]
+  },
+  {
+    "brandId": "rachelle-bery",
+    "displayName": "Rachelle Béry",
+    "category": "grocery",
+    "aliases": [
+      "rachelle bery",
+      "rachelle béry"
+    ]
+  },
+  {
+    "brandId": "premiere-moisson",
+    "displayName": "Première Moisson",
+    "category": "grocery",
+    "aliases": [
+      "premiere moisson",
+      "première moisson"
+    ]
+  },
+  {
+    "brandId": "pharmasave",
+    "displayName": "Pharmasave",
+    "category": "drugStores",
+    "aliases": [
+      "pharmasave"
+    ]
+  },
+  {
+    "brandId": "brunet",
+    "displayName": "Brunet",
+    "category": "drugStores",
+    "aliases": [
+      "brunet"
+    ]
+  },
+  {
+    "brandId": "pure-pharmacy",
+    "displayName": "Pure Pharmacy",
+    "category": "drugStores",
+    "aliases": [
+      "pure pharmacy"
+    ]
+  },
+  {
+    "brandId": "pure-integrative-pharmacy",
+    "displayName": "Pure Integrative Pharmacy",
+    "category": "drugStores",
+    "aliases": [
+      "pure integrative pharmacy"
+    ]
+  },
+  {
+    "brandId": "global-pet-foods",
+    "displayName": "Global Pet Foods",
+    "category": "pets",
+    "aliases": [
+      "global pet foods"
+    ]
+  },
+  {
+    "brandId": "home-building-centre",
+    "displayName": "Home Building Centre",
+    "category": "homeImprovement",
+    "aliases": [
+      "home building centre",
+      "home building center"
+    ]
+  },
+  {
+    "brandId": "air-france",
+    "displayName": "Air France",
+    "category": "airlines",
+    "aliases": [
+      "air france"
+    ]
+  },
+  {
+    "brandId": "klm",
+    "displayName": "KLM Royal Dutch Airlines",
+    "category": "airlines",
+    "aliases": [
+      "klm royal dutch airlines",
+      "klm"
+    ]
+  },
+  {
+    "brandId": "cathay-pacific",
+    "displayName": "Cathay Pacific",
+    "category": "airlines",
+    "aliases": [
+      "cathay pacific",
+      "cathay"
+    ]
+  },
+  {
+    "brandId": "hk-express",
+    "displayName": "HK Express",
+    "category": "airlines",
+    "aliases": [
+      "hk express"
+    ]
+  },
+  {
+    "brandId": "celebrity-cruises",
+    "displayName": "Celebrity Cruises",
+    "category": "travel",
+    "aliases": [
+      "celebrity cruises"
+    ]
+  },
+  {
+    "brandId": "norwegian-cruise-line",
+    "displayName": "Norwegian Cruise Line",
+    "category": "travel",
+    "aliases": [
+      "norwegian cruise line"
+    ]
+  },
+  {
+    "brandId": "royal-caribbean",
+    "displayName": "Royal Caribbean",
+    "category": "travel",
+    "aliases": [
+      "royal caribbean international",
+      "royal caribbean"
+    ]
+  },
+  {
+    "brandId": "silversea",
+    "displayName": "Silversea",
+    "category": "travel",
+    "aliases": [
+      "silversea cruises",
+      "silversea"
+    ]
+  },
+  {
+    "brandId": "belk",
+    "displayName": "Belk",
+    "category": "departmentStores",
+    "aliases": [
+      "belk"
+    ]
+  },
+  {
+    "brandId": "chicos",
+    "displayName": "Chico's",
+    "category": "apparel",
+    "aliases": [
+      "chico's",
+      "chicos"
+    ]
+  },
+  {
+    "brandId": "soma-intimates",
+    "displayName": "Soma Intimates",
+    "category": "apparel",
+    "aliases": [
+      "soma intimates",
+      "soma"
+    ]
+  },
+  {
+    "brandId": "white-house-black-market",
+    "displayName": "White House Black Market",
+    "category": "apparel",
+    "aliases": [
+      "white house black market"
+    ]
+  },
+  {
+    "brandId": "aerie",
+    "displayName": "Aerie",
+    "category": "apparel",
+    "aliases": [
+      "aerie"
+    ]
+  },
+  {
+    "brandId": "j-crew",
+    "displayName": "J.Crew",
+    "category": "apparel",
+    "aliases": [
+      "j.crew",
+      "j crew"
+    ]
+  },
+  {
+    "brandId": "j-crew-factory",
+    "displayName": "J.Crew Factory",
+    "category": "apparel",
+    "aliases": [
+      "j.crew factory",
+      "j crew factory"
+    ]
+  },
+  {
+    "brandId": "guitar-center",
+    "displayName": "Guitar Center",
+    "category": "electronics",
+    "aliases": [
+      "guitar center"
+    ]
+  },
+  {
+    "brandId": "chargepoint",
+    "displayName": "ChargePoint",
+    "category": "evCharging",
+    "aliases": [
+      "chargepoint"
+    ]
+  },
+  {
+    "brandId": "paypal",
+    "displayName": "PayPal",
+    "category": "onlineShopping",
+    "aliases": [
+      "paypal"
+    ]
   }
 ]
