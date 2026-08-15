@@ -150,7 +150,7 @@ conditions.
 
 Worth knowing what you're getting: the app is the whole app, but the **recommendations are
 only as good as the data behind them** — the brand registry and the rewards catalog. Those
-are generated from a separate curation pipeline, and keeping ~223 cards accurate as issuers
+are generated from a separate curation pipeline, and keeping ~414 cards accurate as issuers
 reword their terms is the ongoing work. `assets/vocab/brands.json` is the file to send a PR
 against; card data goes through the pipeline rather than a direct edit
 (see [docs/reward-catalog.md](docs/reward-catalog.md)).

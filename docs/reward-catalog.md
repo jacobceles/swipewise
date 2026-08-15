@@ -75,6 +75,20 @@ exclusions, rotation windows, and a `point_system_id`. See
 > supplies, not something the app generates. The build is **owned** by the catalog
 > data-product domain (see [architecture.md](architecture.md)).
 
+### Two countries, one catalog
+
+The catalog carries **US and Canadian** cards in one bundle — as of `2026.08.15`, 296 US and 118
+CA across 23 issuers (BMO, CIBC, RBC, Scotiabank, TD, National Bank and Amex Canada are the
+Canadian side). Each `card_products` row carries `country` and `currency`.
+
+The app does **not** show both to everyone. `SettingsRepository.getCatalogCountry` stores the
+user's choice — `'US'`, `'CA'`, or [`catalogCountryAll`] — defaulted **once** from the device
+locale and then never re-derived, so someone who overrode it (a Canadian holding US cards) keeps
+that choice through a SIM swap or a trip. `CatalogRepository._countryClause` applies it as
+`COALESCE(country, 'US') = ?`, which is what keeps an **older bundle** working: catalogs published
+before Canada carry no `country` at all and are entirely American, so a NULL reads as US instead
+of emptying the picker.
+
 ## Hydration
 
 [`catalog_loader.dart`](../lib/api/catalog_loader.dart) — `CatalogLoader.hydrateIfNeeded(userId)`
