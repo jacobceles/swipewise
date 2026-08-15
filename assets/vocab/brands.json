@@ -6715,5 +6715,13 @@
     "aliases": [
       "paypal"
     ]
+  },
+  {
+    "brandId": "at-home",
+    "displayName": "At Home",
+    "category": "homeImprovement",
+    "aliases": [
+      "at home"
+    ]
   }
 ]

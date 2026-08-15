@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import 'app_check_service.dart';
+
 /// ETag-gated HTTP fetch for R2-hosted static assets (brands.json,
 /// catalog.json). Files and their ETags are stored side-by-side in the
 /// app's documents directory as `<key>.json` and `<key>.etag`.
@@ -48,6 +50,19 @@ class RemoteAssetService {
       final etag = await _readEtag(key);
       final headers = <String, String>{};
       if (etag != null) headers['If-None-Match'] = etag;
+      // Attest the catalog fetch the same way every other client already does.
+      //
+      // Deliberately shipped BEFORE the Worker gates these routes, and in that
+      // order: enforcement that lands first would 401 every install still on an
+      // older build, and because those installs fall back to the bundled
+      // offline catalog they would keep working while silently serving stale
+      // rewards — the worst kind of breakage, invisible from the outside.
+      //
+      // A null token is normal (no Play Services, unregistered emulator), so
+      // the header is omitted rather than sent empty and the request proceeds.
+      // While the routes stay ungated that is indistinguishable from today.
+      final token = await AppCheckService.token();
+      if (token != null) headers['X-Firebase-AppCheck'] = token;
 
       final resp = await http
           .get(Uri.parse(url), headers: headers)

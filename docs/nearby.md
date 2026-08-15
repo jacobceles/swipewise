@@ -180,6 +180,11 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 - App Check is activated in *both* isolates. Geofence re-registration runs headless and calls
   Places itself, and App Check state is per-isolate — activating only in `main()` leaves that
   path tokenless, so geofences silently stop re-registering.
+- The **catalog** fetch (`remote_asset_service.dart`) also sends the token now, but the Worker's
+  catalog routes do **not** reject on it yet. That order is deliberate and must not be inverted:
+  a catalog 401 is invisible to the user because `catalog_loader.dart` falls back to the bundled
+  offline copy, so enforcing before this build is released would strand un-updated installs on a
+  stale catalog with nothing to show for it. The backend repo's README owns the rollout steps.
 - ⚠️ **Attestation is not free — but do NOT add a token cache.** A Play Integrity round trip
   measured **~2.2 s**. `getToken()` already "will use a cached token if found in storage" and
   "attaches to the most recent in-flight request if one is present" — *storage*, so the cache
