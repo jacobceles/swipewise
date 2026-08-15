@@ -13,5 +13,22 @@ big picture, then drill into whichever subsystem you need.
 | [database.md](database.md) | Full SQLite schema reference |
 | [setup.md](setup.md) | Keys, build flags, git hooks, local-data reset, troubleshooting |
 
+## Hard-won knowledge — where each thing is written down
+
+Things that cost real time to learn, and the file that owns each one. Add to the owning file, never
+to a planning doc: planning docs get deleted.
+
+| Topic | Home |
+|---|---|
+| Schema changes need `_onUpgrade`; never `ConflictAlgorithm.replace` on a parent table | [setup.md](setup.md), [database.md](database.md) |
+| `flutter analyze` doesn't check Kotlin — `:app:lintDebug` after a `minSdk` change | [setup.md](setup.md) |
+| Release builds serve a stale AOT snapshot | [setup.md](setup.md) |
+| Off-screen tabs go stale (`IndexedStack`) | [architecture.md](architecture.md) |
+| App Check cost (~2.2 s) and per-isolate state | [nearby.md](nearby.md) |
+| FDX hard limits — no MCC, no lat/lng, no reward balances, no pending | [sophtron.md](sophtron.md) |
+
+The backend engine that produces the catalog, and the API that serves it, each keep their own
+equivalent index in their own repo.
+
 For **forward-looking** design (what's planned, not built) see [`../docs/`](../docs/):
 the [card-rewards catalog](reward-catalog.md) spec and the [roadmap](architecture.md).
