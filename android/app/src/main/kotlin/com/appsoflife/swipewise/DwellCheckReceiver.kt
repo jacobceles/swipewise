@@ -30,6 +30,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val meta = GeofenceMetadataStore(context).read(geofenceId)
         if (meta == null) {
             // Fence set was replaced while this timer was in flight.
+            DwellOutcomeStore(context).record(geofenceId, null, DwellOutcome.NO_META)
             return
         }
 
@@ -88,8 +89,16 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val dist = FloatArray(1)
         Location.distanceBetween(fix.latitude, fix.longitude, meta.lat!!, meta.lng!!, dist)
         val allowed = meta.radiusM!! + fix.accuracy + SLACK_M
+        val measured = DwellFix(dist[0], fix.accuracy, allowed)
         if (dist[0] <= allowed) {
-            maybePost(context, meta)
+            maybePost(context, meta, measured)
+        } else {
+            DwellOutcomeStore(context).record(
+                meta.geofenceId,
+                meta.primary.name,
+                DwellOutcome.OUTSIDE_FENCE,
+                measured,
+            )
         }
     }
 
@@ -104,13 +113,21 @@ class DwellCheckReceiver : BroadcastReceiver() {
         // a drive-by at every red light. Cooldowns aren't marked on a skip, so
         // the next genuine dwell at this merchant still fires normally.
         if (ActivityState.isLikelyDriving(context)) {
+            DwellOutcomeStore(context).record(
+                meta.geofenceId,
+                meta.primary.name,
+                DwellOutcome.NO_FIX_DRIVING,
+            )
             return
         }
         maybePost(context, meta)
     }
 
-    private fun maybePost(context: Context, meta: MerchantMeta) {
+    /// [fix] is null on the no-fix path, so a `posted` row with no distance is
+    /// itself the signal that verification failed open.
+    private fun maybePost(context: Context, meta: MerchantMeta, fix: DwellFix? = null) {
         val cooldown = CooldownStore(context)
+        val trail = DwellOutcomeStore(context)
         val now = System.currentTimeMillis()
         val primary = meta.primary
         // Belt-and-braces mute check: Dart drops muted stores at re-register
@@ -124,10 +141,12 @@ class DwellCheckReceiver : BroadcastReceiver() {
             muted.isMuted(primary.merchantId)
         }
         if (suppressed) {
+            trail.record(meta.geofenceId, primary.name, DwellOutcome.MUTED, fix)
             return
         }
         val lastMerchant = cooldown.lastMerchantNotified(primary.merchantId)
         if (lastMerchant != null && now - lastMerchant < MERCHANT_COOLDOWN_MS) {
+            trail.record(meta.geofenceId, primary.name, DwellOutcome.MERCHANT_COOLDOWN, fix)
             return
         }
         // Composite "<category>@<areaBucket>" key so the 30-min category
@@ -138,6 +157,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val categoryKey = compositeCategoryKey(primary.category, meta.lat, meta.lng)
         val lastCategory = cooldown.lastCategoryNotified(categoryKey)
         if (lastCategory != null && now - lastCategory < CATEGORY_COOLDOWN_MS) {
+            trail.record(meta.geofenceId, primary.name, DwellOutcome.CATEGORY_COOLDOWN, fix)
             return
         }
         NotificationHelper(context).postDwell(meta)
@@ -147,6 +167,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
             primary
         }
         cooldown.markNotified(notifyOption, now)
+        trail.record(meta.geofenceId, primary.name, DwellOutcome.POSTED, fix)
     }
 
     /// "<category>@<lat>,<lng>" with lat/lng rounded to 2 decimal degrees

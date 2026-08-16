@@ -119,6 +119,38 @@ loitering lazily on the OS's own location cadence and can fire minutes late. Ins
 Fence geometry + dwell seconds ride along in `GeofenceMetadataStore` so the receivers
 need no Dart round-trip.
 
+### Outcome trail (temporary)
+
+`DwellCheckReceiver` has seven exits and six of them are a bare `return`, so a
+correctly-suppressed drive-by and an eaten real visit look identical from outside —
+both are just silence. A device pulled on 2026-08-16 had **12 dwell timers fire over
+two days and only 5 post**, with nothing on the device able to say which path ate the
+other 7.
+
+`DwellOutcomeStore` writes one `dwell_outcomes` row per fired timer (DB v15,
+**debug builds only**, capped at 500, best-effort):
+
+| outcome | meaning |
+| --- | --- |
+| `posted` | notification shown |
+| `no_meta` | fence set replaced mid-flight — frequent means re-registration is racing arrivals |
+| `outside_fence` | verification fix put the user outside; `distance_m` vs `allowed_m` says by how much |
+| `no_fix_driving` | no fix in time and AR still says driving |
+| `muted` / `merchant_cooldown` / `category_cooldown` | suppressed on purpose |
+
+`distance_m`/`accuracy_m`/`allowed_m` are set whenever a fix was obtained, so a `posted`
+row with no distance is itself the marker that verification failed open. Read it with:
+
+```
+adb exec-out run-as com.appsoflife.swipewise.dev cat databases/swipewise.db > /tmp/sw.db
+sqlite3 /tmp/sw.db "SELECT datetime(at/1000,'unixepoch','localtime'), merchant_name,
+  outcome, round(distance_m), round(allowed_m) FROM dwell_outcomes ORDER BY id DESC;"
+```
+
+**This is a rig, not a feature.** Its ancestor `debug_trail` went in at DB v6 and was
+dropped at v8 once it had proven the pipeline. Delete the table, `DwellOutcomeStore.kt`
+and its call sites the same way once the silent drops are attributed.
+
 ## Recommendation
 
 For each nearby merchant the payload is built with the **same** classifier + ranker as the

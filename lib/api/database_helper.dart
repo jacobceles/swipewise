@@ -82,7 +82,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'swipewise.db');
     return await openDatabase(
       path,
-      version: 14,
+      version: 15,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -100,6 +100,26 @@ class DatabaseHelper {
   /// dwell post. Keyed by the Google place id. Not user-scoped — the native
   /// receivers read it without a user context, exactly like the cooldown
   /// tables. Mute/unmute writes happen only in Dart; native only reads.
+  /// Disposable diagnostic trail: one row per fired dwell timer, saying which of
+  /// `DwellCheckReceiver`'s seven exits it took. Written only by the native
+  /// `DwellOutcomeStore`, and only in debug builds — Dart just owns the schema.
+  ///
+  /// **Temporary.** Its ancestor `debug_trail` went in at v6 and was dropped at
+  /// v8 once it had proven the pipeline; this one gets the same ending once the
+  /// silent drops are attributed. Keep in step with `DwellOutcomeStore.CREATE_SQL`.
+  static const String _createDwellOutcomesSql = '''
+    CREATE TABLE IF NOT EXISTS dwell_outcomes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      at INTEGER NOT NULL,
+      geofence_id TEXT NOT NULL,
+      merchant_name TEXT,
+      outcome TEXT NOT NULL,
+      distance_m REAL,
+      accuracy_m REAL,
+      allowed_m REAL
+    )
+  ''';
+
   static const String _createMutedMerchantsSql = '''
     CREATE TABLE IF NOT EXISTS muted_merchants (
       merchant_id TEXT PRIMARY KEY,
@@ -307,6 +327,14 @@ class DatabaseHelper {
       if (psCols.isNotEmpty && !psCols.contains('currency')) {
         await db.execute('ALTER TABLE point_systems ADD COLUMN currency TEXT');
       }
+    }
+
+    // v15 — dwell_outcomes, the temporary diagnostic trail. Additive and
+    // debug-write-only, so nothing reads it in a release build; it exists so a
+    // dwell timer that fires and posts nothing can say which of the six silent
+    // paths ate it. Drop it (and the native writer) once that's answered.
+    if (oldVersion < 15) {
+      await db.execute(_createDwellOutcomesSql);
     }
   }
 
@@ -733,6 +761,9 @@ class DatabaseHelper {
 
     // Device-level per-store mute list for dwell notifications.
     await db.execute(_createMutedMerchantsSql);
+
+    // Temporary diagnostic trail for dwell notifications (see the SQL above).
+    await db.execute(_createDwellOutcomesSql);
 
     // One row per bank Member (link) we resolve from Sophtron v2. Drives
     // the per-link transaction sync. `user_institution_id` holds the

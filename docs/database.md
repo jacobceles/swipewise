@@ -100,6 +100,7 @@ the same stable id reappears. A user's card reaches its rewards/perks through it
 | `boundary_geofence` | single-row app boundary tripwire (`CHECK id = 1`) |
 | `merchant_notification_cooldown` | per-merchant notify throttle (6h) |
 | `category_notification_cooldown` | per-category notify throttle (30 min) |
+| `dwell_outcomes` | **temporary** diagnostic trail: why each fired dwell timer did/didn't post (debug builds only, capped at 500) |
 
 See [nearby.md](nearby.md).
 
