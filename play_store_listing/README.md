@@ -2,207 +2,78 @@
 
 <img src="icon_512.png" width="112" alt="SwipeWise app icon">
 
-# SwipeWise — Play Store listing assets
-
-*Which credit card to use at every store — for maximum cashback and points.*
+# SwipeWise — Play Store listing
 
 </div>
 
-Everything for the Google Play store listing, in one place. Reusable for future updates.
-Each asset below maps to a field in Play Console → *Grow → Store presence → Main store
-listing* (screenshots go on the *Internal testing* release).
+Everything to paste into Play Console. Filed 2026-08-16 for the free tier, no billing SDK.
 
-## Feature graphic — `cover.png` · 1024×500
+Google checks this form, the store listing and the
+[privacy policy](https://jacobcelestine.com/swipewise/privacy_policy.html) against each other.
+Change one, change all three.
 
-<img src="cover.png" width="640" alt="SwipeWise feature graphic">
+## Assets
 
-## App icon — `icon_512.png` · 512×512
-
-<img src="icon_512.png" width="120" alt="SwipeWise app icon">
-
-## Screenshots — `screenshots/` · all ≤2:1
-
-Split by tier, because the tab bar differs and nothing else makes that visible:
-
-- **`screenshots/free/`** — upload these. All five, and nothing outside this folder.
-- **`screenshots/pro/`** — held for when Pro goes on sale. **Do not upload today**: two show
-  Pro-only screens (Transactions, Subscriptions) and the other three draw the four-tab bar. Regenerate
-  them from the original (non-`FREE —`) wireframe frames when Pro ships.
-
-Named in carousel order (drag to reorder in Play Console).
-
-<table>
-  <tr>
-    <td><img src="screenshots/free/1-best-card-at-every-store.png" width="150" alt="Best card at every store"></td>
-    <td><img src="screenshots/free/2-where-your-cards-win.png" width="150" alt="Brand-level ranking"></td>
-    <td><img src="screenshots/free/3-every-category-ranked.png" width="150" alt="Per-category card ranking"></td>
-    <td><img src="screenshots/free/4-your-wallet.png" width="150" alt="Cards"></td>
-    <td><img src="screenshots/free/5-no-account-needed.png" width="150" alt="Welcome — sign in or skip"></td>
-  </tr>
-  <tr align="center">
-    <td>Best card at every store</td>
-    <td>Where your cards win (brands)</td>
-    <td>Every category ranked</td>
-    <td>Your whole wallet</td>
-    <td>No account needed</td>
-  </tr>
-</table>
-
-Exported from [`../wireframe.pen`](../wireframe.pen) via the Pencil MCP (the `FREE — *` frames),
-then padded to ≤2:1 (Play's max ratio) using each screen's own dark background.
-
-> ⚠️ **Every main screen in the wireframe draws a four-tab bar; the free build ships three.**
-> `shellTabs(isPro)` in `lib/widgets/app_tab_bar.dart` returns `[cards, advisor, profile]` for a
-> free user — Pro *inserts* Transactions, it doesn't reshuffle. The `FREE — *` frames exist for
-> exactly this: they are copies with the shared `Tab Bar` component's Transactions item disabled,
-> which re-spaces the remaining three because the bar is `space_around`. **If you re-export from
-> the original frames you will ship a tab that does not exist.**
->
-> Two frames are deliberately not in the set. `Merchant Detail` looks like a natural free screen
-> but its content is total spent / visit count / transaction history — all Pro. `Card Details
-> Sheet` shows a "Used" figure derived from transactions for the same reason.
-
-## Upload map
-
-| Play Console field | File | Spec / status |
+| Console field | Source | Spec |
 |---|---|---|
-| App icon | `icon_512.png` | 512×512, 32-bit PNG, opaque ✅ |
-| Feature graphic | `cover.png` | 1024×500, watermark removed ✅ |
-| Phone screenshots | `screenshots/free/*.png` (all 5) | ≤2:1, 320–3840 px/side ✅. **Never `screenshots/pro/`** |
-| Short description | `short_description.txt` | ≤80 chars ✅ |
-| Full description | `full_description.txt` | ≤4000 chars ✅ |
 | App name | — | `SwipeWise` |
+| App icon | `icon_512.png` | 512×512, opaque |
+| Feature graphic | `cover.png` | 1024×500 |
+| Phone screenshots | `screenshots/free/*.png` — all 5 | ≤2:1. **Never `screenshots/pro/`** |
+| Short description | *Which credit card to use at every store — for maximum cashback and points.* | ≤80 |
+| Full description | `full_description.txt` | ≤4000 |
+| Category / tag | — | Finance / Personal finance |
+| Target audience | — | **18+ only** — any younger band triggers Families policy |
 
-## Short description
+⚠️ **Screenshots are tier-specific.** `shellTabs(isPro)` gives a free user three tabs; every original
+wireframe frame draws four. `screenshots/free/` came from the `FREE — *` frames with the Transactions
+tab disabled. Re-export from the originals and you ship a tab that doesn't exist. `screenshots/pro/`
+is held for when Pro sells.
 
-Paste from [`short_description.txt`](short_description.txt):
+## Data safety
 
-> Which credit card to use at every store — for maximum cashback and points.
+| Category → Type | Collected | Shared | Required? | Purpose | Linked |
+|---|---|---|---|---|---|
+| Location → Precise location | Yes | **Yes** | Optional | App functionality | No |
+| Personal info → Name | Yes | No | Optional | App functionality | **Yes** |
+| Personal info → Email address | Yes | No | Optional | App functionality | **Yes** |
+| Personal info → User IDs | Yes | No | Optional | App functionality | **Yes** |
+| Financial info → User payment info | Yes | No | Optional | App functionality | **Yes** |
+| Financial info → Other financial info | Yes | No | Optional | App functionality | **Yes** |
+| App info and performance → Crash logs | Yes | No | **Required** | **Analytics** | No |
+| App info and performance → Diagnostics | Yes | No | **Required** | **Analytics** | No |
+| Device or other IDs | Yes | No | **Required** | **Analytics** | No |
 
-## Full description
+Everything else **No**. Nothing is **Ephemeral**.
 
-Paste from [`full_description.txt`](full_description.txt) — single source of truth, edit that
-file (not this one).
+- **Precise, not Approximate** — Google's "approximate" means ≥3 km²; 110 m is ~0.04 km².
+- **Only location is Shared** — Places is a third party. Firebase and Cloudflare are service providers.
+- **Crash data is Analytics**, not App functionality. Location stays App functionality.
+- **Financial info is declared** because the backup carries last-four and manual credit limit
+  (`docs/BACKUP_SCHEMA.md`), both reachable in the free tier via `manual_card_flow_screen.dart`.
+- **Health and fitness stays No** — `ACTIVITY_RECOGNITION` never leaves the device, so it is not collected.
 
-## Data safety form — answer sheet
+### Security
 
-> ⚠️ **REVIEW BEFORE THE NEXT SUBMISSION — 2026-08-12.** This sheet was written when the app
-> had no accounts and sent nothing off the device. Both are now false: sign-in is available
-> (optional) and wallet backup is available (opt-in). Answers marked **CHANGED** below were
-> filed under the old premise and are wrong in the Play Console today. The authoritative list
-> of what backup uploads is [`docs/BACKUP_SCHEMA.md`](../docs/BACKUP_SCHEMA.md) — answer from
-> it rather than re-deriving, and keep the two in step.
+| Question | Answer |
+|---|---|
+| Allows account creation? | **Yes — OAuth only.** Not "Username and other authentication": that is the aggregator flow, unreachable as submitted |
+| Log in with accounts made outside the app? | Yes |
+| Encrypted in transit / at rest | Yes / Yes |
+| Data deletion request? | **Yes** — https://jacobcelestine.com/swipewise/delete_account.html |
+| Deletion *without* deleting the account? | No — turning backup off keeps the stored copy |
 
-Answer for the app **as submitted**: free tier, no billing SDK. Google reviews these against
-the binary, and the three surfaces (this form, the store listing, the privacy policy) must
-agree.
+Answering "no account" makes the deletion question unreachable. Sign-out never deletes anything.
 
-⚠️ **"Collected" means transmitted off the device** — to you *or* a third party. It does not
-mean "stored". Everything SwipeWise keeps in `swipewise.db` stays on the phone unless the user
-turns backup on.
+## Declarations
 
-**CHANGED — what now leaves the device:** the two originals below, plus, *for a user who signs
-in*, their email and user id; plus, *for a user who also enables backup*, their cards, card
-nicknames/edits, catalog links, preferences and muted stores. Transactions still never leave —
-that claim is intact and there is a test enforcing it.
+**Advertising ID → No.** No `AD_ID` permission, no ads SDK.
 
-### Declare these two data types
+**`FOREGROUND_SERVICE_DATA_SYNC` → declare it**, as *user-initiated*: it holds a bank link the user
+started while it waits on an OTP. There is no background sync in the app.
 
-| Data type | Collected | Shared | Ephemeral | Required? | Purpose | Linked? |
-|---|---|---|---|---|---|---|
-| **Precise location** | Yes | **Yes** | No | **Optional** | App functionality | No |
-| **Crash logs** | Yes | No | No | **Required** | **Analytics** | No |
-
-Plus, because Crashlytics sends them alongside a crash:
-
-| Data type | Collected | Shared | Ephemeral | Required? | Purpose | Linked? |
-|---|---|---|---|---|---|---|
-| **Diagnostics** | Yes | No | No | **Required** | **Analytics** | No |
-| **Device or other IDs** | Yes | No | No | **Required** | **Analytics** | No |
-
-### Two more that are easy to get wrong
-
-**5. Crash data is *Analytics*, not *App functionality*.** It reads like infrastructure, but
-Google's own definition of Analytics says "to monitor app health, to **diagnose and fix bugs or
-crashes**". That is crash reporting described exactly. Location stays App functionality — there
-the data *is* the feature.
-
-**6. Crash data is *required*; location is *optional*.** Location has a permission the user can
-decline or revoke, and the app degrades gracefully — that is the whole point of the disclosure
-dialog. Crashlytics has no in-app toggle and is never disabled, so "users can choose" would be
-false.
-
-### The four answers that are easy to get wrong
-
-**1. Location is *Precise*, not *Approximate*.** The coordinate is rounded to ~110 m before it
-leaves, which sounds approximate — but Google defines *approximate* as an area of **3 km² or
-more**. A 110 m radius is ~0.04 km², so it is still precise by their definition, and the app
-requests `ACCESS_FINE_LOCATION`. Declaring approximate here would be a misdeclaration.
-
-**2. Location is *Shared*; crash logs are not.** Sharing means transfer to a **third party**.
-Google Places is a genuine third party answering a query, so location is shared. Firebase
-Crashlytics is Google acting as **your service provider**, processing on your behalf — which
-Google's own guidance treats as collection, not sharing.
-
-**3. Location and crash data are not *linked to identity*; email and user id are.** ⚠️ This
-point used to read "nothing is linked to identity — there is no account, no email, no sign-in",
-which is false since optional sign-in landed. Split the answer per data type: precise location,
-crash logs, diagnostics and device ids stay unlinked (they are collected with no account
-attached, and Crashlytics' installation id is pseudonymous), while the email and user id
-declared below are linked by definition — they *are* the account.
-
-**4. Do not mark location *ephemeral*.** Our Worker genuinely processes it in memory and stores
-nothing — but the ephemeral option asserts that about the whole path, and Google Places'
-retention is not ours to promise. Ephemeral data is hidden from the listing, so claiming it
-wrongly is exactly the kind of under-disclosure that gets enforced.
-
-### Answer "no" to everything else
-
-Personal info · Financial info · Health and fitness · Messages · Photos and videos · Audio ·
-Files and docs · Calendar · Contacts · App activity · Web browsing history · Purchases.
-
-Two that look like they might apply and do not:
-
-- **Health and fitness** — the app holds `ACTIVITY_RECOGNITION`, but activity is used on-device
-  to tell a real store visit from a traffic stop. Nothing is transmitted, so nothing is collected.
-- **Financial info** — no card numbers and no payments. Card *products* a user owns (e.g.
-  "Chase Sapphire Preferred") do leave the device in a backup, which is closer to a preference
-  than a financial record, but decide it deliberately rather than by omission. Bank
-  connectivity remains unavailable to anyone without an entitlement, which is granted by hand.
-
-**CHANGED — Personal info → Email address.** Collected for users who sign in. Optional, not
-required. Purpose: app functionality (it is the account). Linked to identity: yes.
-
-**CHANGED — User IDs.** Same shape: collected when signed in, optional, app functionality.
-
-### Security section
-
-- **CHANGED — Does your app allow users to create an account? YES.** Filed as *"does not allow
-  users to create an account"*, which was true before optional sign-in and is false now: signing
-  in with Google mints a Firebase Auth user. **It is account creation regardless of what it
-  unlocks** — the fact that the app is fully usable without one, and that signing in only enables
-  wallet backup, does not change the answer. Google checks this against the binary, and it gates
-  the deletion question below, so answering "no" here makes that answer unreachable.
-- **Encrypted in transit:** yes. Every request is HTTPS.
-- **CHANGED — Encrypted at rest: yes, and re-read the question.** The old answer was given when
-  the only thing server-side was the public catalog, so it was really a statement about static
-  assets. It now covers *user content* — the wallet backup in D1 and the Firebase Auth record.
-  Both are encrypted at rest by Cloudflare and Google respectively, so the answer stays "yes";
-  what changed is what the answer is about. On-device, `swipewise.db` relies on Android's
-  full-disk encryption, not app-level encryption — say so if a field asks, rather than implying
-  a second layer that does not exist.
-- **CHANGED — Users can request data deletion: yes.** The old answer said there is no account
-  and nothing server-side to delete; accounts and server-side rows both exist now. Both routes
-  Google requires are in place — in-app at **Profile → Delete my account**, and the web URL
-  **https://jacobcelestine.com/swipewise/delete_account.html**, which is what goes in the form.
-  Note for the answer: uninstalling still removes everything local, but it does *not* remove a
-  wallet backup — only account deletion does.
-
-## ACTIVITY_RECOGNITION declaration — Play Console
-
-⚠️ It appears under **Health data permissions**, because Android treats physical activity as
-health-adjacent. Answering *"we provide no health features"* elsewhere is still correct; this
-free-text box is where the non-health use gets explained.
+**ACTIVITY_RECOGNITION** — appears under *Health data permissions*. Answering "no health features"
+elsewhere stays correct; this box is where the non-health use gets explained.
 
 > SwipeWise notifies users when they arrive at a nearby store where one of their credit cards
 > earns extra rewards. It uses activity recognition for one purpose: to tell an actual store
@@ -220,34 +91,10 @@ free-text box is where the non-health use gets explained.
 > value is written to local app storage and read back by the notification logic. The permission
 > is optional; declining it only makes arrival notifications less accurate.
 
-Accurate as of 2026-08-10 against `ActivityState.kt` (transition subscription, the 30-minute
-`isLikelyDriving` staleness window, SharedPreferences-only storage) and
-`ActivityTransitionReceiver.kt`. **If that logic changes, change this.**
+Accurate against `ActivityState.kt` and `ActivityTransitionReceiver.kt`. **If that logic changes,
+change this.**
 
-Note the consequence for Data safety: because the reading never leaves the device, it is *not*
-collected, so **Health and fitness stays unticked**. Those two answers are consistent, not
-contradictory — one describes a permission, the other describes transmission.
-
-## Background location declaration — Play Console → App content → Location permissions
-
-The schedule long pole. Review runs days-to-weeks and is commonly rejected on the first pass,
-so submit it before the rest of the listing is finished. Rejections are usually about the
-**video**, not the app.
-
-### The other two declarations that appear alongside it
-
-- **Advertising ID → No.** Verified against the merged release manifest: no `AD_ID` permission,
-  no ads SDK, and nothing pulls one transitively (Crashlytics does not drag in the
-  measurement/ads libraries).
-- **`FOREGROUND_SERVICE_DATA_SYNC` → declare it. ⚠️ CHANGED 2026-08-12.** This previously read
-  "do not declare it", which is no longer true: the permission moved into the main manifest,
-  so the release build requests it. Declare it, and describe it as *user-initiated*: the
-  service runs only while a bank link the user started is in flight, including while it waits
-  on an OTP. It is not background data collection — there is no background sync in the app at
-  all. If a prior answer is already filed, this one needs re-answering before the next
-  release.
-
-### Form answers — paste these (both inside the 500-character limit)
+## Background location
 
 **What is the main purpose of your app?**
 
@@ -257,11 +104,6 @@ so submit it before the rest of the listing is finished. Rejections are usually 
 > default. It compares the reward rates those cards pay at that specific store or brand and shows
 > you the best one. Everything stays on your device unless you turn on backup.
 
-⚠️ The previous version of this answer said *"no account"*. That was true when it was written and
-is false now — optional sign-in mints a Firebase Auth user, which is also why the Security
-section above flips to **yes**. All three surfaces have to agree, so if you edit one, edit them
-together.
-
 **Describe one location-based feature that needs background location.**
 
 > Arrival alerts. SwipeWise registers geofences around nearby stores where one of the user's
@@ -269,20 +111,6 @@ together.
 > a notification naming the best card — for example "You're at Whole Foods, use your Prime Visa
 > for 5%". That reminder is only useful at the moment of payment, with the phone in a pocket, so
 > it has to work when the app is closed or not in use.
-
-Both deliberately use Google's own phrase — *"when the app is closed or not in use"* — and
-describe the same feature as the in-app disclosure, which is what reviewers cross-check.
-
-### Longer-form answers (if a field allows more)
-
-**Does your app access location in the background?** Yes — `ACCESS_BACKGROUND_LOCATION`.
-
-**Which feature requires it?**
-
-> Arrival alerts. SwipeWise notifies the user when they arrive at a nearby store where one of
-> the credit cards in their wallet earns extra rewards — for example, arriving at a grocery
-> store where their card earns 5% instead of 1%. The reminder is only useful at the moment of
-> payment, so it has to reach the user when the app is not open.
 
 **Why is foreground-only access insufficient?**
 
@@ -292,7 +120,7 @@ describe the same feature as the in-app disclosure, which is what reviewers cros
 > recommendation has no value. There is no version of this feature that works while the app is
 > in the foreground.
 
-**How is location handled?** Useful to state, because it pre-empts the obvious follow-up:
+**How is location handled?**
 
 > Detection runs on the device. SwipeWise registers native Android geofences for nearby stores
 > and the operating system performs the dwell detection; the app is woken only when an arrival
@@ -304,53 +132,39 @@ describe the same feature as the in-app disclosure, which is what reviewers cros
 > recording where geofences were last registered, overwritten on every refresh and deleted on
 > uninstall.
 
-### The demo video — where first passes are lost
+Both short answers use Google's own phrase, *"when the app is closed or not in use"*, and match the
+in-app disclosure — which is what reviewers cross-check.
 
-Host it unlisted on YouTube and paste the link. It must show, in this order and unambiguously:
+### The video
 
-1. **The prominent disclosure, before any system dialog.** This is
-   `NearbyPermissionGate._showAlwaysAllowExplainer` — the dialog titled *"Allow location all the
-   time?"*. Hold on it long enough to read. Its text contains Google's required phrasing,
-   verbatim: *"even when the app is closed or not in use"*.
-2. **The user tapping Continue** — affirmative consent, not a dismissal.
-3. **The Android system permission dialog**, and *Allow all the time* being chosen.
-4. **The feature actually working**: leave the app, and show the arrival notification firing
-   with the recommended card. A screen recording that walks into a registered store, or a
-   mock-location demo, both pass — what fails is a video that shows only the settings screen.
+Submitted showing the disclosure, the *Allow all the time* grant, and the Stores list — **not** the
+alert firing. Deliberate: staging a real arrival on camera is awkward. The foreground-only answer
+above carries that argument in text instead.
 
-Three things that get first passes rejected, none of which are about the code:
+If review asks for the background behaviour, a passing clip needs, in order: the in-app disclosure
+(`NearbyPermissionGate._showAlwaysAllowExplainer`, held long enough to read) → tapping Continue →
+the system dialog with *Allow all the time* → the notification firing with the app closed. A
+mock-location demo passes, so no travel is needed.
 
-- The video shows the system dialog but never the in-app disclosure. The disclosure is the
-  thing being reviewed; the system dialog is Android's, not yours.
-- The video never demonstrates the background behaviour, so the reviewer cannot see why
-  foreground access would not do.
-- The declared purpose does not match the store listing or the data safety form. Keep all three
-  saying the same thing: arrival alerts for card rewards, nothing about advertising or
-  analytics, because the app does neither.
+⚠️ **Internal testing is not a reviewed track**, so the declaration has nothing to attach to there.
+Closed testing is the earliest track that starts the review.
 
-## What changes when Pro ships
+## When Pro ships
 
-Every answer above is filed for the app **as submitted**: free tier, no billing SDK. These flip
-the moment Pro reaches a paying user — update them then, not later.
-
-| Form | After Pro |
+| Form | Becomes |
 |---|---|
-| App access | "Some or all functionality is restricted" + a test account with the entitlement granted, surviving review cycles |
-| Account creation | OAuth, plus likely *"Username and other authentication"* for the aggregator's credential + MFA flow |
-| Data safety — types | Add **Financial info**; possibly Purchase history |
-| Data safety — linkage | Much of it becomes linked — there is an account to link to |
-| Financial features | ⚠️ **Re-open before submitting.** Reading real account data routes you to a specialist review team, and some categories need licensing documentation up front |
+| App access | "Some or all functionality is restricted" + a test account carrying the entitlement |
+| Account creation | OAuth **+ Username and other authentication** |
+| Data safety | Add Purchase history; much of it becomes **linked** |
+| Financial features | ⚠️ **Re-open** — routes to a specialist review team, may need licensing docs up front |
 
-Public copy that becomes false at the same moment: `full_description.txt`'s "No bank connection"
-and "no card numbers", and the published privacy policy's *"The subscription is not on sale yet,
-so it is currently available only to accounts granted access individually"*.
+Copy that becomes false: `full_description.txt`'s "No bank connection" and "no card numbers", and
+the privacy policy's "the subscription is not on sale yet".
 
 ## Regenerating assets
 
-- **Icon** — flatten the adaptive foreground on white:
-  `magick assets/icon_foreground.png -resize 512x512 -background white -alpha remove -flatten play_store_listing/icon_512.png`
-- **Feature graphic** — generated with Gemini (attach [`../assets/logo.png`](../assets/logo.png)
-  as the brand reference; 1024×500, dark background + orange card motif, no baked-in text).
-  Gemini sparkle watermark removed via a feathered patch in the bottom-right corner.
-- **Screenshots** — re-export the relevant frames from `../wireframe.pen` (Pencil must be
-  open), then pad to ≤2:1.
+- **Icon** — `magick assets/icon_foreground.png -resize 512x512 -background white -alpha remove -flatten play_store_listing/icon_512.png`
+- **Feature graphic** — Gemini, with `../assets/logo.png` as the brand reference; 1024×500, dark
+  background, no baked-in text.
+- **Screenshots** — export the `FREE — *` frames from `../wireframe.pen` (Pencil MCP), then pad to
+  ≤2:1 using each screen's own background.
