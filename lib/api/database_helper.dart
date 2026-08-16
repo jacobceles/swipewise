@@ -82,7 +82,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'swipewise.db');
     return await openDatabase(
       path,
-      version: 15,
+      version: 16,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -326,6 +326,29 @@ class DatabaseHelper {
       )).map((r) => r['name'] as String).toSet();
       if (psCols.isNotEmpty && !psCols.contains('currency')) {
         await db.execute('ALTER TABLE point_systems ADD COLUMN currency TEXT');
+      }
+    }
+
+    // v16 — force one catalog re-hydrate so `foreign_tx_fee_pct` picks up the
+    // negative "unknown" sentinel. Existing rows hold 0.0 for every card whose
+    // fee was never captured, which reads as "charges nothing" and is the bug
+    // being fixed; nothing rewrites them until the catalog's dataVersion moves,
+    // which could be weeks. Clearing the loaded-version marker makes the next
+    // launch re-import from the bundle it already has. Catalog data is derived,
+    // so this costs one import and no user data.
+    if (oldVersion < 16) {
+      // Guarded like every other block here: migration tests (and a v1 DB)
+      // reach this with only a subset of tables created.
+      final hasSettings =
+          (await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'",
+          )).isNotEmpty;
+      if (hasSettings) {
+        await db.delete(
+          'settings',
+          where: 'key = ?',
+          whereArgs: ['catalog_data_version'],
+        );
       }
     }
 
@@ -884,6 +907,11 @@ class DatabaseHelper {
         display_name TEXT NOT NULL,
         network TEXT,
         annual_fee_usd REAL,
+        -- NOT NULL, so "never captured" is carried as a NEGATIVE sentinel
+        -- written by CatalogLoader rather than NULL — this table has two FK
+        -- dependents and dropping NOT NULL would mean a rebuild. 0.0 means the
+        -- card genuinely charges nothing; < 0 means unknown. No real fee is
+        -- negative. See CatalogLoader._markUnknownFxFee.
         foreign_tx_fee_pct REAL NOT NULL DEFAULT 0.0,
         image_url TEXT,
         catalog_version TEXT NOT NULL,

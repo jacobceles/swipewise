@@ -257,6 +257,8 @@ void main() {
           issuer: 'x',
           displayName: 'A',
           catalogVersion: 't',
+          // Explicit: omitting this now means *unknown*, not 0%.
+          foreignTxFeePct: 0.0,
         ),
         'B': const CardProduct(
           id: 'B',
@@ -304,5 +306,77 @@ void main() {
         expect(ranking.first.cardId, 'cA'); // no-FX-fee card wins abroad
       },
     );
+  });
+
+  group('foreign-travel mode — unknown fee is not a free pass', () {
+    // Identical 2% baselines. K is *known* to charge nothing; U's fee was never
+    // captured. Nothing is docked from either, so they tie on effective rate —
+    // and the preference deliberately favours the unknown card, so only the
+    // tie-break can separate them.
+    final s = CatalogSnapshot(
+      products: {
+        'K': const CardProduct(
+          id: 'K',
+          issuer: 'x',
+          displayName: 'K',
+          catalogVersion: 't',
+          foreignTxFeePct: 0.0,
+        ),
+        'U': const CardProduct(
+          id: 'U',
+          issuer: 'x',
+          displayName: 'U',
+          catalogVersion: 't',
+        ),
+      },
+      rulesByProduct: {
+        'K': [rule('K', 'k', RewardRuleKind.baseline, rate: 2.0)],
+        'U': [rule('U', 'u', RewardRuleKind.baseline, rate: 2.0)],
+      },
+      exclusionsByRule: const {},
+      pointSystems: const {
+        'usd': PointSystem(
+          id: 'usd',
+          displayName: 'usd',
+          baselineCentValue: 1.0,
+        ),
+      },
+    );
+    final links = [link('cK', 'K', 'Card K'), link('cU', 'U', 'Card U')];
+
+    test('abroad, a known 0% beats an unknown fee', () {
+      final ranking = EngineRanker(
+        snapshot: s,
+        linkedCards: links,
+        when: when,
+        cardPreferenceOrder: const ['cU'],
+        isForeign: true,
+      ).rewardRanking(RewardCategory.dining).general;
+      expect(ranking.first.cardId, 'cK');
+    });
+
+    test('at home the distinction is ignored — preference wins', () {
+      final ranking = EngineRanker(
+        snapshot: s,
+        linkedCards: links,
+        when: when,
+        cardPreferenceOrder: const ['cU'],
+      ).rewardRanking(RewardCategory.dining).general;
+      expect(ranking.first.cardId, 'cU');
+    });
+
+    test('an unknown fee is never invented as a cost', () {
+      // U must keep its full 2%: docking a guessed fee would be the mirror
+      // -image lie of claiming it charges nothing.
+      final ranking = EngineRanker(
+        snapshot: s,
+        linkedCards: links,
+        when: when,
+        isForeign: true,
+      ).rewardRanking(RewardCategory.dining).general;
+      final u = ranking.firstWhere((r) => r.cardId == 'cU');
+      final k = ranking.firstWhere((r) => r.cardId == 'cK');
+      expect(u.rate, k.rate);
+    });
   });
 }

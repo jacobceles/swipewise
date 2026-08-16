@@ -408,6 +408,39 @@ void main() {
     await fresh.close();
   });
 
+  test('onUpgrade(15→16) clears the catalog version so FX fees re-hydrate', () async {
+    // Existing rows hold 0.0 for every fee the crawl never captured, which reads
+    // as "charges nothing". Nothing rewrites them until the catalog's dataVersion
+    // moves, so the migration drops the marker to force one re-import.
+    final db = await databaseFactoryFfi.openDatabase(
+      inMemoryDatabasePath,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+      ),
+    );
+    await db.insert('settings', {
+      'user_id': 'u1',
+      'key': 'catalog_data_version',
+      'value': '123',
+    });
+    await db.insert('settings', {
+      'user_id': 'u1',
+      'key': 'default_screen',
+      'value': 'advisor',
+    });
+
+    await DatabaseHelper.runUpgrade(db, 15, 16);
+
+    final keys = (await db.query('settings'))
+        .map((r) => r['key'] as String)
+        .toSet();
+    expect(keys, isNot(contains('catalog_data_version')));
+    // Only that one key — an over-broad delete would drop the user's settings.
+    expect(keys, contains('default_screen'));
+    await db.close();
+  });
+
   // The native writer carries its own copy of this CREATE (it can fire before
   // Dart has ever opened the DB), so the two can drift into an INSERT that
   // silently fails inside DwellOutcomeStore's catch-all. Pin them together.

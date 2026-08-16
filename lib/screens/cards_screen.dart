@@ -466,7 +466,18 @@ class _BankSectionState extends ConsumerState<_BankSection> {
               Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: (isManual || isOrphan)
+                  // Manual groups get the delete confirmation instead of the
+                  // bank sheet: Reconnect and sync metadata mean nothing for a
+                  // wallet the user typed in, but "remove all of these" is the
+                  // same need Disconnect serves for a linked bank.
+                  onTap: isManual
+                      ? () => _confirmDeleteManualGroup(
+                          context,
+                          ref,
+                          widget.label,
+                          widget.cards,
+                        )
+                      : isOrphan
                       ? null
                       : () => _openBankInfoSheet(
                           context: context,
@@ -1667,6 +1678,67 @@ Future<void> _confirmDelete(
   await ref.read(dataRepositoryProvider).deleteManualCard(userId, card.cardId);
   ref.invalidate(cardsProvider);
   if (context.mounted) Navigator.pop(context);
+}
+
+/// Removes every card in a manual group — the equivalent of Disconnect for a
+/// bank the user typed in rather than linked.
+///
+/// Deliberately loops [deleteManualCard] rather than reusing the institution
+/// -scoped wipe that Disconnect uses. That wipe exists to be re-run by a sync
+/// which immediately re-inserts the same cards, so it spares `card_overrides`
+/// on purpose; here nothing is coming back, and the per-card path is what the
+/// user already gets from the card sheet. Same end state, one primitive.
+Future<void> _confirmDeleteManualGroup(
+  BuildContext context,
+  WidgetRef ref,
+  String label,
+  List<CardSummary> cards,
+) async {
+  final palette = AppPalette.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final n = cards.length;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: palette.sheet,
+      title: Text('Delete $label?'),
+      content: Text(
+        n == 1
+            ? 'This removes the 1 card you added under $label.'
+            : 'This removes all $n cards you added under $label.',
+        style: AppText.bodyMd(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: TextButton.styleFrom(foregroundColor: palette.red),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  final userId = ref.read(authProvider).userId;
+  if (userId == null) return;
+  final repo = ref.read(dataRepositoryProvider);
+  try {
+    for (final c in cards) {
+      await repo.deleteManualCard(userId, c.cardId);
+    }
+    ref.invalidate(cardsProvider);
+    messenger.showSnackBar(
+      SnackBar(content: Text(n == 1 ? 'Removed $label' : 'Removed $n cards')),
+    );
+  } catch (e, st) {
+    Log.e('cards-screen', 'manual group delete failed for $label', e, st);
+    messenger.showSnackBar(
+      SnackBar(content: Text("Couldn't remove $label: $e")),
+    );
+  }
 }
 
 class _TabLabel extends StatelessWidget {

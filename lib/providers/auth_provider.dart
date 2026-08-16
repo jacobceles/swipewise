@@ -272,13 +272,21 @@ class AuthNotifier extends Notifier<AuthState> {
   ///
   /// ⚠️ **The order is the whole design, and it cannot be rearranged.**
   ///
+  /// 0. **Re-authenticate first**, before anything is destroyed. Firebase
+  ///    refuses `delete()` on a stale session (`requires-recent-login`), and
+  ///    that refusal used to land at step 2 — *after* the server wipe had
+  ///    already succeeded. The account survived, its data did not, and because
+  ///    the session stayed valid the next authenticated request re-created the
+  ///    `users` row via `rememberUser`. Observed 2026-08-16: entitlement gone,
+  ///    Firebase account alive, user row back. Proving freshness up front costs
+  ///    one tap and makes step 2 unable to fail that way.
   /// 1. **Server first.** Removing the wallet backup, entitlement, aggregator
   ///    Customer mapping and linked banks needs a valid Firebase ID token —
   ///    which stops existing the instant the Firebase account does. Delete
   ///    Firebase first and those rows become unreachable orphans: the user is
   ///    gone, their data is not, and nothing can ever find it again.
-  /// 2. **Then Firebase**, which may demand a fresh sign-in
-  ///    (`requires-recent-login`) and is reported back rather than swallowed.
+  /// 2. **Then Firebase**, which is still reported back rather than swallowed —
+  ///    step 0 makes recency failures unreachable, not every failure.
   /// 3. **Then local**, which is the only step that cannot fail and the only
   ///    one the user can redo by uninstalling.
   ///
@@ -288,6 +296,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<DeleteFailure?> deleteAccount() async {
     state = state.copyWith(isLoading: true, error: null);
     final client = AccountDeleteClient();
+
+    final reauthFailure = await _reauthenticate();
+    if (reauthFailure != null) {
+      // Nothing has been destroyed yet, which is the point of doing this first.
+      state = state.copyWith(isLoading: false);
+      return reauthFailure;
+    }
 
     final serverFailure = await client.deleteServerSide();
     if (serverFailure != null) {
@@ -316,6 +331,41 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState();
     await checkStatus();
     return null;
+  }
+
+  /// Proves the session is fresh, before [deleteAccount] destroys anything.
+  ///
+  /// Cancelling or failing here is free: no data has been touched yet. That is
+  /// the entire reason it runs first — the same refusal arriving at the Firebase
+  /// step instead leaves the server wiped and the account alive.
+  ///
+  /// Reuses [DeleteFailure.needsRecentLogin] for every outcome, including a
+  /// dismissed picker and a mismatched account. Its message — "sign in again and
+  /// then retry deleting" — is the correct next step in all of them, so a
+  /// dedicated enum value would add a UI branch that reads identically.
+  Future<DeleteFailure?> _reauthenticate() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return DeleteFailure.unavailable;
+    try {
+      await _ensureGoogleInitialized();
+      final GoogleSignInAccount googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          return DeleteFailure.needsRecentLogin;
+        }
+        rethrow;
+      }
+      await user.reauthenticateWithCredential(
+        GoogleAuthProvider.credential(
+          idToken: googleUser.authentication.idToken,
+        ),
+      );
+      return null;
+    } catch (_) {
+      return DeleteFailure.needsRecentLogin;
+    }
   }
 
   Future<void> logout() async {

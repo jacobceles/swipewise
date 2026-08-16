@@ -142,7 +142,7 @@ class CardProduct {
     required this.displayName,
     this.network,
     this.annualFeeUsd,
-    this.foreignTxFeePct = 0.0,
+    this.foreignTxFeePct,
     this.imageUrl,
     required this.catalogVersion,
     this.retiredAt,
@@ -155,7 +155,14 @@ class CardProduct {
   final String displayName;
   final String? network;
   final double? annualFeeUsd;
-  final double foreignTxFeePct;
+  /// Percent charged on foreign spend, or **null when it was never captured**.
+  ///
+  /// Null is not 0. The catalog distinguishes them (203 unknown vs 161 genuine
+  /// zero at time of writing), and collapsing the two made half the catalog
+  /// claim a no-FX-fee benefit it had no evidence for. Unknown costs the card
+  /// nothing here — inventing a fee would be the mirror-image lie — but it also
+  /// cannot win a tie against a card known to charge nothing (`EngineRanker`).
+  final double? foreignTxFeePct;
   final String? imageUrl;
   final String catalogVersion;
   final String? retiredAt;

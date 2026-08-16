@@ -129,7 +129,9 @@ class CatalogLoader {
 
     await _catalog.replaceCatalog(
       pointSystems: _project(data['point_systems'], _pointSystemCols),
-      cardProducts: _project(data['card_products'], _cardProductCols),
+      cardProducts: _markUnknownFxFee(
+        _project(data['card_products'], _cardProductCols),
+      ),
       rewardRules: _jsonEncodeColumn(
         _project(data['reward_rules'], _rewardRuleCols),
         'excluded_categories',
@@ -168,6 +170,24 @@ class CatalogLoader {
           },
     ];
   }
+
+  /// Rewrites a missing `foreign_tx_fee_pct` to the negative "unknown" sentinel.
+  ///
+  /// [_project] drops nulls so column DEFAULTs apply, which is right for every
+  /// other column and wrong for this one: the default is `0.0`, so a fee the
+  /// crawl never captured became indistinguishable from a card that genuinely
+  /// charges nothing. Half the catalog then claimed a no-FX-fee benefit without
+  /// evidence, silently, because the fee is never displayed.
+  ///
+  /// A sentinel rather than a nullable column because `card_products` is
+  /// `NOT NULL DEFAULT 0.0` with two FK dependents — dropping NOT NULL means a
+  /// table rebuild, and no real fee is ever negative.
+  static List<Map<String, Object?>> _markUnknownFxFee(
+    List<Map<String, Object?>> rows,
+  ) => [
+    for (final r in rows)
+      if (r.containsKey('foreign_tx_fee_pct')) r else {...r, 'foreign_tx_fee_pct': -1.0},
+  ];
 
   /// sqflite can't bind a List, so JSON-encode a list-valued column to a TEXT
   /// string before insert (decoded back in `CatalogRepository._rule`). No-op for

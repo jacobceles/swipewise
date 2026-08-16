@@ -594,7 +594,12 @@ final noForeignFeeCardsProvider = FutureProvider<List<LinkedCard>>((ref) async {
   final snapshot = await ref.watch(catalogSnapshotProvider.future);
   return [
     for (final c in links)
-      if ((snapshot.products[c.cardProductId]?.foreignTxFeePct ?? 0) == 0) c,
+      // `== 0`, not `?? 0 == 0`. `foreignTxFeePct` is null when the fee was
+      // never captured, and `?? 0` used to fold that into "charges nothing" —
+      // so this banner named cards as fee-free on no evidence, to a user
+      // standing in another country deciding which card to hand over. Null is
+      // now excluded: the banner claims only what the catalog actually knows.
+      if (snapshot.products[c.cardProductId]?.foreignTxFeePct == 0) c,
   ];
 });
 

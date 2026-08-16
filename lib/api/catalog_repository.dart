@@ -502,7 +502,15 @@ class CatalogRepository {
     displayName: r['display_name'] as String,
     network: r['network'] as String?,
     annualFeeUsd: (r['annual_fee_usd'] as num?)?.toDouble(),
-    foreignTxFeePct: (r['foreign_tx_fee_pct'] as num?)?.toDouble() ?? 0.0,
+    // Negative is the "never captured" sentinel written by CatalogLoader: the
+    // column is NOT NULL DEFAULT 0.0 and has two FK dependents, so making it
+    // nullable would mean a table rebuild for a distinction a sentinel carries
+    // just as well. No real fee is negative.
+    foreignTxFeePct: switch ((r['foreign_tx_fee_pct'] as num?)?.toDouble()) {
+      null => null,
+      final v when v < 0 => null,
+      final v => v,
+    },
     imageUrl: r['image_url'] as String?,
     catalogVersion: r['catalog_version'] as String,
     retiredAt: r['retired_at'] as String?,

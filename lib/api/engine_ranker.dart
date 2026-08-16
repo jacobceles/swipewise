@@ -57,12 +57,29 @@ class EngineRanker {
     return i < 0 ? cardPreferenceOrder.length : i;
   }
 
-  /// Tie-break: effective desc → preference asc → name desc → id asc.
+  /// Whether this card's foreign-transaction fee was ever captured.
+  ///
+  /// Only consulted abroad. Unknown is never charged a fee it might not have,
+  /// so an unknown card ties with a known-0% one on effective rate — and
+  /// without a tie-break the winner would come down to alphabetical order.
+  bool _fxFeeKnown(String cardId) =>
+      snapshot.products[cardId]?.foreignTxFeePct != null;
+
+  /// Tie-break: effective desc → **known FX fee (abroad only)** → preference
+  /// asc → name desc → id asc.
   int _compare(_Scored a, _Scored b) {
     final byEff = b.applied.effectiveCentsPerDollar.compareTo(
       a.applied.effectiveCentsPerDollar,
     );
     if (byEff != 0) return byEff;
+    // Abroad, prefer the card we know charges nothing over one we simply never
+    // captured. A tie-break, not a penalty: we never invent a fee, we just stop
+    // an unevidenced card outranking an evidenced one on a coin flip.
+    if (isForeign) {
+      final ka = _fxFeeKnown(a.card.cardProductId);
+      final kb = _fxFeeKnown(b.card.cardProductId);
+      if (ka != kb) return ka ? -1 : 1;
+    }
     final pa = _prefRank(a.card.cardId), pb = _prefRank(b.card.cardId);
     if (pa != pb) return pa.compareTo(pb);
     final byName = b.card.cardName.toLowerCase().compareTo(

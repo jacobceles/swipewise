@@ -222,7 +222,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         content: Text(
           'This permanently deletes your account, your backup, any linked '
           'bank, and everything on this phone including your transactions. '
-          'It cannot be undone, and a deleted wallet cannot be restored.',
+          'It cannot be undone, and a deleted wallet cannot be restored.\n\n'
+          "You'll be asked to sign in again first, to confirm it's you.",
           style: AppText.bodySm(color: palette.muted),
         ),
         actions: [
