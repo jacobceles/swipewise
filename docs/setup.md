@@ -110,6 +110,61 @@ secrets on the account Worker, which signs on the app's behalf. There is also no
 salt any more: the Customer id is stored server-side in `sophtron_customers` rather than
 derived from an email, so there is nothing to keep stable and nothing to leak.
 
+### Key scoping
+
+The Firebase API key ships in the APK and in the committed `google-services.json`. That is normal
+and unavoidable for an Android app — the key identifies the project, it does not authorise
+anything by itself.
+
+**A key's *application* restriction is not a security boundary.** `X-Android-Package` and
+`X-Android-Cert` are headers the caller sets, and both values are public. Treat them as a filter
+against casual scraping, never as protection. **What matters is the API allowlist: scope every key
+to the minimum set of APIs it actually needs**, and re-check that scope whenever a key is touched.
+
+Places is not in this category at all — its key is never in the app, and the Worker requires a
+Play Integrity attestation instead (`swipewise-backend`).
+
+> Measured reach per key, the Firebase auth posture, and what to re-test when Pro auth changes
+> sign-up are recorded in the **private backend repo**, not here.
+
+### ⚠️ Two Firebase traps that cost real time
+
+**Deleting an API key silently repoints the Firebase app.** Each Firebase Android app stores an
+`apiKeyId` naming one GCP key, and that is what lands in `google-services.json` as `api_key[0]`.
+Delete the key an app points at and Firebase repoints it to *any* Android-restricted key matching
+the package — it once grabbed the **Places-only** key, which blocks every Firebase call. Restoring
+the deleted key does not undo it. Fix it explicitly (Cloud Shell has `gcloud`):
+
+```bash
+gcloud services api-keys list --project=swipewise-e5584 --format="table(uid,displayName)"
+TOKEN=$(gcloud auth print-access-token)
+curl -X PATCH "https://firebase.googleapis.com/v1beta1/projects/swipewise-e5584/androidApps/<appId>?updateMask=apiKeyId" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"apiKeyId":"<uid>"}'
+```
+
+Run it for **both** apps: prod `1:940339008944:android:aa99113dba501e8d7ef275`, dev
+`1:940339008944:android:a6410217d3bc97bd7ef275`. So: **restrict keys, never delete them.**
+
+**Flutter holds the Firebase config in TWO files.** `firebase apps:sdkconfig` refreshes
+`android/app/google-services.json` but never touches `lib/firebase_options.dart`, which hardcodes
+the key in Dart. When they disagree, the native SDK initialises `[DEFAULT]` from the JSON and the
+Dart call throws `[core/duplicate-app]` — a message that names the wrong problem. Change both.
+
+### ⚠️ Before a release build: check the bundled catalog floor
+
+`assets/catalog/free.json` is the offline floor — what a first launch uses before the R2 fetch
+lands, and what *every* install falls back to if the fetch ever fails. **Check it; do not assume.**
+
+```bash
+python3 -c "import json;a=json.load(open('assets/catalog/free.json'));print(a['dataVersion'],len(a['card_products']))"
+```
+
+Only local `make publish` refreshes it (the `cp` into `$(APP_DIR)`). **CI publish does not** — it
+copies the file into a throwaway checkout to publish *from* and never commits it back, so every
+CI-driven publish advances R2 and silently leaves the bundle behind. It reached 223 cards against
+a live 410 before anyone looked. Refresh with
+`cp cardcodex/output/catalog/free.json assets/catalog/free.json` and commit it.
+
 ## Run & build
 
 ```bash
