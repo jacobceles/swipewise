@@ -158,19 +158,31 @@ void main() {
     // The three place-type lists are maintained separately: kPlaceRoots (what
     // the nearby search fetches), kGooglePlaceTypeToLabel (the display label),
     // and categories.json googlePlaceTypes (the reward category). This locks
-    // them so categories.json never maps a type the search won't fetch (a dead
+    // them so categories.json never maps a type nothing can return (a dead
     // mapping, e.g. the `coffee_stand` drift) or that has no display label.
-    final searched = {for (final r in kPlaceRoots) ...r.includedTypes};
+    //
+    // "Reachable" is deliberately wider than "searched". Google's place types
+    // are hierarchical, so a type Google only ever returns as a SUBTYPE of a
+    // searched one still arrives — a pizzeria fetched via `restaurant` reports
+    // `primaryType: pizza_restaurant` — and its reward mapping is live and
+    // needed. Asserting membership of `includedTypes` would therefore fail on
+    // exactly the mappings that do the most work. See the trim note in
+    // place_roots.dart; kTypesReachedViaParentType is that measured set.
+    final reachable = {
+      for (final r in kPlaceRoots) ...r.includedTypes,
+      ...kTypesReachedViaParentType,
+    };
     for (final e in entries) {
       final m = e as Map;
       final id = m['id'] as String;
       for (final pt in (m['googlePlaceTypes'] as List).cast<String>()) {
         expect(
-          searched,
+          reachable,
           contains(pt),
           reason:
-              '"$pt" ($id) is reward-mapped but in no kPlaceRoots search '
-              'list — it would never be fetched',
+              '"$pt" ($id) is reward-mapped but is neither searched by '
+              'kPlaceRoots nor a known subtype of something that is — nothing '
+              'would ever return it',
         );
         expect(
           kGooglePlaceTypeToLabel,

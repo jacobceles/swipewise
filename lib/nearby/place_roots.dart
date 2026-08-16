@@ -22,6 +22,32 @@ class PlaceRoot {
   });
 }
 
+/// ⚠️ **These lists look short on purpose — do not "complete" them.**
+///
+/// Google's place types are hierarchical and a place carries its parents in `types[]`, which
+/// `includedTypes` matches against — not just `primaryType`. So `'restaurant'` already returns
+/// pizzerias, delis and coffee shops, and `'lodging'` already returns hotels, motels and hostels.
+/// Listing the children changes nothing except the bill.
+///
+/// That bill is a **step function**: the API caps `includedTypes` at 50, so the app fans out into
+/// `ceil(types / 50)` billed Nearby requests per tile. The default set was **146 types = 3
+/// requests**; it is now **75 = 2**. A trim that doesn't cross a multiple of 50 saves exactly
+/// nothing, which is why this was measured rather than eyeballed.
+///
+/// Measured 2026-08-15, one query per type in two deliberately different markets (midtown
+/// Manhattan and suburban Plano TX), keeping a type only when some sampled place of that type
+/// carried **no** retained parent. 64 of the 71 dropped types were confirmed redundant in *both*
+/// markets with zero contradictions; the other 7 (ferry terminals, opera houses, subway stations —
+/// absent from suburban Texas) were confirmed in Manhattan alone. Spot-checked the ones that would
+/// hurt most if wrong: every sampled supermarket, grocery and convenience store carried
+/// `food_store`; every hotel carried `lodging`; every train and subway station carried
+/// `transit_station`.
+///
+/// It is a *sample*, not a proof. If merchants of some kind stop appearing in Nearby, this is the
+/// first place to look — re-add that specific type rather than reverting the trim.
+///
+/// The four roots that are off by default were left untouched: they were never in the measured
+/// set, and enabling them all pushes the total back over 100 (i.e. back to 3 requests).
 const kPlaceRoots = <PlaceRoot>[
   PlaceRoot(
     id: 'grocery',
@@ -30,18 +56,9 @@ const kPlaceRoots = <PlaceRoot>[
     icon: Icons.local_grocery_store,
     defaultEnabled: true,
     includedTypes: [
-      'grocery_store',
-      'supermarket',
-      'discount_supermarket',
-      'hypermarket',
       'warehouse_store',
-      'health_food_store',
-      'convenience_store',
       'discount_store',
       'liquor_store',
-      'asian_grocery_store',
-      'butcher_shop',
-      'farmers_market',
       'food_store',
       'market',
     ],
@@ -52,7 +69,10 @@ const kPlaceRoots = <PlaceRoot>[
     description: 'Gas stations & EV charging',
     icon: Icons.local_gas_station,
     defaultEnabled: true,
-    includedTypes: ['gas_station', 'electric_vehicle_charging_station'],
+    includedTypes: [
+      'gas_station',
+      'electric_vehicle_charging_station',
+    ],
   ),
   PlaceRoot(
     id: 'dining',
@@ -62,48 +82,18 @@ const kPlaceRoots = <PlaceRoot>[
     defaultEnabled: true,
     includedTypes: [
       'restaurant',
-      'fine_dining_restaurant',
       'cafe',
-      'bakery',
       'bar',
-      'bar_and_grill',
-      'fast_food_restaurant',
-      'pizza_restaurant',
-      'sandwich_shop',
-      'coffee_shop',
       'coffee_roastery',
       'coffee_stand',
-      'ice_cream_shop',
       'food_court',
       'catering_service',
-      'meal_takeaway',
       'meal_delivery',
-      'deli',
-      'diner',
-      'bistro',
-      'brunch_restaurant',
-      'buffet_restaurant',
       'brewery',
-      'brewpub',
       'winery',
-      'wine_bar',
-      'cocktail_bar',
-      'lounge_bar',
-      'pub',
-      'beer_garden',
-      'sports_bar',
-      'gastropub',
       'night_club',
       'juice_shop',
       'tea_house',
-      'candy_store',
-      'dessert_shop',
-      'dessert_restaurant',
-      'donut_shop',
-      'bagel_shop',
-      'pastry_shop',
-      'snack_bar',
-      'steak_house',
     ],
   ),
   PlaceRoot(
@@ -119,7 +109,6 @@ const kPlaceRoots = <PlaceRoot>[
       'jewelry_store',
       'book_store',
       'home_goods_store',
-      'furniture_store',
       'hardware_store',
       'sporting_goods_store',
       'department_store',
@@ -129,11 +118,7 @@ const kPlaceRoots = <PlaceRoot>[
       'cosmetics_store',
       'pet_store',
       'toy_store',
-      'thrift_store',
-      'bicycle_store',
       'florist',
-      'home_improvement_store',
-      'sportswear_store',
       'wholesaler',
     ],
   ),
@@ -146,10 +131,8 @@ const kPlaceRoots = <PlaceRoot>[
     includedTypes: [
       'beauty_salon',
       'hair_salon',
-      'nail_salon',
       'spa',
       'massage',
-      'massage_spa',
       'barber_shop',
       'tanning_studio',
       'wellness_center',
@@ -165,8 +148,6 @@ const kPlaceRoots = <PlaceRoot>[
       'car_dealer',
       'car_repair',
       'car_wash',
-      'tire_shop',
-      'auto_parts_store',
     ],
   ),
   PlaceRoot(
@@ -177,20 +158,8 @@ const kPlaceRoots = <PlaceRoot>[
     defaultEnabled: true,
     includedTypes: [
       'airport',
-      'international_airport',
-      'hotel',
-      'resort_hotel',
-      'extended_stay_hotel',
       'lodging',
-      'motel',
-      'bed_and_breakfast',
-      'hostel',
       'transit_station',
-      'train_station',
-      'subway_station',
-      'bus_station',
-      'bus_stop',
-      'ferry_terminal',
       'car_rental',
     ],
   ),
@@ -202,17 +171,11 @@ const kPlaceRoots = <PlaceRoot>[
     defaultEnabled: true,
     includedTypes: [
       'museum',
-      'art_museum',
-      'history_museum',
       'art_gallery',
       'movie_theater',
       'performing_arts_theater',
-      'concert_hall',
       'live_music_venue',
       'comedy_club',
-      'opera_house',
-      'amphitheatre',
-      'planetarium',
       'amusement_park',
       'amusement_center',
       'aquarium',
@@ -228,18 +191,13 @@ const kPlaceRoots = <PlaceRoot>[
     defaultEnabled: true,
     includedTypes: [
       'gym',
-      'fitness_center',
       'sports_complex',
       'sports_club',
-      'bowling_alley',
       'golf_course',
-      'ice_skating_rink',
       'swimming_pool',
       'tennis_court',
-      'stadium',
       'arena',
       'ski_resort',
-      'yoga_studio',
     ],
   ),
   PlaceRoot(
@@ -266,7 +224,11 @@ const kPlaceRoots = <PlaceRoot>[
     description: 'Banks, ATMs & post offices',
     icon: Icons.account_balance,
     defaultEnabled: true,
-    includedTypes: ['bank', 'atm', 'post_office'],
+    includedTypes: [
+      'bank',
+      'atm',
+      'post_office',
+    ],
   ),
   PlaceRoot(
     id: 'drugstore',
@@ -274,7 +236,10 @@ const kPlaceRoots = <PlaceRoot>[
     description: 'Pharmacies & drug stores',
     icon: Icons.local_pharmacy,
     defaultEnabled: true,
-    includedTypes: ['pharmacy', 'drugstore'],
+    includedTypes: [
+      'pharmacy',
+      'drugstore',
+    ],
   ),
   PlaceRoot(
     id: 'health',
@@ -331,6 +296,88 @@ const kPlaceRoots = <PlaceRoot>[
     ],
   ),
 ];
+
+/// Place types this app no longer *searches* for, because Google returns them anyway as
+/// subtypes of a type in [kPlaceRoots] — verified by sampling (see the note above).
+///
+/// They are still very much alive downstream: a pizzeria arrives with
+/// `primaryType: pizza_restaurant`, so `categories.json` must keep mapping it to a reward
+/// category and `kGooglePlaceTypeToLabel` must keep a display label for it. This set is what
+/// lets the vocab tests tell "reachable as a subtype" apart from "genuinely unreachable", so
+/// a NEW categorised type that nothing can return still fails the guard.
+const kTypesReachedViaParentType = <String>{
+  'amphitheatre',
+  'art_museum',
+  'asian_grocery_store',
+  'auto_parts_store',
+  'bagel_shop',
+  'bakery',
+  'bar_and_grill',
+  'bed_and_breakfast',
+  'beer_garden',
+  'bicycle_store',
+  'bistro',
+  'bowling_alley',
+  'brewpub',
+  'brunch_restaurant',
+  'buffet_restaurant',
+  'bus_station',
+  'bus_stop',
+  'butcher_shop',
+  'candy_store',
+  'cocktail_bar',
+  'coffee_shop',
+  'concert_hall',
+  'convenience_store',
+  'deli',
+  'dessert_restaurant',
+  'dessert_shop',
+  'diner',
+  'discount_supermarket',
+  'donut_shop',
+  'extended_stay_hotel',
+  'farmers_market',
+  'fast_food_restaurant',
+  'ferry_terminal',
+  'fine_dining_restaurant',
+  'fitness_center',
+  'furniture_store',
+  'gastropub',
+  'grocery_store',
+  'health_food_store',
+  'history_museum',
+  'home_improvement_store',
+  'hostel',
+  'hotel',
+  'hypermarket',
+  'ice_cream_shop',
+  'ice_skating_rink',
+  'international_airport',
+  'lounge_bar',
+  'massage_spa',
+  'meal_takeaway',
+  'motel',
+  'nail_salon',
+  'opera_house',
+  'pastry_shop',
+  'pizza_restaurant',
+  'planetarium',
+  'pub',
+  'resort_hotel',
+  'sandwich_shop',
+  'snack_bar',
+  'sports_bar',
+  'sportswear_store',
+  'stadium',
+  'steak_house',
+  'subway_station',
+  'supermarket',
+  'thrift_store',
+  'tire_shop',
+  'train_station',
+  'wine_bar',
+  'yoga_studio',
+};
 
 /// IDs of roots enabled by default — used when no user setting exists.
 Set<String> get defaultEnabledPlaceRootIds =>

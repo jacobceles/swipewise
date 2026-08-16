@@ -25,6 +25,7 @@ to a planning doc: planning docs get deleted.
 | Release builds serve a stale AOT snapshot | [setup.md](setup.md) |
 | Off-screen tabs go stale (`IndexedStack`) | [architecture.md](architecture.md) |
 | App Check cost (~2.2 s) and per-isolate state | [nearby.md](nearby.md) |
+| Google place types are hierarchical, so `includedTypes` subtypes are redundant — and Places cost is a step function at every 50 types | [nearby.md](nearby.md) |
 | FDX hard limits — no MCC, no lat/lng, no reward balances, no pending | [sophtron.md](sophtron.md) |
 
 The backend engine that produces the catalog, and the API that serves it, each keep their own

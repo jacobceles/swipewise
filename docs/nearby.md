@@ -172,6 +172,19 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 ## Notes
 
 - `ACTIVITY_RECOGNITION` lets the OS distinguish a real dwell from a traffic stop.
+- ⚠️ **Google's place types are hierarchical, and `includedTypes` matches the whole `types[]`
+  array — not just `primaryType`.** Searching `restaurant` already returns pizzerias, delis and
+  coffee shops; `lodging` already returns hotels, motels and hostels; `transit_station` already
+  returns train, subway and bus stations; `food_store` already returns supermarkets, groceries and
+  convenience stores. Listing the children buys nothing.
+  That matters because the bill is a **step function**: `includedTypes` is capped at 50, so each
+  tile costs `ceil(types / 50)` billed Nearby requests. Trimming the default set from 146 to 75
+  (measured 2026-08-15 — see the note atop `place_roots.dart`) took it from 3 requests to 2, a
+  third off Places spend with no measured loss of merchants. A trim that does not cross a multiple
+  of 50 saves **nothing**, so measure before trimming.
+  The dropped types are still live downstream: a pizzeria arrives as `primaryType:
+  pizza_restaurant`, so `categories.json` and `kGooglePlaceTypeToLabel` must keep entries for them.
+  `kTypesReachedViaParentType` records the set, and the vocab test asserts reachability against it.
 - **No Places key is baked into the app.** Nearby search posts to `PLACES_PROXY_URL` — the
   Worker's `/places/nearby` — which holds the Google Places key as a server-side secret and
   forwards the request. The app attaches a Firebase App Check token (`X-Firebase-AppCheck`);
