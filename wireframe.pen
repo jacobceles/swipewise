@@ -39159,6 +39159,3556 @@
           }
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "v3ErdF",
+      "x": 15612,
+      "y": -488,
+      "name": "FREE — Advisor Stores",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "DQK5Z",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "wGlRf",
+          "name": "App Bar",
+          "width": "fill_container",
+          "height": 48,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "yZMKl",
+              "name": "Title",
+              "fill": "$--foreground",
+              "content": "Card Advisor",
+              "fontFamily": "$--font-primary",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "UyCnd",
+              "name": "Actions",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "xhz3G",
+                  "name": "Tune Button",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$--secondary",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Y8rafs",
+                      "name": "Tune Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "sliders-horizontal",
+                      "library": "lucide",
+                      "fill": "$--foreground"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HS8eX",
+                  "name": "Search Button",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$--secondary",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Iazf2",
+                      "name": "Search Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "$--foreground"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "z75Cih",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            8,
+            20,
+            0,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "C8A0k",
+              "name": "Segment Toggle",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--secondary",
+              "cornerRadius": 20,
+              "padding": 3,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "q1YPuz",
+                  "name": "Nearby Stores Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--foreground",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Y1tJ3",
+                      "name": "Nearby Label",
+                      "fill": "$--background",
+                      "content": "Stores",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XKd00",
+                  "name": "Categories Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "HFOKw",
+                      "name": "Categories Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Categories",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "a1UeJ",
+                  "name": "Brands Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Gxpp6",
+                      "name": "Brands Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Brands",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "y0Qq0",
+              "name": "Caption",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "12 within 5 mi",
+              "textAlign": "center",
+              "fontFamily": "$--font-primary",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "JERn4",
+              "name": "Merchant List",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "JOBqM",
+                  "name": "Whole Foods Market Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "hG9bm",
+                      "name": "Whole Foods Market Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#0A3A1A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "nSpjQ",
+                          "name": "Whole Foods Market Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "shopping-cart",
+                          "library": "lucide",
+                          "fill": "$--green"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VcXwr",
+                      "name": "Whole Foods Market Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "j43KE3",
+                          "name": "Whole Foods Market Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Whole Foods Market",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qHANJ",
+                          "name": "Whole Foods Market Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Groceries · 0.3 mi",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UFCrr",
+                      "name": "Whole Foods Market Rec",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "alignItems": "end",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "EoaBl",
+                          "name": "Whole Foods Market Card",
+                          "fill": "$--primary",
+                          "content": "Amex Gold",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "jgla5",
+                          "name": "Whole Foods Market Rate",
+                          "fill": "$--muted-foreground",
+                          "content": "4x",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yLA1o",
+                  "name": "Chipotle Mexican Grill Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "y9Rw5",
+                      "name": "Chipotle Mexican Grill Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#3A2A0A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "R3EJN",
+                          "name": "Chipotle Mexican Grill Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "utensils",
+                          "library": "lucide",
+                          "fill": "$--amber"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tJrGu",
+                      "name": "Chipotle Mexican Grill Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tVqlo",
+                          "name": "Chipotle Mexican Grill Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chipotle Mexican Grill",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "g5MJi",
+                          "name": "Chipotle Mexican Grill Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dining · 0.5 mi",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "BulDl",
+                      "name": "Chipotle Mexican Grill Rec",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "alignItems": "end",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lzPzv",
+                          "name": "Chipotle Mexican Grill Card",
+                          "fill": "$--primary",
+                          "content": "Chase Sapphire Reserve",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "hshPE",
+                          "name": "Chipotle Mexican Grill Rate",
+                          "fill": "$--muted-foreground",
+                          "content": "3x",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Osj0f",
+                  "name": "Shell Gas Station Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "EDUgo",
+                      "name": "Shell Gas Station Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#1A1A3A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "btJqr",
+                          "name": "Shell Gas Station Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "fuel",
+                          "library": "lucide",
+                          "fill": "#5B8DEF"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "g2yP3",
+                      "name": "Shell Gas Station Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "AdKdp",
+                          "name": "Shell Gas Station Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Shell Gas Station",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "C5EUG",
+                          "name": "Shell Gas Station Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Gas · 0.8 mi",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "QGpld",
+                      "name": "Shell Gas Station Rec",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "alignItems": "end",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "u6q9oU",
+                          "name": "Shell Gas Station Card",
+                          "fill": "$--primary",
+                          "content": "Citi Custom Cash",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "RQoC4",
+                          "name": "Shell Gas Station Rate",
+                          "fill": "$--muted-foreground",
+                          "content": "5%",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QvPcJ",
+                  "name": "Starbucks Coffee Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Vuap8",
+                      "name": "Starbucks Coffee Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#3A2A0A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ZGvo1",
+                          "name": "Starbucks Coffee Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "coffee",
+                          "library": "lucide",
+                          "fill": "$--amber"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cg7YB",
+                      "name": "Starbucks Coffee Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lnbD7",
+                          "name": "Starbucks Coffee Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Starbucks Coffee",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "n9xek",
+                          "name": "Starbucks Coffee Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dining · 1.2 mi",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Gex5X",
+                      "name": "Starbucks Coffee Rec",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "alignItems": "end",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "N65yz",
+                          "name": "Starbucks Coffee Card",
+                          "fill": "$--primary",
+                          "content": "Chase Sapphire Reserve",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tON6N",
+                          "name": "Starbucks Coffee Rate",
+                          "fill": "$--muted-foreground",
+                          "content": "3x",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rHL5E",
+                  "name": "Target Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "KV8aP",
+                      "name": "Target Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#3A0A1A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "zLUSa",
+                          "name": "Target Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "tag",
+                          "library": "lucide",
+                          "fill": "$--red"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RKN4L",
+                      "name": "Target Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "IRXKj",
+                          "name": "Target Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Target",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "NIhDg",
+                          "name": "Target Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Online Shopping · 2.1 mi",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fhvLP",
+                      "name": "Target Rec",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "alignItems": "end",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "BhaKh",
+                          "name": "Target Card",
+                          "fill": "$--primary",
+                          "content": "Wells Fargo Active Cash",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "A2iYM",
+                          "name": "Target Rate",
+                          "fill": "$--muted-foreground",
+                          "content": "2%",
+                          "textAlign": "right",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b232B",
+          "type": "ref",
+          "ref": "kr0AR",
+          "name": "Tab Bar",
+          "width": "fill_container",
+          "descendants": {
+            "o53Er": {
+              "enabled": false
+            },
+            "H9ZXNN": {
+              "fill": "#FF840026"
+            },
+            "I5dUvS": {
+              "fill": "$--primary"
+            },
+            "pvah3": {
+              "fill": "$--primary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "h6jSl",
+      "x": 16122,
+      "y": -488,
+      "name": "FREE — Advisor Brands",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "C5lDu",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "cl7bs",
+          "name": "App Bar",
+          "width": "fill_container",
+          "height": 48,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "WYwqM",
+              "name": "Title",
+              "fill": "$--foreground",
+              "content": "Card Advisor",
+              "fontFamily": "$--font-primary",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "jfUzu",
+              "name": "Actions",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "GlZTQ",
+                  "name": "Search Button",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$--secondary",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "UgNOW",
+                      "name": "Search Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "$--foreground"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "o5L953",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            8,
+            20,
+            0,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "HAYTT",
+              "name": "Segment Toggle",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--secondary",
+              "cornerRadius": 20,
+              "padding": 3,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "D4XMF0",
+                  "name": "Stores Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "y7IQuA",
+                      "name": "Stores Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Stores",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wuk8G",
+                  "name": "Categories Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "kUToE",
+                      "name": "Categories Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Categories",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "tkixD",
+                  "name": "Brands Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--foreground",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MzWKH",
+                      "name": "Brands Label",
+                      "fill": "$--background",
+                      "content": "Brands",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "uVwT1",
+              "name": "Section Label",
+              "fill": "$--muted-foreground",
+              "content": "WHERE YOUR CARDS WIN",
+              "fontFamily": "$--font-primary",
+              "fontSize": 12,
+              "fontWeight": "600",
+              "letterSpacing": 0.5
+            },
+            {
+              "type": "frame",
+              "id": "n5Xa4",
+              "name": "Brand List",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "VgJWl",
+                  "name": "Amazon Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LuJUu",
+                      "name": "Amazon Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#0A2A3A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "sm6Y6",
+                          "name": "Amazon Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "shopping-bag",
+                          "library": "lucide",
+                          "fill": "#22D3EE"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ATCFG",
+                      "name": "Amazon Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "iGzgL",
+                          "name": "Amazon Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Amazon",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "G1ktWr",
+                          "name": "Amazon Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Amazon Prime Visa · 5%",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "PT82O",
+                  "name": "Whole Foods Market Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "E0Mudx",
+                      "name": "Whole Foods Market Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#0A3A1A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "XrMNr",
+                          "name": "Whole Foods Market Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "shopping-cart",
+                          "library": "lucide",
+                          "fill": "$--green"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bcGAF",
+                      "name": "Whole Foods Market Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pddYD",
+                          "name": "Whole Foods Market Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Whole Foods Market",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "nXXTr",
+                          "name": "Whole Foods Market Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Amex Gold · 4x",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kPG4x",
+                  "name": "Uber Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "jfp8j",
+                      "name": "Uber Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#2A1A3A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "XwQv5",
+                          "name": "Uber Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "car",
+                          "library": "lucide",
+                          "fill": "#A78BFA"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mS0H0",
+                      "name": "Uber Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "bpGx6",
+                          "name": "Uber Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Uber",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "rpRL6",
+                          "name": "Uber Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chase Sapphire Reserve · 3x",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "n8UwY",
+                  "name": "Apple Store Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "JAZca",
+                      "name": "Apple Store Icon",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#1A1A3A",
+                      "cornerRadius": 22,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "gWaG8",
+                          "name": "Apple Store Ico",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "smartphone",
+                          "library": "lucide",
+                          "fill": "#5B8DEF"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "G6CZFT",
+                      "name": "Apple Store Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "YZhOU",
+                          "name": "Apple Store Name",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Apple Store",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "W8ccB",
+                          "name": "Apple Store Sub",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Citi Custom Cash · 5%",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "d9Dw07",
+              "name": "All Other Brands Header",
+              "width": "fill_container",
+              "gap": 12,
+              "padding": [
+                14,
+                0,
+                0,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qo1l7",
+                  "name": "Tail Info",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "V1Pey",
+                      "name": "Tail Title",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "All other brands (12)",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "q6K28s",
+                      "name": "Tail Sub",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Your Wells Fargo Active Cash earns 2% everywhere else",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "lV70m",
+                  "name": "Tail Chevron",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron-down",
+                  "library": "lucide",
+                  "fill": "$--muted-foreground"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "BFNAz",
+          "type": "ref",
+          "ref": "kr0AR",
+          "name": "Tab Bar",
+          "width": "fill_container",
+          "descendants": {
+            "o53Er": {
+              "enabled": false
+            },
+            "H9ZXNN": {
+              "fill": "#FF840026"
+            },
+            "I5dUvS": {
+              "fill": "$--primary"
+            },
+            "pvah3": {
+              "fill": "$--primary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "m4Pob4",
+      "x": 16632,
+      "y": -488,
+      "name": "FREE — Advisor Categories",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "a2de7",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "wQKSM",
+          "name": "App Bar",
+          "width": "fill_container",
+          "height": 48,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Uzy8d",
+              "name": "Title",
+              "fill": "$--foreground",
+              "content": "Card Advisor",
+              "fontFamily": "$--font-primary",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "TjCjD",
+              "name": "Actions",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "SIyPO",
+                  "name": "Search Button",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$--secondary",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "eKcKg",
+                      "name": "Search Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "$--foreground"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "em2pY",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            8,
+            20,
+            0,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "gzZ87",
+              "name": "Segment Toggle",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--secondary",
+              "cornerRadius": 20,
+              "padding": 3,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eqHb0",
+                  "name": "Nearby Stores Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "NAORC",
+                      "name": "Stores Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Stores",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "q6nA37",
+                  "name": "Categories Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--foreground",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "IAsnx",
+                      "name": "Categories Label",
+                      "fill": "$--background",
+                      "content": "Categories",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "s5rRJ",
+                  "name": "Brands Seg",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 17,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "W2Cx4",
+                      "name": "Brands Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Brands",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RAEzA",
+              "name": "Category Grid",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "l9nX3",
+                  "name": "Cat Row 1",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "HGbE9",
+                      "name": "Dining Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "LXnqO",
+                          "name": "Dining Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#3A2A0A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "JtCEV",
+                              "name": "Dining Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "utensils",
+                              "library": "lucide",
+                              "fill": "$--amber"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "yxLGZ",
+                          "name": "Dining Rate",
+                          "fill": "$--primary",
+                          "content": "3x",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "TaDgs",
+                          "name": "Dining Label",
+                          "fill": "$--foreground",
+                          "content": "Dining",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PBv6S",
+                          "name": "Dining Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chase Sapphire Reserve",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "A7CELy",
+                          "name": "Dining Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "i0Lvzh",
+                              "name": "Dining Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "h2DnH4",
+                      "name": "Gas Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "eBdSc",
+                          "name": "Gas Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#1A1A3A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "OB2Nz",
+                              "name": "Gas Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "fuel",
+                              "library": "lucide",
+                              "fill": "#5B8DEF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "roJiJ",
+                          "name": "Gas Rate",
+                          "fill": "$--primary",
+                          "content": "5%",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "w0v1ST",
+                          "name": "Gas Label",
+                          "fill": "$--foreground",
+                          "content": "Gas",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Y4lhz",
+                          "name": "Gas Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Citi Custom Cash",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pA9qx",
+                          "name": "Gas Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "nWXn9",
+                              "name": "Gas Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XvsvN",
+                  "name": "Cat Row 2",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "L6CTu",
+                      "name": "Groceries Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JN31B",
+                          "name": "Groceries Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#0A3A1A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "qDSed",
+                              "name": "Groceries Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "shopping-cart",
+                              "library": "lucide",
+                              "fill": "$--green"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "P3KmXz",
+                          "name": "Groceries Rate",
+                          "fill": "$--primary",
+                          "content": "4x",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ybvI7",
+                          "name": "Groceries Label",
+                          "fill": "$--foreground",
+                          "content": "Groceries",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "L0gbH",
+                          "name": "Groceries Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Amex Gold",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iCxLX",
+                          "name": "Groceries Bonus Pill",
+                          "fill": "$--amber-bg",
+                          "cornerRadius": 10,
+                          "gap": 4,
+                          "padding": [
+                            3,
+                            8
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "o8U1UT",
+                              "name": "Groceries Star",
+                              "width": 10,
+                              "height": 10,
+                              "icon": "sparkles",
+                              "library": "lucide",
+                              "fill": "$--amber"
+                            },
+                            {
+                              "type": "text",
+                              "id": "mURU5",
+                              "name": "Groceries Bonus Text",
+                              "fill": "$--amber",
+                              "content": "3 Brand Bonuses",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "a0R6C",
+                          "name": "Groceries Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "YNW71",
+                              "name": "Groceries Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DCXKE",
+                      "name": "Travel Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "eFZiP",
+                          "name": "Travel Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#2A1A3A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "q0XFY",
+                              "name": "Travel Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "plane",
+                              "library": "lucide",
+                              "fill": "#A78BFA"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "fFfLX",
+                          "name": "Travel Rate",
+                          "fill": "$--primary",
+                          "content": "5x",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "IjkfL",
+                          "name": "Travel Label",
+                          "fill": "$--foreground",
+                          "content": "Travel",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "wDpup",
+                          "name": "Travel Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chase Sapphire Reserve",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WU8aT",
+                          "name": "Travel Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "X7H9xH",
+                              "name": "Travel Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "sd8la",
+                  "name": "Cat Row 3",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "rLeXv",
+                      "name": "Streaming Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "UJChl",
+                          "name": "Streaming Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#3A0A2A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "lOlVA",
+                              "name": "Streaming Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "tv",
+                              "library": "lucide",
+                              "fill": "#F472B6"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "DZg2X",
+                          "name": "Streaming Rate",
+                          "fill": "$--primary",
+                          "content": "6%",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "e6yII",
+                          "name": "Streaming Label",
+                          "fill": "$--foreground",
+                          "content": "Streaming",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "A7bFg",
+                          "name": "Streaming Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Blue Cash Preferred",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "VXksH",
+                          "name": "Streaming Bonus Pill",
+                          "fill": "$--amber-bg",
+                          "cornerRadius": 10,
+                          "gap": 4,
+                          "padding": [
+                            3,
+                            8
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "NLIY2",
+                              "name": "Streaming Star",
+                              "width": 10,
+                              "height": 10,
+                              "icon": "sparkles",
+                              "library": "lucide",
+                              "fill": "$--amber"
+                            },
+                            {
+                              "type": "text",
+                              "id": "WZYPS",
+                              "name": "Streaming Bonus Text",
+                              "fill": "$--amber",
+                              "content": "2 Brand Bonuses",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Y2bZO",
+                          "name": "Streaming Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "gBWU3",
+                              "name": "Streaming Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VmCyR",
+                      "name": "Online Shopping Tile",
+                      "width": "fill_container",
+                      "cornerRadius": "$--radius-m",
+                      "stroke": "$--border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "WT11u",
+                          "name": "Online Shopping Icon",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#0A2A3A",
+                          "cornerRadius": 20,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "U4ciFY",
+                              "name": "Online Shopping Ico",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "globe",
+                              "library": "lucide",
+                              "fill": "#22D3EE"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "GN2j9",
+                          "name": "Online Shopping Rate",
+                          "fill": "$--primary",
+                          "content": "5%",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "meyoy",
+                          "name": "Online Shopping Label",
+                          "fill": "$--foreground",
+                          "content": "Online Shopping",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "DCap8",
+                          "name": "Online Shopping Card",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Citi Custom Cash",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oj1Rf",
+                          "name": "Online Shopping Footer",
+                          "width": "fill_container",
+                          "padding": [
+                            6,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WXpy3",
+                              "name": "Online Shopping Compare",
+                              "fill": "$--muted-foreground",
+                              "content": "Compare cards →",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C8f5K1",
+          "type": "ref",
+          "ref": "kr0AR",
+          "name": "Tab Bar",
+          "width": "fill_container",
+          "descendants": {
+            "o53Er": {
+              "enabled": false
+            },
+            "H9ZXNN": {
+              "fill": "#FF840026"
+            },
+            "I5dUvS": {
+              "fill": "$--primary"
+            },
+            "pvah3": {
+              "fill": "$--primary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "JO16b",
+      "x": 17142,
+      "y": -488,
+      "name": "FREE — Cards",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "h9Es0",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "O2X7h",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            0,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "i59KG2",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "W854v",
+                  "name": "Title",
+                  "fill": "$--foreground",
+                  "content": "Cards",
+                  "fontFamily": "Inter",
+                  "fontSize": 28,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "jMpGj",
+                  "name": "Add Button",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$--secondary",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "PIJLv",
+                      "name": "Add Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "plus",
+                      "library": "lucide",
+                      "fill": "$--foreground"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "oPybY",
+              "name": "Stats Row",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "kqEwf",
+                  "name": "Balance Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GIM33",
+                      "name": "Balance Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Used",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "iBPq6",
+                      "name": "Balance Value",
+                      "fill": "$--foreground",
+                      "content": "$4,230",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OtKtx",
+                  "name": "Limit Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "DnZi4",
+                      "name": "Limit Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Limit",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pl7V3",
+                      "name": "Limit Value",
+                      "fill": "$--foreground",
+                      "content": "$18,500",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gVJ5Y",
+                  "name": "Available Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "K5P2qP",
+                      "name": "Available Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Available",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y8ekLV",
+                      "name": "Available Value",
+                      "fill": "$--green",
+                      "content": "$14,270",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rJAh7",
+              "name": "Search Bar",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$--secondary",
+              "cornerRadius": 22,
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "u4J9X0",
+                  "name": "Search Icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "search",
+                  "library": "lucide",
+                  "fill": "$--muted-foreground"
+                },
+                {
+                  "type": "text",
+                  "id": "LToTo",
+                  "name": "Search Placeholder",
+                  "fill": "$--muted-foreground",
+                  "content": "Search cards...",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ERRtC",
+              "name": "Amex Section",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "I2KQSw",
+                  "name": "American Express Header",
+                  "width": "fill_container",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "L0SnZY",
+                      "name": "Left",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "x3Z3c",
+                          "name": "Logo",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#F0F0F0",
+                          "cornerRadius": 18,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "brlLe",
+                              "name": "Bank Icon",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "landmark",
+                              "library": "lucide",
+                              "fill": "#006FCF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JlE1D",
+                          "name": "Info",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "B0gxt",
+                              "name": "Bank Name",
+                              "fill": "$--foreground",
+                              "content": "American Express",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "v2rwVN",
+                              "name": "Card Count",
+                              "fill": "$--muted-foreground",
+                              "content": "3 cards",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J7uPV",
+                      "name": "Right Controls",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "sJWJP",
+                          "name": "Chevron Button",
+                          "width": 36,
+                          "height": 36,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "G45Z2T",
+                              "name": "Chevron",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "chevron-down",
+                              "library": "lucide",
+                              "fill": "$--muted-foreground"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "w3g0SV",
+                  "name": "Amex Stats",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "qDFEK",
+                      "name": "Balance Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "TG4b7",
+                          "name": "Balance Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "un2Rr",
+                              "name": "Balance Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Used",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "fbOjC",
+                          "name": "Balance Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$2,100",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mWtXe",
+                      "name": "Limit Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "L0qqnY",
+                          "name": "Limit Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "D4tw8B",
+                              "name": "Limit Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Limit",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "fAzqy",
+                          "name": "Limit Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$10,000",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "hueRo",
+                      "name": "Available Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "XCl4W",
+                          "name": "Available Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "a0ImnD",
+                              "name": "Available Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Available",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "qg6eh",
+                          "name": "Available Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$7,900",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cYt30",
+              "name": "Chase Section",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "rKyjY",
+                  "name": "Chase Header",
+                  "width": "fill_container",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zphI2",
+                      "name": "Left",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "fFtYl",
+                          "name": "Logo",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#F0F0F0",
+                          "cornerRadius": 18,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Vuj7x",
+                              "name": "Bank Icon",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "landmark",
+                              "library": "lucide",
+                              "fill": "#117ACA"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zrm5R",
+                          "name": "Info",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "lS8TF",
+                              "name": "Bank Name",
+                              "fill": "$--foreground",
+                              "content": "Chase",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "SHFw2",
+                              "name": "Card Count",
+                              "fill": "$--muted-foreground",
+                              "content": "2 cards",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KqW8f",
+                      "name": "Right Controls",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "madDb",
+                          "name": "Chevron Button",
+                          "width": 36,
+                          "height": 36,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "YXOhp",
+                              "name": "Chevron",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "chevron-up",
+                              "library": "lucide",
+                              "fill": "$--muted-foreground"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TmdBT",
+                  "name": "Chase Stats",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "PVh7Z",
+                      "name": "Balance Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "KaVMO",
+                          "name": "Balance Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wJczE",
+                              "name": "Balance Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Used",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "fLq4R",
+                          "name": "Balance Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$2,130",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zqiPb",
+                      "name": "Limit Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "YJWef",
+                          "name": "Limit Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "gcrrn",
+                              "name": "Limit Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Limit",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "KJYyE",
+                          "name": "Limit Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$8,500",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IVJrp",
+                      "name": "Available Tile",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-s",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "fKvDO",
+                          "name": "Available Tile Header",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "fItwi",
+                              "name": "Available Tile Label",
+                              "fill": "$--muted-foreground",
+                              "content": "Available",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "ICLlX",
+                          "name": "Available Tile Value",
+                          "fill": "$--foreground",
+                          "content": "$6,370",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vue9n",
+                  "name": "Sapphire Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "hWGZY",
+                      "name": "Card Top",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "H47Qk",
+                          "name": "Card Art",
+                          "width": 48,
+                          "height": 32,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 135,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#1A3A6B",
+                                "position": 0
+                              },
+                              {
+                                "color": "#2D5FA0",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "cornerRadius": 6,
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "d84FG",
+                          "name": "Card Info",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "b5WwEi",
+                              "name": "Name Row",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Jg2xm",
+                                  "name": "Card Name",
+                                  "fill": "$--foreground",
+                                  "content": "Sapphire Preferred",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "icon",
+                                  "id": "qnTST",
+                                  "name": "Rename Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "pencil",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "QHtY6",
+                              "name": "Card Number",
+                              "fill": "$--muted-foreground",
+                              "content": "**** 4321",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UA0NP",
+                      "name": "Card Stats",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "c9XM3",
+                          "name": "Balance Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "u31x8P",
+                              "name": "Balance Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ZzeZS",
+                                  "name": "Balance Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Used",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "dcPRM",
+                              "name": "Balance Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$1,240",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "r25e6W",
+                          "name": "Limit Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "f7Xqo",
+                              "name": "Limit Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "hmMZ1",
+                                  "name": "Limit Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Limit",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "uf4bv",
+                              "name": "Limit Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$5,000",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZQZKO",
+                          "name": "Available Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Ix1OM",
+                              "name": "Available Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "IBcoe",
+                                  "name": "Available Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Available",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "AzWrL",
+                              "name": "Available Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$3,760",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fay1g",
+                      "name": "Util Bar",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 6,
+                      "fill": "$--secondary",
+                      "cornerRadius": 3,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "kDS3H",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Util Fill",
+                          "fill": "$--green",
+                          "width": 80,
+                          "height": 6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "z30d1",
+                  "name": "Freedom Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "t1ZdM",
+                      "name": "Card Top",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "bRpMb",
+                          "name": "Card Art",
+                          "width": 48,
+                          "height": 32,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 135,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#0A4D3E",
+                                "position": 0
+                              },
+                              {
+                                "color": "#1A8A6E",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "cornerRadius": 6,
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "w46g4r",
+                          "name": "Card Info",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "WySMj",
+                              "name": "Name Row",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "eqZea",
+                                  "name": "Card Name",
+                                  "fill": "$--foreground",
+                                  "content": "Freedom Unlimited",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "icon",
+                                  "id": "R3VCs",
+                                  "name": "Rename Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "pencil",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "IIEoC",
+                                  "name": "Unused Pill",
+                                  "fill": "$--amber-bg",
+                                  "cornerRadius": "$--radius-pill",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "IPlbA",
+                                      "name": "Unused Text",
+                                      "fill": "$--amber",
+                                      "content": "unused 90d+",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 10,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "YbVm8",
+                              "name": "Card Number",
+                              "fill": "$--muted-foreground",
+                              "content": "**** 8765",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "StfbW",
+                      "name": "Card Stats",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ecHIH",
+                          "name": "Balance Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "iC9CX",
+                              "name": "Balance Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "fLDtk",
+                                  "name": "Balance Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Used",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "cMKq9",
+                              "name": "Balance Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$890",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lVSvN",
+                          "name": "Limit Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "gc9j3",
+                              "name": "Limit Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "OgZEm",
+                                  "name": "Limit Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Limit",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                },
+                                {
+                                  "type": "icon",
+                                  "id": "P67uhs",
+                                  "name": "Edit Icon",
+                                  "width": 10,
+                                  "height": 10,
+                                  "icon": "pencil",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "r4NYn",
+                              "name": "Limit Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$3,500",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Z74D5",
+                          "name": "Available Tile",
+                          "width": "fill_container",
+                          "fill": "$--accent",
+                          "cornerRadius": "$--radius-s",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "o3VBc",
+                              "name": "Available Tile Header",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "D2M9p",
+                                  "name": "Available Tile Label",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Available",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "IjaLN",
+                              "name": "Available Tile Value",
+                              "fill": "$--foreground",
+                              "content": "$2,610",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "y8TBt",
+                      "name": "Util Bar",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 6,
+                      "fill": "$--secondary",
+                      "cornerRadius": 3,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "MLSic",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Util Fill",
+                          "fill": "$--green",
+                          "width": 82,
+                          "height": 6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "SZsLn",
+          "type": "ref",
+          "ref": "kr0AR",
+          "name": "Tab Bar",
+          "width": "fill_container",
+          "descendants": {
+            "o53Er": {
+              "enabled": false
+            },
+            "QX4kC": {
+              "fill": "#FF840026"
+            },
+            "H6BYFy": {
+              "fill": "$--primary"
+            },
+            "n2Qto": {
+              "fill": "$--primary"
+            }
+          }
+        }
+      ]
     }
   ],
   "variables": {

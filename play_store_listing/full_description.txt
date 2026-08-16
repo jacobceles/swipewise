@@ -6,7 +6,7 @@ WHAT YOU GET
 
 • Best card at every store: get store- and brand-level recommendations instead of generic category advice.
 • Arrival nudges: optional notifications surface your best card when you arrive at a store, so you don't have to open the app or remember which card to use.
-• Add your wallet in seconds: choose your cards from a catalog of hundreds of US credit cards. No forms, no card numbers.
+• Add your wallet in seconds: choose your cards from a catalog of hundreds of US and Canadian credit cards. No forms, no card numbers.
 • Every category ranked: see which of your cards earns the most on dining, groceries, gas, travel and more, including rotating quarterly bonuses and store-specific offers.
 • Payment reminders: get an optional reminder before your credit card statement is due.
 
@@ -17,7 +17,7 @@ Privacy isn't a promise. It's the architecture:
 • No account needed. No sign-up, no email, no password — open the app and use it. Signing in with Google is offered, never required, and only backs up your wallet if you ask it to.
 • No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions because it doesn't need them to recommend the right card.
 • On-device only. Your wallet and rewards data are stored in a local database on your phone.
-• No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising and no analytics. The only thing sent off your device is a crash report when the app fails, so it can be fixed — a stack trace and your device model, with no wallet, no location and no account attached.
+• No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising and no usage analytics. The only thing sent off your device is a crash report when the app fails, so it can be fixed — a stack trace and your device model, with no wallet, no location and no account attached.
 • Your location stays yours. Your precise GPS fix never leaves the device. Only a location rounded to ~110 m is used to look up nearby stores through Google Places, nothing about where you have been is stored, and no location is ever attached to a crash report.
 
 OPEN SOURCE

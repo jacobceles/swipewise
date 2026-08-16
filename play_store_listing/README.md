@@ -22,39 +22,45 @@ listing* (screenshots go on the *Internal testing* release).
 
 ## Screenshots — `screenshots/` · all ≤2:1
 
-> ⛔ **Three of these advertise features the shipping app does not have.** The Play build is the
-> **free** tier, which has no bank linking and therefore no transactions and no subscription
-> detection. Uploading `3-transactions` or `6-subscriptions`
-> would be a misleading store listing — a policy violation, and a guaranteed 1-star review from
-> anyone who installs expecting them.
->
-> **Upload only 1, 2 and 5.** Play requires a minimum of 2, so that is already sufficient. Better:
-> replace the three with free-tier screens — the issuer picker (`Add a Card`), the card-detail
-> rewards view, and an arrival notification. `full_description.txt` has already been rewritten to
-> match the free feature set.
+Split by tier, because the tab bar differs and nothing else makes that visible:
 
-Named in suggested carousel order (drag to reorder in Play Console).
+- **`screenshots/free/`** — upload these. All five, and nothing outside this folder.
+- **`screenshots/pro/`** — held for when Pro goes on sale. **Do not upload today**: two show
+  Pro-only screens (Transactions, Subscriptions) and the other three draw the four-tab bar. Regenerate
+  them from the original (non-`FREE —`) wireframe frames when Pro ships.
+
+Named in carousel order (drag to reorder in Play Console).
 
 <table>
   <tr>
-    <td><img src="screenshots/1-best-card-stores.png" width="150" alt="Best card at stores"></td>
-    <td><img src="screenshots/2-advisor-categories.png" width="150" alt="Per-category card ranking"></td>
-    <td><img src="screenshots/5-cards.png" width="150" alt="Cards"></td>
-    <td><img src="screenshots/3-transactions.png" width="150" alt="Transactions — PRO ONLY"></td>
-    <td><img src="screenshots/6-subscriptions.png" width="150" alt="Subscriptions — PRO ONLY"></td>
+    <td><img src="screenshots/free/1-best-card-at-every-store.png" width="150" alt="Best card at every store"></td>
+    <td><img src="screenshots/free/2-where-your-cards-win.png" width="150" alt="Brand-level ranking"></td>
+    <td><img src="screenshots/free/3-every-category-ranked.png" width="150" alt="Per-category card ranking"></td>
+    <td><img src="screenshots/free/4-your-wallet.png" width="150" alt="Cards"></td>
+    <td><img src="screenshots/free/5-no-account-needed.png" width="150" alt="Welcome — sign in or skip"></td>
   </tr>
   <tr align="center">
     <td>Best card at every store</td>
-    <td>Ranked per category</td>
+    <td>Where your cards win (brands)</td>
+    <td>Every category ranked</td>
     <td>Your whole wallet</td>
-    <td>⛔ Pro only</td>
-    <td>⛔ Pro only</td>
-    <td>⛔ Pro only</td>
+    <td>No account needed</td>
   </tr>
 </table>
 
-Exported from [`../wireframe.pen`](../wireframe.pen) via the Pencil MCP, then padded to ≤2:1
-(Play's max ratio) using each screen's own dark background.
+Exported from [`../wireframe.pen`](../wireframe.pen) via the Pencil MCP (the `FREE — *` frames),
+then padded to ≤2:1 (Play's max ratio) using each screen's own dark background.
+
+> ⚠️ **Every main screen in the wireframe draws a four-tab bar; the free build ships three.**
+> `shellTabs(isPro)` in `lib/widgets/app_tab_bar.dart` returns `[cards, advisor, profile]` for a
+> free user — Pro *inserts* Transactions, it doesn't reshuffle. The `FREE — *` frames exist for
+> exactly this: they are copies with the shared `Tab Bar` component's Transactions item disabled,
+> which re-spaces the remaining three because the bar is `space_around`. **If you re-export from
+> the original frames you will ship a tab that does not exist.**
+>
+> Two frames are deliberately not in the set. `Merchant Detail` looks like a natural free screen
+> but its content is total spent / visit count / transaction history — all Pro. `Card Details
+> Sheet` shows a "Used" figure derived from transactions for the same reason.
 
 ## Upload map
 
@@ -62,7 +68,7 @@ Exported from [`../wireframe.pen`](../wireframe.pen) via the Pencil MCP, then pa
 |---|---|---|
 | App icon | `icon_512.png` | 512×512, 32-bit PNG, opaque ✅ |
 | Feature graphic | `cover.png` | 1024×500, watermark removed ✅ |
-| Phone screenshots | `screenshots/{1,2,5}-*.png` | ⚠️ **Only these three** — 3/4/6 are Pro-only features the free build doesn't ship. ≤2:1, 320–3840 px/side ✅ |
+| Phone screenshots | `screenshots/free/*.png` (all 5) | ≤2:1, 320–3840 px/side ✅. **Never `screenshots/pro/`** |
 | Short description | `short_description.txt` | ≤80 chars ✅ |
 | Full description | `full_description.txt` | ≤4000 chars ✅ |
 | App name | — | `SwipeWise` |
@@ -138,9 +144,12 @@ Google Places is a genuine third party answering a query, so location is shared.
 Crashlytics is Google acting as **your service provider**, processing on your behalf — which
 Google's own guidance treats as collection, not sharing.
 
-**3. Nothing is *linked to identity*, and that is real, not a technicality.** There is no
-account, no email, no sign-in. The local id never leaves the device. Crashlytics' installation
-id is pseudonymous and tied to no user record.
+**3. Location and crash data are not *linked to identity*; email and user id are.** ⚠️ This
+point used to read "nothing is linked to identity — there is no account, no email, no sign-in",
+which is false since optional sign-in landed. Split the answer per data type: precise location,
+crash logs, diagnostics and device ids stay unlinked (they are collected with no account
+attached, and Crashlytics' installation id is pseudonymous), while the email and user id
+declared below are linked by definition — they *are* the account.
 
 **4. Do not mark location *ephemeral*.** Our Worker genuinely processes it in memory and stores
 nothing — but the ephemeral option asserts that about the whole path, and Google Places'
@@ -243,10 +252,15 @@ so submit it before the rest of the listing is finished. Rejections are usually 
 **What is the main purpose of your app?**
 
 > SwipeWise tells you which of your own credit cards to use at the store you are standing in, so
-> you earn the most cashback and points. You add your cards from a built-in catalog — there is
-> no bank connection, no account and no card numbers. It compares the reward rates those cards
-> pay at that specific store or brand and shows you the best one. Everything is stored on your
-> device.
+> you earn the most cashback and points. You add your cards from a built-in catalog of US and
+> Canadian cards — no bank connection and no card numbers. Signing in is optional and off by
+> default. It compares the reward rates those cards pay at that specific store or brand and shows
+> you the best one. Everything stays on your device unless you turn on backup.
+
+⚠️ The previous version of this answer said *"no account"*. That was true when it was written and
+is false now — optional sign-in mints a Firebase Auth user, which is also why the Security
+section above flips to **yes**. All three surfaces have to agree, so if you edit one, edit them
+together.
 
 **Describe one location-based feature that needs background location.**
 
@@ -313,6 +327,23 @@ Three things that get first passes rejected, none of which are about the code:
 - The declared purpose does not match the store listing or the data safety form. Keep all three
   saying the same thing: arrival alerts for card rewards, nothing about advertising or
   analytics, because the app does neither.
+
+## What changes when Pro ships
+
+Every answer above is filed for the app **as submitted**: free tier, no billing SDK. These flip
+the moment Pro reaches a paying user — update them then, not later.
+
+| Form | After Pro |
+|---|---|
+| App access | "Some or all functionality is restricted" + a test account with the entitlement granted, surviving review cycles |
+| Account creation | OAuth, plus likely *"Username and other authentication"* for the aggregator's credential + MFA flow |
+| Data safety — types | Add **Financial info**; possibly Purchase history |
+| Data safety — linkage | Much of it becomes linked — there is an account to link to |
+| Financial features | ⚠️ **Re-open before submitting.** Reading real account data routes you to a specialist review team, and some categories need licensing documentation up front |
+
+Public copy that becomes false at the same moment: `full_description.txt`'s "No bank connection"
+and "no card numbers", and the published privacy policy's *"The subscription is not on sale yet,
+so it is currently available only to accounts granted access individually"*.
 
 ## Regenerating assets
 
