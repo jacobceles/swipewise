@@ -66,3 +66,8 @@ analysis/
 
 # Personal local tooling config (absolute home paths, useless to anyone else)
 .codex/
+
+# Release artifacts. Symbols are ~10MB per build and match exactly one binary,
+# so they belong in wherever you archive releases, not in git. See docs/setup.md.
+*-symbols.zip
+*.aab

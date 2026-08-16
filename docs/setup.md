@@ -172,13 +172,17 @@ a live 410 before anyone looked. Refresh with
 flutter run --dart-define-from-file=keys.pro.json     # with bank sync
 flutter run --dart-define-from-file=keys.free.json    # as it ships
 
-# release (obfuscated; split debug info to a gitignored folder for symbolication)
+# release — APK for the gate, AAB for Play. Same source, same defines.
 flutter clean
-flutter build apk --release \
-  --dart-define-from-file=keys.free.json \
-  --obfuscate --split-debug-info=build/symbols
+flutter build apk --release --dart-define-from-file=keys.free.json
 python3 tool/verify_release_apk.py     # gate: fails if the keys file carries credentials
+flutter build appbundle --release --dart-define-from-file=keys.free.json
 ```
+
+The gate only reads the APK (`build/app/outputs/flutter-apk/app-release.apk`), so build both —
+the AAB carries the same compiled Dart and native code, so a clean APK gate covers it.
+⚠️ **A versionCode can only be uploaded once.** Play consumes it the moment a bundle reaches any
+track, including internal testing, so a re-upload always needs `version:` in `pubspec.yaml` bumped.
 
 ⚠️⚠️ **A release APK that builds, passes the credential gate and installs can still crash on
 launch — always launch one before believing it.** AGP 9 turned **R8 minification on by default**
@@ -208,8 +212,32 @@ confirm the installed bytes with `md5 -q <apk>` against
 `adb shell md5sum $(adb shell pm path <pkg>)` — `adb install` can also race the build's final
 file write.
 
-`--obfuscate` raises the cost of recovering the baked-in keys next to readable symbols (the
-literals are still inlined — true rotation needs a server proxy, which doesn't exist yet).
+### Why the build is no longer obfuscated
+
+`--obfuscate --split-debug-info` was here to raise the cost of recovering keys baked in next to
+readable symbols, on the stated condition that "true rotation needs a server proxy, which doesn't
+exist yet". **The proxy exists now** — the Places key is a Cloudflare secret, the aggregator
+credentials never ship, and `verify_release_apk.py` proves it on every build. The premise expired,
+so the flags went with it. Three reasons not to bring them back:
+
+- **They were not hiding much.** `--obfuscate` renames *symbols*, not *string literals*, so type
+  names in error paths and route constants survive anyway. An obfuscated 1.0.0+6 build still
+  contained `CatalogLoadResult`, `EngineLayer`, `RewardCategory`, all four `Sophtron*Exception`
+  types and `sophtron_protocol_drift`.
+- **This repo is public**, and the source — with comments, tests and docs — is strictly more
+  informative than any recovered symbol. There is no attacker for whom the binary is the easier
+  path.
+- **Binary tampering is already a designed-for non-threat.** `entitlement_provider.dart`: "A
+  patched binary can force this true… Forcing this true buys a set of empty screens." The gate is
+  server-side.
+
+The cost was real: obfuscated Dart frames in Crashlytics are unreadable without the exact
+`.symbols` files for that one build, matched by hand with `flutter symbolize`. Readable traces are
+worth more than protection that was already zero.
+
+⚠️ Builds made **before** this change still need their archived symbols to symbolicate —
+`1.0.0+6` in particular, which went to internal testing obfuscated.
+
 `.vscode/launch.json` has one config per keys file, so F5 works once they exist.
 
 **Android toolchain — AGP 9 with built-in Kotlin.** `android.builtInKotlin=true` in
