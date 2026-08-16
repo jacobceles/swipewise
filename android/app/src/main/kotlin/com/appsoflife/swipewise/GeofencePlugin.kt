@@ -9,6 +9,7 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -146,6 +147,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             client.removeGeofences(merchantPendingIntent),
             client.removeGeofences(boundaryPendingIntent),
         ).addOnCompleteListener {
+            val adds = mutableListOf<Task<Void>>()
             try {
                 if (merchantGeofences.isNotEmpty()) {
                     // INITIAL_TRIGGER_ENTER: if the device is already inside a
@@ -159,7 +161,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                         .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                         .addGeofences(merchantGeofences)
                         .build()
-                    client.addGeofences(req, merchantPendingIntent)
+                    adds.add(client.addGeofences(req, merchantPendingIntent))
                 }
                 if (boundary != null) {
                     val blat = (boundary["lat"] as Number).toDouble()
@@ -177,13 +179,35 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                         .setInitialTrigger(0)
                         .addGeofences(listOf(bGeofence))
                         .build()
-                    client.addGeofences(bReq, boundaryPendingIntent)
+                    adds.add(client.addGeofences(bReq, boundaryPendingIntent))
                 }
-                result.success(merchantGeofences.size)
             } catch (e: SecurityException) {
                 result.error("PERMISSION_DENIED", e.message, null)
+                return@addOnCompleteListener
             } catch (e: Exception) {
                 result.error("ADD_FAILED", e.message, null)
+                return@addOnCompleteListener
+            }
+            if (adds.isEmpty()) {
+                result.success(0)
+                return@addOnCompleteListener
+            }
+            // addGeofences() is asynchronous: returning normally only means the
+            // request was accepted for delivery, not that the OS took the fences.
+            // Reporting success here (as this did) hands Dart a count for a
+            // registration Play services may still reject — GEOFENCE_NOT_AVAILABLE
+            // when location is off, GEOFENCE_TOO_MANY_GEOFENCES at the per-app cap.
+            // Dart would then log "registered N", stamp `geofence_last_register`
+            // and never retry, leaving the device with no fences and no signal:
+            // the same silent-miss class the Play-services check above exists to
+            // prevent, one branch later. Await the tasks and report what happened.
+            Tasks.whenAllComplete(adds).addOnCompleteListener { done ->
+                val failed = done.result.firstOrNull { !it.isSuccessful }
+                if (failed == null) {
+                    result.success(merchantGeofences.size)
+                } else {
+                    result.error("ADD_FAILED", failed.exception?.message, null)
+                }
             }
         }
     }

@@ -103,6 +103,15 @@ The worker is **expedited** (`RUN_AS_NON_EXPEDITED_WORK_REQUEST` fallback) — a
 request can be deferred minutes under Doze, which defeats fencing the destination before
 the user walks into a store.
 
+**`registerSet` reports what the OS did, not what it was asked.** `addGeofences()` is
+asynchronous, so returning normally only means the request was accepted for delivery —
+Play services can still reject it (`GEOFENCE_NOT_AVAILABLE` when location is off,
+`GEOFENCE_TOO_MANY_GEOFENCES` at the per-app cap). The plugin therefore awaits both add
+tasks before answering. A rejection surfaces as `ADD_FAILED`, which `ensureRegistered`
+turns into `Result.retry` for the worker. Note the trade this makes explicit: the
+`removeGeofences` calls have already run by then, so a failed re-register leaves the
+device with **no** fences rather than the last-good set — the retry is what recovers it.
+
 ## Dwell detection
 
 Dwell is decided **app-side**, not by the OS: `GEOFENCE_TRANSITION_DWELL` evaluates
