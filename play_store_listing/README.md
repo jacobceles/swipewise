@@ -168,7 +168,20 @@ required. Purpose: app functionality (it is the account). Linked to identity: ye
 
 ### Security section
 
+- **CHANGED — Does your app allow users to create an account? YES.** Filed as *"does not allow
+  users to create an account"*, which was true before optional sign-in and is false now: signing
+  in with Google mints a Firebase Auth user. **It is account creation regardless of what it
+  unlocks** — the fact that the app is fully usable without one, and that signing in only enables
+  wallet backup, does not change the answer. Google checks this against the binary, and it gates
+  the deletion question below, so answering "no" here makes that answer unreachable.
 - **Encrypted in transit:** yes. Every request is HTTPS.
+- **CHANGED — Encrypted at rest: yes, and re-read the question.** The old answer was given when
+  the only thing server-side was the public catalog, so it was really a statement about static
+  assets. It now covers *user content* — the wallet backup in D1 and the Firebase Auth record.
+  Both are encrypted at rest by Cloudflare and Google respectively, so the answer stays "yes";
+  what changed is what the answer is about. On-device, `swipewise.db` relies on Android's
+  full-disk encryption, not app-level encryption — say so if a field asks, rather than implying
+  a second layer that does not exist.
 - **CHANGED — Users can request data deletion: yes.** The old answer said there is no account
   and nothing server-side to delete; accounts and server-side rows both exist now. Both routes
   Google requires are in place — in-app at **Profile → Delete my account**, and the web URL
