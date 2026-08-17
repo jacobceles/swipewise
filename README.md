@@ -22,6 +22,15 @@ your Prime Visa for **5%**, not just "a grocery card." That store-level, brand-a
 — *right card, right here, right now* — is what SwipeWise is built around, and it's the one
 moment no other rewards app actually owns.
 
+## 📲 Try it
+
+SwipeWise is on Google Play in **closed testing** — there's no public store page yet, and
+testers are added by hand. Want in?
+[Open an issue](https://github.com/jacobceles/swipewise/issues/new) with the Google account
+your phone signs into, and you'll get added to the test.
+
+Prefer to build it yourself? [Get started](#-get-started).
+
 ## ✨ What you get
 
 - 🏪 **Best card at every store.** Store- and brand-level recommendations, not just generic
