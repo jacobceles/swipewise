@@ -71,6 +71,12 @@ class DatabaseHelper {
     _database = null;
   }
 
+  /// Test-only: runs the real `_onConfigure` pragmas against an already-open
+  /// DB. `setTestDatabaseFactory` opens its own connection and so never calls
+  /// them, which left the whole of [_onConfigure] untested.
+  static Future<void> configureForTesting(Database db) =>
+      _instance._onConfigure(db);
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     final init = _testInit;
@@ -419,6 +425,22 @@ class DatabaseHelper {
   /// `FOREIGN KEY ... ON DELETE CASCADE` we declare is decorative.
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
+    // Two isolates open this same file: the UI engine, and the background
+    // engine `ReregisterWorker` spins up to re-register geofences. Each gets
+    // its own sqflite connection, so they genuinely contend. Without a busy
+    // timeout the loser fails its open-time `BEGIN EXCLUSIVE` the instant the
+    // other holds the lock — SQLITE_BUSY out of `_initDatabase`, which is
+    // fatal because it surfaces during `AuthNotifier.checkStatus` at startup.
+    // Waiting is always better than dying here: the holder is a short write.
+    //
+    // Both of these are rawQuery, not execute: they report the value they set,
+    // and Android's `execute` is `execSQL`, which rejects any statement that
+    // returns rows ("Queries can be performed using ... query or rawQuery
+    // methods only"). `foreign_keys` above returns nothing, so it stays execute.
+    await db.rawQuery('PRAGMA busy_timeout = 5000');
+    // WAL so a reader isn't blocked by the writer at all, which removes most
+    // of the contention rather than just surviving it.
+    await db.rawQuery('PRAGMA journal_mode = WAL');
   }
 
   /// Moves every row owned by [from] onto [to] in one transaction, then
