@@ -36,9 +36,11 @@ void main() {
 
   test('a busy timeout is set', () async {
     // 0 means "fail the instant the other isolate holds the lock", which is
-    // the SQLITE_BUSY crash out of `_initDatabase`.
+    // the SQLITE_BUSY crash out of `_initDatabase`. 5000 was not enough to
+    // survive it in 1.0.2+10 — `ReregisterWorker` budgets its isolate two
+    // minutes — so this pins the raised value rather than just "non-zero".
     final rows = await db.rawQuery('PRAGMA busy_timeout');
-    expect(rows.first.values.first, 5000);
+    expect(rows.first.values.first, 10000);
   });
 
   test('journal mode is WAL', () async {

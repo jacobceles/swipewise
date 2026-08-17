@@ -84,20 +84,52 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Backoff between open attempts. Three attempts total.
+  static const List<Duration> _kOpenRetryDelays = [
+    Duration(milliseconds: 500),
+    Duration(seconds: 2),
+  ];
+
+  /// True for SQLITE_BUSY, primary or extended. Android reports extended codes,
+  /// so `BUSY_SNAPSHOT`/`BUSY_TIMEOUT` arrive as 517/773 — mask to the low byte.
+  static bool _isBusy(DatabaseException e) {
+    final int? code = e.getResultCode();
+    return code != null && (code & 0xFF) == 5;
+  }
+
+  /// Opens the database, retrying a transient SQLITE_BUSY rather than dying.
+  ///
+  /// sqflite only wraps the version check in `BEGIN EXCLUSIVE` when the stored
+  /// schema version differs from [version], so this races on exactly one
+  /// launch: the first after an install or an upgrade. That is also when
+  /// `ReregisterWorker` is most likely mid-write on its own connection, which
+  /// is how 1.0.2+10 crashed in the field despite `busy_timeout`.
+  ///
+  /// The pragma only covers waits *inside* SQLite; when it expires the open
+  /// still throws, and this is the startup path (`AuthNotifier.checkStatus`),
+  /// so an uncaught throw takes the app down before first frame. Retrying the
+  /// whole open is what makes losing the race survivable.
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'swipewise.db');
-    return await openDatabase(
-      path,
-      version: 16,
-      onConfigure: _onConfigure,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-      // Internal testers can side-load an older build over a newer DB. sqflite's
-      // default onDowngrade throws (hard crash on open); delete-and-recreate is
-      // safe here because every local table is re-derivable — the catalog
-      // rehydrates from the API/bundled fallback and bank data re-syncs.
-      onDowngrade: onDatabaseDowngradeDelete,
-    );
+    final String path = join(await getDatabasesPath(), 'swipewise.db');
+    for (int attempt = 0; ; attempt++) {
+      try {
+        return await openDatabase(
+          path,
+          version: 16,
+          onConfigure: _onConfigure,
+          onCreate: _onCreate,
+          onUpgrade: _onUpgrade,
+          // Internal testers can side-load an older build over a newer DB. sqflite's
+          // default onDowngrade throws (hard crash on open); delete-and-recreate is
+          // safe here because every local table is re-derivable — the catalog
+          // rehydrates from the API/bundled fallback and bank data re-syncs.
+          onDowngrade: onDatabaseDowngradeDelete,
+        );
+      } on DatabaseException catch (e) {
+        if (attempt >= _kOpenRetryDelays.length || !_isBusy(e)) rethrow;
+        await Future<void>.delayed(_kOpenRetryDelays[attempt]);
+      }
+    }
   }
 
   /// Device-level per-store mute list for dwell notifications. A row here
@@ -431,15 +463,21 @@ class DatabaseHelper {
     // timeout the loser fails its open-time `BEGIN EXCLUSIVE` the instant the
     // other holds the lock — SQLITE_BUSY out of `_initDatabase`, which is
     // fatal because it surfaces during `AuthNotifier.checkStatus` at startup.
-    // Waiting is always better than dying here: the holder is a short write.
+    //
+    // 10s, not the 5s that shipped in 1.0.2+10 — that build still crashed in
+    // the field. The holder is not necessarily a short write: `ReregisterWorker`
+    // budgets its isolate two minutes (`ReregisterWorker.kt`) and writes the
+    // tile cache between Places calls. [_initDatabase] retries on top of this
+    // for the tail that still loses.
     //
     // Both of these are rawQuery, not execute: they report the value they set,
     // and Android's `execute` is `execSQL`, which rejects any statement that
     // returns rows ("Queries can be performed using ... query or rawQuery
     // methods only"). `foreign_keys` above returns nothing, so it stays execute.
-    await db.rawQuery('PRAGMA busy_timeout = 5000');
-    // WAL so a reader isn't blocked by the writer at all, which removes most
-    // of the contention rather than just surviving it.
+    await db.rawQuery('PRAGMA busy_timeout = 10000');
+    // WAL so a reader isn't blocked by the writer at all. This does NOT cover
+    // the crash above: the open-time version check takes an EXCLUSIVE *write*
+    // lock, and WAL leaves writer-writer contention exactly as it was.
     await db.rawQuery('PRAGMA journal_mode = WAL');
   }
 

@@ -96,11 +96,17 @@ the same stable id reappears. A user's card reaches its rewards/perks through it
 | Table | Purpose |
 |---|---|
 | `merchant_tile_cache` | Google Places merchants per ~1km grid cell; LRU-evicted (200 cells, 7-day TTL) |
-| `active_geofences` | currently-registered merchant geofences (dwell detection) |
-| `boundary_geofence` | single-row app boundary tripwire (`CHECK id = 1`) |
+| `active_geofences` | **vestigial** — created by the schema, never read or written (see below) |
+| `boundary_geofence` | **vestigial** — created by the schema, never read or written (`CHECK id = 1`) |
 | `merchant_notification_cooldown` | per-merchant notify throttle (6h) |
 | `category_notification_cooldown` | per-category notify throttle (30 min) |
 | `dwell_outcomes` | **temporary** diagnostic trail: why each fired dwell timer did/didn't post (debug builds only, capped at 500) |
+
+Geofence state is **not** in SQLite, despite the two table names above. Registered fences live
+in the OS via `GeofencingClient`, and their metadata (merchant options, geometry, dwell
+seconds) is JSON in Android SharedPreferences — see `GeofenceMetadataStore.kt`. The only
+trace in this database is `settings.geofence_last_register` (`lat,lng,timestamp`). Don't go
+looking in `active_geofences` for what fired; it is always empty.
 
 See [nearby.md](nearby.md).
 
