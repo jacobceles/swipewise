@@ -684,15 +684,22 @@ final categoryTilesProvider = FutureProvider<List<CategoryTileData>>((
   final auth = ref.watch(sessionProvider);
   if (!auth.isLoggedIn) return const [];
   final ranker = await ref.watch(engineRankerProvider.future);
-  final lookup = ranker?.bestCardByCategory() ?? BestCardLookup.empty;
+  // Every category, bonus or not — see `bestCardByCategoryAll`. Categories the
+  // wallet cannot price at all are absent from the picks and keep null
+  // rate/name, which the grid renders as "no card offers this".
+  final picks = {
+    for (final p in ranker?.bestCardByCategoryAll() ?? const <CategoryPick>[])
+      p.category: p,
+  };
   final brandCounts =
       ranker?.brandBonusCountsByCategory() ?? const <RewardCategory, int>{};
   return [
     for (final c in RewardCategory.values)
       CategoryTileData(
         category: c,
-        bestRate: lookup.byCategory[c]?.rate,
-        bestCardName: lookup.byCategory[c]?.name,
+        bestRate: picks[c]?.rate,
+        bestCardName: picks[c]?.cardName,
+        isBonus: picks[c]?.isBonus ?? false,
         brandBonusCount: brandCounts[c] ?? 0,
       ),
   ];
@@ -702,12 +709,23 @@ class CategoryTileData {
   final RewardCategory category;
   final double? bestRate;
   final String? bestCardName;
+
+  /// True when [bestRate] beats the wallet's everyday rate. False means the
+  /// tile is showing a baseline fallback — still worth displaying, but it must
+  /// not be dressed up as a bonus.
+  final bool isBonus;
   final int brandBonusCount;
+
+  /// No linked card earns anything here, so [bestRate] is 0 and there is no
+  /// winning card to name. Not "unknown" — a secured / balance-transfer /
+  /// credit-builder card genuinely pays nothing.
+  bool get earnsNothing => (bestCardName ?? '').isEmpty;
 
   const CategoryTileData({
     required this.category,
     required this.bestRate,
     required this.bestCardName,
+    required this.isBonus,
     required this.brandBonusCount,
   });
 }

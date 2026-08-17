@@ -116,6 +116,80 @@ void main() {
     expect(pick?.rate, 1.5);
   });
 
+  group('bestCardByCategoryAll — the browsable Categories grid', () {
+    test('covers every category, not just the ones a card names', () {
+      final all = ranker(catalog, links).bestCardByCategoryAll();
+      expect(
+        all.map((p) => p.category).toSet(),
+        RewardCategory.values.toSet(),
+        reason:
+            'a category with no bonus must still appear, showing the best '
+            'everyday rate — hiding it reads as "SwipeWise does not know '
+            'this category exists"',
+      );
+    });
+
+    test('flags a bonus as a bonus and a fallback as baseline', () {
+      final byCat = {
+        for (final p in ranker(catalog, links).bestCardByCategoryAll())
+          p.category: p,
+      };
+      // dining has a real 3% category rule on Card A.
+      expect(byCat[RewardCategory.dining]!.isBonus, isTrue);
+      expect(byCat[RewardCategory.dining]!.rate, 3);
+      // Nothing names transit, so it falls back to the best baseline (1.5%).
+      expect(byCat[RewardCategory.transit]!.isBonus, isFalse);
+      expect(byCat[RewardCategory.transit]!.rate, 1.5);
+      expect(byCat[RewardCategory.transit]!.cardId, 'c2');
+    });
+
+    test('a wallet that earns nothing reports 0%, not a missing tile', () {
+      // A no-baseline card — secured / balance-transfer / store, which is 118
+      // of the catalog's 410 products. 0% is the real rate these pay, so the
+      // category still gets a tile; there is just no card to crown.
+      final storeOnly = snap([
+        rule(
+          's',
+          's#brand',
+          RewardRuleKind.brand,
+          category: RewardCategory.apparel,
+          brand: 'gap',
+          rate: 5,
+        ),
+      ]);
+      final r = ranker(storeOnly, [link('c9', 's', 'Store Card')]);
+      final byCat = {for (final p in r.bestCardByCategoryAll()) p.category: p};
+
+      expect(byCat.keys.toSet(), RewardCategory.values.toSet());
+      final grocery = byCat[RewardCategory.grocery]!;
+      expect(grocery.rate, 0);
+      expect(grocery.isBonus, isFalse);
+      expect(
+        grocery.cardName,
+        isNull,
+        reason: 'every card ties at nothing, so naming a winner would mislead',
+      );
+
+      // And the sheet behind that tile lists the cards at 0 rather than being
+      // empty — an empty sheet reads as a bug, not as an answer.
+      final sheet = r.rewardRanking(RewardCategory.grocery);
+      expect(sheet.general, hasLength(1));
+      expect(sheet.general.single.rate, 0);
+    });
+
+    test('a category some card DOES earn is unaffected by the 0% fallback', () {
+      final r = ranker(catalog, links);
+      final sheet = r.rewardRanking(RewardCategory.dining);
+      expect(
+        sheet.general.map((g) => g.rate),
+        [3, 2],
+        reason:
+            'the fallback is guarded on nothing matching — a card that simply '
+            'loses at dining must not appear as a 0% row',
+      );
+    });
+  });
+
   test('byBrand surfaces the brand-bonus card', () {
     final lookup = ranker(catalog, links).bestCardByCategory();
     expect(lookup.byBrand['chipotle']?.id, 'c2');

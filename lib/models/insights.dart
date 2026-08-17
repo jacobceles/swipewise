@@ -281,3 +281,28 @@ class BrandPick {
     required this.isBonus,
   });
 }
+
+/// One category resolved against the wallet, for the Advisor "Categories" grid.
+/// The `BrandPick` of categories: `isBonus` false means no linked card pays
+/// extra here and `rate` is the best everyday (baseline) rate instead — which
+/// the grid still shows, because "your cards earn 1.5% here" answers the
+/// question a hidden tile leaves open.
+class CategoryPick {
+  final RewardCategory category;
+
+  /// Null when no linked card has any rule here — every card ties at 0%, so
+  /// there is no winner to name. [rate] is 0 in that case, which is the real
+  /// earn rate for a no-rewards card, not a placeholder.
+  final String? cardId;
+  final String? cardName;
+  final double rate;
+  final bool isBonus;
+
+  const CategoryPick({
+    required this.category,
+    required this.cardId,
+    required this.cardName,
+    required this.rate,
+    required this.isBonus,
+  });
+}

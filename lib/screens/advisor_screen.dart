@@ -350,13 +350,14 @@ class _CategoryGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
     final q = query.trim().toLowerCase();
-    final earning = tiles
-        .where(
-          (t) => (t.bestRate ?? 0) > 0 && (t.bestCardName ?? '').isNotEmpty,
-        )
-        .toList();
+    // The grid shows EVERY category once the wallet can price one of them.
+    // Filtering to bonus-only categories made a wallet with no travel card look
+    // like SwipeWise had never heard of travel; the honest answer is "nothing
+    // you hold pays extra here, and this is your best everyday rate". Tiles the
+    // wallet cannot price at all stay in, rendered as "No card offers this".
+    final earning = tiles.where((t) => !t.earnsNothing).toList();
 
-    if (earning.isEmpty) {
+    if (earning.isEmpty && tiles.isEmpty) {
       // Distinguish three states so the copy isn't a lie:
       //   - No cards yet → "link a bank" (the original "sync your wallet"
       //     case).
@@ -400,13 +401,27 @@ class _CategoryGrid extends ConsumerWidget {
       );
     }
 
-    final filtered = q.isEmpty
-        ? earning
-        : earning.where((t) {
+    final matching = q.isEmpty
+        ? [...tiles]
+        : tiles.where((t) {
             final label = t.category.label.toLowerCase();
             final card = (t.bestCardName ?? '').toLowerCase();
             return label.contains(q) || card.contains(q);
           }).toList();
+    // Wins first, then everyday rates, then the unpriced tail — the same
+    // ordering the Brands tab uses. Enum order alone would bury a wallet's
+    // three bonus categories among 29 baseline ones. `List.sort` is NOT
+    // stable in Dart, so declared order is carried explicitly as the final
+    // tie-break rather than assumed.
+    final order = {
+      for (var i = 0; i < matching.length; i++) matching[i].category: i,
+    };
+    matching.sort((a, b) {
+      if (a.isBonus != b.isBonus) return a.isBonus ? -1 : 1;
+      if (a.earnsNothing != b.earnsNothing) return a.earnsNothing ? 1 : -1;
+      return order[a.category]!.compareTo(order[b.category]!);
+    });
+    final filtered = matching;
     if (filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -452,6 +467,10 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final tint = _tintFor(tile.category);
+    // Nothing in the wallet prices this category, so there is no ranking to
+    // open — the sheet would be an empty list. Dimmed and inert rather than
+    // hidden: the category still exists, the user just cannot earn on it.
+    final unpriced = tile.earnsNothing;
     return Material(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(kRadiusM),
@@ -488,7 +507,10 @@ class _CategoryTile extends StatelessWidget {
                   Text(
                     _rateText(tile.bestRate),
                     style: AppText.titleLg(
-                      color: AppColors.primary,
+                      // Only a real bonus gets the accent colour. A
+                      // baseline fallback in primary would read as "5% at
+                      // grocery" when it is just the everyday rate.
+                      color: tile.isBonus ? AppColors.primary : palette.muted,
                     ).copyWith(fontWeight: FontWeight.w800, fontSize: 22),
                   ),
                 ],
@@ -500,15 +522,17 @@ class _CategoryTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppText.titleMd().copyWith(fontSize: 14),
               ),
-              if ((tile.bestCardName ?? '').isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  tile.bestCardName!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.bodySm(),
-                ),
-              ],
+              const SizedBox(height: 4),
+              Text(
+                unpriced
+                    ? 'No card earns rewards here'
+                    : tile.isBonus
+                    ? tile.bestCardName!
+                    : '${tile.bestCardName!} · everyday rate',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.bodySm(color: unpriced ? palette.muted : null),
+              ),
               if (tile.brandBonusCount > 0) ...[
                 const SizedBox(height: 8),
                 _BrandBonusPill(count: tile.brandBonusCount),
@@ -519,7 +543,9 @@ class _CategoryTile extends StatelessWidget {
                 children: [
                   Text(
                     'Compare cards',
-                    style: AppText.bodySm().copyWith(fontSize: 11),
+                    style: AppText.bodySm(
+                      color: unpriced ? palette.muted : null,
+                    ).copyWith(fontSize: 11),
                   ),
                   Icon(LucideIcons.arrowRight, size: 12, color: palette.muted),
                 ],
@@ -532,8 +558,12 @@ class _CategoryTile extends StatelessWidget {
   }
 
   String _rateText(double? rate) {
-    if (rate == null || rate == 0) return '-';
-    final s = rate % 1 == 0 ? rate.toInt().toString() : rate.toStringAsFixed(1);
+    // 0 renders as "0%", not "-". A no-rewards card (secured, balance-transfer,
+    // credit-builder — 118 of the catalog's 410 products) really does earn
+    // nothing, and a dash reads as missing data rather than as the answer.
+    final s = (rate ?? 0) % 1 == 0
+        ? (rate ?? 0).toInt().toString()
+        : rate!.toStringAsFixed(1);
     return '$s%';
   }
 

@@ -107,6 +107,73 @@ void main() {
     },
   );
 
+  test('deleting a manual card lets the same product be added back', () async {
+    Future<ManualCardAddResult> add() => repository.addManualCard(
+      userId: 'u1',
+      productId: 'chase.freedom-flex',
+      issuer: 'Chase',
+      name: 'Chase Freedom Flex',
+      network: 'Visa',
+      imageUrl: null,
+      creditLimit: 5000,
+      dueDay: 9,
+    );
+
+    final first = await add();
+    expect(first.status, ManualCardAddStatus.added);
+
+    expect(await repository.deleteManualCard('u1', first.cardId!), 1);
+
+    final db = await DatabaseHelper().database;
+    // The regression: these cascade on `users`, never on `cards`, so the card
+    // row went and the satellites stayed. The stranded `card_links` row made
+    // `addManualCard` answer alreadyInWallet forever — a card the user could
+    // neither see nor re-add.
+    for (final table in const [
+      'card_links',
+      'card_overrides',
+      'rotating_activations',
+    ]) {
+      expect(
+        await db.query(table, where: 'card_id = ?', whereArgs: [first.cardId]),
+        isEmpty,
+        reason: '$table kept a row for a deleted card',
+      );
+    }
+
+    final second = await add();
+    expect(
+      second.status,
+      ManualCardAddStatus.added,
+      reason: 'deleting then re-adding the same product must work',
+    );
+  });
+
+  test('deleting a non-manual card leaves its link intact', () async {
+    final db = await DatabaseHelper().database;
+    await db.insert('cards', {
+      'id': 'bank:abc:1234:freedomflex',
+      'user_id': 'u1',
+      'source': 'bank',
+      'name': 'Chase Freedom Flex',
+    });
+    await db.insert('card_links', {
+      'user_id': 'u1',
+      'card_id': 'bank:abc:1234:freedomflex',
+      'card_product_id': 'chase.freedom-flex',
+      'source': 'heuristic',
+    });
+
+    expect(await repository.deleteManualCard('u1', 'bank:abc:1234:freedomflex'), 0);
+    expect(
+      await db.query('card_links', where: 'card_id = ?', whereArgs: ['bank:abc:1234:freedomflex']),
+      hasLength(1),
+      reason:
+          'a bank card must keep its reward-engine link — unlinking it while '
+          'the card stays on screen would silently drop it from ranking',
+    );
+  });
+
   test(
     'manualInstitutionId is stable per issuer regardless of casing/spacing',
     () {

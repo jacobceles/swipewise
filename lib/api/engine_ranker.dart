@@ -171,6 +171,41 @@ class EngineRanker {
     return BestCardLookup(byCategory: byCategory, byBrand: byBrand);
   }
 
+  /// Best card for EVERY category — the Advisor "Categories" grid.
+  ///
+  /// Deliberately not [bestCardByCategory], which only answers for categories
+  /// some linked card names in a rule. That is right for the nearby flow (no
+  /// bonus, no tile) but wrong for a browsable grid: a category vanishing
+  /// entirely reads as "SwipeWise doesn't know about groceries", when the truth
+  /// is "none of your cards pay extra there, and this one is your best
+  /// everyday rate". Same shape as [bestCardByBrand] — resolve through the
+  /// exclusion-aware engine, keep the baseline tail, and flag it with
+  /// [CategoryPick.isBonus] so the UI can say which it is.
+  ///
+  /// When NO linked card has an applicable rule the category still gets a
+  /// pick, at **rate 0 with no card named**. That is not an invented rate: 118
+  /// of the catalog's 410 products carry no earn rule at all (secured,
+  /// balance-transfer, credit-builder, store cards), and 0% is what they pay.
+  /// The card is left null because there is no winner to name — every card
+  /// ties at nothing.
+  List<CategoryPick> bestCardByCategoryAll() {
+    final out = <CategoryPick>[];
+    for (final cat in RewardCategory.values) {
+      final best = _pickBest((c) => _resolve(c, cat, null));
+      out.add(
+        CategoryPick(
+          category: cat,
+          cardId: best?.card.cardId,
+          cardName: best?.card.cardName,
+          rate: best?.applied.rate ?? 0,
+          isBonus:
+              best != null && best.applied.kind != RewardRuleKind.baseline,
+        ),
+      );
+    }
+    return out;
+  }
+
   /// Best card for every registered brand — the Advisor "Brands" tab. Iterates
   /// the FULL brand registry (not just brands named in reward rules) and
   /// resolves each against the wallet (brand bonus → category → baseline). A
@@ -272,6 +307,17 @@ class EngineRanker {
         if (_resolve(c, category, null) case final a when a.hasRule)
           _Scored(c, a),
     ];
+    // Nothing in the wallet has a rule here — a wallet of no-rewards cards
+    // (secured / balance-transfer / store), which is 118 of the catalog's 410
+    // products. Listing them at 0 beats returning an empty sheet: "none of
+    // your cards earn here" is the answer, and an empty list looks like a bug.
+    // Guarded on `isEmpty` so a normal category is untouched — a card that
+    // simply loses at dining must NOT start appearing as a 0% row.
+    if (scored.isEmpty) {
+      scored.addAll([
+        for (final c in linkedCards) _Scored(c, AppliedRate.none),
+      ]);
+    }
     scored.sort(_compare);
     final general = <CategoryRewardRanking>[
       for (var i = 0; i < scored.length; i++)

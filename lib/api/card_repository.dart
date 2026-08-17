@@ -223,13 +223,44 @@ class CardRepository {
     return result;
   }
 
+  /// Removes a manual card and every row keyed to it, in one transaction.
+  ///
+  /// The satellite tables cascade on `users`, never on `cards`, so deleting the
+  /// card row alone strands them. `card_links` is the load-bearing one:
+  /// [addManualCard] treats an existing link for the same `card_product_id` as
+  /// "already in your wallet", so a stranded link makes the card permanently
+  /// un-re-addable — invisible in the UI, but still vetoing the add.
+  /// `card_overrides` would otherwise resurrect the old credit limit and due
+  /// day, and `rotating_activations` the old quarter's activations, on a later
+  /// re-add of the same product.
+  ///
+  /// Returns the number of `cards` rows removed, so a non-manual id still
+  /// reports 0 and nothing else is touched.
   Future<int> deleteManualCard(String userId, String cardId) async {
     final db = await _dbHelper.database;
-    return await db.delete(
-      'cards',
-      where: 'user_id = ? AND id = ? AND source = ?',
-      whereArgs: [userId, cardId, 'manual'],
-    );
+    return db.transaction((txn) async {
+      final removed = await txn.delete(
+        'cards',
+        where: 'user_id = ? AND id = ? AND source = ?',
+        whereArgs: [userId, cardId, 'manual'],
+      );
+      // Guard the satellites on the card actually having been a manual one —
+      // otherwise passing a bank card's id would silently unlink it from the
+      // reward engine while leaving the card itself on screen.
+      if (removed == 0) return 0;
+      for (final table in const [
+        'card_links',
+        'card_overrides',
+        'rotating_activations',
+      ]) {
+        await txn.delete(
+          table,
+          where: 'user_id = ? AND card_id = ?',
+          whereArgs: [userId, cardId],
+        );
+      }
+      return removed;
+    });
   }
 
   /// Creates a catalog-backed manual card and its reward-engine link in one
