@@ -33,6 +33,16 @@ credentials. Locally — where `keys.pro.json` legitimately exists — it *also*
 greps the APK for the real values, which is strictly stronger and costs nothing
 because the file is already on disk. In CI that half is skipped and says so.
 
+## Why the Firebase key set is pinned
+
+The APK scan needs an allowlist of keys that may legitimately ship, and takes it
+from google-services.json. That file is not a fixed point: Firebase repoints an
+app's `apiKeyId` when the key it named is deleted, which rewrites it — and the
+scan would then declare the *new* key accounted for, against itself. So the
+allowlist is pinned by digest. This catches our own silent config drift, not an
+attacker; the keys are public by design and already committed twice over, which
+is why a digest is pinned rather than the values.
+
 ## Two traps that produced confident wrong answers before this existed
 
 1. **Both string encodings must be checked.** Dart stores a string one byte per
@@ -46,6 +56,7 @@ because the file is already on disk. In CI that half is skipped and says so.
 Exits non-zero on any failure.
 """
 
+import hashlib
 import json
 import os
 import re
@@ -83,6 +94,11 @@ MUST_BE_ABSENT = {"HMAC auth scheme": "FIApiAUTH"}
 GOOGLE_SERVICES_JSON = "android/app/google-services.json"
 API_KEY_RE = re.compile(rb"AIza[0-9A-Za-z_\-]{35}")
 
+# sha256 over the newline-joined, sorted key strings in google-services.json —
+# stable across reformatting and client reordering. Update it deliberately, and
+# only once you have confirmed the new key set is the one you meant to ship.
+EXPECTED_KEYSET_SHA256 = "799b2b44f9efab5b3b4741632da90c0adf4efcd55dba6869a157cc1698f65d37"
+
 # A binary that shipped nothing would pass every absence check, so pin the
 # features that make this the app rather than an empty shell.
 MUST_BE_PRESENT = {
@@ -103,6 +119,15 @@ def load_blobs(apk: str) -> list[bytes]:
             with open(os.path.join(root, name), "rb") as fh:
                 blobs.append(fh.read())
     return blobs
+
+
+def google_services_keys() -> set[str]:
+    gs = json.load(open(GOOGLE_SERVICES_JSON))
+    return {k["current_key"] for c in gs.get("client", []) for k in c.get("api_key", [])}
+
+
+def keyset_digest(keys: set[str]) -> str:
+    return hashlib.sha256("\n".join(sorted(keys)).encode()).hexdigest()
 
 
 def occurrences(blobs: list[bytes], needle: str) -> int:
@@ -141,6 +166,27 @@ def main() -> int:
         failures += 1
     else:
         print(f"  ok    required config present: {list(REQUIRED_KEYS)}")
+
+    # ── 1b. Pin the allowlist that step 3b trusts. Reads one committed file, so
+    #     it runs on the pre-commit path too — the earliest point a repoint shows up.
+    print("\nFirebase key set — android/app/google-services.json:")
+    try:
+        gs_keys = google_services_keys()
+    except (OSError, json.JSONDecodeError, KeyError) as exc:
+        print(f"  FAIL  unreadable ({exc}) — cannot trust the APK key allowlist")
+        gs_keys = set()
+        failures += 1
+    else:
+        digest = keyset_digest(gs_keys)
+        if digest == EXPECTED_KEYSET_SHA256:
+            print(f"  ok    {len(gs_keys)} key(s), digest matches")
+        else:
+            print(f"  FAIL  key set changed — {digest[:16]}...")
+            print(f"        expected              {EXPECTED_KEYSET_SHA256[:16]}...")
+            print("        Firebase repoints an app's key when the one it named is")
+            print("        deleted. Confirm the new set is what you meant to ship,")
+            print("        then update EXPECTED_KEYSET_SHA256 in this file.")
+            failures += 1
 
     if input_only:
         # Pre-commit path: the keys file is checkable in milliseconds and is
@@ -188,17 +234,7 @@ def main() -> int:
     #     Gradle plugin emits only google-services.json's api_key[0], so any
     #     other AIza... string arrived some other way and is unaccounted for.
     print("\nGoogle API keys in the APK:")
-    try:
-        gs = json.load(open(GOOGLE_SERVICES_JSON))
-        allowed = {
-            k["current_key"]
-            for c in gs.get("client", [])
-            for k in c.get("api_key", [])
-        }
-    except (OSError, json.JSONDecodeError) as exc:
-        print(f"  FAIL  cannot read {GOOGLE_SERVICES_JSON} ({exc})")
-        allowed = set()
-        failures += 1
+    allowed = gs_keys  # pinned in step 1b
 
     seen: set[str] = set()
     for blob in blobs:
