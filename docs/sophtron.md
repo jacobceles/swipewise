@@ -23,8 +23,7 @@ and signs with credentials the app has never seen.
   every bank link. The service stores the mapping in `sophtron_customers` instead.
 
 The HMAC scheme itself, the path allowlist and the job-ownership check now live in the
-account service (`swipewise-backend/swipewise-account/src/aggregator.ts`), along with the
-tests that pin them.
+account service, which is private, along with the tests that pin them.
 
 ## Connect flow (V2) — the MFA state machine
 

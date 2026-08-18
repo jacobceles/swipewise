@@ -19,7 +19,7 @@ The build doesn't ship in the app binary — it's served by
 
 ```mermaid
 flowchart LR
-  CC["backend engine<br/>build"] --> DROP["swipewise-api/catalog/<br/>catalog.json"]
+  CC["backend engine<br/>build"] --> DROP["catalog service<br/>drop dir · catalog.json"]
   DROP --> PUB["publish CLI<br/>(download art · rewrite image_url · sha-diff)"]
   PUB --> R2[("R2 bucket")]
   R2 --> W["Worker<br/>(read API, ETag-gated)"]

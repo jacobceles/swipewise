@@ -21,10 +21,10 @@ Which tier a local build behaves as is chosen entirely by the keys file:
 | `keys.free.json` | 3 tabs, no sign-in, no bank connectivity | **the published release** |
 | `keys.pro.json` | 5 tabs, sign-in, bank sync | local development |
 
-⚠️ **The one real footgun**: building a *release* with `keys.pro.json` produces a perfectly
-working APK that contains every aggregator credential. Nothing about the artifact looks
-wrong. `tool/verify_release_apk.py` exists to catch exactly that, and CI runs it on every
-push to main.
+⚠️ **Build releases from `keys.free.json`.** A release built from `keys.pro.json` forces the
+Pro UI on, shipping tabs the entitlement service will not fill — and nothing about the artifact
+looks wrong. `tool/verify_release_apk.py` checks the keys file a release was built from, and CI
+runs it on every push to main.
 
 ## Keys
 
@@ -62,9 +62,8 @@ which holds that key server-side. `tool/verify_release_apk.py` fails the build i
 `GOOGLE_PLACES_KEY` appears in the keys file or if any unaccounted Google API key reaches the
 APK, and it runs on every pull request.
 
-Omitting the Sophtron keys from the release file is the entire point: a value that isn't in
-the binary can't be extracted from it. The Pro *code* does ship — it has to, for a
-subscription to unlock it — but it ships with nothing to authenticate with.
+The Pro *code* does ship — it has to, for a subscription to unlock it — but it ships with
+nothing to authenticate with, and a value that isn't in the binary can't be extracted from it.
 
 - `PLACES_PROXY_URL` — the Worker's `/places/nearby` route. The app posts a Google-shaped
   body plus a Firebase App Check token; the Worker verifies the token, adds the Places key it
@@ -85,16 +84,12 @@ subscription to unlock it — but it ships with nothing to authenticate with.
   ⚠️ **A registered debug token dies with the install, and the console name lies about that.**
   The secret is a random UUID v4 minted by `DebugAppCheckProvider` into app-private storage — not
   derived from the device — so an uninstall or a clear-data mints a new one and the old console
-  entry is orphaned. Verified 2026-08-13: the same app on the same Pixel produced
-  `0d6389cc-…` before an uninstall and `065364f5-…` after. Naming an entry "Pixel 10 Pro" makes it
-  read as device-scoped, so `403 App attestation failed` with a token "already registered" is the
-  expected symptom, not a misconfiguration. **Re-register after any reinstall, and delete the
-  stale entry** — an orphan is a permanent credential for nothing.
+  entry is orphaned. Naming an entry "Pixel 10 Pro" makes it read as device-scoped, so
+  `403 App attestation failed` with a token "already registered" is the expected symptom, not a
+  misconfiguration. **Re-register after any reinstall, and delete the stale entry.**
 
-  ⚠️ It is a real credential for the project: whoever holds a registered one can mint valid App
-  Check tokens from anywhere, and the Worker cannot distinguish those from Play Integrity's
-  (`verifyAppCheck` checks signature, `aud`, `iss` and expiry — App Check tokens carry no provider
-  claim). Never commit one; remove it when you are done.
+  ⛔ **Treat a registered debug token as a project credential.** Never commit one, never paste one
+  into an issue or a log excerpt, and remove it from the console the moment you are done with it.
 - `R2_BASE_URL` — base URL of the **catalog API** (`swipewise-api`),
   the Cloudflare Worker the app fetches `catalog.json` and `brands.json` from (e.g.
   `https://swipewise-api.<subdomain>.workers.dev`). The Worker reads those from R2 and
@@ -121,8 +116,8 @@ anything by itself.
 against casual scraping, never as protection. **What matters is the API allowlist: scope every key
 to the minimum set of APIs it actually needs**, and re-check that scope whenever a key is touched.
 
-Places is not in this category at all — its key is never in the app, and the Worker requires a
-Play Integrity attestation instead (`swipewise-backend`).
+Places is not in this category at all — its key is never in the app; the Worker holds it and
+requires a Play Integrity attestation instead.
 
 > Measured reach per key, the Firebase auth posture, and what to re-test when Pro auth changes
 > sign-up are recorded in the **private backend repo**, not here.
@@ -133,17 +128,10 @@ Play Integrity attestation instead (`swipewise-backend`).
 `apiKeyId` naming one GCP key, and that is what lands in `google-services.json` as `api_key[0]`.
 Delete the key an app points at and Firebase repoints it to *any* Android-restricted key matching
 the package — it once grabbed the **Places-only** key, which blocks every Firebase call. Restoring
-the deleted key does not undo it. Fix it explicitly (Cloud Shell has `gcloud`):
-
-```bash
-gcloud services api-keys list --project=swipewise-e5584 --format="table(uid,displayName)"
-TOKEN=$(gcloud auth print-access-token)
-curl -X PATCH "https://firebase.googleapis.com/v1beta1/projects/swipewise-e5584/androidApps/<appId>?updateMask=apiKeyId" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"apiKeyId":"<uid>"}'
-```
-
-Run it for **both** apps: prod `1:940339008944:android:aa99113dba501e8d7ef275`, dev
-`1:940339008944:android:a6410217d3bc97bd7ef275`. So: **restrict keys, never delete them.**
+the deleted key does not undo it — the app has to be repointed explicitly through the Firebase
+Management API, and for **both** the prod and the `.dev` app. So: **restrict keys, never delete
+them.** The repair commands, with the project and app identifiers filled in, live in the private
+backend repo alongside the rest of the key inventory.
 
 **Flutter holds the Firebase config in TWO files.** `firebase apps:sdkconfig` refreshes
 `android/app/google-services.json` but never touches `lib/firebase_options.dart`, which hardcodes
@@ -162,8 +150,8 @@ python3 -c "import json;a=json.load(open('assets/catalog/free.json'));print(a['d
 Only local `make publish` refreshes it (the `cp` into `$(APP_DIR)`). **CI publish does not** — it
 copies the file into a throwaway checkout to publish *from* and never commits it back, so every
 CI-driven publish advances R2 and silently leaves the bundle behind. It reached 223 cards against
-a live 410 before anyone looked. Refresh with
-`cp cardcodex/output/catalog/free.json assets/catalog/free.json` and commit it.
+a live 410 before anyone looked. Refresh it by copying the backend engine's built
+`output/catalog/free.json` over `assets/catalog/free.json`, and commit it.
 
 ## Run & build
 

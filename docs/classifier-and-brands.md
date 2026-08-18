@@ -120,9 +120,8 @@ catalog's `reward_rules` *reference*. See
 ## Curation & validation
 
 There's no telemetry feedback loop (the app doesn't collect user transactions). Brand
-coverage is **curation-driven**: ask Gemini for more brands (see
-[`todo/reference_brands_prompt.md`](classifier-and-brands.md)) or add a store you
-hit yourself.
+coverage is **curation-driven**: brands are generated upstream and served via the catalog API,
+or you add a store you hit yourself.
 
 `brands.json` is now produced upstream and served via the catalog API,
 so the **slug contract** is enforced where the data is built (the producer pipeline), not by
