@@ -55,9 +55,11 @@ Prefer to build it yourself? [Get started](#-get-started).
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="play_store_listing/screenshots/1-best-card-stores.png" width="220"><br><sub><b>Best card at every store</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/2-advisor-categories.png" width="220"><br><sub><b>Ranked per category</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/5-cards.png" width="220"><br><sub><b>Your whole wallet</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/1-best-card-at-every-store.png" width="220"><br><sub><b>Best card at every store</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/2-where-your-cards-win.png" width="220"><br><sub><b>Where your cards win</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/3-every-category-ranked.png" width="220"><br><sub><b>Every category ranked</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/4-your-wallet.png" width="220"><br><sub><b>Your whole wallet</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/5-no-account-needed.png" width="220"><br><sub><b>No account needed</b></sub></td>
   </tr>
 </table>
 </div>
