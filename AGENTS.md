@@ -115,3 +115,49 @@ This project runs CCE — a semantic code index plus cross-session memory. §5 c
 - Skip trivial reads/formatting — durable signal, not an event log.
 
 **Drill into a recall hit:** results are tagged `[sid:…|n:…]`. `session_timeline(session_id="…")` walks that session's turns; `session_event(event_id=N)` fetches a specific tool event's raw input/output. Both read-only — prefer them over re-running tools or asking for a re-paste.
+
+## 8. Pre-Commit / Pre-Publish Review
+
+**When the owner says "check the diff before I commit/publish", run this. It is not a lint pass — every item below has caught a real defect.**
+
+Order matters: establish blast radius first, then correctness, then hygiene.
+
+### 8.1 Establish what a push actually does — BEFORE reviewing anything
+- Read the CI/publish workflow's `on.push.paths`. **A push can publish.** Work out whether *this* diff matches those filters; if it does, the review is a release review, not a code review.
+- Check the reverse too: does a changed file sit OUTSIDE the guard meant to validate it? A guard whose path filter excludes the file it guards never runs on the commit that matters.
+- If a build artifact ships, **rebuild and hash-compare against the pre-review copy.** Comment-only source edits must produce byte-identical output; if they don't, something non-obvious changed.
+
+### 8.2 Pre-flight every gate locally
+Run each commit hook and CI step yourself — linter, formatter, type checker, dead-code, test suite, any project-specific gate. A blocked commit is a wasted round-trip, and a gate you didn't run is a gate you're guessing about.
+
+### 8.3 Separate *your* failures from *pre-existing* ones
+Never report "pre-existing" on inference. **Prove it**: create a throwaway worktree at `HEAD`, run the failing check there, then remove the worktree. If it fails at clean `HEAD`, it predates the work — say so and don't attribute it to the owner's in-flight changes. (Cost of guessing: a wrong attribution sends them auditing their own correct code.)
+
+### 8.4 Verify factual claims in docs and comments against the thing they describe
+Prose rots silently and ships as truth. For every added or nearby claim of the form "all N are X" / "currently the default" / "none do", **go count**. Two such statements were false in one review, both written before a rollout and never updated.
+
+### 8.5 Assertions must be proven non-vacuous
+For any new or changed test/guard, **mutate the code it covers and confirm it fails.** Revert the mutation immediately (snapshot the file first). A test that passes because it isn't reached is worse than no test.
+
+Also hunt **stale exemptions**: a skip whose comment names a condition ("re-enable once X ships"). If X shipped, the exemption is now a silent coverage hole — close it.
+
+### 8.6 Guards must fail loudly when they cannot run
+A check that depends on external config (an env var, a URL, a network fetch) and treats absence as success will read green forever while checking nothing. Prefer a value already committed in-repo over one that must be configured per machine or per environment. **A guard that passes when it can't run is worse than none — it reads as proof.**
+
+### 8.7 Time-dependent tests
+Any test whose fixture carries a fixed date, against code with a recency window or cutoff, is a time bomb: it passes when written and fails later with no code change. **Fixtures must be relative to now.** Say so in a comment so the next person doesn't "fix" it back.
+
+### 8.8 Deletions and data changes
+- Every deleted file: confirm the deletion is intentional and nothing still routes through it.
+- Config that exists in two layers (a source-of-truth file that is compiled/synced into a second one) must be **checked in both** — an edit to only the source silently loses to the compiled copy.
+- Bundled data: confirm it's the right *variant* (build outputs and published copies can legitimately differ), that its schema version is one the reader supports, and that it's registered wherever assets are declared.
+
+### 8.9 Public-repo hygiene
+Run on added lines only, so pre-existing noise doesn't drown the signal:
+- **Secrets**: keys, tokens, passwords, bearer/auth headers, private-key headers.
+- **Private names**: a public repo must never name a private repo or service except where a path makes it load-bearing (e.g. an ignore rule). Use the agreed public alias everywhere else.
+- Debug leftovers (`breakpoint()`, `set_trace`, stray prints), and absolute machine-local paths.
+- Formatting/lint: check **only the files this diff touches**. Pre-existing unformatted files are not yours to reformat (§3) — report them, don't fix them.
+
+### 8.10 Report
+State plainly: what you fixed, what needs the owner's decision, and what you checked and cleared. If you could not root-cause something, **say that** rather than offering a guess as a finding.
