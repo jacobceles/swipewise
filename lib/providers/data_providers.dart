@@ -563,6 +563,32 @@ final travelIsForeignProvider = FutureProvider<bool>((ref) async {
   }
 });
 
+/// The categories the user picked for each selectable-bonus group (N17),
+/// keyed by group id. Feeds [engineRankerProvider]: a "choose 1 of 9" bonus is
+/// only credited to a recommendation on the category they actually chose.
+///
+/// Invalidate this after writing a selection — the ranker rebuilds off it.
+// sync: opt-out — the user's own picks, in a table no bank sync writes.
+final bonusSelectionsProvider =
+    FutureProvider<Map<String, Set<RewardCategory>>>((ref) async {
+      final repo = ref.watch(dataRepositoryProvider);
+      return repo.catalog.bonusSelections();
+    });
+
+/// The selectable-bonus groups a card product carries (N17), in catalog
+/// order. Almost always empty — see [BonusSelectionGroup]. Drives the Cards
+/// screen's Rewards-tab bonus row and the category picker it opens.
+// sync: opt-out — derived from the global catalog tables, not user sync data.
+final bonusSelectionGroupsProvider =
+    FutureProvider.family<List<BonusSelectionGroup>, String>((
+      ref,
+      cardProductId,
+    ) async {
+      final repo = ref.watch(dataRepositoryProvider);
+      await ref.watch(catalogReadyProvider.future);
+      return repo.catalog.selectionGroupsForProduct(cardProductId);
+    });
+
 final engineRankerProvider = FutureProvider<EngineRanker?>((ref) async {
   final auth = ref.watch(sessionProvider);
   if (!auth.isLoggedIn) return null;
@@ -574,6 +600,7 @@ final engineRankerProvider = FutureProvider<EngineRanker?>((ref) async {
   final activations = await repo.catalog.activations(auth.userId!);
   final prefOrder = await ref.watch(cardPreferenceOrderProvider.future);
   final isForeign = await ref.watch(travelIsForeignProvider.future);
+  final bonusSelections = await ref.watch(bonusSelectionsProvider.future);
   return EngineRanker(
     snapshot: snapshot,
     linkedCards: links,
@@ -581,6 +608,7 @@ final engineRankerProvider = FutureProvider<EngineRanker?>((ref) async {
     activationsByCard: activations,
     cardPreferenceOrder: prefOrder,
     isForeign: isForeign,
+    selectedBonusCategories: bonusSelections,
   );
 });
 

@@ -273,6 +273,7 @@ class DataRepository {
       activationsByCard: await catalog.activations(userId),
       cardPreferenceOrder: cardPreferenceOrder,
       isForeign: isForeign,
+      selectedBonusCategories: await catalog.bonusSelections(),
     );
   }
 

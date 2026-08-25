@@ -6,6 +6,17 @@ import 'package:swipewise/api/transaction_repository.dart';
 /// N11: `queryRecurringPayments` must carry the card a recurring charge is
 /// billed to (the most-recent occurrence's `card_id`) so the router can compare
 /// it against the user's best card for that category.
+
+/// A UTC ISO timestamp `n` days before now.
+///
+/// ⚠️ These MUST be relative to now. `queryRecurringPayments` drops a series
+/// whose last charge is older than its cadence's `activeCutoffDays` (50 for
+/// MONTHLY), so fixed dates pass when written and then start failing on their
+/// own once the calendar walks past the cutoff — which is exactly what these
+/// two tests did, silently, some time after 2026-08-20.
+String daysAgo(int n) =>
+    DateTime.now().toUtc().subtract(Duration(days: n)).toIso8601String();
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
@@ -63,25 +74,25 @@ void main() {
         't1',
         merchant: 'Netflix',
         cardId: 'cardA',
-        postedAt: '2026-04-01T00:00:00Z',
+        postedAt: daysAgo(90),
       );
       await insertTx(
         't2',
         merchant: 'Netflix',
         cardId: 'cardA',
-        postedAt: '2026-05-01T00:00:00Z',
+        postedAt: daysAgo(60),
       );
       await insertTx(
         't3',
         merchant: 'Netflix',
         cardId: 'cardB',
-        postedAt: '2026-06-01T00:00:00Z',
+        postedAt: daysAgo(30),
       );
       await insertTx(
         't4',
         merchant: 'Netflix',
         cardId: 'cardB',
-        postedAt: '2026-07-01T00:00:00Z',
+        postedAt: daysAgo(1),
       );
 
       final summary = await TransactionRepository(
@@ -99,21 +110,21 @@ void main() {
       merchant: 'Spotify',
       cardId: 'cardX',
       amount: 9.99,
-      postedAt: '2026-05-01T00:00:00Z',
+      postedAt: daysAgo(60),
     );
     await insertTx(
       's2',
       merchant: 'Spotify',
       cardId: 'cardX',
       amount: 9.99,
-      postedAt: '2026-06-01T00:00:00Z',
+      postedAt: daysAgo(30),
     );
     await insertTx(
       's3',
       merchant: 'Spotify',
       cardId: 'cardX',
       amount: 9.99,
-      postedAt: '2026-07-01T00:00:00Z',
+      postedAt: daysAgo(1),
     );
 
     final summary = await TransactionRepository(

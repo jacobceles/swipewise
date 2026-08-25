@@ -2,7 +2,7 @@
 # Auto-detected quality gate — run before committing. Exits 0 if no stack matched.
 set -e
 if [ -f pubspec.yaml ]; then
-    grep -q flutter pubspec.yaml && flutter analyze || dart analyze
+    if grep -q flutter pubspec.yaml; then flutter analyze && flutter test; else dart analyze; fi
 elif [ -f package.json ]; then
     if grep -q '"lint"' package.json; then npm run -s lint
     elif [ -f tsconfig.json ]; then npx --yes tsc --noEmit

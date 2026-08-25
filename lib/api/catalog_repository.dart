@@ -94,10 +94,11 @@ String issuerDisplayName(String issuer) {
   return _kIssuerDisplayNames[key] ?? issuer;
 }
 
-/// All DB access for the catalog Track-B tables: the five global catalog
+/// All DB access for the catalog Track-B tables: the six global catalog
 /// tables (`point_systems`/`card_products`/`reward_rules`/
-/// `reward_rule_exclusions`/`product_perks`), the user-side `card_links`, and
-/// `rotating_activations`.
+/// `reward_rule_exclusions`/`product_perks`/`bonus_selection_groups`), the
+/// user-side `card_links`, `rotating_activations`, and
+/// `user_bonus_selections`.
 ///
 /// Deliberately the ONLY place that touches these tables, so `reward_engine`
 /// stays a pure function over [CatalogSnapshot] and the rest of the app talks
@@ -108,21 +109,29 @@ class CatalogRepository {
 
   // ─────────────── Catalog hydration (global) ───────────────
 
-  /// Replaces the five global catalog tables atomically. Rows must already
+  /// Replaces the global catalog tables atomically. Rows must already
   /// be column-projected (only real column keys). Deletes run in reverse FK
   /// order, inserts in forward FK order, so `foreign_keys = ON` is happy.
+  ///
+  /// Everything this wipes is **derived** — re-importable from the next
+  /// bundle. `user_bonus_selections` is the one table in the catalog family
+  /// that is not, so it is deliberately absent from the deletes below: a
+  /// catalog refresh happens on any boot the publisher moved `dataVersion`,
+  /// and it must never cost the user the bonus categories they picked.
   Future<void> replaceCatalog({
     required List<Map<String, Object?>> pointSystems,
     required List<Map<String, Object?>> cardProducts,
     required List<Map<String, Object?>> rewardRules,
     required List<Map<String, Object?>> exclusions,
     List<Map<String, Object?>> productPerks = const [],
+    List<Map<String, Object?>> bonusSelectionGroups = const [],
   }) async {
     final db = await _dbHelper.database;
     await db.transaction((txn) async {
       await txn.delete('reward_rule_exclusions');
       await txn.delete('reward_rules');
       await txn.delete('product_perks');
+      await txn.delete('bonus_selection_groups');
       await txn.delete('card_products');
       await txn.delete('point_systems');
 
@@ -132,6 +141,9 @@ class CatalogRepository {
       }
       for (final c in cardProducts) {
         batch.insert('card_products', c);
+      }
+      for (final g in bonusSelectionGroups) {
+        batch.insert('bonus_selection_groups', g);
       }
       for (final r in rewardRules) {
         batch.insert('reward_rules', r);
@@ -156,6 +168,7 @@ class CatalogRepository {
       'card_products',
       'reward_rules',
       'reward_rule_exclusions',
+      'bonus_selection_groups',
     ]) {
       final res = await db.rawQuery('SELECT COUNT(*) AS n FROM $t');
       out[t] = Sqflite.firstIntValue(res) ?? 0;
@@ -165,7 +178,7 @@ class CatalogRepository {
 
   // ─────────────── Snapshot (engine input) ───────────────
 
-  /// Reads the four global tables once and builds the immutable
+  /// Reads the global catalog tables once and builds the immutable
   /// [CatalogSnapshot] the engine resolves against.
   Future<CatalogSnapshot> loadSnapshot() async {
     final db = await _dbHelper.database;
@@ -173,6 +186,7 @@ class CatalogRepository {
     final ruleRows = await db.query('reward_rules');
     final exclusionRows = await db.query('reward_rule_exclusions');
     final psRows = await db.query('point_systems');
+    final groupRows = await db.query('bonus_selection_groups');
 
     final products = <String, CardProduct>{
       for (final r in productRows) r['card_product_id'] as String: _product(r),
@@ -199,6 +213,9 @@ class CatalogRepository {
       rulesByProduct: rulesByProduct,
       exclusionsByRule: exclusionsByRule,
       pointSystems: pointSystems,
+      selectionGroups: {
+        for (final r in groupRows) r['group_id'] as String: _selectionGroup(r),
+      },
     );
   }
 
@@ -388,6 +405,71 @@ class CatalogRepository {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  // ─────────────── Selectable bonus categories (N17) ───────────────
+
+  /// The selectable-bonus groups a product carries, in catalog order. Usually
+  /// none; U.S. Bank Cash+ carries two.
+  Future<List<BonusSelectionGroup>> selectionGroupsForProduct(
+    String cardProductId,
+  ) async {
+    final db = await _dbHelper.database;
+    final rows = await db.query(
+      'bonus_selection_groups',
+      where: 'card_product_id = ?',
+      whereArgs: [cardProductId],
+      orderBy: 'group_id',
+    );
+    return rows.map(_selectionGroup).toList(growable: false);
+  }
+
+  /// group_id → the categories the user picked for that group. The map the
+  /// ranker consults; a group the user hasn't answered yet is simply absent.
+  ///
+  /// Not user-scoped — see `user_bonus_selections` in `database_helper.dart`.
+  Future<Map<String, Set<RewardCategory>>> bonusSelections() async {
+    final db = await _dbHelper.database;
+    final rows = await db.query('user_bonus_selections');
+    final out = <String, Set<RewardCategory>>{};
+    for (final r in rows) {
+      final groupId = r['group_id'] as String;
+      (out[groupId] ??= <RewardCategory>{}).add(
+        RewardCategory.fromName(r['category'] as String),
+      );
+    }
+    return out;
+  }
+
+  /// Records the user's pick for ONE group, replacing whatever that group held
+  /// before. Scoped to `group_id` on purpose: a card can carry two independent
+  /// groups, and answering one must not blank the other.
+  ///
+  /// An empty [categories] clears the group — "I haven't decided" is a real
+  /// answer, and it puts the card back to earning its baseline in rankings.
+  Future<void> setBonusSelection({
+    required String groupId,
+    required String cardProductId,
+    required Iterable<RewardCategory> categories,
+    DateTime? at,
+  }) async {
+    final db = await _dbHelper.database;
+    final chosenAt = (at ?? DateTime.now()).toUtc().toIso8601String();
+    await db.transaction((txn) async {
+      await txn.delete(
+        'user_bonus_selections',
+        where: 'group_id = ?',
+        whereArgs: [groupId],
+      );
+      for (final c in categories) {
+        await txn.insert('user_bonus_selections', {
+          'group_id': groupId,
+          'card_product_id': cardProductId,
+          'category': c.name,
+          'chosen_at': chosenAt,
+        });
+      }
+    });
+  }
+
   // ─────────────── Card-detail reads (via card_links) ───────────────
 
   /// Perks for a card, resolved through its catalog link. Display-only —
@@ -546,8 +628,20 @@ class CatalogRepository {
       notes: r['notes'] as String?,
       earnConstraint: r['earn_constraint'] as String?,
       excludedCategories: _categoryList(r['excluded_categories']),
+      selectionGroup: r['selection_group'] as String?,
     );
   }
+
+  static BonusSelectionGroup _selectionGroup(Map<String, Object?> r) =>
+      BonusSelectionGroup(
+        groupId: r['group_id'] as String,
+        productId: r['card_product_id'] as String,
+        // Nullable in the schema so one malformed row can't roll back the
+        // whole import; 1 is the only sane read of "a choice was offered".
+        choose: (r['choose'] as num?)?.toInt() ?? 1,
+        mode: BonusSelectionMode.fromName(r['mode'] as String?),
+        period: r['period'] as String?,
+      );
 
   /// Decode the stored `excluded_categories` JSON array (e.g. `'["transit"]'`) into
   /// `RewardCategory` values. Empty for null/blank/legacy rows (pre-migration data or

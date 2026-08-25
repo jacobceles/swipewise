@@ -53,6 +53,10 @@ on:
       - 'test/**'
       - 'android/**'
       - 'tool/**'
+      # assets/** matters for the offline-floor check below: refreshing
+      # assets/catalog/free.json is usually a lone commit, and without this the
+      # one job that validates it would not run on the change it guards.
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - '.github/workflows/app.yml'
@@ -62,6 +66,10 @@ on:
       - 'test/**'
       - 'android/**'
       - 'tool/**'
+      # assets/** matters for the offline-floor check below: refreshing
+      # assets/catalog/free.json is usually a lone commit, and without this the
+      # one job that validates it would not run on the change it guards.
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
   workflow_dispatch: {}
@@ -81,6 +89,32 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+
+      # The bundled offline floor is what a FRESH INSTALL boots on before its first
+      # fetch, so a stale one ships wrong rates to exactly the users with no cached
+      # catalog. It goes stale silently: the backend engine's publish job copies free.json into
+      # a CI checkout so the publish CLI can read it, but nothing commits it back —
+      # refreshing the committed copy is a manual step in a different repo. That is how
+      # the app once shipped a 223-card floor against a live 410.
+      #
+      # This does not fix the drift, it makes it loud. Compare the bundled dataVersion
+      # against what the Worker is actually serving and fail if they differ.
+      - name: Offline floor matches the published catalog
+        run: |
+          BUNDLED=$(python3 -c "import json;print(json.load(open('assets/catalog/free.json'))['dataVersion'])")
+          # The URL comes from keys.free.json, which is committed on purpose (it carries no
+          # credential). Deliberately NOT a repo variable: an unset variable makes curl fail,
+          # which lands in the skip branch below — so the check would read green forever while
+          # never comparing anything. A guard that passes when it cannot run is worse than none.
+          BASE=$(python3 -c "import json;print(json.load(open('keys.free.json'))['R2_BASE_URL'])")
+          LIVE=$(curl -fsSL "$BASE/catalog.json" | python3 -c "import json,sys;print(json.load(sys.stdin)['dataVersion'])") || {
+            echo "::warning::could not reach the catalog API — skipping the floor check"; exit 0; }
+          echo "bundled=$BUNDLED live=$LIVE"
+          if [ "$BUNDLED" != "$LIVE" ]; then
+            echo "::error::Bundled assets/catalog/free.json (dataVersion $BUNDLED) trails the published catalog ($LIVE)."
+            echo "Fresh installs would boot on stale rates. Refresh it from the engine's output/catalog/free.json and commit."
+            exit 1
+          fi
 
   release-gate:
     # No `if:` guard any more, and that is the point. The gate used to need a

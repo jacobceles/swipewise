@@ -7,8 +7,11 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../models/card.dart';
 import '../models/insights.dart';
+import '../models/reward_category.dart';
 import '../api/data_repository.dart';
 import '../api/bank_client.dart';
+import '../api/catalog_repository.dart';
+import '../api/reward_engine.dart';
 import '../api/types.dart';
 import '../providers/entitlement_provider.dart';
 import '../providers/auth_provider.dart';
@@ -18,6 +21,7 @@ import '../providers/bank_sync_provider.dart';
 import '../sync/sync_progress_event.dart';
 import '../notifications/payment_reminder_service.dart';
 import '../theme/app_theme.dart';
+import 'bonus_category_picker_screen.dart';
 import 'due_date_sheet.dart';
 import '../util/logger.dart';
 import '../widgets/async_action_button.dart';
@@ -1532,6 +1536,7 @@ class _CardDetailsSheet extends ConsumerWidget {
     final rewards = rewardsAsync.value ?? const <WalletRewardRow>[];
     final credits = perks.where((p) => p.isCredit).toList();
     final benefits = perks.where((p) => p.isBenefit).toList();
+    final bonusGroups = _bonusGroupsFor(ref, card.cardId);
     final available =
         card.creditAvailable ??
         (card.creditLimit != null ? card.creditLimit! - card.balance : null);
@@ -1618,6 +1623,7 @@ class _CardDetailsSheet extends ConsumerWidget {
                       rewards: rewards,
                       async: rewardsAsync,
                       card: card,
+                      bonusGroups: bonusGroups,
                     ),
                     _CreditsTab(credits: credits, async: perksAsync),
                     _BenefitsTab(benefits: benefits, async: perksAsync),
@@ -1840,88 +1846,299 @@ class _StatStrip extends StatelessWidget {
       Container(width: 1, height: 32, color: palette.border);
 }
 
-class _RewardsTab extends StatelessWidget {
+class _RewardsTab extends ConsumerWidget {
   const _RewardsTab({
     required this.rewards,
     required this.async,
     required this.card,
+    required this.bonusGroups,
   });
   final List<WalletRewardRow> rewards;
   final AsyncValue async;
   final CardSummary card;
+  // N17: the card's selectable-bonus groups, if it has any (~13 of 410
+  // cards do). Empty for everything else, in which case no row renders.
+  final List<_BonusGroupDisplay> bonusGroups;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Locked-rewards empty state: when a card needs identification, the
     // generic "no rewards yet" copy is misleading - rewards are
     // unavailable because we don't know the product. Surface that
     // directly with a CTA to the picker so the empty tab is also an
     // entry point to the Identify flow.
+    // Deliberately NOT "…yet". 69 of 410 catalogued cards carry no earn rules at all, and for
+    // 68 of them that is correct rather than missing: BankAmericard, the secured and prepaid
+    // cards, and the balance-transfer products genuinely have no rewards programme. "yet"
+    // promised data that is never coming and made 17% of the catalog read as half-built.
+    // It does not say "this card earns nothing" either, because one card (synchrony's Venmo)
+    // really is an extraction gap, and asserting absence there would be wrong.
     final empty = IdentifyCardBanner.shouldShowFor(card)
         ? _LockedRewardsEmpty(card: card)
         : const _TabEmpty(
             icon: LucideIcons.gift,
-            message: 'No rewards data for this card yet',
+            message: 'No rewards listed for this card',
           );
     return _TabSlot(
       async: async,
       empty: empty,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        itemCount: rewards.length,
-        separatorBuilder: (_, _) =>
-            Divider(height: 1, indent: 0, color: AppPalette.of(context).border),
-        itemBuilder: (_, i) {
-          final r = rewards[i];
-          final label = r.label;
-          final amount = r.amount ?? 0;
-          final currency = r.currency ?? '%';
-          // `is_baseline = 1` is the explicit catch-all marker now; the
-          // legacy substring on the label stays as a defensive fallback.
-          final isCatchAll =
-              r.isBaseline ||
-              label.toLowerCase().contains('everywhere') ||
-              label.toLowerCase().contains('other');
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+      child: Column(
+        children: [
+          if (bonusGroups.isNotEmpty)
+            for (final g in bonusGroups) ...[
+              _BonusSelectionRow(card: card, display: g),
+              Divider(height: 1, color: AppPalette.of(context).border),
+            ],
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              itemCount: rewards.length,
+              separatorBuilder: (_, _) => Divider(
+                height: 1,
+                indent: 0,
+                color: AppPalette.of(context).border,
+              ),
+              itemBuilder: (_, i) {
+                final r = rewards[i];
+                final label = r.label;
+                final amount = r.amount ?? 0;
+                final currency = r.currency ?? '%';
+                // `is_baseline = 1` is the explicit catch-all marker now; the
+                // legacy substring on the label stays as a defensive fallback.
+                final isCatchAll =
+                    r.isBaseline ||
+                    label.toLowerCase().contains('everywhere') ||
+                    label.toLowerCase().contains('other');
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: AppText.bodyMd()),
-                      // "top N spend categories" earns reach only a subset of the
-                      // listed categories — show the caveat so the rates don't read
-                      // as earned on everything at once.
-                      if (r.earnConstraint != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            r.earnConstraint!,
-                            style: AppText.bodySm(
-                              color: AppPalette.of(context).muted,
-                            ),
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(label, style: AppText.bodyMd()),
+                            // "top N spend categories" earns reach only a subset of the
+                            // listed categories — show the caveat so the rates don't read
+                            // as earned on everything at once.
+                            if (r.earnConstraint != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  r.earnConstraint!,
+                                  style: AppText.bodySm(
+                                    color: AppPalette.of(context).muted,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
+                      ),
+                      Text(
+                        _formatRate(amount, currency),
+                        style: AppText.monoMd(
+                          color: isCatchAll
+                              ? AppColors.foreground
+                              : AppPalette.of(context).green,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
-                ),
-                Text(
-                  _formatRate(amount, currency),
-                  style: AppText.monoMd(
-                    color: isCatchAll
-                        ? AppColors.foreground
-                        : AppPalette.of(context).green,
-                  ).copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
+  }
+}
+
+/// N17: the card's selectable-bonus rows for the Rewards tab, derived from
+/// its linked product's groups + their member reward rules. A group carries
+/// no rate or candidate list of its own (`groupId`/`choose`/`mode`/`period`
+/// only) — those come from `reward_rules` filtered by
+/// `rule.selectionGroup == group.groupId`. Empty for the ~397 of 410 cards
+/// with no selection group at all, which is the common case.
+List<_BonusGroupDisplay> _bonusGroupsFor(WidgetRef ref, String cardId) {
+  final links = ref.watch(cardLinksProvider).value ?? const <LinkedCard>[];
+  String? productId;
+  for (final l in links) {
+    if (l.cardId == cardId) {
+      productId = l.cardProductId;
+      break;
+    }
+  }
+  if (productId == null) return const [];
+  final groups =
+      ref.watch(bonusSelectionGroupsProvider(productId)).value ??
+      const <BonusSelectionGroup>[];
+  if (groups.isEmpty) return const [];
+  final snapshot = ref.watch(catalogSnapshotProvider).value;
+  final chosen =
+      ref.watch(bonusSelectionsProvider).value ??
+      const <String, Set<RewardCategory>>{};
+  final rules = snapshot?.rulesByProduct[productId] ?? const <RewardRule>[];
+  final out = <_BonusGroupDisplay>[];
+  for (final g in groups) {
+    final members = rules.where((r) => r.selectionGroup == g.groupId).toList();
+    // Defensive: a group whose member rules didn't come through (shouldn't
+    // happen with a sound catalog) has no rate or options to show, so it's
+    // skipped rather than rendered blank.
+    if (members.isEmpty) continue;
+    out.add(
+      _BonusGroupDisplay(
+        group: g,
+        rate: members.first.rate,
+        currency:
+            snapshot
+                ?.pointSystems[members.first.pointSystemId]
+                ?.currencyLabel ??
+            'USD',
+        candidateCount: members.length,
+        chosen: chosen[g.groupId] ?? const <RewardCategory>{},
+      ),
+    );
+  }
+  return out;
+}
+
+/// One selectable-bonus group's Rewards-tab display data.
+class _BonusGroupDisplay {
+  const _BonusGroupDisplay({
+    required this.group,
+    required this.rate,
+    required this.currency,
+    required this.candidateCount,
+    required this.chosen,
+  });
+  final BonusSelectionGroup group;
+  final double rate;
+  final String currency;
+  final int candidateCount;
+  final Set<RewardCategory> chosen;
+}
+
+/// "3%" for a USD (cash back) rule, "3x" for a points/miles one.
+String _bonusRateText(double rate, String currency) {
+  final n = rate.truncateToDouble() == rate
+      ? rate.toStringAsFixed(0)
+      : rate.toStringAsFixed(1);
+  return currency == 'USD' ? '$n%' : '${n}x';
+}
+
+/// Subtitle copy once the user has answered a `user_choice` group — a
+/// quarter/year group genuinely resets on that cadence, while a monthly
+/// group (BoA Customized Cash) can be changed on demand rather than on a
+/// fixed reset, hence "change anytime" for `month` and the unset `null`.
+String _bonusResetPhrase(String? period) => switch (period) {
+  'quarter' => 'resets each quarter',
+  'year' => 'resets each year',
+  _ => 'change anytime',
+};
+
+/// Subtitle copy for an `automatic`/`unknown` group — the issuer decides,
+/// on this cadence.
+String _bonusCadencePhrase(String? period) => switch (period) {
+  'month' => 'each month',
+  'quarter' => 'each quarter',
+  'year' => 'each year',
+  _ => 'each cycle',
+};
+
+/// The N17 bonus-category row at the top of the Rewards tab — one per
+/// selectable-bonus group the card carries (U.S. Bank Cash+ carries two,
+/// independently). Tapping a `user_choice` row, answered or not, opens the
+/// full-screen picker; an `automatic`/`unknown` row has no chevron and
+/// isn't tappable — the issuer decides, there's nothing to pick.
+class _BonusSelectionRow extends ConsumerWidget {
+  const _BonusSelectionRow({required this.card, required this.display});
+  final CardSummary card;
+  final _BonusGroupDisplay display;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final group = display.group;
+    final rateText = _bonusRateText(display.rate, display.currency);
+    final plural = group.choose > 1 ? 'categories' : 'category';
+    final isUserChoice = group.mode == BonusSelectionMode.userChoice;
+    final hasChosen = display.chosen.isNotEmpty;
+
+    final String title;
+    final String subtitle;
+    final bool tappable;
+    if (!isUserChoice) {
+      title = '$rateText on your top ${group.choose} $plural';
+      subtitle = 'Chosen for you ${_bonusCadencePhrase(group.period)}';
+      tappable = false;
+    } else if (!hasChosen) {
+      title = 'Choose your $rateText $plural';
+      subtitle = 'Tap to pick ${group.choose} of ${display.candidateCount}';
+      tappable = true;
+    } else {
+      title = '$rateText $plural';
+      final labels = display.chosen.map((c) => c.label).toList()..sort();
+      subtitle = '${labels.join(', ')} · ${_bonusResetPhrase(group.period)}';
+      tappable = true;
+    }
+
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppText.bodyMd(
+                    color: !isUserChoice || hasChosen
+                        ? null
+                        : AppColors.primary,
+                  ).copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(subtitle, style: AppText.bodySm(color: palette.muted)),
+              ],
+            ),
+          ),
+          if (tappable)
+            Icon(LucideIcons.chevronRight, size: 18, color: palette.muted),
+        ],
+      ),
+    );
+    if (!tappable) return row;
+    return InkWell(
+      onTap: () => _openBonusPicker(context, ref, card),
+      child: row,
+    );
+  }
+}
+
+/// Pushes the full-screen picker and, if the user saved, invalidates the
+/// selections provider (which cascades into the ranker) and confirms via
+/// snackbar — mirroring `_editLimit`'s pop-a-bool-then-react pattern rather
+/// than having the picker reach back into providers after it's already gone.
+Future<void> _openBonusPicker(
+  BuildContext context,
+  WidgetRef ref,
+  CardSummary card,
+) async {
+  final saved = await Navigator.of(context).push<bool>(
+    MaterialPageRoute(
+      builder: (_) => BonusCategoryPickerScreen(cardId: card.cardId),
+    ),
+  );
+  if (saved == true) {
+    ref.invalidate(bonusSelectionsProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Selection saved')));
+    }
   }
 }
 

@@ -53,6 +53,53 @@ enum RewardRuleKind {
   }
 }
 
+/// Who picks the categories a [BonusSelectionGroup] pays its bonus on.
+enum BonusSelectionMode {
+  /// The cardholder chooses (BoA Customized Cash: "choose 1 of 9"). Knowable —
+  /// once they tell us, the rule is as good as any other.
+  userChoice,
+
+  /// The issuer picks from actual spend (Amex Business Gold: "your top 2
+  /// categories each billing cycle"). Never knowable from inside the app.
+  automatic,
+
+  /// A mode this build doesn't recognise. Treated like [automatic] everywhere
+  /// it matters: unprovable, so never credited to a recommendation.
+  unknown;
+
+  static BonusSelectionMode fromName(String? s) => switch (s) {
+    'user_choice' => BonusSelectionMode.userChoice,
+    'automatic' => BonusSelectionMode.automatic,
+    _ => BonusSelectionMode.unknown,
+  };
+}
+
+/// A set of category rules on one card of which only [choose] are live at a
+/// time — a catalog `bonus_selections` entry.
+///
+/// The unit is the GROUP, not the card: U.S. Bank Cash+ has two independent
+/// groups (choose 1 of 3 at 5%, choose 2 of 6 at 2%), so anything keyed by
+/// card would fuse two different picks into one.
+class BonusSelectionGroup {
+  const BonusSelectionGroup({
+    required this.groupId,
+    required this.productId,
+    required this.choose,
+    required this.mode,
+    this.period,
+  });
+
+  final String groupId;
+  final String productId;
+
+  /// How many of the group's categories earn the bonus at once.
+  final int choose;
+  final BonusSelectionMode mode;
+
+  /// 'month' | 'quarter' | 'year' | null — how often the pick can change.
+  final String? period;
+}
+
 /// A points/miles currency with its app-curated cents-per-point valuation.
 /// `usd` is 1.0 — so a 5% cashback rule and a 5x-points rule become
 /// comparable on a single `effectiveCentsPerDollar` axis.
@@ -96,6 +143,7 @@ class RewardRule {
     this.notes,
     this.earnConstraint,
     this.excludedCategories = const [],
+    this.selectionGroup,
   });
 
   final String ruleId;
@@ -131,6 +179,16 @@ class RewardRule {
   /// `travel` rule listing `transit` here won't win a transit lookup. Curated in
   /// the catalog (`excluded_categories`); empty for the common case.
   final List<RewardCategory> excludedCategories;
+
+  /// The [BonusSelectionGroup] this rule belongs to, or null (the common case)
+  /// for a rule that always earns.
+  ///
+  /// A member rule is only *potentially* live: the card pays this rate on this
+  /// category only while the category is one of the group's chosen few. The
+  /// rule stays in the card's own rule list either way — the card really does
+  /// pay it once chosen — but `EngineRanker` refuses to credit it in a
+  /// recommendation it can't prove.
+  final String? selectionGroup;
 }
 
 /// A card product (the issuer's marketed card). Only the fields the engine
@@ -155,6 +213,7 @@ class CardProduct {
   final String displayName;
   final String? network;
   final double? annualFeeUsd;
+
   /// Percent charged on foreign spend, or **null when it was never captured**.
   ///
   /// Null is not 0. The catalog distinguishes them (203 unknown vs 161 genuine
@@ -191,6 +250,7 @@ class CatalogSnapshot {
     required this.rulesByProduct,
     required this.exclusionsByRule,
     required this.pointSystems,
+    this.selectionGroups = const {},
   });
 
   /// card_product_id → product.
@@ -204,6 +264,11 @@ class CatalogSnapshot {
 
   /// point_system_id → valuation.
   final Map<String, PointSystem> pointSystems;
+
+  /// group_id → selectable-bonus group. Empty on a catalog published before
+  /// `bonus_selections` existed (including the offline floor in the APK),
+  /// where no rule carries a `selectionGroup` either.
+  final Map<String, BonusSelectionGroup> selectionGroups;
 
   static final CatalogSnapshot empty = CatalogSnapshot(
     products: const {},

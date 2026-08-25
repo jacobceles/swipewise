@@ -42709,6 +42709,1393 @@
           }
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "b7n26K",
+      "x": 18142,
+      "y": -488,
+      "name": "Bonus Categories",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "B1meJ",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "WiO6U",
+          "name": "App Bar",
+          "width": "fill_container",
+          "height": 48,
+          "gap": 12,
+          "padding": [
+            0,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Owfet",
+              "name": "Back",
+              "fill": "$--foreground",
+              "content": "‹",
+              "fontFamily": "$--font-primary",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ir1RM",
+              "name": "Title",
+              "fill": "$--foreground",
+              "content": "Bonus categories",
+              "fontFamily": "$--font-primary",
+              "fontSize": 17,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NGNaS",
+          "name": "Card Context",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "padding": [
+            4,
+            16,
+            20,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "jKCmu",
+              "name": "Card",
+              "fill": "$--foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Customized Cash Rewards",
+              "lineHeight": 1.25,
+              "fontFamily": "$--font-primary",
+              "fontSize": 22,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "W1Sf0s",
+              "name": "Sub",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Bank of America · choose where this card earns its bonus",
+              "lineHeight": 1.4,
+              "fontFamily": "$--font-primary",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wzT7f",
+          "name": "Group 3pct",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            0,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "ptxBV",
+              "name": "Header",
+              "width": "fill_container",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "yegDK",
+                  "name": "HeaderLeft",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GnGNL",
+                      "fill": "$--foreground",
+                      "content": "3% cash back",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "WKbIF",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Pick 1 of 9 · changeable once a month",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kJDhN",
+                  "name": "Badge",
+                  "fill": "$--green-bg",
+                  "cornerRadius": 99,
+                  "padding": [
+                    4,
+                    10
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "l0bmG",
+                      "fill": "$--green",
+                      "content": "1 of 1 chosen",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nC1Ro",
+              "name": "Options",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "P3TGD0",
+                  "name": "Opt Gas",
+                  "width": "fill_container",
+                  "fill": "#241703",
+                  "cornerRadius": 12,
+                  "stroke": "$--primary",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "n0RYtb",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Gas",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "mTp8m",
+                      "fill": "$--primary",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--primary",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rg3pn",
+                  "name": "Opt Dining",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "e30oB",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Dining",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "HAiVI",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "R4G1Xz",
+                  "name": "Opt Online shopping",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MPQtA",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Online shopping",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "P5RKb6",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "G78C3l",
+                  "name": "Opt Drug stores",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "s1DKa",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Drug stores",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Nxd7r",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ka6Lz",
+                  "name": "Opt Home improvement",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dChvN",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Home improvement",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "FQzyr",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GasmY",
+                  "name": "Opt Travel",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Pq04W",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Travel",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "u0z81",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XDW6F",
+                  "name": "Opt Streaming",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "kbLrV",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Streaming",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "PtxY9",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "E8OLb7",
+                  "name": "Opt Phone & internet",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "W2SfA",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Phone & internet",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "D2lI3",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vv0yy",
+                  "name": "Opt EV charging",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nKdur",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "EV charging",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "JuktY",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tGkDV",
+              "name": "Effective Note",
+              "width": "fill_container",
+              "fill": "$--card",
+              "cornerRadius": 10,
+              "gap": 8,
+              "padding": [
+                10,
+                12
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VcJeH",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Applies from your next statement. Your last change was 4 Aug.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dmrpP",
+          "name": "Footer",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            16,
+            16,
+            24,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "rCHvn",
+              "name": "Save",
+              "width": "fill_container",
+              "fill": "$--primary",
+              "cornerRadius": 12,
+              "padding": [
+                15,
+                16
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XoyVk",
+                  "fill": "$--primary-foreground",
+                  "content": "Save selection",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "aeWyy",
+      "x": 17632,
+      "y": -488,
+      "name": "Bonus Category — Row States",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "gap": 18,
+      "padding": [
+        24,
+        16
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "cDgKe",
+          "fill": "$--foreground",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Card detail row",
+          "fontFamily": "$--font-primary",
+          "fontSize": 18,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "Z6Oc0K",
+          "fill": "$--muted-foreground",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Shown ONLY on the 13 cards that have a selectable-bonus group. The other 397 render nothing here.",
+          "lineHeight": 1.4,
+          "fontFamily": "$--font-primary",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "Wl0tE",
+          "name": "A · Not chosen yet",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "BChu4",
+              "fill": "$--muted-foreground",
+              "content": "A · Not chosen yet",
+              "fontFamily": "$--font-primary",
+              "fontSize": 11,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "rMWx9",
+              "width": "fill_container",
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": "$--border",
+              "strokeWidth": 1,
+              "gap": 12,
+              "padding": 14,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jXSRH",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "a5wHKP",
+                      "fill": "$--primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Choose your 3% category",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pkCHL",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Tap to pick 1 of 9",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "HFAJk",
+                  "fill": "$--muted-foreground",
+                  "content": "›",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "A7ahNZ",
+          "name": "B · Chosen (editable)",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "MrWbF",
+              "fill": "$--muted-foreground",
+              "content": "B · Chosen (editable)",
+              "fontFamily": "$--font-primary",
+              "fontSize": 11,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "IjIZN",
+              "width": "fill_container",
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": "$--border",
+              "strokeWidth": 1,
+              "gap": 12,
+              "padding": 14,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "UQDpp",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yTq07",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3% category",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "CcOsV",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Gas · change anytime",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Xtb1U",
+                  "fill": "$--muted-foreground",
+                  "content": "›",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PcTf9",
+          "name": "C · Automatic — no picker",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "rkca8",
+              "fill": "$--muted-foreground",
+              "content": "C · Automatic — no picker",
+              "fontFamily": "$--font-primary",
+              "fontSize": 11,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "z3ot4P",
+              "width": "fill_container",
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": "$--border",
+              "strokeWidth": 1,
+              "gap": 12,
+              "padding": 14,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "caGaZ",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bzq2O",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2% on your top 2 categories",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "hxDfs",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Chosen for you each month",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "g2rfT9",
+      "x": 18652,
+      "y": -488,
+      "name": "Bonus Categories — Two Groups",
+      "clip": true,
+      "width": 390,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "iz7mJ",
+          "type": "ref",
+          "ref": "Elmkk",
+          "name": "Status Bar",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "pjQrc",
+          "name": "App Bar",
+          "width": "fill_container",
+          "height": 48,
+          "gap": 12,
+          "padding": [
+            0,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "PxznC",
+              "fill": "$--foreground",
+              "content": "‹",
+              "fontFamily": "$--font-primary",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "vftoK",
+              "fill": "$--foreground",
+              "content": "Bonus categories",
+              "fontFamily": "$--font-primary",
+              "fontSize": 17,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "nv68q",
+          "name": "Card Context",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "padding": [
+            4,
+            16,
+            18,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "GJxJ9",
+              "fill": "$--foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "U.S. Bank Cash+",
+              "fontFamily": "$--font-primary",
+              "fontSize": 22,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "O9cB8",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "This card has two separate picks. They are chosen and reset independently.",
+              "lineHeight": 1.4,
+              "fontFamily": "$--font-primary",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VXesE",
+          "name": "Group 5pct",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            0,
+            16,
+            18,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "lxIkP",
+              "width": "fill_container",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "w5L6k",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "oXGTR",
+                      "fill": "$--foreground",
+                      "content": "5% cash back",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HGLPc",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Pick 2 of 6 · resets each quarter",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qeJWa",
+                  "fill": "$--green-bg",
+                  "cornerRadius": 99,
+                  "padding": [
+                    4,
+                    10
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EvlAF",
+                      "fill": "$--green",
+                      "content": "2 of 2 chosen",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bKzcP",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "kd1pR",
+                  "width": "fill_container",
+                  "fill": "#241703",
+                  "cornerRadius": 12,
+                  "stroke": "$--primary",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MJgS2",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Streaming",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "CB8Fh",
+                      "fill": "$--primary",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--primary",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "otLYZ",
+                  "width": "fill_container",
+                  "fill": "#241703",
+                  "cornerRadius": 12,
+                  "stroke": "$--primary",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "E1SjC",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Dining",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "fPEKV",
+                      "fill": "$--primary",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--primary",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "tLjCU",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KwSz1",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Department stores",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "xNLgI",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "zMVug",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dUiiF",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Entertainment",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "q57qh8",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KEu1K",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Q6fbjS",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Phone & internet",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Z1geTu",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dOmMA",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YaM61",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Transit",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "j5cHTy",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "K73ZcW",
+          "name": "Group 2pct",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            0,
+            16,
+            18,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "fw6Fg",
+              "width": "fill_container",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "K7bDI9",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "F6JUB",
+                      "fill": "$--foreground",
+                      "content": "2% cash back",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RyTgV",
+                      "fill": "$--muted-foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Pick 1 of 2 · resets each quarter",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ewoPB",
+                  "fill": "$--green-bg",
+                  "cornerRadius": 99,
+                  "padding": [
+                    4,
+                    10
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qJ3J7",
+                      "fill": "$--green",
+                      "content": "1 of 1 chosen",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "P9kEUm",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qejN1",
+                  "width": "fill_container",
+                  "fill": "#241703",
+                  "cornerRadius": 12,
+                  "stroke": "$--primary",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EF4ON",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Grocery",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "bobH7",
+                      "fill": "$--primary",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--primary",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "r7FeUb",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": "$--border",
+                  "strokeWidth": 1,
+                  "gap": 12,
+                  "padding": 14,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "E4cuL",
+                      "fill": "$--foreground",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Gas",
+                      "fontFamily": "$--font-primary",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "jm5rv",
+                      "fill": "$--background",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "$--ring",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "V4Woa",
+          "name": "Footer",
+          "width": "fill_container",
+          "padding": [
+            0,
+            16,
+            24,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "FjpIn",
+              "width": "fill_container",
+              "fill": "$--primary",
+              "cornerRadius": 12,
+              "padding": [
+                15,
+                16
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "b0T7Q",
+                  "fill": "$--primary-foreground",
+                  "content": "Save selections",
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

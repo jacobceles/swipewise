@@ -115,7 +115,7 @@ class DatabaseHelper {
       try {
         return await openDatabase(
           path,
-          version: 16,
+          version: 17,
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
@@ -356,7 +356,9 @@ class DatabaseHelper {
           await db.execute('ALTER TABLE card_products ADD COLUMN country TEXT');
         }
         if (!productCols.contains('currency')) {
-          await db.execute('ALTER TABLE card_products ADD COLUMN currency TEXT');
+          await db.execute(
+            'ALTER TABLE card_products ADD COLUMN currency TEXT',
+          );
         }
       }
       final psCols = (await db.rawQuery(
@@ -377,10 +379,9 @@ class DatabaseHelper {
     if (oldVersion < 16) {
       // Guarded like every other block here: migration tests (and a v1 DB)
       // reach this with only a subset of tables created.
-      final hasSettings =
-          (await db.rawQuery(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'",
-          )).isNotEmpty;
+      final hasSettings = (await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'",
+      )).isNotEmpty;
       if (hasSettings) {
         await db.delete(
           'settings',
@@ -396,6 +397,51 @@ class DatabaseHelper {
     // paths ate it. Drop it (and the native writer) once that's answered.
     if (oldVersion < 15) {
       await db.execute(_createDwellOutcomesSql);
+    }
+
+    // v17 — selectable bonus categories (N17). Some cards pay their bonus only
+    // on a category the cardholder SELECTED (or one the issuer picks from
+    // spend), and the app credited every such rule unconditionally: a BoA
+    // Customized Cash was recommended for EV charging at 6% to someone who had
+    // chosen home improvement and would actually earn 1%.
+    //
+    // Three additive pieces: `reward_rules.selection_group` (which group a rule
+    // belongs to), `bonus_selection_groups` (catalog: the group's mode/choose/
+    // period) and `user_bonus_selections` (the user's pick — see the table's
+    // own note on why it is NOT part of the catalog wipe).
+    //
+    // Column guard mirrors v4/v13/v14: a v1 DB reaches here having already
+    // gained the column from `_createCatalogTables` in the v2 block, and a
+    // migration test may present only a subset of tables.
+    if (oldVersion < 17) {
+      final ruleCols = (await db.rawQuery(
+        'PRAGMA table_info(reward_rules)',
+      )).map((r) => r['name'] as String).toSet();
+      if (ruleCols.isNotEmpty && !ruleCols.contains('selection_group')) {
+        await db.execute(
+          'ALTER TABLE reward_rules ADD COLUMN selection_group TEXT',
+        );
+      }
+      await db.execute(_createBonusSelectionGroupsSql);
+      await db.execute(_createUserBonusSelectionsSql);
+
+      // Force one catalog re-hydrate, exactly as v16 did. The new column and
+      // table are empty until an import fills them, and the loader no-ops
+      // while the bundle's `dataVersion` still matches what's recorded — so an
+      // install that already fetched a bonus-selection-carrying catalog (whose
+      // `selection_group` was dropped for want of a column) would keep ranking
+      // on the bug indefinitely. Catalog data is derived; this costs one
+      // import and no user data.
+      final hasSettings = (await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'",
+      )).isNotEmpty;
+      if (hasSettings) {
+        await db.delete(
+          'settings',
+          where: 'key = ?',
+          whereArgs: ['catalog_data_version'],
+        );
+      }
     }
   }
 
@@ -933,10 +979,12 @@ class DatabaseHelper {
   /// The catalog-driven RewardEngine schema (Track B), shared by `_onCreate`
   /// (fresh installs) and the v2 `_onUpgrade` block (existing testers).
   ///
-  /// The first four tables are the **catalog**: global, read-mostly, hydrated
-  /// from the bundled `catalog-v{version}.json` by `CatalogLoader`. They carry
-  /// no user FK — they're the same for everyone and survive user-scoped wipes.
-  /// `card_links` / `rotating_activations` are the **user-side** bindings.
+  /// Everything up to and including `bonus_selection_groups` is the
+  /// **catalog**: global, read-mostly, hydrated from the bundled
+  /// `catalog-v{version}.json` by `CatalogLoader`. They carry no user FK —
+  /// they're the same for everyone and survive user-scoped wipes.
+  /// `card_links` / `rotating_activations` / `user_bonus_selections` are the
+  /// **user-side** tables, which a catalog re-hydrate must never touch.
   ///
   /// Creation order matters: `onConfigure` turns `foreign_keys` ON, so a
   /// referenced table must exist before its referencer — point_systems and
@@ -945,6 +993,58 @@ class DatabaseHelper {
   /// Like `card_overrides`, `card_links`/`rotating_activations` carry **no FK
   /// on `card_id`** so they survive `replaceBankData` and re-attach when a card
   /// with the same stable id reappears; the binding outlives a re-link.
+  /// Catalog half of a **selectable bonus**: "choose 1 of 9 categories" (Bank
+  /// of America Customized Cash) or "your top 2 spend categories each cycle"
+  /// (Amex Business Gold). Global catalog data, hydrated from the bundle's
+  /// `bonus_selections` array and wiped with the rest of the catalog.
+  ///
+  /// Keyed by GROUP, never by card: U.S. Bank Cash+ carries two independent
+  /// groups (choose 1 of 3 *and* choose 2 of 6, different rates, both
+  /// quarterly), and a per-card key would collapse them into one.
+  ///
+  /// Only the identity columns are NOT NULL. `choose`/`mode`/`period` are
+  /// nullable because the whole catalog import is one transaction: a single
+  /// group row missing a field would otherwise roll back every table. An
+  /// unreadable `mode` is handled where it matters — the ranker refuses to
+  /// credit a group it can't prove is available.
+  static const String _createBonusSelectionGroupsSql = '''
+    CREATE TABLE IF NOT EXISTS bonus_selection_groups (
+      group_id TEXT PRIMARY KEY,
+      card_product_id TEXT NOT NULL REFERENCES card_products(card_product_id),
+      -- How many of the group's categories earn the bonus at once.
+      choose INTEGER,
+      -- 'user_choice' (the cardholder picks) | 'automatic' (the issuer picks
+      -- from spend, which the app cannot see).
+      mode TEXT,
+      -- 'month' | 'quarter' | 'year' | NULL — how often the pick can change.
+      period TEXT
+    )
+  ''';
+
+  /// The categories the user picked for a `user_choice` group — **user data**,
+  /// and the one table in the catalog family a catalog refresh must never
+  /// touch. `CatalogRepository.replaceCatalog` wipes every catalog table on
+  /// every sync; this one is deliberately absent from that list.
+  ///
+  /// Carries no foreign key, for the same reason `card_links` carries none on
+  /// `card_id`: the row has to outlive the thing it points at. A catalog
+  /// re-hydrate deletes and re-inserts every `bonus_selection_groups` row, and
+  /// an FK would either cascade the user's choice away or abort the import.
+  ///
+  /// Not user-scoped (no `user_id`, so it stays out of [kUserScopedTables]):
+  /// the pick is a property of the physical card in the wallet, so it must
+  /// survive a sign-in re-key and a sign-out the same way `muted_merchants`
+  /// does. One row per chosen category — `choose: 2` writes two rows.
+  static const String _createUserBonusSelectionsSql = '''
+    CREATE TABLE IF NOT EXISTS user_bonus_selections (
+      group_id TEXT NOT NULL,
+      card_product_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      chosen_at TEXT,
+      PRIMARY KEY (group_id, category)
+    )
+  ''';
+
   Future<void> _createCatalogTables(Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS point_systems (
@@ -1002,7 +1102,8 @@ class DatabaseHelper {
         cap_group TEXT,
         notes TEXT,
         earn_constraint TEXT,
-        excluded_categories TEXT
+        excluded_categories TEXT,
+        selection_group TEXT
       )
     ''');
 
@@ -1026,6 +1127,8 @@ class DatabaseHelper {
         PRIMARY KEY (rule_id, brand)
       )
     ''');
+
+    await db.execute(_createBonusSelectionGroupsSql);
 
     // Card benefits/credits (travel insurance, purchase protection, lounge &
     // statement credits, …) attached to a product. Global catalog data, like
@@ -1072,5 +1175,7 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute(_createUserBonusSelectionsSql);
   }
 }

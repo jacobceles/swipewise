@@ -22,6 +22,7 @@ class EngineRanker {
     this.spendByCard = const {},
     this.cardPreferenceOrder = const [],
     this.isForeign = false,
+    this.selectedBonusCategories = const {},
   });
 
   final CatalogSnapshot snapshot;
@@ -31,9 +32,73 @@ class EngineRanker {
   final Map<String, SpendLedger> spendByCard;
   final List<String> cardPreferenceOrder;
 
+  /// group_id → the categories the user chose for that selectable-bonus group
+  /// (`CatalogRepository.bonusSelections`). Absent group = not answered yet.
+  final Map<String, Set<RewardCategory>> selectedBonusCategories;
+
   /// When true (the user is abroad — see `travelIsForeignProvider`), each card's
   /// value is docked its foreign-transaction fee, so no-FX-fee cards win. N7.
   final bool isForeign;
+
+  /// The snapshot every ranking method resolves against: [snapshot] with the
+  /// selectable-bonus rules the wallet can't actually earn today removed.
+  ///
+  /// Ranking answers "which card should I pull out", so a rate that is merely
+  /// *available for selection* is not an answer — a Customized Cash was being
+  /// recommended for EV charging at 6% to someone who had chosen home
+  /// improvement and would have earned 1%. Dropping the rule here (rather than
+  /// discounting it) makes every ranking path fall through to whatever the
+  /// card really pays, usually its baseline, with no other change in
+  /// behaviour.
+  ///
+  /// Deliberately NOT applied to the card's own rule list
+  /// (`CatalogRepository.rewardsForCard`): the card does pay that rate on the
+  /// chosen category, and hiding it from the card's detail page would be a
+  /// different lie. Only the ranking narrows.
+  late final CatalogSnapshot _ranked = _withUnavailableBonusesRemoved(snapshot);
+
+  CatalogSnapshot _withUnavailableBonusesRemoved(CatalogSnapshot s) {
+    var changed = false;
+    final rules = <String, List<RewardRule>>{};
+    for (final e in s.rulesByProduct.entries) {
+      final kept = [
+        for (final r in e.value)
+          if (_isEarnable(s, r)) r,
+      ];
+      if (kept.length != e.value.length) changed = true;
+      rules[e.key] = kept;
+    }
+    if (!changed) return s;
+    return CatalogSnapshot(
+      products: s.products,
+      rulesByProduct: rules,
+      exclusionsByRule: s.exclusionsByRule,
+      pointSystems: s.pointSystems,
+      selectionGroups: s.selectionGroups,
+    );
+  }
+
+  /// Whether a rule can be credited to a *recommendation* right now.
+  ///
+  ///   • no selection group        → always (the overwhelming majority)
+  ///   • `user_choice`, chosen     → yes, it is an ordinary category bonus
+  ///   • `user_choice`, not chosen → no, including "not answered yet"
+  ///   • `automatic`               → never: the issuer picks from spend the
+  ///     app cannot see, so no answer is provable. The `earnConstraint`
+  ///     caveat on the card's detail page is what tells the user about it.
+  ///   • group missing from the catalog → no, same reasoning as `automatic`:
+  ///     an unresolvable group is not an earnable one.
+  bool _isEarnable(CatalogSnapshot s, RewardRule r) {
+    final groupId = r.selectionGroup;
+    if (groupId == null) return true;
+    final group = s.selectionGroups[groupId];
+    if (group == null || group.mode != BonusSelectionMode.userChoice) {
+      return false;
+    }
+    final category = r.category;
+    if (category == null) return false;
+    return selectedBonusCategories[groupId]?.contains(category) ?? false;
+  }
 
   ActivationState _activations(String cardId) =>
       ActivationState(activationsByCard[cardId] ?? const <(int, int)>{});
@@ -42,7 +107,7 @@ class EngineRanker {
 
   AppliedRate _resolve(LinkedCard c, RewardCategory category, String? brand) =>
       resolve(
-        snapshot: snapshot,
+        snapshot: _ranked,
         product: c.cardProductId,
         category: category,
         brand: brand,
@@ -63,7 +128,7 @@ class EngineRanker {
   /// so an unknown card ties with a known-0% one on effective rate — and
   /// without a tie-break the winner would come down to alphabetical order.
   bool _fxFeeKnown(String cardId) =>
-      snapshot.products[cardId]?.foreignTxFeePct != null;
+      _ranked.products[cardId]?.foreignTxFeePct != null;
 
   /// Tie-break: effective desc → **known FX fee (abroad only)** → preference
   /// asc → name desc → id asc.
@@ -99,7 +164,7 @@ class EngineRanker {
     final brandToCategory = <String, RewardCategory>{};
     for (final c in linkedCards) {
       for (final r
-          in snapshot.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+          in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
         if (r.kind == RewardRuleKind.category ||
             r.kind == RewardRuleKind.rotating) {
           if (r.category != null) candidateCategories.add(r.category!);
@@ -198,8 +263,7 @@ class EngineRanker {
           cardId: best?.card.cardId,
           cardName: best?.card.cardName,
           rate: best?.applied.rate ?? 0,
-          isBonus:
-              best != null && best.applied.kind != RewardRuleKind.baseline,
+          isBonus: best != null && best.applied.kind != RewardRuleKind.baseline,
         ),
       );
     }
@@ -252,7 +316,7 @@ class EngineRanker {
     final seen = <String>{};
     for (final c in linkedCards) {
       for (final r
-          in snapshot.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+          in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
         if (r.brand == null) continue;
         if (r.kind != RewardRuleKind.brand &&
             r.kind != RewardRuleKind.rotating) {
@@ -274,7 +338,7 @@ class EngineRanker {
     for (final c in linkedCards) {
       final baseline = _baselineOf(c.cardProductId);
       if (baseline == null) continue;
-      final eff = baseline.rate * snapshot.centValueOf(baseline.pointSystemId);
+      final eff = baseline.rate * _ranked.centValueOf(baseline.pointSystemId);
       final scored = _Scored(
         c,
         AppliedRate(
@@ -342,7 +406,7 @@ class EngineRanker {
     final seen = <String>{};
     for (final c in linkedCards) {
       for (final r
-          in snapshot.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+          in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
         final brand = r.brand;
         if (brand == null) continue;
         if (r.kind != RewardRuleKind.brand &&
@@ -397,15 +461,14 @@ class EngineRanker {
   }
 
   RewardRule? _baselineOf(String productId) {
-    for (final r
-        in snapshot.rulesByProduct[productId] ?? const <RewardRule>[]) {
+    for (final r in _ranked.rulesByProduct[productId] ?? const <RewardRule>[]) {
       if (r.kind == RewardRuleKind.baseline) return r;
     }
     return null;
   }
 
   String _currencyOf(String pointSystemId) =>
-      snapshot.pointSystems[pointSystemId]?.currencyLabel ?? 'USD';
+      _ranked.pointSystems[pointSystemId]?.currencyLabel ?? 'USD';
 }
 
 class _Scored {

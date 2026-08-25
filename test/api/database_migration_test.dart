@@ -380,66 +380,207 @@ void main() {
     await db.close();
   });
 
-  test('onUpgrade(14→15) creates dwell_outcomes; fresh install has it', () async {
-    final db = await databaseFactoryFfi.openDatabase(
-      inMemoryDatabasePath,
-      options: OpenDatabaseOptions(
-        onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
-      ),
-    );
-    await DatabaseHelper.runUpgrade(db, 14, 15);
-    final cols = (await db.rawQuery(
-      'PRAGMA table_info(dwell_outcomes)',
-    )).map((r) => r['name'] as String).toSet();
-    expect(cols, equals(_dwellOutcomeColumns));
-    await db.close();
+  test(
+    'onUpgrade(14→15) creates dwell_outcomes; fresh install has it',
+    () async {
+      final db = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+        ),
+      );
+      await DatabaseHelper.runUpgrade(db, 14, 15);
+      final cols = (await db.rawQuery(
+        'PRAGMA table_info(dwell_outcomes)',
+      )).map((r) => r['name'] as String).toSet();
+      expect(cols, equals(_dwellOutcomeColumns));
+      await db.close();
 
-    final fresh = await databaseFactoryFfi.openDatabase(
-      inMemoryDatabasePath,
-      options: OpenDatabaseOptions(
-        version: 1,
-        onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
-      ),
-    );
-    final freshCols = (await fresh.rawQuery(
-      'PRAGMA table_info(dwell_outcomes)',
-    )).map((r) => r['name'] as String).toSet();
-    expect(freshCols, equals(_dwellOutcomeColumns));
-    await fresh.close();
-  });
+      final fresh = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        ),
+      );
+      final freshCols = (await fresh.rawQuery(
+        'PRAGMA table_info(dwell_outcomes)',
+      )).map((r) => r['name'] as String).toSet();
+      expect(freshCols, equals(_dwellOutcomeColumns));
+      await fresh.close();
+    },
+  );
 
-  test('onUpgrade(15→16) clears the catalog version so FX fees re-hydrate', () async {
-    // Existing rows hold 0.0 for every fee the crawl never captured, which reads
-    // as "charges nothing". Nothing rewrites them until the catalog's dataVersion
-    // moves, so the migration drops the marker to force one re-import.
-    final db = await databaseFactoryFfi.openDatabase(
-      inMemoryDatabasePath,
-      options: OpenDatabaseOptions(
-        version: 1,
-        onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
-      ),
-    );
-    await db.insert('settings', {
-      'user_id': 'u1',
-      'key': 'catalog_data_version',
-      'value': '123',
-    });
-    await db.insert('settings', {
-      'user_id': 'u1',
-      'key': 'default_screen',
-      'value': 'advisor',
-    });
+  test(
+    'onUpgrade(15→16) clears the catalog version so FX fees re-hydrate',
+    () async {
+      // Existing rows hold 0.0 for every fee the crawl never captured, which reads
+      // as "charges nothing". Nothing rewrites them until the catalog's dataVersion
+      // moves, so the migration drops the marker to force one re-import.
+      final db = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        ),
+      );
+      await db.insert('settings', {
+        'user_id': 'u1',
+        'key': 'catalog_data_version',
+        'value': '123',
+      });
+      await db.insert('settings', {
+        'user_id': 'u1',
+        'key': 'default_screen',
+        'value': 'advisor',
+      });
 
-    await DatabaseHelper.runUpgrade(db, 15, 16);
+      await DatabaseHelper.runUpgrade(db, 15, 16);
 
-    final keys = (await db.query('settings'))
-        .map((r) => r['key'] as String)
-        .toSet();
-    expect(keys, isNot(contains('catalog_data_version')));
-    // Only that one key — an over-broad delete would drop the user's settings.
-    expect(keys, contains('default_screen'));
-    await db.close();
-  });
+      final keys = (await db.query(
+        'settings',
+      )).map((r) => r['key'] as String).toSet();
+      expect(keys, isNot(contains('catalog_data_version')));
+      // Only that one key — an over-broad delete would drop the user's settings.
+      expect(keys, contains('default_screen'));
+      await db.close();
+    },
+  );
+
+  test(
+    'onUpgrade(16→17) adds the selectable-bonus schema and is re-runnable',
+    () async {
+      // A DB physically created at v16: catalog tables from the era before
+      // `selection_group`, plus the settings row the migration has to clear.
+      final db = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+        ),
+      );
+      await db.execute(
+        'CREATE TABLE users (id TEXT PRIMARY KEY, identifier TEXT NOT NULL)',
+      );
+      await db.execute('''
+        CREATE TABLE settings (
+          user_id TEXT NOT NULL,
+          key TEXT NOT NULL,
+          value TEXT,
+          PRIMARY KEY (user_id, key),
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute(
+        'CREATE TABLE card_products (card_product_id TEXT PRIMARY KEY)',
+      );
+      await db.execute(
+        'CREATE TABLE reward_rules (rule_id TEXT PRIMARY KEY, notes TEXT, '
+        'earn_constraint TEXT, excluded_categories TEXT)',
+      );
+      await db.insert('users', {'id': 'u1', 'identifier': 'u1@test'});
+      await db.insert('settings', {
+        'user_id': 'u1',
+        'key': 'catalog_data_version',
+        'value': '123',
+      });
+      await db.insert('settings', {
+        'user_id': 'u1',
+        'key': 'default_screen',
+        'value': 'advisor',
+      });
+      await db.insert('card_products', {'card_product_id': 'usbank.cash-plus'});
+
+      Future<Set<String>> tables() async => (await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table'",
+      )).map((r) => r['name'] as String).toSet();
+      Future<Set<String>> ruleCols() async => (await db.rawQuery(
+        'PRAGMA table_info(reward_rules)',
+      )).map((r) => r['name'] as String).toSet();
+
+      expect(await ruleCols(), isNot(contains('selection_group')));
+
+      await DatabaseHelper.runUpgrade(db, 16, 17);
+
+      expect(await ruleCols(), contains('selection_group'));
+      expect(
+        await tables(),
+        containsAll(<String>[
+          'bonus_selection_groups',
+          'user_bonus_selections',
+        ]),
+      );
+      // Forces one catalog re-import so the new column/table actually fill —
+      // and only that key, never the user's other settings.
+      final keys = (await db.query(
+        'settings',
+      )).map((r) => r['key'] as String).toSet();
+      expect(keys, isNot(contains('catalog_data_version')));
+      expect(keys, contains('default_screen'));
+
+      // A user's pick survives a replayed migration — the block is guarded, not
+      // destructive.
+      await db.insert('user_bonus_selections', {
+        'group_id': 'usbank.cash-plus#sel-u1-quarter',
+        'card_product_id': 'usbank.cash-plus',
+        'category': 'gas',
+        'chosen_at': '2026-08-22T00:00:00Z',
+      });
+
+      // Idempotent: a tester replaying the chain (or a v1 DB that already got
+      // the column from _createCatalogTables) must not hit "duplicate column".
+      await DatabaseHelper.runUpgrade(db, 16, 17);
+      expect(await ruleCols(), contains('selection_group'));
+      expect(await db.query('user_bonus_selections'), hasLength(1));
+      await db.close();
+
+      // Fresh install lands the same end state via _onCreate.
+      final fresh = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        ),
+      );
+      final freshTables = (await fresh.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table'",
+      )).map((r) => r['name'] as String).toSet();
+      expect(
+        freshTables,
+        containsAll(<String>[
+          'bonus_selection_groups',
+          'user_bonus_selections',
+        ]),
+      );
+      final freshCols = (await fresh.rawQuery(
+        'PRAGMA table_info(reward_rules)',
+      )).map((r) => r['name'] as String).toSet();
+      expect(freshCols, contains('selection_group'));
+      await fresh.close();
+    },
+  );
+
+  test(
+    'onUpgrade(1→17) is guarded when reward_rules already has the column',
+    () async {
+      final db = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+        ),
+      );
+      await db.execute(
+        'CREATE TABLE users (id TEXT PRIMARY KEY, identifier TEXT NOT NULL)',
+      );
+      // v2 creates reward_rules WITH selection_group via _createCatalogTables,
+      // so the v17 ALTER must skip rather than throw.
+      await DatabaseHelper.runUpgrade(db, 1, 17);
+      final cols = (await db.rawQuery(
+        'PRAGMA table_info(reward_rules)',
+      )).map((r) => r['name'] as String).toSet();
+      expect(cols, contains('selection_group'));
+      await db.close();
+    },
+  );
 
   // The native writer carries its own copy of this CREATE (it can fire before
   // Dart has ever opened the DB), so the two can drift into an INSERT that
@@ -451,7 +592,11 @@ void main() {
     final create = RegExp(
       r'CREATE TABLE IF NOT EXISTS dwell_outcomes \(([^)]*)\)',
     ).firstMatch(kotlin);
-    expect(create, isNotNull, reason: 'CREATE_SQL not found in the Kotlin store');
+    expect(
+      create,
+      isNotNull,
+      reason: 'CREATE_SQL not found in the Kotlin store',
+    );
     final nativeCols = create!
         .group(1)!
         .split(',')

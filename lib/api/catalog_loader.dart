@@ -26,11 +26,12 @@ enum CatalogLoadResult {
   error,
 }
 
-/// Hydrates the catalog into the five global catalog tables (point_systems,
-/// card_products, reward_rules, reward_rule_exclusions, product_perks) from the
-/// first available source: R2 (ETag-gated) → the local R2 cache → the bundled
-/// asset (the offline floor shipped with the app). So even a first launch with no
-/// network gets a working rewards engine instead of empty tables.
+/// Hydrates the catalog into the six global catalog tables (point_systems,
+/// card_products, reward_rules, reward_rule_exclusions, product_perks,
+/// bonus_selection_groups) from the first available source: R2 (ETag-gated) →
+/// the local R2 cache → the bundled asset (the offline floor shipped with the
+/// app). So even a first launch with no network gets a working rewards engine
+/// instead of empty tables.
 ///
 /// Idempotent and cheap to call on every boot: it re-hydrates only when the
 /// bundle's `dataVersion` differs from what's recorded as loaded.
@@ -138,6 +139,7 @@ class CatalogLoader {
       ),
       exclusions: _project(data['reward_rule_exclusions'], _exclusionCols),
       productPerks: _project(data['product_perks'], _productPerkCols),
+      bonusSelectionGroups: _bonusSelectionGroups(data['bonus_selections']),
     );
     await _settings.setLoadedCatalogDataVersion(userId, dataVersion);
 
@@ -186,8 +188,37 @@ class CatalogLoader {
     List<Map<String, Object?>> rows,
   ) => [
     for (final r in rows)
-      if (r.containsKey('foreign_tx_fee_pct')) r else {...r, 'foreign_tx_fee_pct': -1.0},
+      if (r.containsKey('foreign_tx_fee_pct'))
+        r
+      else
+        {...r, 'foreign_tx_fee_pct': -1.0},
   ];
+
+  /// Projects the bundle's `bonus_selections` array onto
+  /// `bonus_selection_groups` rows. Hand-written rather than run through
+  /// [_project] for one reason: the group's key is `id` in the JSON and
+  /// `group_id` in the table (`id` alone is too generic for a column that
+  /// joins against `reward_rules.selection_group`).
+  ///
+  /// A row missing either identity column is dropped rather than inserted:
+  /// the whole import is one transaction, so a NOT NULL violation would take
+  /// the entire catalog down with it. A catalog with no `bonus_selections` at
+  /// all — every bundle published before N17, including the offline floor in
+  /// the APK — yields an empty list.
+  static List<Map<String, Object?>> _bonusSelectionGroups(Object? rows) {
+    if (rows is! List) return const [];
+    return [
+      for (final r in rows)
+        if (r is Map && r['id'] != null && r['card_product_id'] != null)
+          {
+            'group_id': r['id'] as Object?,
+            'card_product_id': r['card_product_id'] as Object?,
+            if (r['choose'] != null) 'choose': r['choose'] as Object?,
+            if (r['mode'] != null) 'mode': r['mode'] as Object?,
+            if (r['period'] != null) 'period': r['period'] as Object?,
+          },
+    ];
+  }
 
   /// sqflite can't bind a List, so JSON-encode a list-valued column to a TEXT
   /// string before insert (decoded back in `CatalogRepository._rule`). No-op for
@@ -242,6 +273,7 @@ class CatalogLoader {
     'notes',
     'earn_constraint',
     'excluded_categories',
+    'selection_group',
   ];
   static const _exclusionCols = ['rule_id', 'brand'];
 

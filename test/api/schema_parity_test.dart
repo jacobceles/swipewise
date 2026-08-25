@@ -65,8 +65,23 @@ void main() {
       'notes',
       'earn_constraint',
       'excluded_categories',
+      // N17. Listed as of 2026-08-24: the offline floor was republished from a
+      // bundle that carries `bonus_selections`, which is the condition this
+      // exemption was waiting on. All 2025 rules now carry the key (94 with a
+      // non-null group).
+      'selection_group',
     ],
     'reward_rule_exclusions': ['rule_id', 'brand'],
+    // N17. `id` (not `group_id`) is the bundle's spelling — CatalogLoader
+    // renames it on the way into `bonus_selection_groups`, because `id` alone
+    // is too generic for the column `reward_rules.selection_group` joins to.
+    'bonus_selections': [
+      'id',
+      'card_product_id',
+      'choose',
+      'mode',
+      'period',
+    ],
     'product_perks': [
       'card_product_id',
       'perk_id',
