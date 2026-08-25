@@ -64,9 +64,17 @@ For multi-step tasks, state a brief plan:
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## 5. Development Commands
+
+> **Nested repos carry their own rules.** A repo checked out inside this one has its own
+> `AGENTS.md`/`CLAUDE.md` with operating rules this file deliberately does not duplicate (its
+> pipeline, its commit conventions). **Before doing any work inside a nested
+> repo, read that repo's agent file first** — a session started from the outer directory will not
+> necessarily have loaded it, and its rules win inside its own tree.
+
 * Run Quality Checks & Linters.
 * Verify Changed Files Only when possible.
-* Committing and pushing to GitHub is fine when it makes sense — but stay measured: batch related work into a few meaningful commits; don't spam pushes, PRs, or branches; don't mix unrelated changes together.
+* **Do NOT commit, push, or open a PR unless the owner authorises it for that specific change.** Default to editing files in place and leaving them uncommitted and unstaged for review — the owner reviews, commits and publishes personally. Authorisation is per-task and does not carry to the next one. When it is given, stay measured: batch related work into a few meaningful commits, don't mix unrelated changes, don't spam pushes or branches.
+* ⚠️ In some repos **a push IS a publish** (a workflow fires on push and rewrites live data). Check `on.push.paths` before assuming a commit is private — see §8.1.
 * `context_search` (CCE) is the preferred way to explore code, but it's a guideline, not a hard rule — when you need a file's exact or whole content, just `Read` it. Use judgment; don't fight the tool.
 * Search with `rg` (ripgrep); use `ast-grep` (`sg`) for structural / AST-aware search and refactors. Pull up-to-date docs for any GitHub repo from the `gitmcp` MCP instead of guessing APIs.
 * Before committing, run `./.claude/quality-check.sh` — the auto-detected lint/analyze gate.
