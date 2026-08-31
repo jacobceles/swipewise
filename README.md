@@ -24,12 +24,12 @@ moment no other rewards app actually owns.
 
 ## 📲 Try it
 
-SwipeWise is on Google Play in **closed testing** — there's no public store page yet, and
-testers are added by hand. Want in?
-[Open an issue](https://github.com/jacobceles/swipewise/issues/new) with the Google account
-your phone signs into, and you'll get added to the test.
+SwipeWise is on Google Play:
 
-Prefer to build it yourself? [Get started](#-get-started).
+**[▶ Get it on Google Play](https://play.google.com/store/apps/details?id=com.appsoflife.swipewise)**
+
+Free, no account required — your wallet lives on your phone. Prefer to build it yourself?
+[Get started](#-get-started).
 
 ## ✨ What you get
 
@@ -37,8 +37,8 @@ Prefer to build it yourself? [Get started](#-get-started).
   categories. Whole Foods → Prime Visa (5%), Costco → the card that *isn't* excluded there.
 - 📍 **Nudges when you arrive.** Geofenced notifications surface your best card as you walk
   into a store — no need to open the app or remember a thing.
-- 🗂️ **Your wallet in seconds.** Pick your cards from a catalog of hundreds of US credit
-  cards — no forms, no card numbers, no account.
+- 🗂️ **Your wallet in seconds.** Pick your cards from a catalog of 400+ US and Canadian
+  credit cards across 23 issuers — no forms, no card numbers, no account.
 - 📊 **Every category ranked.** An Advisor that ranks every card you own — by nearby store,
   spend category, or merchant brand, with one search across all three.
 
