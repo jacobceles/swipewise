@@ -1,0 +1,6 @@
+[
+  {
+    "language": "en-US",
+    "text": "First production release.\n\n• Rewards data refreshed across all 24 supported issuers\n• Corrected earn rates on several cards\n• Wider foreign-transaction-fee coverage, with unknown fees shown as unknown rather than assumed"
+  }
+]
