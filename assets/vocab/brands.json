@@ -6723,5 +6723,38 @@
     "aliases": [
       "at home"
     ]
+  },
+  {
+    "brandId": "williams-sonoma",
+    "displayName": "Williams Sonoma",
+    "category": "departmentStores",
+    "aliases": [
+      "williams sonoma"
+    ]
+  },
+  {
+    "brandId": "pottery-barn",
+    "displayName": "Pottery Barn",
+    "category": "departmentStores",
+    "aliases": [
+      "pottery barn"
+    ]
+  },
+  {
+    "brandId": "west-elm",
+    "displayName": "West Elm",
+    "category": "departmentStores",
+    "aliases": [
+      "west elm"
+    ]
+  },
+  {
+    "brandId": "mark-and-graham",
+    "displayName": "Mark & Graham",
+    "category": "departmentStores",
+    "aliases": [
+      "mark and graham",
+      "mark graham"
+    ]
   }
 ]
