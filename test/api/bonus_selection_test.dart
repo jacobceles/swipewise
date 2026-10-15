@@ -540,6 +540,67 @@ void main() {
         containsAll(<String>['cp#gas', 'cp#grocery', 'cp#dining']),
       );
     });
+
+    test('rotating rules show only for the live quarter', () async {
+      // The catalog carries a rotating card's past and announced-ahead quarters
+      // too (Freedom Flex shipped Q3 2026, Q4 2026 and Q1 2027 together), and
+      // listing them all showed "Grocery (rotating)" twice.
+      Map<String, Object?> rotating(
+        String id,
+        String category,
+        int year,
+        int q,
+      ) => {
+        'rule_id': id,
+        'card_product_id': 'usbank.cash-plus',
+        'kind': 'rotating',
+        'category': category,
+        'rate': 5.0,
+        'point_system_id': 'usd',
+        'rotation_year': year,
+        'rotation_quarter': q,
+      };
+      await seedUser('u1');
+      await CatalogLoader(
+        remote: _InlineCatalog(
+          _catalog(
+            extraRules: [
+              rotating('rot#q3-gas', 'gas', 2026, 3),
+              rotating('rot#q4-grocery', 'grocery', 2026, 4),
+              rotating('rot#q1-grocery', 'grocery', 2027, 1),
+            ],
+          ),
+        ),
+      ).hydrateIfNeeded('u1');
+      final db = await DatabaseHelper().database;
+      await db.insert('cards', {
+        'id': 'c1',
+        'user_id': 'u1',
+        'source': 'manual',
+        'name': 'Cash+',
+      });
+      final r = repo();
+      await r.upsertLink(
+        userId: 'u1',
+        cardId: 'c1',
+        cardProductId: 'usbank.cash-plus',
+        source: 'user_confirmed',
+      );
+
+      Future<List<String>> rotatingShown(DateTime now) async => [
+        for (final w in await r.rewardsForCard('u1', 'c1', now: now))
+          if (w.ruleId.startsWith('rot#')) w.ruleId,
+      ];
+      expect(await rotatingShown(DateTime(2026, 10, 14)), ['rot#q4-grocery']);
+      expect(await rotatingShown(DateTime(2027, 1, 15)), ['rot#q1-grocery']);
+      // The fixed rules are untouched.
+      final all = await r.rewardsForCard(
+        'u1',
+        'c1',
+        now: DateTime(2026, 10, 14),
+      );
+      expect(all.map((w) => w.ruleId), contains('cp#base'));
+    });
   });
 }
 
@@ -587,7 +648,9 @@ List<Map<String, Object?>> _rules() => [
 
 /// A minimal published catalog carrying both a `user_choice` and an
 /// `automatic` group on the same product.
-Map<String, Object?> _catalog() => {
+Map<String, Object?> _catalog({
+  List<Map<String, Object?>> extraRules = const [],
+}) => {
   'schemaVersion': 1,
   'dataVersion': 1,
   'point_systems': [
@@ -606,7 +669,7 @@ Map<String, Object?> _catalog() => {
       'foreign_tx_fee_pct': 0.0,
     },
   ],
-  'reward_rules': _rules(),
+  'reward_rules': [..._rules(), ...extraRules],
   'reward_rule_exclusions': <Map<String, Object?>>[],
   'product_perks': <Map<String, Object?>>[],
   'bonus_selections': [

@@ -494,11 +494,17 @@ class CatalogRepository {
 
   /// The card's earn rules, shaped like the old `wallet_rewards` rows so the
   /// card-detail Rewards tab renders unchanged. 0-rate intro-APR promos are
-  /// omitted (not earn rules); baseline sorts last.
+  /// omitted (not earn rules); baseline sorts last. Rotating rules show only for
+  /// the live quarter — the catalog also carries past and announced-ahead ones
+  /// (Freedom Flex ships Q3 2026 … Q1 2027), which the engine ignores until their
+  /// quarter and which read as duplicates when listed together.
   Future<List<WalletRewardRow>> rewardsForCard(
     String userId,
-    String cardId,
-  ) async {
+    String cardId, {
+    DateTime? now,
+  }) async {
+    final when = now ?? DateTime.now();
+    final quarter = quarterOf(when);
     final db = await _dbHelper.database;
     final rows = await db.rawQuery(
       '''
@@ -514,6 +520,12 @@ class CatalogRepository {
       final rule = _rule(r);
       if (rule.kind == RewardRuleKind.promo && rule.rate == 0) continue;
       if (rule.kind == RewardRuleKind.partnerPortal) continue;
+      if (rule.kind == RewardRuleKind.rotating &&
+          (rule.rotationYear != when.year ||
+              (rule.rotationQuarter != null &&
+                  rule.rotationQuarter != quarter))) {
+        continue;
+      }
       out.add(
         WalletRewardRow(
           ruleId: rule.ruleId,
