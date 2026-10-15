@@ -1268,7 +1268,8 @@ class BankSyncEngine {
   /// to [minPiece]). A busy card's two-year first-sync history in one request
   /// outran the client's 20s timeout on every retry, and the card synced with
   /// no transactions at all (Sapphire Preferred, 2026-10). Pieces don't
-  /// overlap; any other failure propagates as before.
+  /// overlap. Any other failure on the newest piece propagates as before; on an
+  /// older piece the newer pieces are kept and the fetch stops there.
   @visibleForTesting
   static Future<List<dynamic>> fetchTransactionsInPieces({
     required DateTime start,
@@ -1293,11 +1294,24 @@ class BankSyncEngine {
     }
 
     final out = <dynamic>[];
+    var fetchedAny = false;
     var to = end;
     while (!to.isBefore(start)) {
       final candidate = to.subtract(piece);
       final from = candidate.isBefore(start) ? start : candidate;
-      out.addAll(await fetchSplitting(from, to));
+      try {
+        out.addAll(await fetchSplitting(from, to));
+      } on SophtronException catch (e) {
+        // An older piece failed after newer ones landed (a first sync's
+        // many pieces drew HTTP 429 from the aggregator, 2026-10): keep the
+        // newer pieces instead of discarding the account's history. Safe —
+        // the rebuild deletes only rows at or after the oldest one returned,
+        // and the next sync's window re-fetches the gap.
+        if (!fetchedAny) rethrow;
+        Log.w('bank-sync', 'older transactions unavailable before $to: ${e.summary}');
+        break;
+      }
+      fetchedAny = true;
       to = from.subtract(_pieceGap);
     }
     return out;

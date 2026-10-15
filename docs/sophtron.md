@@ -202,6 +202,8 @@ Key behaviors:
   first, and a piece that times out (the client's 20s limit) is split in half down to 7 days
   (`BankSyncEngine.fetchTransactionsInPieces`). A busy card's two-year first-sync history in
   one request timed out on every retry and synced with zero transactions.
+  If an *older* piece then fails (a first sync's pieces drew HTTP 429), the newer pieces are
+  kept and the fetch stops; only a failure on the newest piece fails the account.
 - **Member auto-dedup** — re-linking the same bank leaves multiple Members with the **same
   `InstitutionID`** (and identical accounts). The engine keeps the most-recently-modified per
   `InstitutionID` and `deleteMember`s the rest at Sophtron, so duplicates don't multiply

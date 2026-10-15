@@ -310,6 +310,30 @@ void _piecesTests() {
     expect(n, 1);
   });
 
+  test('an older piece failing keeps the newer pieces', () async {
+    // A first sync's many pieces drew HTTP 429; discarding the whole account
+    // left US Bank with zero transactions.
+    var n = 0;
+    final ok = fakeBank(maxDays: 400);
+    final txs = await BankSyncEngine.fetchTransactionsInPieces(
+      start: start,
+      end: end,
+      fetch: (from, to) async {
+        if (++n == 3) {
+          throw SophtronTransientException(
+            method: 'GET',
+            path: 'p',
+            cause: 'HTTP 429 after 3 attempt(s)',
+            inner: Exception('429'),
+          );
+        }
+        return ok(from, to);
+      },
+    );
+    expect(txs, hasLength(181), reason: 'the two newest 90-day pieces');
+    expect(n, 3, reason: 'stops at the failed piece');
+  });
+
   test('a failed job logs where it stopped', () {
     expect(
       BankSyncEngine.jobSummary({
