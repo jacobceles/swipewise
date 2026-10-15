@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wraps an `ElevatedButton` or `OutlinedButton` with an in-flight loading
 /// state. Tapping the button invokes [onPressed] (a `Future<void>`-returning

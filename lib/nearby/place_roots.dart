@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A logical grouping of Google Places API place types shown to the user
 /// as a toggleable category in Nearby Stores settings.
