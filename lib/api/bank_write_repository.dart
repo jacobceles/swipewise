@@ -11,6 +11,7 @@ import 'database_helper.dart';
 import 'reward_category_mapper.dart';
 import 'types.dart';
 import '../util/logger.dart';
+import '../util/stored_time.dart';
 
 /// Owns the write side of the Sophtron pipeline: connection rows,
 /// institution cache, the per-institution atomic rebuild used by
@@ -517,7 +518,7 @@ class BankWriteRepository {
         // freshly-linked one.
         final createdRaw = r['created_at'] as String?;
         if (createdRaw == null) continue;
-        final created = DateTime.tryParse(createdRaw);
+        final created = parseStoredUtc(createdRaw);
         if (created != null && created.millisecondsSinceEpoch > cutoffMs) {
           continue;
         }

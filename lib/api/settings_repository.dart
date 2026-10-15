@@ -157,6 +157,19 @@ class SettingsRepository {
   Future<void> clearMemberRefreshJobId(String userId, String memberId) =>
       _repo.setSetting(userId, _memberRefreshJobKey(memberId), '');
 
+  // Per-member: whether a never-synced member's failed first job has had its
+  // one automatic retry (BankSyncEngine._syncMember). A second failure flags
+  // the link for reconnect instead of retrying again (issuer lockout guard).
+  static String _memberFirstJobRetriedKey(String memberId) =>
+      'member_first_job_retried:$memberId';
+
+  Future<bool> getMemberFirstJobRetried(String userId, String memberId) async =>
+      await _repo.getSetting(userId, _memberFirstJobRetriedKey(memberId)) ==
+      'true';
+
+  Future<void> setMemberFirstJobRetried(String userId, String memberId) =>
+      _repo.setSetting(userId, _memberFirstJobRetriedKey(memberId), 'true');
+
   // Nearby stores: feature toggle, default ON. We ask the four required
   // permissions once at first HomeScreen paint via NearbyPermissionGate,
   // so the feature is usable out of the box.

@@ -181,6 +181,27 @@ Key behaviors:
   (`BankSyncEngine.connectionStatusAfterRead`). Until 2026-10 the account Worker allowlisted
   `PUT` on `members/{id}/{job}` (the credential *update*) instead of `POST` (the refresh), so
   every refresh was refused and this read as `ok` for two months.
+- **Failed refresh jobs** — a job that *finished* unsuccessfully (no challenge pending) is
+  `jobFailed`; a pending MFA challenge is `reauthRequired`. Both flag a member that has synced
+  before. A never-synced member (a fresh link) gets **one** automatic retry of a failed job,
+  then is flagged `failed` — before 2026-10 it was left silent as an empty card (US Bank,
+  when Sophtron's US Bank refresh success rate dropped). Never more than one retry: each is a
+  login at the bank. Failures log the job's `LastStatus`/`LastStep`/`ErrorMessage`.
+  A pending verification challenge on a never-synced member is spared only for 15 minutes
+  after the connection is recorded (`BankSyncEngine.flagChallengeNow`); past that it flags
+  Reconnect too. Otherwise a bank that texts a code on every login (US Bank) gets logged into
+  on every sync and texts the user each time.
+  `bank_connections.created_at` is SQLite `CURRENT_TIMESTAMP` (UTC, no `Z`); read it with
+  `parseStoredUtc` (`lib/util/stored_time.dart`), never bare `DateTime.tryParse`, which reads it
+  as local time. That mistake kept every connection "fresh" west of UTC: this flag never fired
+  and the drop pass was skipped on every sync.
+- **No refresh right after a link** — the sync that follows linking a member
+  (`waitForMemberId`) reads it without a refresh job: the link job just scraped it, and a
+  second login made US Bank text another code, whose stuck job then flagged the fresh link.
+- **Transactions in pieces** — each account's window is fetched in ≤90-day pieces, newest
+  first, and a piece that times out (the client's 20s limit) is split in half down to 7 days
+  (`BankSyncEngine.fetchTransactionsInPieces`). A busy card's two-year first-sync history in
+  one request timed out on every retry and synced with zero transactions.
 - **Member auto-dedup** — re-linking the same bank leaves multiple Members with the **same
   `InstitutionID`** (and identical accounts). The engine keeps the most-recently-modified per
   `InstitutionID` and `deleteMember`s the rest at Sophtron, so duplicates don't multiply

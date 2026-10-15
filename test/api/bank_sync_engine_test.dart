@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swipewise/api/bank_client.dart';
 import 'package:swipewise/sync/bank_sync_engine.dart';
 
 /// Pins the safety contract of the abandoned-link retirement gate
@@ -13,6 +16,8 @@ void main() {
 
   _breakerTests();
   _staleReadTests();
+  _piecesTests();
+  _challengeTests();
 
   test('retires an old, never-synced, account-less member', () {
     expect(
@@ -211,11 +216,174 @@ void _staleReadTests() {
     expect(after.advanceLastSynced, isTrue);
   });
 
-  test('a never-synced member is ok even without a refresh — its link job is fresh', () {
-    final after = BankSyncEngine.connectionStatusAfterRead(
-      refreshStarted: false,
-      neverSyncedBefore: true,
+  test(
+    'a never-synced member is ok even without a refresh — its link job is fresh',
+    () {
+      final after = BankSyncEngine.connectionStatusAfterRead(
+        refreshStarted: false,
+        neverSyncedBefore: true,
+      );
+      expect(after.status, 'ok');
+    },
+  );
+}
+
+/// A busy card's two-year first-sync history in one request outran the 20s
+/// client timeout on every retry, and the card synced with no transactions.
+void _piecesTests() {
+  final end = DateTime.utc(2026, 10, 15);
+  final start = end.subtract(const Duration(days: 730));
+
+  // One fake transaction per day in [start, end]; a request spanning more than
+  // [maxDays] times out the way the real one did.
+  Future<List<dynamic>> Function(DateTime, DateTime) fakeBank({
+    required int maxDays,
+    List<(DateTime, DateTime)>? calls,
+  }) => (from, to) async {
+    calls?.add((from, to));
+    if (to.difference(from).inDays > maxDays) {
+      throw SophtronTransientException(
+        method: 'GET',
+        path: 'v3/.../transactions',
+        cause: 'timeout after 20s',
+        inner: TimeoutException('20s'),
+      );
+    }
+    return [
+      for (var d = 0; d <= 730; d++)
+        if (!start.add(Duration(days: d)).isBefore(from) &&
+            !start.add(Duration(days: d)).isAfter(to))
+          start.add(Duration(days: d)),
+    ];
+  };
+
+  test('returns every day exactly once across 90-day pieces', () async {
+    final calls = <(DateTime, DateTime)>[];
+    final txs = await BankSyncEngine.fetchTransactionsInPieces(
+      start: start,
+      end: end,
+      fetch: fakeBank(maxDays: 400, calls: calls),
     );
-    expect(after.status, 'ok');
+    expect(txs, hasLength(731));
+    expect(txs.toSet(), hasLength(731), reason: 'pieces must not overlap');
+    expect(calls.length, 9);
+  });
+
+  test('splits a piece that times out until it fits', () async {
+    final txs = await BankSyncEngine.fetchTransactionsInPieces(
+      start: start,
+      end: end,
+      fetch: fakeBank(maxDays: 30),
+    );
+    expect(txs, hasLength(731), reason: 'split halves must not overlap');
+  });
+
+  test('gives up below the minimum piece and reports the timeout', () async {
+    await expectLater(
+      BankSyncEngine.fetchTransactionsInPieces(
+        start: start,
+        end: end,
+        fetch: fakeBank(maxDays: 3),
+      ),
+      throwsA(isA<SophtronTransientException>()),
+    );
+  });
+
+  test('a non-timeout failure is not retried by splitting', () async {
+    var n = 0;
+    await expectLater(
+      BankSyncEngine.fetchTransactionsInPieces(
+        start: start,
+        end: end,
+        fetch: (_, _) async {
+          n++;
+          throw SophtronTransientException(
+            method: 'GET',
+            path: 'p',
+            cause: '503',
+            inner: Exception('503'),
+          );
+        },
+      ),
+      throwsA(isA<SophtronTransientException>()),
+    );
+    expect(n, 1);
+  });
+
+  test('a failed job logs where it stopped', () {
+    expect(
+      BankSyncEngine.jobSummary({
+        'SuccessFlag': false,
+        'LastStatus': 'Completed',
+        'LastStep': 'Login',
+        'ErrorMessage': null,
+      }),
+      'SuccessFlag=false LastStatus=Completed LastStep=Login '
+      'ErrorMessage=null challenge=false',
+    );
+  });
+}
+
+/// A bank that texts a code on every login (US Bank) must stop being logged
+/// into once the link has settled, or every sync sends the user a new code.
+void _challengeTests() {
+  final now = DateTime.utc(2026, 10, 15, 12);
+  String ago(Duration d) => now.subtract(d).toIso8601String();
+
+  test('a bank that has synced before is flagged at once', () {
+    expect(
+      BankSyncEngine.flagChallengeNow(
+        neverSyncedBefore: false,
+        createdAtRaw: ago(const Duration(minutes: 1)),
+        now: now,
+      ),
+      isTrue,
+    );
+  });
+
+  test('a fresh link is spared while it settles', () {
+    expect(
+      BankSyncEngine.flagChallengeNow(
+        neverSyncedBefore: true,
+        createdAtRaw: ago(const Duration(minutes: 5)),
+        now: now,
+      ),
+      isFalse,
+    );
+  });
+
+  test('a fresh link still asking for a code after the window is flagged', () {
+    expect(
+      BankSyncEngine.flagChallengeNow(
+        neverSyncedBefore: true,
+        createdAtRaw: ago(const Duration(minutes: 30)),
+        now: now,
+      ),
+      isTrue,
+    );
+  });
+
+  test('a CURRENT_TIMESTAMP creation time (UTC, no Z) is not read as local', () {
+    // The US Bank case: created_at '2026-10-15 04:04:14', 30 minutes before
+    // now. Read as EDT it looked 3.5 hours in the future and was spared.
+    expect(
+      BankSyncEngine.flagChallengeNow(
+        neverSyncedBefore: true,
+        createdAtRaw: '2026-10-15 11:30:00',
+        now: now,
+      ),
+      isTrue,
+    );
+  });
+
+  test('an unknown creation time defers rather than flags', () {
+    expect(
+      BankSyncEngine.flagChallengeNow(
+        neverSyncedBefore: true,
+        createdAtRaw: null,
+        now: now,
+      ),
+      isFalse,
+    );
   });
 }

@@ -13,6 +13,7 @@ import '../api/bank_write_repository.dart';
 import '../api/types.dart';
 import '../util/logger.dart';
 import 'sync_progress_event.dart';
+import '../util/stored_time.dart';
 
 /// Sophtron's built-in test bank. Anyone who exercised the debug script
 /// against `sophtron bank` will have this leftover; hide it so it doesn't
@@ -83,6 +84,13 @@ class BankSyncEngine {
   /// margin the orphan-cleanup pass uses), so a slow-but-legitimate first sync
   /// is never mistaken for a link the user bailed on mid-MFA.
   static const Duration _abandonedMemberMinAge = Duration(hours: 2);
+
+  /// How long after a connection is first recorded a refresh asking for a code
+  /// is still blamed on the link settling rather than on the bank. Past it, a
+  /// never-synced bank that wants a code is flagged for reconnect like any
+  /// other — otherwise every sync logs in again and the bank texts the user a
+  /// fresh code each time (US Bank, 2026-10).
+  static const Duration _linkGraceWindow = Duration(minutes: 15);
 
   /// Rolling reconcile window for connections that have already had one
   /// successful sync. The per-card rebuild deletes local rows at/newer than
@@ -185,7 +193,7 @@ class BankSyncEngine {
     final hasFreshConnection = existingConns.any((c) {
       final createdAt = c.createdAt;
       if (createdAt == null) return false;
-      final ts = DateTime.tryParse(createdAt);
+      final ts = parseStoredUtc(createdAt);
       return ts != null && ts.isAfter(graceCutoff);
     });
     final inPostMutationWindow = waitForMemberId != null || hasFreshConnection;
@@ -543,6 +551,7 @@ class BankSyncEngine {
               transactionDays: transactionDays,
               includeDebitAccounts: includeDebitAccounts,
               forceRefresh: forceRefresh,
+              justLinked: conn.userInstitutionId == waitForMemberId,
               onProgress: onProgress,
               brandResolver: brandResolver,
             ),
@@ -608,7 +617,7 @@ class BankSyncEngine {
   }) {
     if (!rawAccountsEmpty || !neverSyncedBefore) return false;
     if (createdAtRaw == null) return false;
-    final created = DateTime.tryParse(createdAtRaw);
+    final created = parseStoredUtc(createdAtRaw);
     if (created == null) return false;
     final reference = (now ?? DateTime.now()).toUtc();
     return reference.difference(created.toUtc()) > _abandonedMemberMinAge;
@@ -623,6 +632,12 @@ class BankSyncEngine {
     required bool includeDebitAccounts,
     required bool forceRefresh,
     required BrandResolver brandResolver,
+
+    /// This sync follows linking this very member. Its link job just scraped
+    /// the bank, so no refresh: another one is a second login, which a bank
+    /// that texts a code on every login (US Bank) answers with another code —
+    /// and a refresh stuck on that code flags the fresh link for reconnect.
+    bool justLinked = false,
     void Function(SyncProgressEvent)? onProgress,
   }) async {
     final memberId = conn.userInstitutionId;
@@ -672,14 +687,63 @@ class BankSyncEngine {
       // Re-scrape the bank first so the v3 reads return current data instead
       // of replaying the last job's snapshot (the root cause of stale/short
       // history). Best-effort: never blocks the read on MFA/timeout/error.
-      final refreshOutcome = await _refreshMemberIfDue(
-        client: client,
-        customerId: customerId,
-        memberId: memberId,
-        userId: userId,
-        forceRefresh: forceRefresh,
-        instName: instName,
-      );
+      var refreshOutcome = justLinked
+          ? _RefreshOutcome.proceeded
+          : await _refreshMemberIfDue(
+              client: client,
+              customerId: customerId,
+              memberId: memberId,
+              userId: userId,
+              forceRefresh: forceRefresh,
+              instName: instName,
+            );
+
+      // A brand-new link's first job failed: retry it once now (a fresh job;
+      // the failed one's id was just cleared), and flag it if that fails too.
+      // Only once — each retry is a login at the bank (issuer lockout guard).
+      // Before 2026-10 this case was left silent — never-synced members are
+      // exempt from the Reconnect flag below — so a dead link showed as an
+      // empty card with no error.
+      if (refreshOutcome == _RefreshOutcome.jobFailed && neverSyncedBefore) {
+        final settings = SettingsRepository(_repo);
+        final retried = await settings.getMemberFirstJobRetried(
+          userId,
+          memberId,
+        );
+        if (!retried) {
+          await settings.setMemberFirstJobRetried(userId, memberId);
+          Log.w('bank-sync', 'retrying first job once for $memberId ($instName)');
+          refreshOutcome = await _refreshMemberIfDue(
+            client: client,
+            customerId: customerId,
+            memberId: memberId,
+            userId: userId,
+            forceRefresh: true,
+            instName: instName,
+          );
+        }
+        if (refreshOutcome == _RefreshOutcome.jobFailed) {
+          Log.w('bank-sync', 'first job failed twice for $memberId ($instName)');
+          await _repo.setConnectionSyncStatus(
+            memberId,
+            status: 'failed',
+            error: "Couldn't connect — your bank needs you to reconnect",
+          );
+          onProgress?.call(
+            MemberCompleted(
+              memberId: memberId,
+              bankName: instName,
+              success: false,
+              error: 'Reconnect required',
+            ),
+          );
+          return const _MemberOutcome(
+            cardCount: 0,
+            txCount: 0,
+            errors: <String>[],
+          );
+        }
+      }
 
       // The pre-read scrape surfaced a re-auth / MFA need (or the bank rejected
       // the login outright). This signal was previously swallowed: the cached
@@ -687,11 +751,16 @@ class BankSyncEngine {
       // `ok`, hiding the problem while every later sync silently re-attempted
       // the login until the issuer locked the account. Flag it `failed` so the
       // Reconnect prompt shows, and bail before the read so we stop hammering.
-      // Skipped for never-synced members: a refresh right after linking can
-      // re-challenge during Sophtron's propagation window, and we don't want to
-      // slap a Reconnect banner on a bank the user just added.
-      if (refreshOutcome == _RefreshOutcome.reauthRequired &&
-          !neverSyncedBefore) {
+      // A never-synced member is spared only inside [_linkGraceWindow]: a
+      // refresh right after linking can re-challenge while Sophtron settles,
+      // and we don't want a Reconnect banner on a bank the user just added.
+      // A failed job on a never-synced member was handled (retried once) above.
+      if ((refreshOutcome == _RefreshOutcome.reauthRequired &&
+              flagChallengeNow(
+                neverSyncedBefore: neverSyncedBefore,
+                createdAtRaw: conn.createdAt,
+              )) ||
+          (refreshOutcome == _RefreshOutcome.jobFailed && !neverSyncedBefore)) {
         Log.w('bank-sync', 're-auth required for $memberId ($instName)');
         await _repo.setConnectionSyncStatus(
           memberId,
@@ -820,11 +889,15 @@ class BankSyncEngine {
               (acct) async {
                 final accountId = acct.accountId;
                 try {
-                  final raw = await client.getTransactionsV3(
-                    customerId: customerId,
-                    accountId: accountId,
-                    startDate: start,
-                    endDate: end,
+                  final raw = await fetchTransactionsInPieces(
+                    start: start,
+                    end: end,
+                    fetch: (from, to) => client.getTransactionsV3(
+                      customerId: customerId,
+                      accountId: accountId,
+                      startDate: from,
+                      endDate: to,
+                    ),
                   );
                   final txs = raw
                       .map(BankFdxMapper.transaction)
@@ -1089,9 +1162,9 @@ class BankSyncEngine {
         Log.w(
           'bank-sync',
           'prior refresh job for $memberId ($instName) failed — '
-              'flagging re-auth: ${job['ErrorMessage']}',
+              '${jobSummary(job)}',
         );
-        return _RefreshOutcome.reauthRequired;
+        return _reauthOutcome(job);
       }
       if (job != null && job['SuccessFlag'] == true) {
         // Finished fine after we stopped watching — the v3 reads will return
@@ -1179,10 +1252,9 @@ class BankSyncEngine {
         await settings.clearMemberRefreshJobId(userId, memberId);
         Log.w(
           'bank-sync',
-          'refresh for $memberId needs re-auth ($instName): '
-              '${job['ErrorMessage']}',
+          'refresh for $memberId failed ($instName) — ${jobSummary(job)}',
         );
-        return _RefreshOutcome.reauthRequired;
+        return _reauthOutcome(job);
       }
     }
     // Timed out with the job still running. The JobID stays persisted so the
@@ -1190,6 +1262,50 @@ class BankSyncEngine {
     Log.w('bank-sync', 'refresh for $memberId timed out; reading snapshot');
     return _RefreshOutcome.proceeded;
   }
+
+  /// Fetches an account's transactions for `[start, end]` in pieces of at most
+  /// [piece], newest first, splitting any piece that times out in half (down
+  /// to [minPiece]). A busy card's two-year first-sync history in one request
+  /// outran the client's 20s timeout on every retry, and the card synced with
+  /// no transactions at all (Sapphire Preferred, 2026-10). Pieces don't
+  /// overlap; any other failure propagates as before.
+  @visibleForTesting
+  static Future<List<dynamic>> fetchTransactionsInPieces({
+    required DateTime start,
+    required DateTime end,
+    required Future<List<dynamic>> Function(DateTime from, DateTime to) fetch,
+    Duration piece = const Duration(days: 90),
+    Duration minPiece = const Duration(days: 7),
+  }) async {
+    Future<List<dynamic>> fetchSplitting(DateTime from, DateTime to) async {
+      try {
+        return await fetch(from, to);
+      } on SophtronTransientException catch (e) {
+        if (e.inner is! TimeoutException || to.difference(from) <= minPiece) {
+          rethrow;
+        }
+        final mid = from.add(to.difference(from) ~/ 2);
+        return [
+          ...await fetchSplitting(mid, to),
+          ...await fetchSplitting(from, mid.subtract(_pieceGap)),
+        ];
+      }
+    }
+
+    final out = <dynamic>[];
+    var to = end;
+    while (!to.isBefore(start)) {
+      final candidate = to.subtract(piece);
+      final from = candidate.isBefore(start) ? start : candidate;
+      out.addAll(await fetchSplitting(from, to));
+      to = from.subtract(_pieceGap);
+    }
+    return out;
+  }
+
+  /// Separates adjacent pieces so a transaction stamped exactly on a boundary
+  /// isn't returned twice (the aggregator's date range is inclusive).
+  static const _pieceGap = Duration(microseconds: 1);
 
   /// What a successful read records on the connection. A refresh that never
   /// started means the read replayed the last snapshot: say so (`stale`) and
@@ -1224,6 +1340,40 @@ class BankSyncEngine {
     }
     return job['SuccessFlag'] == false && job['LastStatus'] == 'Completed';
   }
+
+  /// Whether a refresh that hit a verification challenge flags the connection
+  /// for reconnect now. Always for a bank that has synced before; for a fresh
+  /// link only once [_linkGraceWindow] has passed since it was recorded (a
+  /// re-challenge right after linking is the link settling). A missing or
+  /// unparseable [createdAtRaw] defers, like [shouldRetireAbandoned].
+  @visibleForTesting
+  static bool flagChallengeNow({
+    required bool neverSyncedBefore,
+    required String? createdAtRaw,
+    DateTime? now,
+  }) {
+    if (!neverSyncedBefore) return true;
+    final created = createdAtRaw == null ? null : parseStoredUtc(createdAtRaw);
+    if (created == null) return false;
+    return (now ?? DateTime.now()).toUtc().difference(created.toUtc()) >
+        _linkGraceWindow;
+  }
+
+  /// A finished-but-unsuccessful job (no pending challenge) is
+  /// [_RefreshOutcome.jobFailed]; a pending MFA challenge stays
+  /// [_RefreshOutcome.reauthRequired]. Only the former is worth one retry.
+  static _RefreshOutcome _reauthOutcome(Map<String, dynamic> job) =>
+      job['SuccessFlag'] == false && job['LastStatus'] == 'Completed'
+      ? _RefreshOutcome.jobFailed
+      : _RefreshOutcome.reauthRequired;
+
+  /// The job's progress fields for the log — where it stopped. No credentials
+  /// or account data: these are the aggregator's step/status labels.
+  @visibleForTesting
+  static String jobSummary(Map<String, dynamic> job) =>
+      'SuccessFlag=${job['SuccessFlag']} LastStatus=${job['LastStatus']} '
+      'LastStep=${job['LastStep']} ErrorMessage=${job['ErrorMessage']} '
+      'challenge=${job['SecurityQuestion'] != null || job['TokenMethod'] != null || job['TokenSentFlag'] == true || job['CaptchaImage'] != null}';
 }
 
 /// Outcome of the pre-read scrape ([BankSyncEngine._refreshMemberIfDue]).
@@ -1234,6 +1384,11 @@ enum _RefreshOutcome {
   /// The scrape hit an MFA challenge or the bank rejected the login. The member
   /// needs the user to reconnect and must not be re-scraped (lockout guard).
   reauthRequired,
+
+  /// The refresh job finished unsuccessfully with no challenge pending — the
+  /// bank or the aggregator refused the scrape. Flagged for reconnect, after
+  /// one automatic retry for a never-synced member.
+  jobFailed,
 
   /// No refresh job could be started (the trigger errored or returned no
   /// JobID), so the read returns the last snapshot. Recorded as `stale` rather
