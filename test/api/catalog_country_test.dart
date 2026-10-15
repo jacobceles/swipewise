@@ -2,16 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/catalog_repository.dart';
 import 'package:swipewise/api/database_helper.dart';
-import 'package:swipewise/api/settings_repository.dart';
 
-/// Country filtering for the Add-Cards picker.
+/// Issuer countries for the Add-a-Card country filter.
 ///
-/// The load-bearing case is not "Canadian cards are hidden from Americans" —
-/// it is what happens to a catalog published *before* Canada existed. Those
-/// bundles carry no `country` at all, so every row is NULL, and a naive
-/// `country = 'US'` filter empties the picker for every existing user until
-/// they happen to receive a new catalog. `COALESCE(country, 'US')` is what
-/// makes NULL mean "American", which it always was.
+/// The load-bearing case is what happens to a catalog published *before*
+/// Canada existed. Those bundles carry no `country` at all, so every row is
+/// NULL, and an issuer with no countries would vanish under every filter but
+/// All. `COALESCE(country, 'US')` is what makes NULL mean "American", which it
+/// always was.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
@@ -49,87 +47,39 @@ void main() {
         'country': ?country,
       });
 
-  group('country filtering', () {
+  group('issuer countries', () {
+    Future<Map<String, Set<String>>> countries() async => {
+      for (final i in await catalog.issuers()) i.id: i.countries,
+    };
+
     test('a pre-Canada catalog row (country NULL) reads as US', () async {
       await seed('chase.sapphire', 'Chase');
 
-      expect(
-        (await catalog.productsForIssuer(null, country: 'US')).map((p) => p.id),
-        ['chase.sapphire'],
-      );
-      expect(await catalog.productsForIssuer(null, country: 'CA'), isEmpty);
+      expect(await countries(), {
+        'Chase': {'US'},
+      });
     });
 
-    test('Canadian cards are offered only to Canada', () async {
+    test('an issuer selling in both countries carries both', () async {
+      // Amex is the one issuer in both: the picker tags it "US + CANADA" and
+      // its card list offers its own country switch.
+      await seed('amex.gold', 'Amex', country: 'US');
+      await seed('amex.cobalt', 'Amex', country: 'CA');
       await seed('rbc.avion', 'Rbc', country: 'CA');
-      await seed('chase.sapphire', 'Chase', country: 'US');
 
-      expect(
-        (await catalog.productsForIssuer(null, country: 'CA')).map((p) => p.id),
-        ['rbc.avion'],
-      );
-      expect(
-        (await catalog.productsForIssuer(null, country: 'US')).map((p) => p.id),
-        ['chase.sapphire'],
-      );
+      expect(await countries(), {
+        'Amex': {'US', 'CA'},
+        'Rbc': {'CA'},
+      });
     });
 
-    test('the ALL sentinel filters nothing', () async {
+    test('issuers() lists every country, unfiltered', () async {
       await seed('rbc.avion', 'Rbc', country: 'CA');
       await seed('chase.sapphire', 'Chase', country: 'US');
       await seed('legacy.card', 'Legacy');
 
-      final all = await catalog.productsForIssuer(
-        null,
-        country: catalogCountryAll,
-      );
-      expect(all.map((p) => p.id).toSet(), {
-        'rbc.avion',
-        'chase.sapphire',
-        'legacy.card',
-      });
-    });
-
-    test('no country asked for is the same as ALL', () async {
-      await seed('rbc.avion', 'Rbc', country: 'CA');
-      await seed('chase.sapphire', 'Chase', country: 'US');
-
-      expect(await catalog.productsForIssuer(null), hasLength(2));
-    });
-
-    test('country and issuer filters compose', () async {
-      // Amex sells in both countries; stepping into the issuer must not leak
-      // the other country's line-up.
-      await seed('amex.gold', 'Amex', country: 'US');
-      await seed('amex.cobalt', 'Amex', country: 'CA');
-
-      expect(
-        (await catalog.productsForIssuer('Amex', country: 'CA')).map((p) => p.id),
-        ['amex.cobalt'],
-      );
-    });
-
-    test('the issuer picker hides an issuer with no cards here', () async {
-      await seed('rbc.avion', 'Rbc', country: 'CA');
-      await seed('chase.sapphire', 'Chase', country: 'US');
-
-      expect(
-        (await catalog.issuers(country: 'US')).map((i) => i.id),
-        ['Chase'],
-      );
-      expect((await catalog.issuers(country: 'CA')).map((i) => i.id), ['Rbc']);
-      expect((await catalog.issuers()).map((i) => i.id), hasLength(2));
-    });
-
-    test('issuer counts reflect the filter, not the whole catalog', () async {
-      await seed('amex.gold', 'Amex', country: 'US');
-      await seed('amex.platinum', 'Amex', country: 'US');
-      await seed('amex.cobalt', 'Amex', country: 'CA');
-
-      final ca = (await catalog.issuers(country: 'CA')).single;
-      expect(ca.productCount, 1);
-      final us = (await catalog.issuers(country: 'US')).single;
-      expect(us.productCount, 2);
+      expect((await catalog.issuers()).map((i) => i.id), hasLength(3));
+      expect(await catalog.productsForIssuer(null), hasLength(3));
     });
   });
 
@@ -181,10 +131,7 @@ void main() {
       expect(psCols, contains('currency'));
 
       // The existing card survives and still reads as American.
-      expect(
-        (await catalog.productsForIssuer(null, country: 'US')).map((p) => p.id),
-        ['chase.sapphire'],
-      );
+      expect((await catalog.issuers()).single.countries, {'US'});
     });
 
     test('is idempotent — re-running does not throw on existing columns', () async {

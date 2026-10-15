@@ -7,7 +7,6 @@ import '../models/reward_category.dart';
 import 'database_helper.dart';
 import 'reward_category_mapper.dart';
 import 'reward_engine.dart';
-import 'settings_repository.dart';
 import 'types.dart';
 
 /// One synced card bound to a catalog product — the input the engine ranks.
@@ -34,6 +33,7 @@ class CatalogIssuer {
     required this.id,
     required this.displayName,
     required this.productCount,
+    this.countries = const {'US'},
     this.imageUrl,
   });
 
@@ -43,6 +43,10 @@ class CatalogIssuer {
   /// What to show the user. See [issuerDisplayName].
   final String displayName;
   final int productCount;
+
+  /// Countries the issuer sells in (among the products counted), so the
+  /// unfiltered picker can tag the Canadian ones.
+  final Set<String> countries;
 
   /// Art from one of the issuer's products, purely to make the row scannable.
   final String? imageUrl;
@@ -221,41 +225,17 @@ class CatalogRepository {
 
   /// Catalog products for an issuer (case-insensitive), for the Identify
   /// Card picker. Null/empty issuer returns the whole catalog.
-  Future<List<CardProduct>> productsForIssuer(
-    String? issuer, {
-    String? country,
-  }) async {
+  Future<List<CardProduct>> productsForIssuer(String? issuer) async {
     final db = await _dbHelper.database;
-    final clauses = <String>[];
-    final args = <Object?>[];
-    if (issuer != null && issuer.trim().isNotEmpty) {
-      clauses.add('LOWER(issuer) = ?');
-      args.add(issuer.trim().toLowerCase());
-    }
-    final countryClause = _countryClause(country);
-    if (countryClause != null) {
-      clauses.add(countryClause);
-      args.add(country);
-    }
+    final hasIssuer = issuer != null && issuer.trim().isNotEmpty;
     final rows = await db.query(
       'card_products',
-      where: clauses.isEmpty ? null : clauses.join(' AND '),
-      whereArgs: clauses.isEmpty ? null : args,
+      where: hasIssuer ? 'LOWER(issuer) = ?' : null,
+      whereArgs: hasIssuer ? [issuer.trim().toLowerCase()] : null,
       orderBy: 'display_name',
     );
     return rows.map(_product).toList(growable: false);
   }
-
-  /// `null` when no filtering applies — no country asked for, or [catalogCountryAll].
-  ///
-  /// `COALESCE(country, 'US')` is what makes this safe against an older catalog:
-  /// bundles published before Canada carry no `country` at all, and every card
-  /// in them is American, so a NULL reads as US rather than dropping the whole
-  /// catalog out of the picker.
-  static String? _countryClause(String? country) =>
-      (country == null || country == catalogCountryAll)
-      ? null
-      : "COALESCE(country, 'US') = ?";
 
   /// Every issuer in the catalog, for the wallet flow's issuer picker.
   ///
@@ -263,25 +243,29 @@ class CatalogRepository {
   /// issuer's count, and an issuer whose whole line-up is retired shouldn't
   /// appear at all. The image is just the first product that has art
   /// (~95% of the catalog does), used to make the row scannable.
-  Future<List<CatalogIssuer>> issuers({String? country}) async {
+  ///
+  /// `COALESCE(country, 'US')` keeps an older catalog safe: bundles published
+  /// before Canada carry no `country` at all, and every card in them is
+  /// American.
+  Future<List<CatalogIssuer>> issuers() async {
     final db = await _dbHelper.database;
-    final countryClause = _countryClause(country);
     final rows = await db.rawQuery('''
       SELECT issuer,
              COUNT(*) AS product_count,
+             GROUP_CONCAT(DISTINCT COALESCE(country, 'US')) AS countries,
              MIN(image_url) AS image_url
       FROM card_products
       WHERE retired_at IS NULL
-            ${countryClause == null ? '' : 'AND $countryClause'}
       GROUP BY issuer
       ORDER BY issuer COLLATE NOCASE
-    ''', countryClause == null ? null : [country]);
+    ''');
     return [
       for (final r in rows)
         CatalogIssuer(
           id: r['issuer'] as String,
           displayName: issuerDisplayName(r['issuer'] as String),
           productCount: (r['product_count'] as num).toInt(),
+          countries: (r['countries'] as String).split(',').toSet(),
           imageUrl: r['image_url'] as String?,
         ),
     ]..sort((a, b) => a.displayName.compareTo(b.displayName));

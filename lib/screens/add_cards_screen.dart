@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/catalog_repository.dart';
+import '../api/settings_repository.dart';
 import '../providers/data_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connect_bank_app_bar.dart';
+import '../widgets/country_filter.dart';
 import 'manual_card_flow_screen.dart';
 
 /// Constant across every step of the flow — the app bar names the task, and
@@ -33,6 +35,7 @@ class AddCardsScreen extends ConsumerStatefulWidget {
 class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  String _country = catalogCountryAll;
 
   @override
   void dispose() {
@@ -50,6 +53,7 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
           displayName: issuer.displayName,
           addAnotherLabel: 'Add cards from another issuer',
           appBarTitle: kAddCardsTitle,
+          country: _country,
         ),
       ),
     );
@@ -79,6 +83,8 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
               added: added,
               searchCtrl: _searchCtrl,
               onQueryChanged: (v) => setState(() => _query = v),
+              country: _country,
+              onCountryChanged: (v) => setState(() => _country = v),
               onPick: _openIssuer,
             ),
             _ => const Center(child: CircularProgressIndicator()),
@@ -90,14 +96,16 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
 
   List<CatalogIssuer> _visible(List<CatalogIssuer> all) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return all;
     // Match the raw catalog value too, so typing "amex" still finds American
     // Express and "boa" is at least not worse than nothing.
     return all
         .where(
           (i) =>
-              i.displayName.toLowerCase().contains(q) ||
-              i.id.toLowerCase().contains(q),
+              (_country == catalogCountryAll ||
+                  i.countries.contains(_country)) &&
+              (q.isEmpty ||
+                  i.displayName.toLowerCase().contains(q) ||
+                  i.id.toLowerCase().contains(q)),
         )
         .toList();
   }
@@ -110,6 +118,8 @@ class _IssuerList extends StatelessWidget {
     required this.added,
     required this.searchCtrl,
     required this.onQueryChanged,
+    required this.country,
+    required this.onCountryChanged,
     required this.onPick,
   });
 
@@ -118,6 +128,8 @@ class _IssuerList extends StatelessWidget {
   final int added;
   final TextEditingController searchCtrl;
   final ValueChanged<String> onQueryChanged;
+  final String country;
+  final ValueChanged<String> onCountryChanged;
   final void Function(CatalogIssuer) onPick;
 
   @override
@@ -167,7 +179,25 @@ class _IssuerList extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 16),
-      Text('ALL ISSUERS', style: AppText.labelSm()),
+      CountryFilter(value: country, onChanged: onCountryChanged),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Text(switch (country) {
+            'US' => 'US ISSUERS',
+            'CA' => 'CANADIAN ISSUERS',
+            _ => 'ALL ISSUERS',
+          }, style: AppText.labelSm()),
+          const Spacer(),
+          Text(
+            '${issuers.length} issuer${issuers.length == 1 ? '' : 's'}',
+            style: AppText.labelSm().copyWith(
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
+      ),
       const SizedBox(height: 10),
       Expanded(
         child: issuers.isEmpty
@@ -186,6 +216,15 @@ class _IssuerList extends StatelessWidget {
                   final issuer = issuers[index];
                   return _IssuerTile(
                     issuer: issuer,
+                    // Only the unfiltered view tags, and only issuers that sell
+                    // outside the US — tagging every US tile would be noise.
+                    countryTag:
+                        country != catalogCountryAll ||
+                            !issuer.countries.contains('CA')
+                        ? null
+                        : issuer.countries.contains('US')
+                        ? 'US + CANADA'
+                        : 'CANADA',
                     addedCount: counts[issuer.id] ?? 0,
                     onTap: () => onPick(issuer),
                   );
@@ -199,11 +238,13 @@ class _IssuerList extends StatelessWidget {
 class _IssuerTile extends StatelessWidget {
   const _IssuerTile({
     required this.issuer,
+    required this.countryTag,
     required this.addedCount,
     required this.onTap,
   });
 
   final CatalogIssuer issuer;
+  final String? countryTag;
   final int addedCount;
   final VoidCallback onTap;
 
@@ -247,6 +288,7 @@ class _IssuerTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppText.bodyMd(),
           ),
+          if (countryTag != null) Text(countryTag!, style: AppText.labelSm()),
           if (addedCount > 0)
             Text(
               '$addedCount added',

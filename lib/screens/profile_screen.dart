@@ -63,19 +63,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _pickCardCountry() async {
-    final picked = await _showPicker<String>(
-      title: 'Card Country',
-      subtitle: 'Which country\'s cards to offer when you add one',
-      options: [...catalogCountries, catalogCountryAll],
-      current: ref.read(catalogCountryProvider),
-      labelOf: catalogCountryLabel,
-    );
-    if (picked != null) {
-      await ref.read(catalogCountryProvider.notifier).setCountry(picked);
-    }
-  }
-
   Future<void> _pickDefaultAdvisorView() async {
     final current = ref.read(advisorViewProvider);
     final picked = await _showPicker<AdvisorView>(
@@ -367,7 +354,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final signedIn = auth.email != null;
     final defaultScreen = ref.watch(defaultScreenProvider);
     final advisorView = ref.watch(advisorViewProvider);
-    final cardCountry = ref.watch(catalogCountryProvider);
     final nearbyRadius = ref.watch(nearbyRadiusProvider);
 
     return Scaffold(
@@ -511,13 +497,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       value: advisorViewLabel(advisorView),
                     ),
                     onTap: _pickDefaultAdvisorView,
-                  ),
-                  _SettingsRow(
-                    label: 'Card Country',
-                    trailing: _ValueChevron(
-                      value: catalogCountryLabel(cardCountry),
-                    ),
-                    onTap: _pickCardCountry,
                   ),
                   _SettingsRow(
                     label: 'Preferred Card Order',

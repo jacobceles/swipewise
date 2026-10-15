@@ -7,11 +7,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/card_repository.dart';
 import '../api/catalog_repository.dart';
 import '../api/reward_engine.dart';
+import '../api/settings_repository.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_providers.dart';
-import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connect_bank_app_bar.dart';
+import '../widgets/country_filter.dart';
 
 /// Products the user already holds — a `card_links` row for the product,
 /// from any source (a heuristically-matched bank card or a prior manual
@@ -34,6 +35,7 @@ class ManualCardFlowScreen extends ConsumerStatefulWidget {
     required this.addAnotherLabel,
     this.appBarTitle,
     this.logoUrl,
+    this.country = catalogCountryAll,
   });
 
   /// Matched against `card_products.issuer` with punctuation and case
@@ -57,6 +59,11 @@ class ManualCardFlowScreen extends ConsumerStatefulWidget {
 
   final String? logoUrl;
 
+  /// The issuer picker's country filter, carried in as this list's starting
+  /// filter. Only an issuer selling in more than one country shows its own
+  /// switch to change it.
+  final String country;
+
   @override
   ConsumerState<ManualCardFlowScreen> createState() =>
       _ManualCardFlowScreenState();
@@ -70,6 +77,7 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
   final Set<String> _selected = {};
   final Map<String, _CardDetails> _details = {};
   List<_AddOutcome> _outcomes = const [];
+  late String _country = widget.country;
 
   @override
   void initState() {
@@ -79,13 +87,9 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
 
   Future<_ProductCatalog> _loadCatalog() async {
     final repo = ref.read(dataRepositoryProvider);
-    // Same country filter as the issuer picker that led here, or an issuer
-    // present in both countries (Amex, Capital One) would list the other
-    // country's cards once you stepped inside it.
-    final all = await repo.catalog.productsForIssuer(
-      null,
-      country: ref.read(catalogCountryProvider),
-    );
+    // Every country; [_SelectCards] applies the country filter, so switching
+    // it on an issuer that sells in both countries (Amex) needs no reload.
+    final all = await repo.catalog.productsForIssuer(null);
     final bank = _normalized(widget.issuerQuery);
     final matches = all.where((product) {
       final issuer = _normalized(product.issuer);
@@ -188,6 +192,8 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
                 issuerName: widget.displayName,
                 logoUrl: widget.logoUrl,
                 products: products,
+                country: _country,
+                onCountryChanged: (v) => setState(() => _country = v),
                 owned: owned,
                 selected: _selected,
                 onChanged: (id, selected) => setState(() {
@@ -230,6 +236,8 @@ class _SelectCards extends StatefulWidget {
     required this.issuerName,
     required this.logoUrl,
     required this.products,
+    required this.country,
+    required this.onCountryChanged,
     required this.owned,
     required this.selected,
     required this.onChanged,
@@ -238,6 +246,8 @@ class _SelectCards extends StatefulWidget {
   final String issuerName;
   final String? logoUrl;
   final List<CardProduct> products;
+  final String country;
+  final ValueChanged<String> onCountryChanged;
   // card_product_ids already in the wallet (bank-linked or manually added
   // earlier). Shown pre-checked and locked so the user can't add a
   // duplicate.
@@ -263,9 +273,15 @@ class _SelectCardsState extends State<_SelectCards> {
   @override
   Widget build(BuildContext context) {
     final q = _query.trim().toLowerCase();
-    final visible = q.isEmpty
+    // A NULL country is a catalog published before Canada: American.
+    String countryOf(CardProduct p) => p.country ?? 'US';
+    final multiCountry = widget.products.map(countryOf).toSet().length > 1;
+    final inCountry = widget.country == catalogCountryAll
         ? widget.products
-        : widget.products
+        : widget.products.where((p) => countryOf(p) == widget.country).toList();
+    final visible = q.isEmpty
+        ? inCountry
+        : inCountry
               .where((p) => p.displayName.toLowerCase().contains(q))
               .toList();
     // "Select all" only toggles the addable (not-yet-owned) cards among
@@ -293,6 +309,25 @@ class _SelectCardsState extends State<_SelectCards> {
             style: AppText.bodyMd(color: AppColors.mutedFg),
           ),
           const SizedBox(height: 20),
+          if (multiCountry) ...[
+            CountryFilter(
+              value: widget.country,
+              onChanged: widget.onCountryChanged,
+            ),
+            if (widget.country != catalogCountryAll) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  '${inCountry.length} of ${widget.products.length} '
+                  '${widget.issuerName} cards are sold in '
+                  '${widget.country == 'US' ? 'the United States' : catalogCountryLabel(widget.country)}',
+                  style: AppText.bodySm(color: AppColors.mutedFg),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+          ],
           TextField(
             controller: _searchCtrl,
             onChanged: (v) => setState(() => _query = v),

@@ -282,10 +282,9 @@ final earliestTransactionDateProvider = FutureProvider<DateTime?>((ref) async {
 final catalogIssuersProvider = FutureProvider<List<CatalogIssuer>>((ref) async {
   final repo = ref.watch(dataRepositoryProvider);
   await ref.watch(catalogReadyProvider.future);
-  // Watched, not read: changing the country in Profile has to rebuild the
-  // picker, and this provider is what the picker renders from.
-  final country = ref.watch(catalogCountryProvider);
-  return repo.catalog.issuers(country: country);
+  // Every country: the picker narrows by [CatalogIssuer.countries] in memory,
+  // so flipping its country filter never reloads the grid.
+  return repo.catalog.issuers();
 });
 
 /// How many cards the wallet already holds per issuer. Watched by the issuer
