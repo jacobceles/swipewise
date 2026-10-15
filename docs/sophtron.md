@@ -173,6 +173,14 @@ Key behaviors:
   timestamp in `settings`), so repeated pulls stay fast and issuers aren't hammered; the
   throttle counts *attempts*, not just successes, so a slow or MFA-gated member isn't
   re-tried every sync. This is the fix for stale/missing recent activity and short history.
+  If the refresh can't even be *started* (the trigger errors or returns no JobID), the read
+  still replays the last snapshot, but the connection is recorded `last_sync_status='stale'`
+  and `last_synced_at` is left at the last real refresh; the Cards screen shows "Couldn't
+  update from <bank> · showing data from …". `stale` is not `failed`: no Reconnect prompt,
+  no circuit breaker, and the next refresh that starts clears it
+  (`BankSyncEngine.connectionStatusAfterRead`). Until 2026-10 the account Worker allowlisted
+  `PUT` on `members/{id}/{job}` (the credential *update*) instead of `POST` (the refresh), so
+  every refresh was refused and this read as `ok` for two months.
 - **Member auto-dedup** — re-linking the same bank leaves multiple Members with the **same
   `InstitutionID`** (and identical accounts). The engine keeps the most-recently-modified per
   `InstitutionID` and `deleteMember`s the rest at Sophtron, so duplicates don't multiply
@@ -205,8 +213,10 @@ Key behaviors:
 - **Circuit breakers** (`api_circuit_breakers`) — cross-isolate breaker state for external
   APIs (e.g. Google Places): N failures → fast-fail for a cooldown window.
 
-There is no background sync. Syncing is user-initiated — pull-to-refresh, or the sync
-that follows a link. A `workmanager` 8-hourly tick used to exist behind an `auto_sync`
+There is no background sync. A sync runs on pull-to-refresh, after a link, and when the app
+opens or returns to the foreground with the last sync over 12 hours old
+(`HomeScreen._syncBanksIfDue`, after the wallet-restore attempt so a bank sync can't beat a
+restore onto a new phone). A `workmanager` 8-hourly tick used to exist behind an `auto_sync`
 setting; it was removed on 2026-08-12, having never been reachable (no UI ever set the
 setting, and nothing watched its provider). The mutex above still earns its keep: the
 link's first sync and a pull-to-refresh can still overlap.

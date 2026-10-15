@@ -886,8 +886,18 @@ class BankSyncEngine {
         ),
       );
 
-      await _repo.setConnectionLastSyncedAt(memberId, DateTime.now().toUtc());
-      await _repo.setConnectionSyncStatus(memberId, status: 'ok');
+      final after = connectionStatusAfterRead(
+        refreshStarted: refreshOutcome != _RefreshOutcome.refreshFailed,
+        neverSyncedBefore: neverSyncedBefore,
+      );
+      if (after.advanceLastSynced) {
+        await _repo.setConnectionLastSyncedAt(memberId, DateTime.now().toUtc());
+      }
+      await _repo.setConnectionSyncStatus(
+        memberId,
+        status: after.status,
+        error: after.status == 'stale' ? "Couldn't refresh from the bank" : null,
+      );
       onProgress?.call(
         MemberCompleted(memberId: memberId, bankName: instName, success: true),
       );
@@ -1047,9 +1057,9 @@ class BankSyncEngine {
   /// Returns [_RefreshOutcome.reauthRequired] when the scrape (current or
   /// pending from a prior sync) surfaced an MFA challenge or the bank rejected
   /// the login (a completed-but-failed job), so the caller can flag the member
-  /// for reconnect and stop re-scraping it; [_RefreshOutcome.proceeded] in
-  /// every other case (success, throttled, transient trigger/poll error,
-  /// timeout).
+  /// for reconnect and stop re-scraping it; [_RefreshOutcome.refreshFailed]
+  /// when no refresh job could be started; [_RefreshOutcome.proceeded] in
+  /// every other case (success, throttled, poll error, timeout).
   Future<_RefreshOutcome> _refreshMemberIfDue({
     required BankClient client,
     required String customerId,
@@ -1136,9 +1146,9 @@ class BankSyncEngine {
         jobId = (res['JobID'] ?? res['jobID'])?.toString();
       } catch (e) {
         Log.w('bank-sync', 'refresh trigger failed for $memberId: $e');
-        return _RefreshOutcome.proceeded;
+        return _RefreshOutcome.refreshFailed;
       }
-      if (jobId == null) return _RefreshOutcome.proceeded;
+      if (jobId == null) return _RefreshOutcome.refreshFailed;
       // Mark the *attempt* (not just success): a slow or MFA-gated job must
       // not be re-triggered every sync, or syncs stay perpetually slow. The
       // throttle counts attempts; the job still finishes server-side and the
@@ -1181,6 +1191,20 @@ class BankSyncEngine {
     return _RefreshOutcome.proceeded;
   }
 
+  /// What a successful read records on the connection. A refresh that never
+  /// started means the read replayed the last snapshot: say so (`stale`) and
+  /// keep `last_synced_at` at the last real refresh, so the Cards screen can
+  /// show how old the data is. Until 2026-10 the account Worker refused every
+  /// refresh and this recorded `ok` for two months. A never-synced member's
+  /// snapshot is its fresh link job, so it counts as a real refresh.
+  @visibleForTesting
+  static ({String status, bool advanceLastSynced}) connectionStatusAfterRead({
+    required bool refreshStarted,
+    required bool neverSyncedBefore,
+  }) => refreshStarted || neverSyncedBefore
+      ? (status: 'ok', advanceLastSynced: true)
+      : (status: 'stale', advanceLastSynced: false);
+
   /// True when a refresh job's payload says the scrape can't complete without
   /// the user. Two shapes:
   ///   - an MFA challenge is pending (can't be answered headlessly during
@@ -1210,6 +1234,11 @@ enum _RefreshOutcome {
   /// The scrape hit an MFA challenge or the bank rejected the login. The member
   /// needs the user to reconnect and must not be re-scraped (lockout guard).
   reauthRequired,
+
+  /// No refresh job could be started (the trigger errored or returned no
+  /// JobID), so the read returns the last snapshot. Recorded as `stale` rather
+  /// than `failed`: reconnecting can't fix it, and the next sync retries.
+  refreshFailed,
 }
 
 class _ResolvedMember {

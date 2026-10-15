@@ -12,6 +12,7 @@ void main() {
   final young = now.subtract(const Duration(minutes: 30)).toIso8601String();
 
   _breakerTests();
+  _staleReadTests();
 
   test('retires an old, never-synced, account-less member', () {
     expect(
@@ -185,5 +186,36 @@ void _breakerTests() {
 
   test('closed exactly at expiry — recovery must not be delayed a tick', () {
     expect(BankSyncEngine.breakerIsOpen(openedUntil: nowMs, now: now), isFalse);
+  });
+}
+
+/// A refresh that never started (the trigger was refused, as every one was
+/// while the account Worker allowlisted PUT instead of POST) leaves the read
+/// replaying the last snapshot. That must not be recorded as a fresh `ok`.
+void _staleReadTests() {
+  test('a refresh that never started records stale and keeps last_synced_at', () {
+    final after = BankSyncEngine.connectionStatusAfterRead(
+      refreshStarted: false,
+      neverSyncedBefore: false,
+    );
+    expect(after.status, 'stale');
+    expect(after.advanceLastSynced, isFalse);
+  });
+
+  test('a refresh that ran records ok', () {
+    final after = BankSyncEngine.connectionStatusAfterRead(
+      refreshStarted: true,
+      neverSyncedBefore: false,
+    );
+    expect(after.status, 'ok');
+    expect(after.advanceLastSynced, isTrue);
+  });
+
+  test('a never-synced member is ok even without a refresh — its link job is fresh', () {
+    final after = BankSyncEngine.connectionStatusAfterRead(
+      refreshStarted: false,
+      neverSyncedBefore: true,
+    );
+    expect(after.status, 'ok');
   });
 }

@@ -94,7 +94,14 @@ class BankSyncNotifier extends Notifier<AsyncValue<BankSyncState>> {
   /// just completed (add-bank / reconnect), so the first post-link sync
   /// doesn't miss its own freshly-added bank or older sibling Members
   /// that the v2 index hasn't re-listed yet.
-  Future<void> runSync({String? waitForMemberId}) async {
+  ///
+  /// [forceRefresh] bypasses the engine's per-bank re-scrape throttle. True for
+  /// user gestures (pull-to-refresh, retry, add-bank, debit toggle); the
+  /// automatic sync on app open passes false.
+  Future<void> runSync({
+    String? waitForMemberId,
+    bool forceRefresh = true,
+  }) async {
     final auth = ref.read(authProvider);
     if (!auth.isLoggedIn || auth.userId == null) {
       Log.w('bank-sync', 'runSync called without auth; skipping');
@@ -210,12 +217,7 @@ class BankSyncNotifier extends Notifier<AsyncValue<BankSyncState>> {
         bankCustomerId: uniqueId,
         firstSyncCompleted: firstSyncCompleted,
         includeDebitAccounts: includeDebit,
-        // Every caller of this notifier is a foreground user gesture
-        // (pull-to-refresh, retry button, add-bank, debit toggle), so the
-        // re-scrape throttle is bypassed per the engine's documented
-        // user-initiated contract. The background WorkManager path calls the
-        // engine directly with forceRefresh: false and keeps the throttle.
-        forceRefresh: true,
+        forceRefresh: forceRefresh,
         waitForMemberId: waitForMemberId,
         onProgress: (event) {
           // Keep the lock's heartbeat fresh so a concurrent pull or the

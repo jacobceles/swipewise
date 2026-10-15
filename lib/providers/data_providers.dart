@@ -210,7 +210,7 @@ final cardsProvider = FutureProvider<List<CardSummary>>((ref) async {
 /// `institution_name`, no broken-state mismatches for multi-word banks.
 ///
 /// Map value contains all columns of `bank_connections` - most
-/// importantly `last_sync_status` ('ok' | 'failed' | null) and
+/// importantly `last_sync_status` ('ok' | 'stale' | 'failed' | null) and
 /// `institution_logo` (link-time URL preferred over the v1 lookup).
 final bankConnectionsByInstitutionIdProvider =
     FutureProvider<Map<String, BankConnectionRow>>((ref) async {

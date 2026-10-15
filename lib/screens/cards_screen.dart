@@ -424,6 +424,9 @@ class _BankSectionState extends ConsumerState<_BankSection> {
     // entitlement makes the whole branch fail closed instead.
     final isPro = ref.watch(proEntitlementProvider);
     final isBroken = isPro && conn?.lastSyncStatus == 'failed';
+    // The last sync couldn't refresh from the bank and replayed old data.
+    // Informational only: syncing carries on and the next good refresh clears it.
+    final isStale = isPro && conn?.lastSyncStatus == 'stale';
     // Orphan: cards present + non-Manual + no live connection row. The
     // user disconnected, or the bank was wiped server-side.
     final isOrphan = isPro && !isManual && conn == null;
@@ -580,7 +583,7 @@ class _BankSectionState extends ConsumerState<_BankSection> {
               style: AppText.bodySm(color: palette.muted),
             ),
           ],
-        ] else
+        ] else ...[
           Row(
             children: [
               Expanded(
@@ -600,6 +603,25 @@ class _BankSectionState extends ConsumerState<_BankSection> {
               ),
             ],
           ),
+          if (isStale) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(LucideIcons.triangleAlert, size: 14, color: palette.amber),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    lastSyncedAt == null
+                        ? "Couldn't update from ${widget.label}"
+                        : "Couldn't update from ${widget.label} · showing data "
+                              'from ${_relativeDate(lastSyncedAt)}',
+                    style: AppText.bodySm(color: palette.amber),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
         if (_expanded) ...[
           const SizedBox(height: 12),
           for (final c in widget.cards)

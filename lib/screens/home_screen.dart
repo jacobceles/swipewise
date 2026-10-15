@@ -10,6 +10,7 @@ import '../nearby/geofence_channel.dart';
 import '../nearby/nearby_permission_gate.dart';
 import '../providers/auth_provider.dart';
 import '../providers/backup_provider.dart';
+import '../providers/bank_sync_provider.dart';
 import '../providers/sync_provider.dart';
 import '../providers/data_providers.dart';
 import '../providers/activation_reminder_provider.dart';
@@ -54,8 +55,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _askPermissionsOnce();
       _consumePendingMerchant();
       _topUpPaymentReminders();
-      _maybeRestoreWallet();
+      // Restore first: it refuses a wallet that already has cards, so a bank
+      // sync landing first on a new phone would block the backup's manual
+      // cards and nicknames from coming back.
+      _maybeRestoreWallet().whenComplete(_syncBanksIfDue);
     });
+  }
+
+  /// How stale bank data may get before opening the app syncs it.
+  static const _autoSyncAfter = Duration(hours: 12);
+
+  /// Syncs linked banks when the app opens or comes back to the foreground and
+  /// the last sync is older than [_autoSyncAfter]. The only other triggers are
+  /// pull-to-refresh and linking a bank — there is no background sync — so
+  /// without this a bank could go stale, or need reconnecting, unnoticed.
+  /// `runSync` itself no-ops without Pro or aggregator credentials.
+  Future<void> _syncBanksIfDue() async {
+    final userId = ref.read(authProvider).userId;
+    if (userId == null) return;
+    final last = await SettingsRepository(
+      ref.read(dataRepositoryProvider),
+    ).getLastSyncAt(userId);
+    if (last != null &&
+        DateTime.now().toUtc().difference(last.toUtc()) < _autoSyncAfter) {
+      return;
+    }
+    if (!mounted) return;
+    await ref.read(bankSyncProvider.notifier).runSync(forceRefresh: false);
   }
 
   /// Pulls a wallet backup down onto an empty device.
@@ -176,6 +202,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _consumePendingMerchant();
+      _syncBanksIfDue();
     }
   }
 
