@@ -1563,7 +1563,7 @@
       "country": "CA",
       "currency": "CAD",
       "display_name": "BMO Prepaid Mastercard®*",
-      "foreign_tx_fee_pct": null,
+      "foreign_tx_fee_pct": 2.5,
       "image_url": "https://www.bmo.com/dam_asset/transform/d8438c67-27b7-4627-85c8-08dfe30ee174/prepaid-no-outline?io=width:277,transform:fit&quality=100&format=jpg",
       "issuer": "Bmo",
       "network": "Mastercard",
@@ -5679,7 +5679,7 @@
     }
   ],
   "catalogVersion": "2026.10.15",
-  "dataVersion": 1304512579,
+  "dataVersion": 1775797282,
   "point_systems": [
     {
       "baseline_cent_value": 1.5,
