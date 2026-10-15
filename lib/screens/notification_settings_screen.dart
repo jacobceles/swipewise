@@ -5,14 +5,16 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../api/settings_repository.dart';
 import '../models/card.dart';
+import '../providers/activation_reminder_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_providers.dart';
 import '../providers/payment_reminder_provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 
-/// Wireframe `lc1fO` / `wTpts` — one place to manage every notification the app
-/// sends: payment reminders (N12) and the existing near-store recommendations.
+/// Wireframe `lc1fO` / `wTpts` / `zxMcr` — one place to manage every
+/// notification the app sends: payment reminders (N12), rotating-category
+/// activation reminders (D2/N3) and the existing near-store recommendations.
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
 
@@ -45,6 +47,14 @@ class _NotificationSettingsScreenState
     await _settings.setPaymentRemindersEnabled(userId, value);
     ref.invalidate(paymentRemindersEnabledProvider);
     await ref.read(paymentReminderControllerProvider).reschedule();
+  }
+
+  Future<void> _setActivationEnabled(bool value) async {
+    final userId = ref.read(authProvider).userId;
+    if (userId == null) return;
+    await _settings.setActivationRemindersEnabled(userId, value);
+    ref.invalidate(activationRemindersEnabledProvider);
+    await ref.read(activationReminderControllerProvider).reschedule();
   }
 
   /// Bottom-sheet picker behind the "Remind me" row (wireframe uses a
@@ -95,6 +105,10 @@ class _NotificationSettingsScreenState
     final leadDays = ref.watch(paymentReminderLeadDaysProvider).value ?? 3;
     final cards = ref.watch(cardsProvider).value ?? const <CardSummary>[];
     final withDueDay = cards.where((c) => c.dueDay != null).length;
+    final activationOn =
+        ref.watch(activationRemindersEnabledProvider).value ?? true;
+    final activationCards =
+        ref.watch(activationCardNamesProvider).value ?? const <String>[];
     final denied = _osGranted == false;
 
     return Scaffold(
@@ -160,6 +174,27 @@ class _NotificationSettingsScreenState
             withDueDay == 0
                 ? 'No cards have a due date yet. Add one from a card to get reminders.'
                 : 'Reminders fire for the $withDueDay card${withDueDay == 1 ? '' : 's'} with a due date set.',
+            style: AppText.bodySm(color: palette.muted),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'ROTATING CATEGORIES',
+            style: AppText.labelSm(color: palette.muted),
+          ),
+          const SizedBox(height: 8),
+          _ToggleRow(
+            icon: LucideIcons.calendarClock,
+            title: 'Activation reminders',
+            subtitle: activationCards.isEmpty
+                ? 'When a new quarter starts for a card with rotating categories'
+                : 'When a new quarter starts for ${activationCards.join(' and ')}',
+            value: activationOn && !denied,
+            onChanged: denied ? null : _setActivationEnabled,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Activation happens at your bank. SwipeWise ranks these cards at '
+            'their bonus rate, assuming you’ve activated.',
             style: AppText.bodySm(color: palette.muted),
           ),
           const SizedBox(height: 28),

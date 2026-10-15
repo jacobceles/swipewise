@@ -3,6 +3,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../util/logger.dart';
+import 'activation_reminder_service.dart';
 
 /// Schedules "your payment is due soon" notifications (N12).
 ///
@@ -35,7 +36,8 @@ class PaymentReminderService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
-  Future<void> _ensureInit() async {
+  /// Shared with [ActivationReminderService]: one plugin, one tz setup.
+  Future<void> ensureInit() async {
     if (_ready) return;
     tzdata.initializeTimeZones();
     // The device's zone matters: a due date is a wall-clock date, so a reminder
@@ -142,8 +144,14 @@ class PaymentReminderService {
     required int leadDays,
     DateTime? now,
   }) async {
-    await _ensureInit();
-    await _plugin.cancelAll();
+    await ensureInit();
+    // Not `cancelAll`: that would also wipe the activation reminders, which
+    // share this plugin and reschedule on their own inputs.
+    for (final p in await _plugin.pendingNotificationRequests()) {
+      if (p.payload != ActivationReminderService.payload) {
+        await _plugin.cancel(id: p.id);
+      }
+    }
     if (!enabled) {
       Log.i('payment-reminder', 'reminders off — cleared all');
       return;

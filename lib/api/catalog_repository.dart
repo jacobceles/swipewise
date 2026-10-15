@@ -52,6 +52,59 @@ class CatalogIssuer {
   final String? imageUrl;
 }
 
+/// One quarter of a card's rotating bonus, for the Rewards tab and the
+/// quarter-start activation reminder.
+class RotatingQuarter {
+  const RotatingQuarter({
+    required this.year,
+    required this.quarter,
+    required this.rows,
+    this.capSpendUsd,
+  });
+
+  final int year;
+  final int quarter;
+
+  /// One row per bonus category, labelled without the "(rotating)" suffix —
+  /// the section heading already says so.
+  final List<WalletRewardRow> rows;
+
+  /// Spend the bonus applies to per quarter, when the catalog knows it.
+  final double? capSpendUsd;
+
+  DateTime get start => DateTime(year, 3 * quarter - 2);
+
+  /// The quarter's last day (day 0 of the following month).
+  DateTime get end => DateTime(year, 3 * quarter + 1, 0);
+}
+
+/// A card's rotating bonus programme around a given date. See
+/// [CatalogRepository.rotatingScheduleForCard].
+class RotatingSchedule {
+  const RotatingSchedule({
+    required this.issuerName,
+    required this.requiresActivation,
+    required this.rate,
+    required this.currency,
+    this.current,
+    this.next,
+  });
+
+  final String issuerName;
+
+  /// The issuer pays the bonus only once the cardholder activates it each
+  /// quarter (Chase Freedom Flex, Discover it). The app can't see or do that —
+  /// it ranks at the bonus rate regardless and only reminds.
+  final bool requiresActivation;
+
+  /// The headline bonus rate, for a reminder whose quarter has no categories
+  /// in the catalog yet.
+  final double rate;
+  final String currency;
+  final RotatingQuarter? current;
+  final RotatingQuarter? next;
+}
+
 /// The catalog stores issuers as squashed slugs (`Bankofamerica`, `Usbank`,
 /// `Sofi`) because the bank-linked flow matches them by stripping every
 /// non-alphanumeric character — `_normalized('Bank of America')` and
@@ -476,19 +529,16 @@ class CatalogRepository {
     return rows.map(CardPerk.fromRow).toList(growable: false);
   }
 
-  /// The card's earn rules, shaped like the old `wallet_rewards` rows so the
-  /// card-detail Rewards tab renders unchanged. 0-rate intro-APR promos are
-  /// omitted (not earn rules); baseline sorts last. Rotating rules show only for
-  /// the live quarter — the catalog also carries past and announced-ahead ones
-  /// (Freedom Flex ships Q3 2026 … Q1 2027), which the engine ignores until their
-  /// quarter and which read as duplicates when listed together.
+  /// The card's everyday earn rules, shaped like the old `wallet_rewards` rows
+  /// so the card-detail Rewards tab renders unchanged. 0-rate intro-APR promos
+  /// are omitted (not earn rules); baseline sorts last. Quarter-dated rotating
+  /// rules are left to [rotatingScheduleForCard] — the catalog carries past and
+  /// announced-ahead quarters too (Freedom Flex ships Q3 2026 … Q1 2027), and
+  /// listed together they read as duplicates.
   Future<List<WalletRewardRow>> rewardsForCard(
     String userId,
-    String cardId, {
-    DateTime? now,
-  }) async {
-    final when = now ?? DateTime.now();
-    final quarter = quarterOf(when);
+    String cardId,
+  ) async {
     final db = await _dbHelper.database;
     final rows = await db.rawQuery(
       '''
@@ -505,9 +555,7 @@ class CatalogRepository {
       if (rule.kind == RewardRuleKind.promo && rule.rate == 0) continue;
       if (rule.kind == RewardRuleKind.partnerPortal) continue;
       if (rule.kind == RewardRuleKind.rotating &&
-          (rule.rotationYear != when.year ||
-              (rule.rotationQuarter != null &&
-                  rule.rotationQuarter != quarter))) {
+          rule.rotationQuarter != null) {
         continue;
       }
       out.add(
@@ -529,6 +577,72 @@ class CatalogRepository {
       return (b.amount ?? 0).compareTo(a.amount ?? 0);
     });
     return out;
+  }
+
+  /// The card's rotating bonus around [now]: the live quarter and the one after
+  /// it, each only when the catalog has its categories. Null for a card with no
+  /// rotating rules at all — the common case.
+  Future<RotatingSchedule?> rotatingScheduleForCard(
+    String userId,
+    String cardId, {
+    DateTime? now,
+  }) async {
+    final when = now ?? DateTime.now();
+    final db = await _dbHelper.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT rr.*, cp.issuer
+      FROM card_links cl
+      JOIN reward_rules rr ON rr.card_product_id = cl.card_product_id
+      JOIN card_products cp ON cp.card_product_id = cl.card_product_id
+      WHERE cl.user_id = ? AND cl.card_id = ? AND rr.kind = 'rotating'
+      ''',
+      [userId, cardId],
+    );
+    if (rows.isEmpty) return null;
+    final rules = rows.map(_rule).toList();
+
+    RotatingQuarter? quarterAt(int year, int quarter) {
+      final members = rules
+          .where((r) => r.rotationYear == year && r.rotationQuarter == quarter)
+          .toList();
+      if (members.isEmpty) return null;
+      return RotatingQuarter(
+        year: year,
+        quarter: quarter,
+        rows: [
+          for (final r in members)
+            WalletRewardRow(
+              ruleId: r.ruleId,
+              label: r.brand != null
+                  ? (brandDisplayNameFor(r.brand!) ?? r.brand!)
+                  : (r.category?.label ?? 'Rotating'),
+              categoryName: r.category?.name ?? 'other',
+              brandId: r.brand,
+              isBaseline: false,
+              amount: r.rate,
+              currency: _currencyLabel(r.pointSystemId),
+              iconId: null,
+            ),
+        ],
+        capSpendUsd: members
+            .map((r) => r.capSpendAmountUsd)
+            .whereType<double>()
+            .firstOrNull,
+      );
+    }
+
+    final quarter = quarterOf(when);
+    return RotatingSchedule(
+      issuerName: issuerDisplayName(rows.first['issuer'] as String),
+      requiresActivation: rules.any((r) => r.requiresActivation),
+      rate: rules.first.rate,
+      currency: _currencyLabel(rules.first.pointSystemId),
+      current: quarterAt(when.year, quarter),
+      next: quarter == 4
+          ? quarterAt(when.year + 1, 1)
+          : quarterAt(when.year, quarter + 1),
+    );
   }
 
   /// card_id → display currency ('USD' / 'POINTS' / 'MILES'), from each card's

@@ -149,8 +149,10 @@ highest priority first:
 1. **promo** — date-bounded; `rate == 0` intro-APR offers are skipped.
 2. **rotating** — matching rotation year/quarter. **Assumed activated**: the app has no
    activation toggle, so an activation-required bonus still applies (gating on it would
-   permanently hide the whole Freedom Flex / Discover it 5% program). The `rotating_activations`
-   plumbing is retained for a future opt-in toggle but not consulted here.
+   permanently hide the whole Freedom Flex / Discover it 5% program). That is now a product
+   decision (2026-10), not a gap: the app only *reminds* — a notification when a new quarter
+   starts (`ActivationReminderService`) and a note on the card's Rewards tab. The
+   `rotating_activations` plumbing is retained but not consulted here.
 3. **brand** — exact `brand_id`.
 4. **category** — permanent.
 5. **baseline** — the floor; always applies last.

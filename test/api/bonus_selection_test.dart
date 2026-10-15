@@ -541,7 +541,7 @@ void main() {
       );
     });
 
-    test('rotating rules show only for the live quarter', () async {
+    test('rotating quarters split into the live one and the next', () async {
       // The catalog carries a rotating card's past and announced-ahead quarters
       // too (Freedom Flex shipped Q3 2026, Q4 2026 and Q1 2027 together), and
       // listing them all showed "Grocery (rotating)" twice.
@@ -587,18 +587,32 @@ void main() {
         source: 'user_confirmed',
       );
 
-      Future<List<String>> rotatingShown(DateTime now) async => [
-        for (final w in await r.rewardsForCard('u1', 'c1', now: now))
-          if (w.ruleId.startsWith('rot#')) w.ruleId,
-      ];
-      expect(await rotatingShown(DateTime(2026, 10, 14)), ['rot#q4-grocery']);
-      expect(await rotatingShown(DateTime(2027, 1, 15)), ['rot#q1-grocery']);
-      // The fixed rules are untouched.
-      final all = await r.rewardsForCard(
+      Future<List<List<String>?>> quarters(DateTime now) async {
+        final s = await r.rotatingScheduleForCard('u1', 'c1', now: now);
+        return [
+          s?.current?.rows.map((w) => w.ruleId).toList(),
+          s?.next?.rows.map((w) => w.ruleId).toList(),
+        ];
+      }
+
+      expect(await quarters(DateTime(2026, 10, 14)), [
+        ['rot#q4-grocery'],
+        ['rot#q1-grocery'],
+      ]);
+      // Nothing announced past Q1 2027 yet.
+      expect(await quarters(DateTime(2027, 1, 15)), [
+        ['rot#q1-grocery'],
+        null,
+      ]);
+      final q4 = (await r.rotatingScheduleForCard(
         'u1',
         'c1',
         now: DateTime(2026, 10, 14),
-      );
+      ))!.current!;
+      expect((q4.start, q4.end), (DateTime(2026, 10), DateTime(2026, 12, 31)));
+      // The flat list keeps only the fixed rules.
+      final all = await r.rewardsForCard('u1', 'c1');
+      expect(all.map((w) => w.ruleId), isNot(contains(startsWith('rot#'))));
       expect(all.map((w) => w.ruleId), contains('cp#base'));
     });
   });

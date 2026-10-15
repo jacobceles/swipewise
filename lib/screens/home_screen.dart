@@ -12,6 +12,7 @@ import '../providers/auth_provider.dart';
 import '../providers/backup_provider.dart';
 import '../providers/sync_provider.dart';
 import '../providers/data_providers.dart';
+import '../providers/activation_reminder_provider.dart';
 import '../providers/payment_reminder_provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
@@ -88,6 +89,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await ref.read(cardsProvider.future);
     if (!mounted) return;
     await ref.read(paymentReminderControllerProvider).reschedule();
+    // Same top-up for the quarter-start activation reminders (D2/N3), which
+    // read the card→product links the catalog hydration writes.
+    await ref.read(catalogReadyProvider.future);
+    if (!mounted) return;
+    await ref.read(activationReminderControllerProvider).reschedule();
   }
 
   /// Fires the four OS permission dialogs (notifications, activity

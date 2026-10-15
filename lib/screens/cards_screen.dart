@@ -1534,6 +1534,7 @@ class _CardDetailsSheet extends ConsumerWidget {
     final rewardsAsync = ref.watch(cardRewardsByCardProvider(card.cardId));
     final perks = perksAsync.value ?? const <CardPerk>[];
     final rewards = rewardsAsync.value ?? const <WalletRewardRow>[];
+    final rotating = ref.watch(cardRotatingScheduleProvider(card.cardId)).value;
     final credits = perks.where((p) => p.isCredit).toList();
     final benefits = perks.where((p) => p.isBenefit).toList();
     final bonusGroups = _bonusGroupsFor(ref, card.cardId);
@@ -1611,7 +1612,11 @@ class _CardDetailsSheet extends ConsumerWidget {
                 ),
                 unselectedLabelStyle: AppText.bodyMd(),
                 tabs: [
-                  _TabLabel(label: 'Rewards', count: rewards.length),
+                  _TabLabel(
+                    label: 'Rewards',
+                    count:
+                        rewards.length + (rotating?.current?.rows.length ?? 0),
+                  ),
                   _TabLabel(label: 'Credits', count: credits.length),
                   _TabLabel(label: 'Benefits', count: benefits.length),
                 ],
@@ -1621,6 +1626,7 @@ class _CardDetailsSheet extends ConsumerWidget {
                   children: [
                     _RewardsTab(
                       rewards: rewards,
+                      rotating: rotating,
                       async: rewardsAsync,
                       card: card,
                       bonusGroups: bonusGroups,
@@ -1849,11 +1855,15 @@ class _StatStrip extends StatelessWidget {
 class _RewardsTab extends ConsumerWidget {
   const _RewardsTab({
     required this.rewards,
+    required this.rotating,
     required this.async,
     required this.card,
     required this.bonusGroups,
   });
   final List<WalletRewardRow> rewards;
+  // The live and next rotating quarters (Freedom Flex, Discover it); null for
+  // every card without a rotating bonus, which then renders exactly as before.
+  final RotatingSchedule? rotating;
   final AsyncValue async;
   final CardSummary card;
   // N17: the card's selectable-bonus groups, if it has any (~13 of 410
@@ -1879,6 +1889,9 @@ class _RewardsTab extends ConsumerWidget {
             icon: LucideIcons.gift,
             message: 'No rewards listed for this card',
           );
+    final palette = AppPalette.of(context);
+    final current = rotating?.current;
+    final next = rotating?.next;
     return _TabSlot(
       async: async,
       empty: empty,
@@ -1890,64 +1903,255 @@ class _RewardsTab extends ConsumerWidget {
               Divider(height: 1, color: AppPalette.of(context).border),
             ],
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              itemCount: rewards.length,
-              separatorBuilder: (_, _) => Divider(
-                height: 1,
-                indent: 0,
-                color: AppPalette.of(context).border,
-              ),
-              itemBuilder: (_, i) {
-                final r = rewards[i];
-                final label = r.label;
-                final amount = r.amount ?? 0;
-                final currency = r.currency ?? '%';
-                // `is_baseline = 1` is the explicit catch-all marker now; the
-                // legacy substring on the label stays as a defensive fallback.
-                final isCatchAll =
-                    r.isBaseline ||
-                    label.toLowerCase().contains('everywhere') ||
-                    label.toLowerCase().contains('other');
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(label, style: AppText.bodyMd()),
-                            // "top N spend categories" earns reach only a subset of the
-                            // listed categories — show the caveat so the rates don't read
-                            // as earned on everything at once.
-                            if (r.earnConstraint != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  r.earnConstraint!,
-                                  style: AppText.bodySm(
-                                    color: AppPalette.of(context).muted,
-                                  ),
-                                ),
-                              ),
-                          ],
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 12),
+              children: [
+                if (current != null) ...[
+                  _RewardSectionHead(
+                    label: 'THIS QUARTER · Q${current.quarter} ${current.year}',
+                    dates: _quarterDates(current),
+                  ),
+                  for (final (i, r) in current.rows.indexed) ...[
+                    if (i > 0) Divider(height: 1, color: palette.border),
+                    _RewardRateRow(row: r),
+                  ],
+                  const SizedBox(height: 4),
+                  _RotatingNote(
+                    quarter: current,
+                    schedule: rotating!,
+                    baseline: rewards.where((r) => r.isBaseline).firstOrNull,
+                  ),
+                ],
+                if (next != null) ...[
+                  _RewardSectionHead(
+                    label: 'NEXT · Q${next.quarter} ${next.year}',
+                    dates: _quarterDates(next),
+                  ),
+                  _NextQuarterPreview(
+                    quarter: next,
+                    requiresActivation: rotating!.requiresActivation,
+                  ),
+                ],
+                if (current != null || next != null) ...[
+                  Divider(height: 1, color: palette.border),
+                  const _RewardSectionHead(label: 'EVERY DAY'),
+                ] else
+                  const SizedBox(height: 12),
+                for (final (i, r) in rewards.indexed) ...[
+                  if (i > 0) Divider(height: 1, color: palette.border),
+                  _RewardRateRow(row: r),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _quarterDates(RotatingQuarter q) =>
+    '${DateFormat('MMM d').format(q.start)} – ${DateFormat('MMM d').format(q.end)}';
+
+/// A Rewards-tab section heading: label left, an optional date range right.
+/// Wireframe `SGyfz`.
+class _RewardSectionHead extends StatelessWidget {
+  const _RewardSectionHead({required this.label, this.dates});
+  final String label;
+  final String? dates;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppPalette.of(context).muted;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 4),
+      child: Row(
+        children: [
+          Text(label, style: AppText.labelSm(color: muted)),
+          const Spacer(),
+          if (dates != null)
+            Text(
+              dates!,
+              style: AppText.labelSm(
+                color: muted,
+              ).copyWith(fontWeight: FontWeight.w400, letterSpacing: 0),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardRateRow extends StatelessWidget {
+  const _RewardRateRow({required this.row});
+  final WalletRewardRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = row;
+    final label = r.label;
+    // `is_baseline = 1` is the explicit catch-all marker now; the legacy
+    // substring on the label stays as a defensive fallback.
+    final isCatchAll =
+        r.isBaseline ||
+        label.toLowerCase().contains('everywhere') ||
+        label.toLowerCase().contains('other');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppText.bodyMd()),
+                // "top N spend categories" earns reach only a subset of the
+                // listed categories — show the caveat so the rates don't read
+                // as earned on everything at once.
+                if (r.earnConstraint != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      r.earnConstraint!,
+                      style: AppText.bodySm(
+                        color: AppPalette.of(context).muted,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            _formatRate(r.amount ?? 0, r.currency ?? '%'),
+            style: AppText.monoMd(
+              color: isCatchAll
+                  ? AppColors.foreground
+                  : AppPalette.of(context).green,
+            ).copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The live quarter's fine print: the spend cap and, for an issuer that makes
+/// you opt in, that activation happens at the bank. Informational only — the
+/// app can't see activation and keeps ranking at the bonus rate. Wireframe
+/// `m3SCmA`.
+class _RotatingNote extends StatelessWidget {
+  const _RotatingNote({
+    required this.quarter,
+    required this.schedule,
+    required this.baseline,
+  });
+  final RotatingQuarter quarter;
+  final RotatingSchedule schedule;
+  final WalletRewardRow? baseline;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final cap = quarter.capSpendUsd;
+    final rate = quarter.rows.first;
+    final parts = [
+      if (cap != null)
+        '${_formatRate(rate.amount ?? 0, rate.currency ?? '%')} on the first '
+            '${NumberFormat.simpleCurrency(decimalDigits: 0).format(cap)}'
+            '${quarter.rows.length > 1 ? ' in combined purchases' : ''} each quarter'
+            '${baseline == null ? '' : ', then ${_formatRate(baseline!.amount ?? 0, baseline!.currency ?? '%')}'}.',
+      if (schedule.requiresActivation)
+        '${schedule.issuerName} needs you to activate the bonus each quarter '
+            '— we\'ll remind you when a new one starts.',
+    ];
+    if (parts.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: palette.secondary,
+        borderRadius: BorderRadius.circular(kRadiusS),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(LucideIcons.info, size: 14, color: palette.muted),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              parts.join(' '),
+              style: AppText.bodySm(color: palette.muted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The announced-ahead quarter, kept visibly grey so it can't read as earning
+/// today. Wireframe `wio9b`.
+class _NextQuarterPreview extends StatelessWidget {
+  const _NextQuarterPreview({
+    required this.quarter,
+    required this.requiresActivation,
+  });
+  final RotatingQuarter quarter;
+  final bool requiresActivation;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final rate = quarter.rows.first;
+    final starts = DateFormat('MMM d').format(quarter.start);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    for (final r in quarter.rows)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: palette.border),
+                          borderRadius: BorderRadius.circular(kRadiusPill),
+                        ),
+                        child: Text(
+                          r.label,
+                          style: AppText.bodySm(color: palette.muted),
                         ),
                       ),
-                      Text(
-                        _formatRate(amount, currency),
-                        style: AppText.monoMd(
-                          color: isCatchAll
-                              ? AppColors.foreground
-                              : AppPalette.of(context).green,
-                        ).copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatRate(rate.amount ?? 0, rate.currency ?? '%'),
+                style: AppText.monoMd(
+                  color: palette.muted,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            requiresActivation
+                ? 'Starts $starts — we\'ll remind you to activate then.'
+                : 'Starts $starts.',
+            style: AppText.bodySm(color: palette.muted),
           ),
         ],
       ),

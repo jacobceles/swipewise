@@ -47,7 +47,8 @@ deliberately adds it to the list — the failure direction is "didn't sync" rath
 
 Travels: default screen, default advisor view, nearby enabled, search radius,
 dwell time per category, nearby place types, preferred card order, dismissed recurring tips,
-include debit accounts, payment reminders enabled, payment reminder lead days.
+include debit accounts, payment reminders enabled, payment reminder lead days, activation
+reminders enabled.
 
 An old backup may still carry `catalog_country` (the Profile "Card Country" setting, removed
 for an on-screen filter in Add a Card); restore drops it because it is no longer listed.

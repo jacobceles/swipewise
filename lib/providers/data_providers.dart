@@ -327,6 +327,15 @@ final cardRewardsByCardProvider =
       return repo.catalog.rewardsForCard(auth.userId!, cardId);
     });
 
+final cardRotatingScheduleProvider =
+    FutureProvider.family<RotatingSchedule?, String>((ref, cardId) async {
+      final auth = ref.watch(sessionProvider);
+      if (!auth.isLoggedIn) return null;
+      final repo = ref.watch(dataRepositoryProvider);
+      await ref.watch(catalogReadyProvider.future);
+      return repo.catalog.rotatingScheduleForCard(auth.userId!, cardId);
+    });
+
 final recurringPaymentsProvider = FutureProvider<RecurringPaymentsSummary>((
   ref,
 ) async {

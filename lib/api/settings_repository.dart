@@ -35,6 +35,7 @@ class SettingsRepository {
   static const _kCatalogDataVersion = 'catalog_data_version';
   static const _kPaymentRemindersEnabled = 'payment_reminders_enabled';
   static const _kPaymentReminderLeadDays = 'payment_reminder_lead_days';
+  static const _kActivationRemindersEnabled = 'activation_reminders_enabled';
   static const _kBackupEnabled = 'backup_enabled';
   static const _kProCached = 'pro_cached';
 
@@ -71,6 +72,7 @@ class SettingsRepository {
     _kIncludeDebitAccounts,
     _kPaymentRemindersEnabled,
     _kPaymentReminderLeadDays,
+    _kActivationRemindersEnabled,
   };
 
   // Default screen on launch.
@@ -184,6 +186,15 @@ class SettingsRepository {
 
   Future<void> setPaymentReminderLeadDays(String userId, int days) =>
       _repo.setSetting(userId, _kPaymentReminderLeadDays, days.toString());
+
+  // Rotating-bonus activation reminders. Default ON, unlike payment reminders:
+  // the catalog alone says which cards need one, so nothing has to be typed
+  // first, and it only ever fires for a card that needs activating.
+  Future<bool> getActivationRemindersEnabled(String userId) async =>
+      await _repo.getSetting(userId, _kActivationRemindersEnabled) != 'false';
+
+  Future<void> setActivationRemindersEnabled(String userId, bool enabled) =>
+      _repo.setSetting(userId, _kActivationRemindersEnabled, enabled.toString());
 
   // Search radius (5 / 10 / 25 mi). Default 10.
   Future<int> getNearbyRadiusMi(String userId) async {
