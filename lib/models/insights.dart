@@ -156,6 +156,26 @@ class MerchantSummary {
   });
 }
 
+/// How a reward pays out, which decides what the ranking sheet can promise
+/// about its value. Derived from the rule's point system ([of]).
+enum RewardKind {
+  /// Cash back (`usd` / `cad`): value per $1 is the rate, exactly.
+  cash,
+
+  /// A points programme: value per $1 ≈ rate × its typical cent value.
+  points,
+
+  /// The issuer's own terms (`other` — store money, per-litre points). The
+  /// catalog values it at 0, so it ranks last; the wording is the only answer.
+  other;
+
+  static RewardKind of(String pointSystemId) => switch (pointSystemId) {
+    'usd' || 'cad' => RewardKind.cash,
+    'other' => RewardKind.other,
+    _ => RewardKind.points,
+  };
+}
+
 class CategoryRewardRanking {
   final String cardId;
   final String? cardName;
@@ -165,6 +185,16 @@ class CategoryRewardRanking {
   final String? currency;
   final double earnedRecently;
   final bool isBest;
+  final RewardKind kind;
+
+  /// The engine's ranking key — what the sheet's value line and bar show.
+  final double effectiveCentsPerDollar;
+
+  /// The point system's display name ("Membership Rewards").
+  final String? programName;
+
+  /// The issuer's verbatim wording (the rule's `notes`), for [RewardKind.other].
+  final String? issuerWording;
 
   const CategoryRewardRanking({
     required this.cardId,
@@ -175,6 +205,10 @@ class CategoryRewardRanking {
     this.currency,
     required this.earnedRecently,
     required this.isBest,
+    required this.kind,
+    required this.effectiveCentsPerDollar,
+    this.programName,
+    this.issuerWording,
   });
 }
 
@@ -182,8 +216,6 @@ class CategoryRewardRanking {
 /// "Brand bonuses" section. Distinct from [CategoryRewardRanking]:
 ///   - `brand` is non-null (e.g. "Whole Foods Market") whereas the
 ///     general ranking has no brand context.
-///   - `generalBest` is the best general rate the user gets in this
-///     same category, used to render the "vs Nx general" caption.
 ///   - `isMatchedBrand` lights up the row when the sheet was opened
 ///     in response to the user being at this specific merchant.
 class BrandBonusRow {
@@ -194,8 +226,11 @@ class BrandBonusRow {
   final String brand;
   final double rate;
   final String? currency;
-  final double generalBest;
   final bool isMatchedBrand;
+  final RewardKind kind;
+  final double effectiveCentsPerDollar;
+  final String? programName;
+  final String? issuerWording;
 
   const BrandBonusRow({
     required this.cardId,
@@ -205,8 +240,11 @@ class BrandBonusRow {
     required this.brand,
     required this.rate,
     this.currency,
-    required this.generalBest,
     required this.isMatchedBrand,
+    required this.kind,
+    required this.effectiveCentsPerDollar,
+    this.programName,
+    this.issuerWording,
   });
 }
 

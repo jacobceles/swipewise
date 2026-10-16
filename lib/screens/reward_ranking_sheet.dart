@@ -58,7 +58,7 @@ Future<void> showRewardRankingSheetForLabel(
   );
 }
 
-class _RewardRankingSheet extends ConsumerWidget {
+class _RewardRankingSheet extends ConsumerStatefulWidget {
   const _RewardRankingSheet({
     required this.category,
     required this.primary,
@@ -72,16 +72,36 @@ class _RewardRankingSheet extends ConsumerWidget {
   final String? brandId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RewardRankingSheet> createState() =>
+      _RewardRankingSheetState();
+}
+
+class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
+  /// The kind filter; null is "All".
+  RewardKind? _filter;
+
+  @override
+  Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    final category = widget.category;
+    final merchantName = widget.merchantName;
     final rankingAsync = ref.watch(
       rewardRankingProvider((
         category: category,
         merchantName: merchantName,
-        brandId: brandId,
+        brandId: widget.brandId,
       )),
     );
     final mediaH = MediaQuery.of(context).size.height;
+    final cardCount = rankingAsync.asData?.value.isEmpty == false
+        ? _cardCount(_entriesOf(rankingAsync.asData!.value), null)
+        : null;
+    final subtitle = cardCount == null
+        ? (merchantName != null ? category.label : 'Ranked by value per \$1')
+        : [
+            if (merchantName != null) category.label,
+            '$cardCount of your ${cardCount == 1 ? 'card' : 'cards'}',
+          ].join(' · ');
 
     return Container(
       constraints: BoxConstraints(
@@ -109,15 +129,14 @@ class _RewardRankingSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Best Cards for ${merchantName ?? category.label}',
+            merchantName != null
+                ? 'Best cards at $merchantName'
+                : 'Best cards for ${category.label}',
             style: AppText.titleLg(),
           ),
           const SizedBox(height: 4),
-          Text(
-            merchantName != null ? category.label : 'Ranked by reward rate',
-            style: AppText.bodySm(),
-          ),
-          const SizedBox(height: 20),
+          Text(subtitle, style: AppText.bodySm()),
+          const SizedBox(height: 16),
           Flexible(
             child: rankingAsync.when(
               loading: () => const Padding(
@@ -155,44 +174,7 @@ class _RewardRankingSheet extends ConsumerWidget {
                     ),
                   );
                 }
-                // Brand-first mode is only meaningful when *this* merchant
-                // actually matches one of the brand bonuses. Otherwise the
-                // top row would be a brand bonus for an unrelated merchant
-                // and the Stores list's "Best:" (general fallback) would
-                // disagree with the sheet's headline.
-                final hasMatchedBrand = result.brandBonuses.any(
-                  (b) => b.isMatchedBrand,
-                );
-                final brandPrimary =
-                    primary == RewardRankingPrimary.brand && hasMatchedBrand;
-                final generalSection = _GeneralSection(
-                  rows: result.general,
-                  suppressBest: brandPrimary,
-                );
-                final brandSection = result.brandBonuses.isEmpty
-                    ? null
-                    : _BrandSection(
-                        rows: result.brandBonuses,
-                        primaryHighlight: brandPrimary,
-                      );
-                final sections = <Widget>[];
-                if (brandPrimary && brandSection != null) {
-                  sections.add(brandSection);
-                  sections.add(const SizedBox(height: 20));
-                  sections.add(generalSection);
-                } else {
-                  sections.add(generalSection);
-                  if (brandSection != null) {
-                    sections.add(const SizedBox(height: 20));
-                    sections.add(brandSection);
-                  }
-                }
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: sections,
-                  ),
-                );
+                return _buildRanking(context, result);
               },
             ),
           ),
@@ -200,48 +182,353 @@ class _RewardRankingSheet extends ConsumerWidget {
       ),
     );
   }
-}
 
-class _GeneralSection extends StatelessWidget {
-  const _GeneralSection({required this.rows, this.suppressBest = false});
-  final List<CategoryRewardRanking> rows;
-  final bool suppressBest;
+  Widget _buildRanking(BuildContext context, RewardRankingResult result) {
+    final (:general, :brand) = _entriesOf(result);
+    // Brand-first mode is only meaningful when *this* merchant
+    // actually matches one of the brand bonuses. Otherwise the
+    // top row would be a brand bonus for an unrelated merchant
+    // and the Stores list's "Best:" (general fallback) would
+    // disagree with the sheet's headline.
+    final hasMatchedBrand = brand.any((b) => b.isMatchedBrand);
+    final brandPrimary =
+        widget.primary == RewardRankingPrimary.brand && hasMatchedBrand;
 
-  @override
-  Widget build(BuildContext context) {
-    if (rows.isEmpty) return const SizedBox.shrink();
+    // The overall winner. An `other` reward has no known value, so it can
+    // never be called best.
+    final topEntry = brandPrimary
+        ? brand.first
+        : (general.isEmpty ? null : general.first);
+    final best = topEntry?.kind == RewardKind.other ? null : topEntry;
+
+    final filter = _filter;
+    bool shown(_Entry e) => filter == null || e.kind == filter;
+    final visibleGeneral = general.where(shown).toList();
+    final visibleBrand = brand.where(shown).toList();
+    final bestHidden = best != null && !shown(best);
+
+    final allCount = _cardCount((general: general, brand: brand), null);
+    final segments = _KindFilter(
+      selected: filter,
+      counts: {
+        null: allCount,
+        for (final k in RewardKind.values)
+          k: _cardCount((general: general, brand: brand), k),
+      },
+      onChanged: (k) => setState(() => _filter = k),
+    );
+    final header = _RankHeader(onInfo: () => _showHowWeRank(context));
+
+    final Widget body;
+    if (visibleGeneral.isEmpty && visibleBrand.isEmpty) {
+      body = _EmptyFilter(
+        kind: filter!,
+        where: widget.merchantName != null
+            ? 'at ${widget.merchantName}'
+            : 'in ${widget.category.label}',
+        counts: {
+          for (final k in RewardKind.values)
+            if (k != filter) k: _cardCount((general: general, brand: brand), k),
+        },
+        allCount: allCount,
+        onShowAll: () => setState(() => _filter = null),
+      );
+    } else {
+      // Neutral "Top cash"/"Top points" on the first valued row when the
+      // filter hides the real winner.
+      final firstVisible = brandPrimary
+          ? [...visibleBrand, ...visibleGeneral]
+          : [...visibleGeneral, ...visibleBrand];
+      final topPillEntry = bestHidden
+          ? firstVisible.where((e) => e.kind != RewardKind.other).firstOrNull
+          : null;
+      final showSectionHeaders = visibleBrand.isNotEmpty;
+      final generalSection = visibleGeneral.isEmpty
+          ? null
+          : _Section(
+              title: showSectionHeaders ? 'General ranking' : null,
+              entries: visibleGeneral,
+              best: best,
+              topPill: topPillEntry,
+            );
+      final brandSection = visibleBrand.isEmpty
+          ? null
+          : _Section(
+              title: 'Brand bonuses',
+              icon: LucideIcons.sparkles,
+              entries: visibleBrand,
+              best: best,
+              topPill: topPillEntry,
+            );
+      final ordered = brandPrimary
+          ? [brandSection, generalSection]
+          : [generalSection, brandSection];
+      final sections = <Widget>[];
+      for (final s in ordered.nonNulls) {
+        if (sections.isNotEmpty) sections.add(const SizedBox(height: 20));
+        sections.add(s);
+      }
+      final anyOther = [
+        ...visibleGeneral,
+        ...visibleBrand,
+      ].any((e) => e.kind == RewardKind.other);
+      body = SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ...sections,
+            if (anyOther) const _IssuerWordingFootnote(),
+            if (bestHidden) ...[
+              const SizedBox(height: 12),
+              _HiddenBestCallout(
+                best: best,
+                onShowAll: () => setState(() => _filter = null),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionHeader(title: 'General ranking'),
-        const SizedBox(height: 8),
-        for (final r in rows)
-          _RankRow(item: r, highlightBest: !suppressBest && r.isBest),
+        segments,
+        const SizedBox(height: 16),
+        header,
+        const SizedBox(height: 12),
+        Flexible(child: body),
       ],
     );
   }
 }
 
-class _BrandSection extends StatelessWidget {
-  const _BrandSection({required this.rows, this.primaryHighlight = false});
-  final List<BrandBonusRow> rows;
-  final bool primaryHighlight;
+/// One rendered row, general or brand bonus — the two share a layout.
+class _Entry {
+  const _Entry({
+    required this.cardId,
+    required this.title,
+    required this.detail,
+    this.cardName,
+    this.cardImage,
+    required this.kind,
+    required this.rate,
+    required this.eff,
+    this.programName,
+    this.wording,
+    this.isMatchedBrand = false,
+  });
+
+  final String cardId;
+
+  /// Card name for a general row, the brand for a brand bonus.
+  final String title;
+
+  /// The line under the title: "•••• 1234  $0.00 earned recently" or the card.
+  final String detail;
+  final String? cardName;
+  final String? cardImage;
+  final RewardKind kind;
+  final double rate;
+  final double eff;
+  final String? programName;
+  final String? wording;
+  final bool isMatchedBrand;
+}
+
+typedef _Entries = ({List<_Entry> general, List<_Entry> brand});
+
+_Entries _entriesOf(RewardRankingResult result) => (
+  general: [
+    for (final r in result.general)
+      _Entry(
+        cardId: r.cardId,
+        title: r.cardName ?? 'Card',
+        detail:
+            '•••• ${r.lastFour ?? '----'}  '
+            '${NumberFormat.simpleCurrency().format(r.earnedRecently)} earned recently',
+        cardName: r.cardName,
+        cardImage: r.cardImage,
+        kind: r.kind,
+        rate: r.rate,
+        eff: r.effectiveCentsPerDollar,
+        programName: r.programName,
+        wording: r.issuerWording,
+      ),
+  ],
+  brand: [
+    for (final r in result.brandBonuses)
+      _Entry(
+        cardId: r.cardId,
+        title: r.brand,
+        detail: r.cardName ?? 'Card',
+        cardName: r.cardName,
+        cardImage: r.cardImage,
+        kind: r.kind,
+        rate: r.rate,
+        eff: r.effectiveCentsPerDollar,
+        programName: r.programName,
+        wording: r.issuerWording,
+        isMatchedBrand: r.isMatchedBrand,
+      ),
+  ],
+);
+
+/// Distinct cards with a row of [kind] (any kind when null).
+int _cardCount(_Entries entries, RewardKind? kind) => {
+  for (final e in [...entries.general, ...entries.brand])
+    if (kind == null || e.kind == kind) e.cardId,
+}.length;
+
+class _KindFilter extends StatelessWidget {
+  const _KindFilter({
+    required this.selected,
+    required this.counts,
+    required this.onChanged,
+  });
+
+  final RewardKind? selected;
+  final Map<RewardKind?, int> counts;
+  final ValueChanged<RewardKind?> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: palette.secondary,
+        borderRadius: BorderRadius.circular(kRadiusPill),
+      ),
+      child: Row(
+        children: [
+          for (final k in <RewardKind?>[null, ...RewardKind.values])
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(k),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected == k
+                        ? AppColors.foreground
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(kRadiusPill),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          k == null ? 'All' : _kindLabel(k),
+                          style:
+                              AppText.bodyMd(
+                                color: selected == k
+                                    ? AppColors.background
+                                    : counts[k] == 0
+                                    ? palette.muted
+                                    : AppColors.foreground,
+                              ).copyWith(
+                                fontWeight: selected == k
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${counts[k] ?? 0}',
+                          style: AppText.bodySm(
+                            color: palette.muted,
+                          ).copyWith(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankHeader extends StatelessWidget {
+  const _RankHeader({required this.onInfo});
+  final VoidCallback onInfo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text('RANKED BY VALUE PER \$1', style: AppText.labelSm()),
+        ),
+        GestureDetector(
+          onTap: onInfo,
+          child: Row(
+            children: [
+              const Icon(LucideIcons.info, size: 14, color: AppColors.primary),
+              const SizedBox(width: 5),
+              Text(
+                'How we rank',
+                style: AppText.bodySm(
+                  color: AppColors.primary,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Section extends StatelessWidget {
+  const _Section({
+    this.title,
+    this.icon,
+    required this.entries,
+    required this.best,
+    required this.topPill,
+  });
+
+  final String? title;
+  final IconData? icon;
+  final List<_Entry> entries;
+  final _Entry? best;
+  final _Entry? topPill;
+
+  @override
+  Widget build(BuildContext context) {
+    final valued = [
+      for (final e in entries)
+        if (e.kind != RewardKind.other) e,
+    ];
+    final others = [
+      for (final e in entries)
+        if (e.kind == RewardKind.other) e,
+    ];
+    Widget row(_Entry e) => _RewardRow(
+      entry: e,
+      isBest: identical(e, best),
+      topPill: identical(e, topPill),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionHeader(
-          title: 'Brand bonuses',
-          icon: LucideIcons.sparkles,
-        ),
-        const SizedBox(height: 8),
-        for (final r in rows)
-          _BrandRow(
-            item: r,
-            primaryHighlight: primaryHighlight && r.isMatchedBrand,
-          ),
+        if (title != null) ...[
+          _SectionHeader(title: title!, icon: icon),
+          const SizedBox(height: 8),
+        ],
+        for (final e in valued) row(e),
+        if (others.isNotEmpty) ...[
+          if (valued.isNotEmpty) const _OtherDivider(),
+          for (final e in others) row(e),
+        ],
       ],
     );
   }
@@ -267,87 +554,54 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _RankRow extends StatelessWidget {
-  const _RankRow({required this.item, required this.highlightBest});
-  final CategoryRewardRanking item;
-  final bool highlightBest;
+class _OtherDivider extends StatelessWidget {
+  const _OtherDivider();
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.secondary,
-        borderRadius: BorderRadius.circular(kRadiusS + 2),
-        border: Border.all(
-          color: highlightBest ? palette.green : palette.border,
-          width: highlightBest ? 1.5 : 1,
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
       child: Row(
         children: [
-          _CardArt(image: item.cardImage, name: item.cardName ?? ''),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.cardName ?? 'Card',
-                  style: AppText.titleMd().copyWith(fontSize: 14),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '•••• ${item.lastFour ?? '----'}',
-                  style: AppText.monoXs(),
-                ),
-              ],
-            ),
+          Text(
+            'NO RELIABLE VALUE · LISTED LAST',
+            style: AppText.labelSm(color: palette.muted),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatRate(item.rate, item.currency),
-                style: AppText.monoMd(
-                  color: highlightBest ? palette.green : AppColors.foreground,
-                ).copyWith(fontWeight: FontWeight.w700, fontSize: 18),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${NumberFormat.simpleCurrency().format(item.earnedRecently)} earned recently',
-                style: AppText.bodySm().copyWith(fontSize: 10),
-              ),
-            ],
-          ),
+          const SizedBox(width: 10),
+          Expanded(child: Divider(height: 1, color: palette.border)),
         ],
       ),
     );
   }
 }
 
-class _BrandRow extends StatelessWidget {
-  const _BrandRow({required this.item, required this.primaryHighlight});
-  final BrandBonusRow item;
-  final bool primaryHighlight;
+class _RewardRow extends StatelessWidget {
+  const _RewardRow({
+    required this.entry,
+    required this.isBest,
+    required this.topPill,
+  });
+
+  final _Entry entry;
+  final bool isBest;
+  final bool topPill;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    final e = entry;
+    final isOther = e.kind == RewardKind.other;
     final Color borderColor;
     final double borderWidth;
     final Color rateColor;
     final Color bgColor;
-    if (primaryHighlight) {
+    if (isBest) {
       borderColor = palette.green;
       borderWidth = 1.5;
       rateColor = palette.green;
-      bgColor = palette.greenBg;
-    } else if (item.isMatchedBrand) {
+      bgColor = palette.secondary;
+    } else if (e.isMatchedBrand) {
       borderColor = AppColors.primary;
       borderWidth = 1.5;
       rateColor = AppColors.primary;
@@ -355,8 +609,17 @@ class _BrandRow extends StatelessWidget {
     } else {
       borderColor = palette.border;
       borderWidth = 1;
-      rateColor = palette.amber;
+      rateColor = AppColors.foreground;
       bgColor = palette.secondary;
+    }
+    final String description;
+    switch (e.kind) {
+      case RewardKind.cash:
+        description = 'cash back';
+      case RewardKind.points:
+        description = e.programName ?? 'points';
+      case RewardKind.other:
+        description = _otherWording(e);
     }
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -366,45 +629,492 @@ class _BrandRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(kRadiusS + 2),
         border: Border.all(color: borderColor, width: borderWidth),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _CardArt(image: e.cardImage, name: e.cardName ?? ''),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      e.title,
+                      style: AppText.titleMd().copyWith(fontSize: 14),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      e.detail,
+                      style: AppText.monoXs(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (!isOther) ...[
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (isBest)
+                      _Pill(
+                        label: 'Best',
+                        color: palette.green,
+                        background: palette.greenBg,
+                      )
+                    else if (topPill)
+                      _Pill(
+                        label: 'Top ${_kindLabel(e.kind).toLowerCase()}',
+                        color: AppColors.foreground,
+                        background: AppColors.card,
+                      ),
+                    Text(
+                      _bigNumber(e),
+                      style: AppText.monoMd(
+                        color: rateColor,
+                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 18),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _KindPill(kind: e.kind),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  description,
+                  style: AppText.bodySm(
+                    color: isOther ? AppColors.foreground : palette.muted,
+                  ).copyWith(fontSize: isOther ? 13 : 12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _valueLine(e),
+                  textAlign: TextAlign.end,
+                  style: isOther
+                      ? AppText.bodySm(color: palette.muted)
+                      : AppText.bodySm(
+                          color: AppColors.foreground,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+  final String label;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(kRadiusXs),
+      ),
+      child: Text(
+        label,
+        style: AppText.bodySm(
+          color: color,
+        ).copyWith(fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _KindPill extends StatelessWidget {
+  const _KindPill({required this.kind});
+  final RewardKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final color = kind == RewardKind.other
+        ? palette.muted
+        : AppColors.foreground;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(kRadiusPill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_kindIcon(kind), size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            _kindLabel(kind),
+            style: AppText.bodySm(
+              color: color,
+            ).copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IssuerWordingFootnote extends StatelessWidget {
+  const _IssuerWordingFootnote();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          _CardArt(image: item.cardImage, name: item.cardName ?? ''),
+          Icon(LucideIcons.quote, size: 12, color: palette.muted),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Wording in quotes comes straight from the card issuer.',
+              style: AppText.bodySm(
+                color: palette.muted,
+              ).copyWith(fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HiddenBestCallout extends StatelessWidget {
+  const _HiddenBestCallout({required this.best, required this.onShowAll});
+  final _Entry best;
+  final VoidCallback onShowAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: palette.greenBg,
+        borderRadius: BorderRadius.circular(kRadiusS + 2),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.trendingUp, size: 18, color: palette.green),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.brand,
+                  '${best.cardName ?? best.title} earns more here',
                   style: AppText.titleMd().copyWith(fontSize: 14),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  item.cardName ?? 'Card',
+                  '${_valueLine(best)} in ${_kindLabel(best.kind).toLowerCase()}'
+                  ' — hidden by this filter',
                   style: AppText.bodySm().copyWith(fontSize: 11),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatRate(item.rate, item.currency),
-                style: AppText.monoMd(
-                  color: rateColor,
-                ).copyWith(fontWeight: FontWeight.w700, fontSize: 18),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'vs ${_formatRate(item.generalBest, item.currency)} general',
-                style: AppText.bodySm().copyWith(fontSize: 10),
-              ),
-            ],
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onShowAll,
+            child: Text(
+              'Show all',
+              style: AppText.bodyMd(
+                color: palette.green,
+              ).copyWith(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilter extends StatelessWidget {
+  const _EmptyFilter({
+    required this.kind,
+    required this.where,
+    required this.counts,
+    required this.allCount,
+    required this.onShowAll,
+  });
+
+  final RewardKind kind;
+
+  /// "at Joe's Diner" / "in Dining".
+  final String where;
+
+  /// Card counts for the other kinds.
+  final Map<RewardKind, int> counts;
+  final int allCount;
+  final VoidCallback onShowAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final what = switch (kind) {
+      RewardKind.cash => 'cash back',
+      RewardKind.points => 'points',
+      RewardKind.other => 'store money or special points',
+    };
+    final parts = [
+      for (final e in counts.entries)
+        if (e.value > 0) '${e.value} ${_kindLabel(e.key).toLowerCase()}',
+    ];
+    final elsewhere = parts.isEmpty
+        ? ''
+        : ' Your ${parts.length == 1 ? parts.single : '${parts.sublist(0, parts.length - 1).join(', ')} and ${parts.last}'} '
+              '${allCount == 1 ? 'card is' : 'cards are'} under All.';
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: palette.secondary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(_kindIcon(kind), size: 24, color: palette.muted),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No “${_kindLabel(kind)}” rewards here',
+              style: AppText.titleMd(),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'None of your cards earn $what $where.$elsewhere',
+              style: AppText.bodySm(color: palette.muted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: onShowAll,
+              style: TextButton.styleFrom(
+                backgroundColor: palette.secondary,
+                foregroundColor: AppColors.foreground,
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              child: Text(
+                'Show all $allCount ${allCount == 1 ? 'card' : 'cards'}',
+                style: AppText.bodyMd().copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Wireframe `rl3zB` - what each reward kind's value means.
+void _showHowWeRank(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => const _HowWeRankSheet(),
+  );
+}
+
+class _HowWeRankSheet extends StatelessWidget {
+  const _HowWeRankSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    Widget kindRow(RewardKind kind, String title, String body) => Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 112,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _KindPill(kind: kind),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppText.titleMd().copyWith(fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(body, style: AppText.bodySm(color: palette.muted)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    Widget exampleRow(String label, String value, Color color) => Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppText.bodyMd().copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Text(
+            value,
+            style: AppText.bodyMd(
+              color: color,
+            ).copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.sheet,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusM)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: palette.muted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('How we rank cards', style: AppText.titleLg()),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(LucideIcons.x, size: 18),
+                  style: IconButton.styleFrom(
+                    backgroundColor: palette.secondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'We compare what each card gives back for every \$1 you spend.',
+              style: AppText.bodyMd().copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            kindRow(
+              RewardKind.cash,
+              'Exact',
+              '5% cash back = 5¢ back per \$1.',
+            ),
+            kindRow(
+              RewardKind.points,
+              'Estimate',
+              'We use a typical value for each program — e.g. Amex '
+                  'Membership Rewards ≈ 2¢ per point, so 4x ≈ 8¢ back per \$1. '
+                  'What you actually get depends on how you redeem.',
+            ),
+            kindRow(
+              RewardKind.other,
+              'Value unknown',
+              'Store money and per-litre points have no reliable value, so '
+                  "they're listed last. Their wording comes straight from the "
+                  'card issuer.',
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(kRadiusS + 2),
+                border: Border.all(color: palette.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'WHY A BIGGER NUMBER CAN RANK LOWER',
+                    style: AppText.labelSm(),
+                  ),
+                  const SizedBox(height: 8),
+                  exampleRow(
+                    '4x Membership Rewards',
+                    '≈ 8¢ back per \$1',
+                    palette.green,
+                  ),
+                  exampleRow(
+                    '7x Hilton Honors',
+                    '≈ 4.2¢ back per \$1',
+                    AppColors.foreground,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Hilton points are worth less each, so 7x gives back less.',
+                    style: AppText.bodySm(color: palette.muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.foreground,
+                foregroundColor: AppColors.background,
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: Text(
+                'Got it',
+                style: AppText.bodyMd(
+                  color: AppColors.background,
+                ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -453,12 +1163,39 @@ class _CardArt extends StatelessWidget {
   }
 }
 
-String _formatRate(double rate, String? currency) {
-  final cur = (currency ?? '').toUpperCase();
-  final isPoints = cur == 'POINTS' || cur == 'MILES';
-  if (isPoints) {
-    final s = rate % 1 == 0 ? rate.toInt().toString() : rate.toStringAsFixed(1);
-    return '${s}x ${cur == 'MILES' ? 'Miles' : 'Points'}';
-  }
-  return '${rate.toStringAsFixed(rate % 1 == 0 ? 0 : 1)}%';
+String _kindLabel(RewardKind kind) => switch (kind) {
+  RewardKind.cash => 'Cash',
+  RewardKind.points => 'Points',
+  RewardKind.other => 'Other',
+};
+
+IconData _kindIcon(RewardKind kind) => switch (kind) {
+  RewardKind.cash => LucideIcons.banknote,
+  RewardKind.points => LucideIcons.coins,
+  RewardKind.other => LucideIcons.tag,
+};
+
+/// A whole number bare, otherwise one decimal: 8 → "8", 4.2 → "4.2".
+String _num(double v) {
+  final s = v.toStringAsFixed(1);
+  return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+}
+
+/// The rate as the issuer markets it: "5%" cash, "4x" points.
+String _bigNumber(_Entry e) =>
+    e.kind == RewardKind.cash ? '${_num(e.rate)}%' : '${_num(e.rate)}x';
+
+String _valueLine(_Entry e) => switch (e.kind) {
+  RewardKind.cash => '${_num(e.eff)}¢ back per \$1',
+  RewardKind.points => '≈ ${_num(e.eff)}¢ back per \$1',
+  RewardKind.other => 'Value unknown',
+};
+
+/// The issuer's wording in quotes, led by the rate when the wording itself
+/// carries no number ("3x · “at Canadian Tire…”").
+String _otherWording(_Entry e) {
+  final w = e.wording?.trim() ?? '';
+  if (w.isEmpty) return '${_num(e.rate)}x';
+  final quoted = '“$w”';
+  return w.contains(RegExp(r'\d')) ? quoted : '${_num(e.rate)}x · $quoted';
 }

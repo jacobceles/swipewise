@@ -20,6 +20,7 @@
 /// so those rules never match here.
 library;
 
+import '../models/insights.dart';
 import '../models/reward_category.dart';
 
 /// Polymorphic discriminator for a [RewardRule], mirroring the catalog's
@@ -113,6 +114,8 @@ class PointSystem {
   final String id;
   final String displayName;
   final double baselineCentValue;
+
+  RewardKind get kind => RewardKind.of(id);
 
   /// Display currency bucket the UI renders ("USD" → "%", else "x points").
   String get currencyLabel {

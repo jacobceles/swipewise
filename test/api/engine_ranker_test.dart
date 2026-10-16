@@ -3,6 +3,7 @@ import 'package:swipewise/api/catalog_repository.dart';
 import 'package:swipewise/api/engine_ranker.dart';
 import 'package:swipewise/api/reward_category_mapper.dart';
 import 'package:swipewise/api/reward_engine.dart';
+import 'package:swipewise/models/insights.dart';
 import 'package:swipewise/models/reward_category.dart';
 
 /// Pure tests for the ranking loops that turn the engine into the UI's
@@ -210,6 +211,98 @@ void main() {
     expect(r.general.first.cardId, 'c1');
     expect(r.general.first.isBest, isTrue);
     expect(r.general.map((e) => e.cardId), ['c1', 'c2']);
+  });
+
+  group('reward kinds', () {
+    test('kind derives from the point system', () {
+      expect(RewardKind.of('usd'), RewardKind.cash);
+      expect(RewardKind.of('cad'), RewardKind.cash);
+      expect(RewardKind.of('other'), RewardKind.other);
+      expect(RewardKind.of('amex.membership-rewards'), RewardKind.points);
+      expect(RewardKind.of('scotiabank.scene-plus'), RewardKind.points);
+    });
+
+    test('brand bonuses sort by effective value, not raw rate', () {
+      // 7x Hilton (0.6¢) = 4.2¢ loses to 4x MR (2¢) = 8¢.
+      final s = snap(
+        [
+          rule(
+            'h',
+            'h#brand',
+            RewardRuleKind.brand,
+            category: RewardCategory.dining,
+            brand: 'joes',
+            rate: 7,
+            ps: 'hilton',
+          ),
+          rule(
+            'm',
+            'm#brand',
+            RewardRuleKind.brand,
+            category: RewardCategory.dining,
+            brand: 'joes',
+            rate: 4,
+            ps: 'mr',
+          ),
+        ],
+        ps: const {'usd': 1.0, 'hilton': 0.6, 'mr': 2.0},
+      );
+      final rows = ranker(s, [
+        link('cH', 'h', 'Hilton'),
+        link('cM', 'm', 'Gold'),
+      ]).rewardRanking(RewardCategory.dining).brandBonuses;
+      expect(rows.map((r) => r.cardId), ['cM', 'cH']);
+      expect(rows.first.kind, RewardKind.points);
+      expect(rows.first.programName, 'mr');
+      expect(rows.first.effectiveCentsPerDollar, 8);
+    });
+
+    test('an `other` reward ranks last and carries the issuer wording', () {
+      final s = snap(
+        [
+          const RewardRule(
+            ruleId: 'o#cat',
+            productId: 'o',
+            kind: RewardRuleKind.category,
+            category: RewardCategory.gas,
+            rate: 1,
+            pointSystemId: 'other',
+            notes: '1 Scene+ point per litre on fuel purchases at Shell',
+          ),
+          rule(
+            'c',
+            'c#cat',
+            RewardRuleKind.category,
+            category: RewardCategory.gas,
+            rate: 2,
+          ),
+          rule(
+            'p',
+            'p#cat',
+            RewardRuleKind.category,
+            category: RewardCategory.gas,
+            rate: 3,
+            ps: 'scene',
+          ),
+        ],
+        ps: const {'usd': 1.0, 'scene': 1.0, 'other': 0.0},
+      );
+      final general = ranker(s, [
+        link('cO', 'o', 'Value'),
+        link('cC', 'c', 'Momentum'),
+        link('cP', 'p', 'Gold'),
+      ]).rewardRanking(RewardCategory.gas).general;
+      expect(general.map((r) => r.kind), [
+        RewardKind.points,
+        RewardKind.cash,
+        RewardKind.other,
+      ]);
+      expect(
+        general.last.issuerWording,
+        '1 Scene+ point per litre on fuel purchases at Shell',
+      );
+      expect(general.first.issuerWording, isNull);
+    });
   });
 
   test('a tie breaks on preference order', () {

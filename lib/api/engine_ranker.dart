@@ -396,9 +396,12 @@ class EngineRanker {
           // equivalent yet — it moves out of SQL in the cutover sub-task.
           earnedRecently: 0,
           isBest: i == 0,
+          kind: RewardKind.of(scored[i].applied.pointSystemId),
+          effectiveCentsPerDollar: scored[i].applied.effectiveCentsPerDollar,
+          programName: _programNameOf(scored[i].applied.pointSystemId),
+          issuerWording: _issuerWordingOf(scored[i].card, scored[i].applied),
         ),
     ];
-    final generalBest = general.isEmpty ? 0.0 : general.first.rate;
 
     // Brand bonuses: one row per (card, brand) matching this category or the
     // active brand filter.
@@ -431,17 +434,21 @@ class EngineRanker {
             brand: brandDisplayNameFor(brand) ?? brand,
             rate: applied.rate,
             currency: _currencyOf(applied.pointSystemId),
-            generalBest: generalBest,
             isMatchedBrand: matchesFilter,
+            kind: RewardKind.of(applied.pointSystemId),
+            effectiveCentsPerDollar: applied.effectiveCentsPerDollar,
+            programName: _programNameOf(applied.pointSystemId),
+            issuerWording: _issuerWordingOf(c, applied),
           ),
         );
       }
     }
+    // Effective value, not raw rate: 7x Hilton is worth less than 4x Amex.
     brandRows.sort((a, b) {
       if (a.isMatchedBrand != b.isMatchedBrand) {
         return a.isMatchedBrand ? -1 : 1;
       }
-      return b.rate.compareTo(a.rate);
+      return b.effectiveCentsPerDollar.compareTo(a.effectiveCentsPerDollar);
     });
 
     return RewardRankingResult(general: general, brandBonuses: brandRows);
@@ -469,6 +476,20 @@ class EngineRanker {
 
   String _currencyOf(String pointSystemId) =>
       _ranked.pointSystems[pointSystemId]?.currencyLabel ?? 'USD';
+
+  String? _programNameOf(String pointSystemId) =>
+      _ranked.pointSystems[pointSystemId]?.displayName;
+
+  /// The issuer's own wording for an `other` reward — the applied rule's
+  /// `notes`. Null for cash/points, where the rate says it all.
+  String? _issuerWordingOf(LinkedCard c, AppliedRate applied) {
+    if (RewardKind.of(applied.pointSystemId) != RewardKind.other) return null;
+    for (final r
+        in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+      if (r.ruleId == applied.ruleId) return r.notes;
+    }
+    return null;
+  }
 }
 
 class _Scored {
