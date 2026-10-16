@@ -1671,7 +1671,7 @@
       "image_url": "https://ecm.capitalone.com/WCM/card/products/sandbox-discover-it/design-discoveritcash-1.png",
       "issuer": "Capitalone",
       "network": "Discover",
-      "retired_at": null
+      "retired_at": "2026-10-16"
     },
     {
       "annual_fee_usd": 0.0,
@@ -3044,7 +3044,7 @@
       "catalog_version": "2026.10.16",
       "country": "US",
       "currency": "USD",
-      "display_name": "My Best Buy® Credit Cards",
+      "display_name": "My Best Buy® Visa® Card",
       "foreign_tx_fee_pct": 0.0,
       "image_url": "https://aemapi.citi.com/content/dam/cfs/uspb/usmkt/cards/en/static/images/citi-best-buy-credit-cards/citi-best-buy-credit-cards_306x192.webp",
       "issuer": "Citi",
@@ -3248,11 +3248,37 @@
     },
     {
       "annual_fee_usd": 0.0,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "catalog_version": "2026.10.16",
+      "country": "US",
+      "currency": "USD",
+      "display_name": "My Best Buy® Credit Card",
+      "foreign_tx_fee_pct": null,
+      "image_url": "https://aemapi.citi.com/content/dam/cfs/uspb/usmkt/cards/en/static/images/citi-best-buy-credit-cards/citi-best-buy-credit-cards_306x192.webp",
+      "issuer": "Citi",
+      "network": null,
+      "retired_at": null
+    },
+    {
+      "annual_fee_usd": 0.0,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "catalog_version": "2026.10.16",
+      "country": "US",
+      "currency": "USD",
+      "display_name": "Wayfair Credit Card",
+      "foreign_tx_fee_pct": null,
+      "image_url": "https://aemapi.citi.com/content/dam/cfs/uspb/usmkt/cards/en/static/images/wayfair-credit-cards/wayfair-credit-cards_306x192.webp",
+      "issuer": "Citi",
+      "network": null,
+      "retired_at": null
+    },
+    {
+      "annual_fee_usd": 0.0,
       "card_product_id": "citi.credit-cards-wayfair-credit-cards",
       "catalog_version": "2026.10.16",
       "country": "US",
       "currency": "USD",
-      "display_name": "Wayfair Credit Cards",
+      "display_name": "Wayfair Mastercard®",
       "foreign_tx_fee_pct": 3.0,
       "image_url": "https://aemapi.citi.com/content/dam/cfs/uspb/usmkt/cards/en/static/images/wayfair-credit-cards/wayfair-credit-cards_306x192.webp",
       "issuer": "Citi",
@@ -5679,7 +5705,7 @@
     }
   ],
   "catalogVersion": "2026.10.16",
-  "dataVersion": 2088895845,
+  "dataVersion": 89711438,
   "point_systems": [
     {
       "baseline_cent_value": 1.5,
@@ -6022,6 +6048,14 @@
       "currency": "CAD",
       "display_name": "VIPorter",
       "point_system_id": "porter.viporter",
+      "valuation_source": "app-curated",
+      "valuation_updated_at": "2026.10.16"
+    },
+    {
+      "baseline_cent_value": 0.71,
+      "currency": "CAD",
+      "display_name": "RBC Avion Rewards (Premium)",
+      "point_system_id": "rbc.avion-premium",
       "valuation_source": "app-curated",
       "valuation_updated_at": "2026.10.16"
     },
@@ -66492,6 +66526,175 @@
     },
     {
       "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "description": "Choose flexible financing instead of rewards on purchases at Best Buy. Enjoy the flexibility of low monthly payments. Multiple plans can be open on your account. A variety of options for any purchase, big or small.",
+      "frequency": null,
+      "how_to_earn": "Choose financing instead of rewards on Best Buy purchases made with the Card",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-my-best-buy-credit-card#perk-0",
+      "redemption_url": null,
+      "title": "Flexible financing",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "description": "Option to bank My Best Buy reward points until you're ready to redeem.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-my-best-buy-credit-card#perk-1",
+      "redemption_url": null,
+      "title": "Bank your reward points",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "description": "Enjoy free shipping on qualifying purchases at Best Buy.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-my-best-buy-credit-card#perk-2",
+      "redemption_url": null,
+      "title": "Free shipping",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "description": "Cardmembers in good standing will receive offers throughout the year.",
+      "frequency": null,
+      "how_to_earn": "Keep the account in good standing",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-my-best-buy-credit-card#perk-3",
+      "redemption_url": null,
+      "title": "Cardmember Offers",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "description": "Support is available 24 hours a day, 7 days a week at 1-888-574-1301. For TTY: use 711 or other Relay Service.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-my-best-buy-credit-card#perk-4",
+      "redemption_url": null,
+      "title": "24/7 customer service",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Free and automatic enrollment in the Wayfair Rewards Program when your card account is opened; any membership fees due while your account is open are waived.",
+      "frequency": null,
+      "how_to_earn": "Open a Wayfair Credit Card or Wayfair Mastercard account",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-0",
+      "redemption_url": null,
+      "title": "Free Wayfair Rewards Enrollment",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Flexible financing options available on qualifying items across all participating Wayfair Family of Brands sites.",
+      "frequency": null,
+      "how_to_earn": "Select available financing plan at checkout when paying with your card",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-1",
+      "redemption_url": null,
+      "title": "Flexible Financing",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Manage your card account online at wayfair.accountonline.com.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-2",
+      "redemption_url": "http://www.wayfair.accountonline.com",
+      "title": "Online Account Management",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Dedicated customer service support available 24 hours a day, 7 days a week.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-3",
+      "redemption_url": null,
+      "title": "24/7 Customer Service Support",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "There is no minimum threshold to redeem rewards, and rewards never expire as long as your account remains active.",
+      "frequency": null,
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-4",
+      "redemption_url": null,
+      "title": "No Expiration on Rewards",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Free and automatic enrollment in Wayfair Rewards, which waives any membership fees for the program while your card account is open.",
+      "frequency": "recurring",
+      "how_to_earn": "Automatically enrolled when your Wayfair Credit Card or Wayfair Mastercard® account is opened.",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-5",
+      "redemption_url": null,
+      "title": "Free Enrollment in Wayfair Rewards",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "There is no minimum threshold to redeem rewards on any of our retail sites.",
+      "frequency": null,
+      "how_to_earn": "Apply rewards in the cart or checkout when making a qualifying purchase.",
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-6",
+      "redemption_url": null,
+      "title": "No Minimum Threshold to Redeem",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "description": "Enjoy the benefits of the card with no annual fee.",
+      "frequency": "annual",
+      "how_to_earn": null,
+      "image_uri": null,
+      "kind": "BenefitPerk",
+      "perk_id": "citi.credit-cards-wayfair-credit-card#perk-7",
+      "redemption_url": null,
+      "title": "No Annual Fee",
+      "value_estimate": null
+    },
+    {
+      "calendar_max_year_amount": null,
       "card_product_id": "citi.credit-cards-wayfair-credit-cards",
       "description": "Free and automatic enrollment in the Wayfair Rewards Program when your card account is opened; any membership fees due while your account is open are waived.",
       "frequency": null,
@@ -90066,7 +90269,9 @@
       "card_product_id": "amex.en-ca-charge-cards-the-platinum-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "2X points on travel",
       "point_system_id": "amex.ca-membership-rewards",
@@ -90654,7 +90859,9 @@
       "card_product_id": "amex.en-ca-credit-cards-gold-rewards-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "2X points on travel including eligible flights, hotels, car rentals, cruises, and more",
       "point_system_id": "amex.ca-membership-rewards",
@@ -90969,7 +91176,9 @@
       "card_product_id": "amex.en-ca-credit-cards-marriott-bonvoy-business-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X Points Per $1 on eligible gas, dining & travel",
       "point_system_id": "marriott.bonvoy",
@@ -91704,7 +91913,9 @@
       "card_product_id": "amex.us-credit-cards-business-business-credit-cards-american-express-blue-business-plus-credit-card-amex",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2X Membership Rewards points on eligible purchases on AmexTravel.com (does not count toward the first $50,000)",
       "point_system_id": "usd",
@@ -92019,7 +92230,9 @@
       "card_product_id": "amex.us-credit-cards-business-business-credit-cards-american-express-business-green-card-amex",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2X points on flights and prepaid hotels booked on AmexTravel.com or the Amex Travel App",
       "point_system_id": "amex.membership-rewards",
@@ -93216,7 +93429,9 @@
       "card_product_id": "amex.us-credit-cards-card-gold-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2X points on prepaid car rentals booked through AmexTravel.com or Amex Travel App and cruises booked and paid through AmexTravel.com",
       "point_system_id": "amex.membership-rewards",
@@ -93279,7 +93494,9 @@
       "card_product_id": "amex.us-credit-cards-card-green",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X Membership Rewards ® points on Travel ‡",
       "point_system_id": "amex.membership-rewards",
@@ -95127,7 +95344,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-norwegian-cruise-lines-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3 WorldPoints points for every $1 spent on Norwegian purchases",
       "point_system_id": "norwegian.worldpoints",
@@ -95400,7 +95619,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -95421,7 +95642,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -95442,7 +95665,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -95568,7 +95793,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "4 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -95589,7 +95816,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "4 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -95610,7 +95839,9 @@
       "card_product_id": "bankofamerica.credit-cards-products-royal-one-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "4 points per dollar spent on eligible Royal Caribbean, Celebrity Cruises and Silversea purchases",
       "point_system_id": "royalcaribbean.royal-one",
@@ -96891,7 +97122,9 @@
       "card_product_id": "bankofamerica.en-credit-cards-business-advantage-travel-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3 points for every $1 spent on travel purchases made at BofA Travel",
       "point_system_id": "bankofamerica.travel-rewards",
@@ -97983,7 +98216,9 @@
       "card_product_id": "barclays.banking-cards-carnival-rewards-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3x points on Carnival purchases",
       "point_system_id": "usd",
@@ -98088,7 +98323,9 @@
       "card_product_id": "barclays.banking-cards-carnival-world-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "Earn 2X Fun Points for every dollar spent on purchases with Carnival Cruise Line",
       "point_system_id": "usd",
@@ -98130,7 +98367,9 @@
       "card_product_id": "barclays.banking-cards-carnival-world-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "Earn 3X points for every dollar spent using your card on Carnival Purchases (effective Sept 2026)",
       "point_system_id": "usd",
@@ -100318,7 +100557,9 @@
       "card_product_id": "bilt.blue-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "up to 3X on Hotels & Flights booked on Bilt Travel Portal",
       "point_system_id": "bilt.rewards",
@@ -100700,7 +100941,9 @@
       "card_product_id": "bilt.palladium-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "up to 4X on Hotels & Flights booked on Bilt Travel Portal",
       "point_system_id": "bilt.rewards",
@@ -101015,7 +101258,9 @@
       "card_product_id": "bmo.ascend-world-elite-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "5x the points for every $1 spent on eligible travel purchases",
       "point_system_id": "bmo.rewards",
@@ -101141,7 +101386,9 @@
       "card_product_id": "bmo.blue-rewards-business-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "10x Blue Points on Blue Rewards Travel, powered by Expedia",
       "point_system_id": "bmo.rewards",
@@ -101414,7 +101661,9 @@
       "card_product_id": "bmo.blue-rewards-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5 Points per $1 (10x base) on travel booked through Blue Rewards Travel, powered by Expedia (flights, car rentals, hotels)",
       "point_system_id": "bmo.rewards",
@@ -101708,7 +101957,9 @@
       "card_product_id": "bmo.blue-rewards-world-elite-business-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "12.5 Blue Points per $1 (10x base) on flights, car rentals, hotels and more booked through Blue Rewards Travel, powered by Expedia",
       "point_system_id": "bmo.rewards",
@@ -101918,7 +102169,9 @@
       "card_product_id": "bmo.blue-rewards-world-elite-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "10 Points for every $1 spent on travel booked through Blue Rewards Travel, powered by Expedia",
       "point_system_id": "bmo.rewards",
@@ -102947,7 +103200,9 @@
       "card_product_id": "bmo.eclipse-visa-infinite-privilege-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "5x the points for every $1 spent on groceries, dining in and out, drugstore purchases, gas, and travel",
       "point_system_id": "bmo.rewards",
@@ -104165,7 +104420,9 @@
       "card_product_id": "capitalone.quicksilver-rewards-for-good-credit",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Travel",
       "point_system_id": "usd",
@@ -104396,7 +104653,9 @@
       "card_product_id": "capitalone.quicksilver-secured-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, rental cars, and vacation rentals booked through Capital One Travel or Capital One Business Travel",
       "point_system_id": "usd",
@@ -104669,7 +104928,9 @@
       "card_product_id": "capitalone.savor-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Travel",
       "point_system_id": "usd",
@@ -104879,7 +105140,9 @@
       "card_product_id": "capitalone.savor-rewards-for-good-credit",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Travel",
       "point_system_id": "usd",
@@ -105089,7 +105352,9 @@
       "card_product_id": "capitalone.savor-rewards-for-students",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Travel",
       "point_system_id": "usd",
@@ -105299,7 +105564,9 @@
       "card_product_id": "capitalone.savorone-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Travel",
       "point_system_id": "usd",
@@ -105572,7 +105839,9 @@
       "card_product_id": "capitalone.small-business-credit-cards-spark-cash-plus",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on hotels, vacation rentals and rental cars booked through Capital One Business Travel",
       "point_system_id": "usd",
@@ -105761,7 +106030,9 @@
       "card_product_id": "capitalone.small-business-credit-cards-venture-business",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "Unlimited 5X miles on hotels, vacation rentals, and rental cars booked through Capital One Business Travel",
       "point_system_id": "capitalone.miles",
@@ -105887,7 +106158,9 @@
       "card_product_id": "capitalone.small-business-credit-cards-venture-x-business",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5X miles on flights and vacation rentals booked through Capital One Business Travel",
       "point_system_id": "capitalone.miles",
@@ -106244,7 +106517,9 @@
       "card_product_id": "capitalone.venture-x-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5X miles on flights and vacation rentals booked through Capital One Travel",
       "point_system_id": "capitalone.miles",
@@ -107420,7 +107695,9 @@
       "card_product_id": "chase.business-credit-cards-ink-premier",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on travel purchased through Chase Travel",
       "point_system_id": "usd",
@@ -107567,7 +107844,9 @@
       "card_product_id": "chase.business-credit-cards-sapphire-reserve",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "8x points on all purchases through Chase Travel, including The Edit",
       "point_system_id": "chase.ultimate-rewards",
@@ -108512,7 +108791,9 @@
       "card_product_id": "chase.cash-back-credit-cards-amazon-prime-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% back on Chase Travel purchases with an eligible Prime membership",
       "point_system_id": "usd",
@@ -108701,7 +108982,9 @@
       "card_product_id": "chase.cash-back-credit-cards-amazon-rewards",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "Unlimited 3% back on Chase Travel purchases",
       "point_system_id": "usd",
@@ -109144,7 +109427,9 @@
       "card_product_id": "chase.cash-back-credit-cards-freedom-flex",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on travel purchased through Chase Travel",
       "point_system_id": "usd",
@@ -109354,7 +109639,9 @@
       "card_product_id": "chase.cash-back-credit-cards-freedom-unlimited",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on travel purchased through Chase Travel",
       "point_system_id": "usd",
@@ -109543,7 +109830,9 @@
       "card_product_id": "chase.cash-back-credit-cards-instacart",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on Chase Travel purchases, including flights, hotels and more",
       "point_system_id": "usd",
@@ -110362,7 +110651,9 @@
       "card_product_id": "chase.rewards-credit-cards-sapphire-reserve",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "8x points on all purchases through Chase Travel, including The Edit",
       "point_system_id": "chase.ultimate-rewards",
@@ -110530,7 +110821,9 @@
       "card_product_id": "chase.travel-credit-cards-aircanada-aeroplan",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X points on travel purchases",
       "point_system_id": "aircanada.aeroplan",
@@ -113155,7 +113448,9 @@
       "card_product_id": "cibc.adapta-mastercard",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2 Adapta Points for every dollar spent on eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cibc.adapta",
@@ -113575,7 +113870,9 @@
       "card_product_id": "cibc.adapta-mastercard-for-students",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "Earn 2 Adapta Points for every dollar spent on eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cibc.adapta",
@@ -113953,7 +114250,9 @@
       "card_product_id": "cibc.aeroplan-visa-business-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "Travel",
       "point_system_id": "aircanada.aeroplan",
@@ -114226,7 +114525,9 @@
       "card_product_id": "cibc.aeroplan-visa-business-plus-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "Travel",
       "point_system_id": "aircanada.aeroplan",
@@ -114940,7 +115241,9 @@
       "card_product_id": "cibc.aeroplan-visa-infinite-privilege-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1.5 Aeroplan points for every $1 spent on eligible gas, electric vehicle charging, groceries, travel and dining",
       "point_system_id": "aircanada.aeroplan",
@@ -115066,7 +115369,9 @@
       "card_product_id": "cibc.aventura-gold-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2 points for every $1 spent on eligible travel purchased through the CIBC Rewards Centre",
       "point_system_id": "cibc.aventura",
@@ -115297,7 +115602,9 @@
       "card_product_id": "cibc.aventura-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "1 Aventura Point for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -115423,7 +115730,9 @@
       "card_product_id": "cibc.aventura-visa-card-for-business",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2 Aventura Points for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -115486,7 +115795,9 @@
       "card_product_id": "cibc.aventura-visa-card-for-business",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1.5 Aventura Points for every $1 spent on travel such as airlines, hotels, car rental agencies, cruise lines, travel agencies or tour operators, tour buses or bus lines",
       "point_system_id": "cibc.aventura",
@@ -115696,7 +116007,9 @@
       "card_product_id": "cibc.aventura-visa-card-for-business-plus",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2 Aventura Points for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -115759,7 +116072,9 @@
       "card_product_id": "cibc.aventura-visa-card-for-business-plus",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1.5 Aventura Points for every $1 spent on travel such as airlines, hotels, car rental agencies, cruise lines, travel agencies or tour operators, tour buses or bus lines",
       "point_system_id": "cibc.aventura",
@@ -115990,7 +116305,9 @@
       "card_product_id": "cibc.aventura-visa-card-for-students",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "1 Aventura Point for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -116053,7 +116370,9 @@
       "card_product_id": "cibc.aventura-visa-infinite-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2 points for every $1 spent on eligible travel purchased through the CIBC Rewards Centre",
       "point_system_id": "cibc.aventura",
@@ -116263,7 +116582,9 @@
       "card_product_id": "cibc.aventura-visa-infinite-privilege-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "3 Aventura Points for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -116851,7 +117172,9 @@
       "card_product_id": "cibc.dividend-platinum-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "2% cash back on transportation, dining, recurring payments and eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cad",
@@ -116998,7 +117321,9 @@
       "card_product_id": "cibc.dividend-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "Eligible gas, electric vehicle charging, transportation, dining, recurring payments, and eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cad",
@@ -117271,7 +117596,9 @@
       "card_product_id": "cibc.dividend-visa-card-for-students",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cad",
@@ -117397,7 +117724,9 @@
       "card_product_id": "cibc.dividend-visa-infinite-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "Transportation, dining, recurring payments and eligible travel purchases made through CIBC by Expedia",
       "point_system_id": "cad",
@@ -117586,7 +117915,9 @@
       "card_product_id": "cibc.u-s-dollar-aventura-gold-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "1 Aventura Point for every $1 spent on eligible travel purchased through the CIBC Rewards Centre (CIBC by Expedia)",
       "point_system_id": "cibc.aventura",
@@ -120082,6 +120413,90 @@
       "valid_to": null
     },
     {
+      "brand": "best-buy",
+      "cap_group": null,
+      "cap_period": null,
+      "cap_spend_amount_usd": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "category": "departmentStores",
+      "earn_constraint": null,
+      "excluded_categories": [],
+      "kind": "brand",
+      "notes": "5% back in rewards on qualifying purchases at Best Buy (2.5 points per $1 spent)",
+      "point_system_id": "usd",
+      "rate": 5.0,
+      "requires_activation": 0,
+      "rotation_quarter": null,
+      "rotation_year": null,
+      "rule_id": "citi.credit-cards-my-best-buy-credit-card#1",
+      "selection_group": null,
+      "valid_from": null,
+      "valid_to": null
+    },
+    {
+      "brand": null,
+      "cap_group": null,
+      "cap_period": null,
+      "cap_spend_amount_usd": null,
+      "card_product_id": "citi.credit-cards-my-best-buy-credit-card",
+      "category": null,
+      "earn_constraint": null,
+      "excluded_categories": [],
+      "kind": "promo",
+      "notes": "Earn 10% back in rewards on your first day of purchases at Best Buy® or choose flexible financing when you are approved for the Card.",
+      "point_system_id": "usd",
+      "rate": 0.0,
+      "requires_activation": 0,
+      "rotation_quarter": null,
+      "rotation_year": null,
+      "rule_id": "citi.credit-cards-my-best-buy-credit-card#2",
+      "selection_group": null,
+      "valid_from": null,
+      "valid_to": null
+    },
+    {
+      "brand": "wayfair",
+      "cap_group": null,
+      "cap_period": null,
+      "cap_spend_amount_usd": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "category": "onlineShopping",
+      "earn_constraint": null,
+      "excluded_categories": [],
+      "kind": "brand",
+      "notes": "7% back in rewards at Wayfair Family of Brands",
+      "point_system_id": "usd",
+      "rate": 7.0,
+      "requires_activation": 0,
+      "rotation_quarter": null,
+      "rotation_year": null,
+      "rule_id": "citi.credit-cards-wayfair-credit-card#1",
+      "selection_group": null,
+      "valid_from": null,
+      "valid_to": null
+    },
+    {
+      "brand": null,
+      "cap_group": null,
+      "cap_period": null,
+      "cap_spend_amount_usd": null,
+      "card_product_id": "citi.credit-cards-wayfair-credit-card",
+      "category": null,
+      "earn_constraint": null,
+      "excluded_categories": [],
+      "kind": "promo",
+      "notes": "$40 off your qualifying first order of $100+ when you open a new Wayfair Credit Card",
+      "point_system_id": "usd",
+      "rate": 0.0,
+      "requires_activation": 0,
+      "rotation_quarter": null,
+      "rotation_year": null,
+      "rule_id": "citi.credit-cards-wayfair-credit-card#2",
+      "selection_group": null,
+      "valid_from": null,
+      "valid_to": null
+    },
+    {
       "brand": "wayfair",
       "cap_group": null,
       "cap_period": null,
@@ -121328,7 +121743,9 @@
       "card_product_id": "discover.credit-cards-secured-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on purchases (hotels, vacation rentals and rental cars only) made on Capital One Travel",
       "point_system_id": "usd",
@@ -121832,7 +122249,9 @@
       "card_product_id": "discover.credit-cards-student-credit-card-it-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on purchases (hotels, vacation rentals and rental cars only) made on Capital One Travel",
       "point_system_id": "usd",
@@ -122042,7 +122461,9 @@
       "card_product_id": "goldmansachs.apple-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% Daily Cash back at Apple, and at select merchants when you use Apple Card with Apple Pay (Ace Hardware, Booking.com, ChargePoint, Duane Reade, Exxon Mobil, Hertz, Nike, Uber, Uber Eats, Walgreens)",
       "point_system_id": "usd",
@@ -122357,7 +122778,9 @@
       "card_product_id": "nationalbank.en-business-credit-cards-platinum-mastercard-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "purchases with À la carte Travel agency",
       "point_system_id": "nationalbank.a-la-carte",
@@ -122840,7 +123263,9 @@
       "card_product_id": "nationalbank.personal-mastercard-credit-cards-platinum-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "1.5 À la carte points per $1 on travel booked through the À la carte Travel agency",
       "point_system_id": "nationalbank.a-la-carte",
@@ -123071,7 +123496,9 @@
       "card_product_id": "nationalbank.personal-mastercard-credit-cards-world-elite-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "À la carte Travel",
       "point_system_id": "nationalbank.a-la-carte",
@@ -123239,7 +123666,9 @@
       "card_product_id": "navyfederal.loans-cards-credit-cards-flagship-premier-visa-signature-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "4X points on all travel",
       "point_system_id": "navyfederal.rewards",
@@ -123407,7 +123836,9 @@
       "card_product_id": "navyfederal.loans-cards-credit-cards-flagship-visa-signature-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X points on travel",
       "point_system_id": "navyfederal.rewards",
@@ -125552,7 +125983,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Groceries, dining, and food delivery",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125573,7 +126004,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Groceries, dining, and food delivery",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125594,7 +126025,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Gas, EV charging, daily transit, and rideshare",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125615,7 +126046,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Gas, EV charging, daily transit, and rideshare",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125636,7 +126067,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Gas, EV charging, daily transit, and rideshare",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125657,7 +126088,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Streaming services, digital gaming, digital subscriptions, and downloads",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125678,7 +126109,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "Streaming services, digital gaming, digital subscriptions, and downloads",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 3.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125699,7 +126130,7 @@
       "excluded_categories": [],
       "kind": "baseline",
       "notes": "all other purchases",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125720,7 +126151,7 @@
       "excluded_categories": [],
       "kind": "promo",
       "notes": "Get up to 28,000 Avion points - that's up to $200 of value in gift cards: 7,000 points on approval, 14,000 bonus points when you spend $1,500 in your first 6 months, and 7,000 one-time anniversary bonus points. Apply by November 4, 2026.",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 0.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125741,7 +126172,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "groceries",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125762,7 +126193,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "gas",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125783,7 +126214,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "EV charging",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125804,7 +126235,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "rideshare and daily transit",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125825,7 +126256,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "streaming services",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125846,7 +126277,7 @@
       "excluded_categories": [],
       "kind": "category",
       "notes": "digital gaming & subscriptions",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.5,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125867,7 +126298,7 @@
       "excluded_categories": [],
       "kind": "baseline",
       "notes": "all other purchases",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -125888,7 +126319,7 @@
       "excluded_categories": [],
       "kind": "promo",
       "notes": "Get up to 14,000 Avion points - that's up to $100 of value in gift cards: 7,000 points on approval, plus 7,000 bonus points when you spend $500 in your first 3 months. Apply by November 4, 2026.",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 0.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -126247,7 +126678,7 @@
       "excluded_categories": [],
       "kind": "brand",
       "notes": "20% more Avion points at Petro-Canada",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.2,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -126268,7 +126699,7 @@
       "excluded_categories": [],
       "kind": "baseline",
       "notes": "1 Avion point per $1 on all other purchases",
-      "point_system_id": "rbc.avion-rewards",
+      "point_system_id": "rbc.avion-premium",
       "rate": 1.0,
       "requires_activation": 0,
       "rotation_quarter": null,
@@ -126286,7 +126717,9 @@
       "card_product_id": "rbc.credit-cards-travel-rbc-visa-platinum-avion-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1 Avion point on travel related purchases",
       "point_system_id": "rbc.avion-rewards",
@@ -126853,7 +127286,9 @@
       "card_product_id": "robinhood.u-credit-card-waitlist",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on travel booked through the Robinhood travel portal",
       "point_system_id": "usd",
@@ -127483,7 +127918,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-american-express-no-fee-amex-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1 Scene+ point per $1 spent on eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -127777,7 +128214,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-american-express-platinum-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "2 Scene+ points per $1 on eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -128197,7 +128636,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-american-express-student-scotiabank-american-express-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1 Scene+ point per $1 on eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -129373,7 +129814,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-visa-passport-infinite-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1 Scene+ point per $1 on eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -129478,7 +129921,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-visa-passport-infinite-privilege-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "Hotels and car rentals booked through Scene+ Travel, Powered by Expedia",
       "point_system_id": "scotiabank.scene-plus",
@@ -129688,7 +130133,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-visa-scene-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -130255,7 +130702,9 @@
       "card_product_id": "scotiabank.ca-en-personal-credit-cards-visa-scene-student-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "eligible travel purchases",
       "point_system_id": "scotiabank.scene-plus",
@@ -130990,7 +131439,9 @@
       "card_product_id": "sofi.credit-card-essential",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "3% cash back rewards when you book through SoFi Travel",
       "point_system_id": "usd",
@@ -131095,7 +131546,9 @@
       "card_product_id": "sofi.credit-card-everyday-cash",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "3% cash back rewards on trips booked through SoFi Travel (SoFi Travel Portal)",
       "point_system_id": "usd",
@@ -131221,7 +131674,9 @@
       "card_product_id": "sofi.credit-card-unlimited",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "3% cash back on SoFi Travel bookings",
       "point_system_id": "usd",
@@ -132607,7 +133062,9 @@
       "card_product_id": "td.ca-en-business-banking-small-business-credit-cards-aeroplan-visa-business-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1.5 Aeroplan points for every $1 spent on travel & transit, dining, electric vehicle charging and select business categories such as shipping, internet, cable and phone services",
       "point_system_id": "aircanada.aeroplan",
@@ -132922,7 +133379,9 @@
       "card_product_id": "td.ca-en-business-banking-small-business-credit-cards-business-travel-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "when you book travel online through ExpediaForTD.com",
       "point_system_id": "td.rewards",
@@ -133447,7 +133906,9 @@
       "card_product_id": "td.ca-en-personal-banking-products-credit-cards-aeroplan-aeroplan-visa-infinite-privilege-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "1.5 Aeroplan points for every $1 spent on eligible gas, electric vehicle charging, groceries, travel & transit, and dining purchases",
       "point_system_id": "aircanada.aeroplan",
@@ -134035,7 +134496,9 @@
       "card_product_id": "td.ca-en-personal-banking-products-credit-cards-travel-rewards-first-class-travel-visa-infinite-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "8 TD Rewards Points for every $1 spent when you book travel through Expedia For TD",
       "point_system_id": "td.rewards",
@@ -134224,7 +134687,9 @@
       "card_product_id": "td.ca-en-personal-banking-products-credit-cards-travel-rewards-platinum-travel-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "travel booked through Expedia For TD",
       "point_system_id": "td.rewards",
@@ -134413,7 +134878,9 @@
       "card_product_id": "td.ca-en-personal-banking-products-credit-cards-travel-rewards-rewards-visa-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "4 TD Rewards Points for every $1 you spend when you book travel through Expedia® For TD",
       "point_system_id": "td.rewards",
@@ -134896,7 +135363,9 @@
       "card_product_id": "usaa.eagle-navigator-visa-signature-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X points on travel and transit (air, hotel, car and vacation rentals, rideshare, tolls, and more)",
       "point_system_id": "usaa.rewards",
@@ -135169,7 +135638,9 @@
       "card_product_id": "usbank.business-banking-business-credit-cards-business-altitude-connect-credit-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "travel, including airfare, hotels, gas and EV charging stations",
       "point_system_id": "usbank.altitude-rewards",
@@ -135442,7 +135913,9 @@
       "card_product_id": "usbank.business-banking-business-credit-cards-business-altitude-power-credit-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "6X points on prepaid hotel and car rentals booked directly in the Travel Center",
       "point_system_id": "usbank.altitude-rewards",
@@ -137101,7 +137574,9 @@
       "card_product_id": "usbank.credit-cards-cash-plus-visa-signature-credit-card-html",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "partner_portal",
       "notes": "5% cash back on prepaid air, hotel and car reservations booked directly in the Travel Center",
       "point_system_id": "usd",
@@ -137796,7 +138271,9 @@
       "card_product_id": "wellsfargo.autograph-visa-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "category",
       "notes": "3X points on travel",
       "point_system_id": "wellsfargo.rewards",
@@ -138342,7 +138819,9 @@
       "card_product_id": "wellsfargo.one-key-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
@@ -138363,7 +138842,9 @@
       "card_product_id": "wellsfargo.one-key-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
@@ -138384,7 +138865,9 @@
       "card_product_id": "wellsfargo.one-key-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
@@ -138531,7 +139014,9 @@
       "card_product_id": "wellsfargo.one-key-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
@@ -138552,7 +139037,9 @@
       "card_product_id": "wellsfargo.one-key-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
@@ -138573,7 +139060,9 @@
       "card_product_id": "wellsfargo.one-key-plus-credit-card",
       "category": "travel",
       "earn_constraint": null,
-      "excluded_categories": [],
+      "excluded_categories": [
+        "transit"
+      ],
       "kind": "brand",
       "notes": "3% in OneKeyCash on Expedia, Hotels.com and Vrbo",
       "point_system_id": "usd",
