@@ -242,8 +242,9 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 - ⚠️ **Attestation is not free — but do NOT add a token cache.** A Play Integrity round trip
   measured **~2.2 s**. `getToken()` already "will use a cached token if found in storage" and
   "attaches to the most recent in-flight request if one is present" — *storage*, so the cache
-  outlives an isolate, and in-flight attaching, so concurrent callers share one round trip. A
-  second cache in app code would only fight the SDK's own refresh. What matters is *when* the cold
+  outlives an isolate. A second cache in app code would only fight the SDK's own refresh. The
+  in-flight attaching did **not** hold at launch (see below), so `AppCheckService.token()` shares
+  the one in-flight request itself — cleared on completion, so it is not a cache. What matters is *when* the cold
   round trip happens: the token fetch sits **before** the HTTP timeout, so paying it inside the
   first nearby search reads as a hung Stores tab. `AppCheckService.warm()` starts it at activation
   in both isolates instead, and a search that fires meanwhile attaches to it. Every build logs
@@ -264,9 +265,12 @@ This exists because a store whose 100m fence overlaps home re-notified on every 
 - ⚠️ **A FAILED attestation is not cached, so it repeats on every call**, and once the SDK enters
   backoff it rejects locally in single-digit ms — which looks exactly like a cache hit unless the
   log line also states the outcome. That is why `SW.appcheck` always prints `ok`/`FAILED`.
-- ⚠️ Two open threads, neither user-blocking: **why two cold trips** rather than one (the second
-  starts ~26 ms before the first completes, missing the attach window, costing ~2.5 s of startup
-  work), and the **geofence isolate** was never exercised. Absolute timings are the *debug*
+- **Concurrent callers miss the SDK's attach.** 2026-08-13: two cold trips, the second starting
+  ~26 ms before the first completed (~2.5 s of startup work). A 2026-10-15 launch logged ~15 slow
+  (300–480 ms) calls inside one second. Since 2026-10-16 `token()` shares one in-flight request
+  across concurrent callers (`test/api/app_check_service_test.dart`); not yet re-measured on a
+  device — expect ONE `SW.appcheck` WARN line per isolate at launch.
+- ⚠️ Open thread, not user-blocking: the **geofence isolate** was never exercised. Absolute timings are the *debug*
   provider's; Play Integrity measured ~1.9 s, so the same shape at a higher constant.
 - Why the proxy exists: the app used to call Google directly with an Android-restricted key.
   That restriction is matched from `X-Android-Package` / `X-Android-Cert`, which for raw HTTP

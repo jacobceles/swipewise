@@ -38,6 +38,14 @@ class AppCheckService {
 
   static bool _activated = false;
 
+  /// The one attestation currently on the wire, shared by every caller that
+  /// arrives while it is. Not a cache: it is cleared the moment it completes,
+  /// so the next call goes back to the SDK (and its own cache and refresh).
+  static Future<String?>? _inFlight;
+
+  static Future<String?> Function() _getToken = () =>
+      FirebaseAppCheck.instance.getToken();
+
   /// Neither call may block indefinitely.
   ///
   /// Both talk to Google over the network — `activate` registers the provider
@@ -86,8 +94,9 @@ class AppCheckService {
   /// We do NOT cache tokens ourselves. `getToken()` already "will use a cached
   /// token if found in storage" and "attaches to the most recent in-flight
   /// request if one is present" — storage, so the cache survives an isolate,
-  /// and in-flight attaching, so concurrent callers share one round trip. A
-  /// second cache on top would only fight the SDK's own refresh.
+  /// and in-flight attaching. A second cache on top would only fight the SDK's
+  /// own refresh. (The attaching did not hold up in practice — `token()` shares
+  /// the in-flight request itself; see there.)
   ///
   /// What is left to fix is *when* the cold round trip happens. A Play Integrity
   /// attestation was measured at ~2.2 s, and the token fetch sits **before** the
@@ -105,11 +114,19 @@ class AppCheckService {
   /// Null is a normal outcome (no Play Services, an emulator with no debug
   /// token registered, an offline device), so callers must treat it as "send no
   /// header" rather than as an error worth surfacing.
-  static Future<String?> token() async {
+  ///
+  /// Concurrent callers share one request. The SDK's own "attach to the most
+  /// recent in-flight request" did not hold at launch: 2026-08-13 logged two
+  /// cold trips, the second starting ~26 ms before the first finished, and a
+  /// 2026-10-15 launch logged ~15 slow (300–480 ms) calls inside one second.
+  static Future<String?> token() =>
+      _inFlight ??= _fetch().whenComplete(() => _inFlight = null);
+
+  static Future<String?> _fetch() async {
     final started = DateTime.now();
     String? token;
     try {
-      token = await FirebaseAppCheck.instance.getToken().timeout(_timeout);
+      token = await _getToken().timeout(_timeout);
       return token;
     } catch (e) {
       Log.w('appcheck', 'getToken failed', e);
@@ -134,5 +151,12 @@ class AppCheckService {
   }
 
   @visibleForTesting
-  static void resetForTest() => _activated = false;
+  static void resetForTest() {
+    _activated = false;
+    _inFlight = null;
+    _getToken = () => FirebaseAppCheck.instance.getToken();
+  }
+
+  @visibleForTesting
+  static set getTokenForTest(Future<String?> Function() fn) => _getToken = fn;
 }
