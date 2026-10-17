@@ -258,6 +258,45 @@ void main() {
   );
 
   test(
+    'onUpgrade(17→18) adds tile-cache coverage columns; fresh install has them',
+    () async {
+      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      await db.execute('''
+      CREATE TABLE merchant_tile_cache (
+        cell_id TEXT NOT NULL,
+        merchant_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        fetched_at INTEGER NOT NULL,
+        last_accessed_at INTEGER NOT NULL,
+        PRIMARY KEY (cell_id, merchant_id)
+      )
+    ''');
+      const added = {'center_lat', 'center_lng', 'covered_m'};
+      Future<Set<String>> cols(Database d) async => (await d.rawQuery(
+        'PRAGMA table_info(merchant_tile_cache)',
+      )).map((r) => r['name'] as String).toSet();
+
+      await DatabaseHelper.runUpgrade(db, 17, 18);
+      expect((await cols(db)).containsAll(added), isTrue);
+      // Re-runnable: a second pass must skip, not throw on duplicate columns.
+      await DatabaseHelper.runUpgrade(db, 17, 18);
+      await db.close();
+
+      final fresh = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        ),
+      );
+      expect((await cols(fresh)).containsAll(added), isTrue);
+      await fresh.close();
+    },
+  );
+
+  test(
     'onUpgrade(8→9) adds merchant_tile_cache.business_status; fresh install has it',
     () async {
       // Pre-v9 cache shape (no business_status) — v9 must ALTER the column in so a

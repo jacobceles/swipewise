@@ -32,7 +32,17 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    fun postDwell(meta: MerchantMeta) {
+    /// False when the notification can't be shown (notifications or this
+    /// channel turned off, permission missing), so the caller doesn't count a
+    /// silent drop as the visit's alert.
+    fun postDwell(meta: MerchantMeta): Boolean {
+        val nm = NotificationManagerCompat.from(context)
+        if (!nm.areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            nm.getNotificationChannel(CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE
+        ) {
+            return false
+        }
         val title: String
         val body: String
         if (meta.isCluster) {
@@ -75,11 +85,12 @@ class NotificationHelper(private val context: Context) {
             .setContentIntent(contentIntent)
             .build()
 
-        try {
-            NotificationManagerCompat.from(context)
-                .notify(meta.primary.merchantId.hashCode(), notification)
+        return try {
+            nm.notify(meta.primary.merchantId.hashCode(), notification)
+            true
         } catch (e: SecurityException) {
-            // POST_NOTIFICATIONS not granted on Android 13+; silently drop.
+            // POST_NOTIFICATIONS not granted on Android 13+.
+            false
         }
     }
 

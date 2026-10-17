@@ -16,27 +16,42 @@ import com.google.android.gms.tasks.CancellationTokenSource
 /// still at the fence with one fresh location fix + the activity state:
 ///
 ///   - fix inside the fence (radius + fix accuracy slack) → post
+///   - fix inside but still moving (activity says IN_VEHICLE, or the fix has
+///     speed) → a red light beside the store: re-arm once, and the second look
+///     posts only if the user is still inside
 ///   - fix outside → skip (classic false ENTER: red light at a strip mall,
 ///     or the EXIT event was delivered too late to cancel the timer)
 ///   - no fix obtainable in time → post unless activity says IN_VEHICLE
 ///     (fail-open: a missed verification must not eat a legit notification)
 ///
-/// Cooldowns (same tables/thresholds as always): 6h per merchant, 30min per
-/// category.
+/// With a fix, the store named is decided across EVERY registered fence
+/// ([StoreResolver]), not just the one whose timer fired: fences overlap, so
+/// the firing fence is often a neighbour's.
+///
+/// Suppression, in order: resident fence ([ResidentGuard], before any fix),
+/// muted, same visit ([VisitLock] — one walk-in, one notification), 6h per
+/// merchant.
 class DwellCheckReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val geofenceId = DwellAlarms.geofenceIdFromIntent(intent) ?: return
+        val recheck = DwellAlarms.isRecheck(intent)
+        DwellAlarms.markFired(context, geofenceId)
         val meta = GeofenceMetadataStore(context).read(geofenceId)
         if (meta == null) {
             // Fence set was replaced while this timer was in flight.
+            WalkinLog.w(context, "dwell $geofenceId: no_meta (fence set replaced mid-dwell)")
             DwellOutcomeStore(context).record(geofenceId, null, DwellOutcome.NO_META)
+            return
+        }
+        if (!recheck && ResidentGuard.check(context, geofenceId, System.currentTimeMillis())) {
+            done(context, meta, DwellOutcome.RESIDENT)
             return
         }
 
         if (meta.lat == null || meta.lng == null || meta.radiusM == null) {
             // Meta written by an older build — can't geo-verify.
-            maybePost(context, meta)
+            maybePost(context, meta.copy(options = StoreResolver.capped(meta.options, null, null)))
             return
         }
 
@@ -73,7 +88,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
                         if (fix == null) {
                             verdictWithoutFix(context, meta)
                         } else {
-                            verdictWithFix(context, meta, fix)
+                            verdictWithFix(context, meta, fix, recheck)
                         }
                     }
                 }
@@ -85,21 +100,57 @@ class DwellCheckReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun verdictWithFix(context: Context, meta: MerchantMeta, fix: Location) {
+    private fun verdictWithFix(context: Context, meta: MerchantMeta, fix: Location, recheck: Boolean) {
         val dist = FloatArray(1)
         Location.distanceBetween(fix.latitude, fix.longitude, meta.lat!!, meta.lng!!, dist)
         val allowed = meta.radiusM!! + fix.accuracy + SLACK_M
         val measured = DwellFix(dist[0], fix.accuracy, allowed)
-        if (dist[0] <= allowed) {
-            maybePost(context, meta, measured)
-        } else {
-            DwellOutcomeStore(context).record(
-                meta.geofenceId,
-                meta.primary.name,
-                DwellOutcome.OUTSIDE_FENCE,
-                measured,
-            )
+        if (dist[0] > allowed) {
+            done(context, meta, DwellOutcome.OUTSIDE_FENCE, measured)
+            return
         }
+        // Inside, but a car at a red light is inside too. Look once more after
+        // another dwell period instead of skipping: a parked car's activity
+        // state can lag, and the second look trusts the fix alone. An EXIT in
+        // between cancels the recheck, which is the red-light case.
+        val moving = ActivityState.isLikelyDriving(context) ||
+            (fix.hasSpeed() && fix.speed > MOVING_SPEED_MPS)
+        if (moving && !recheck) {
+            DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, recheck = true)
+            done(context, meta, DwellOutcome.MOVING_RECHECK, measured)
+            return
+        }
+        maybePost(context, resolveAtFix(context, meta, fix, allowed.toDouble()), measured, fix.latitude, fix.longitude)
+    }
+
+    /// The store(s) to name, judged from the fix against every registered
+    /// fence, within the same reach that just verified the visit. Falls back
+    /// to the firing fence's own options (capped, closest first) when the fix
+    /// is too coarse to order stores or no store with a known position is in
+    /// reach (fences from older builds carry none). Muted stores are dropped
+    /// first, so a muted store next door can't silence the one the user is in.
+    private fun resolveAtFix(context: Context, meta: MerchantMeta, fix: Location, reach: Double): MerchantMeta {
+        val fallback = meta.copy(options = StoreResolver.capped(meta.options, fix.latitude, fix.longitude))
+        if (fix.accuracy > StoreResolver.MAX_ACCURACY_M) {
+            WalkinLog.w(context, "dwell ${meta.geofenceId}: fix acc=${fix.accuracy.toInt()} too coarse -> fence options")
+            return fallback
+        }
+        val muted = MutedStore(context)
+        val candidates = StoreResolver.candidates(
+            GeofenceMetadataStore(context).readAll().flatMap { it.options },
+            fix.latitude,
+            fix.longitude,
+            reach,
+        ).filterNot { muted.isMuted(it.option.merchantId) }
+        val picked = StoreResolver.resolve(candidates)
+        WalkinLog.w(
+            context,
+            "dwell ${meta.geofenceId}: fix acc=${fix.accuracy.toInt()} candidates=" +
+                candidates.sortedBy { it.distanceM }.take(6)
+                    .joinToString(",") { "${it.option.name}@${it.distanceM.toInt()}m" } +
+                " -> ${if (picked.isEmpty()) "fence options" else picked.joinToString("|") { it.name }}",
+        )
+        return if (picked.isEmpty()) fallback else meta.copy(options = picked)
     }
 
     private fun verdictWithoutFix(context: Context, meta: MerchantMeta) {
@@ -113,21 +164,23 @@ class DwellCheckReceiver : BroadcastReceiver() {
         // a drive-by at every red light. Cooldowns aren't marked on a skip, so
         // the next genuine dwell at this merchant still fires normally.
         if (ActivityState.isLikelyDriving(context)) {
-            DwellOutcomeStore(context).record(
-                meta.geofenceId,
-                meta.primary.name,
-                DwellOutcome.NO_FIX_DRIVING,
-            )
+            done(context, meta, DwellOutcome.NO_FIX_DRIVING)
             return
         }
-        maybePost(context, meta)
+        WalkinLog.w(context, "dwell ${meta.geofenceId}: no fix, not driving -> fence options")
+        maybePost(context, meta.copy(options = StoreResolver.capped(meta.options, meta.lat, meta.lng)))
     }
 
     /// [fix] is null on the no-fix path, so a `posted` row with no distance is
     /// itself the signal that verification failed open.
-    private fun maybePost(context: Context, meta: MerchantMeta, fix: DwellFix? = null) {
+    private fun maybePost(
+        context: Context,
+        meta: MerchantMeta,
+        fix: DwellFix? = null,
+        atLat: Double? = null,
+        atLng: Double? = null,
+    ) {
         val cooldown = CooldownStore(context)
-        val trail = DwellOutcomeStore(context)
         val now = System.currentTimeMillis()
         val primary = meta.primary
         // Belt-and-braces mute check: Dart drops muted stores at re-register
@@ -141,47 +194,44 @@ class DwellCheckReceiver : BroadcastReceiver() {
             muted.isMuted(primary.merchantId)
         }
         if (suppressed) {
-            trail.record(meta.geofenceId, primary.name, DwellOutcome.MUTED, fix)
+            done(context, meta, DwellOutcome.MUTED, fix)
+            return
+        }
+        // Where the user is: the fix when there is one, else the fence centre.
+        val visitLat = atLat ?: meta.lat
+        val visitLng = atLng ?: meta.lng
+        if (visitLat != null && visitLng != null &&
+            VisitLock.isSameVisit(VisitLock.read(context), visitLat, visitLng, now)
+        ) {
+            done(context, meta, DwellOutcome.SAME_VISIT, fix)
             return
         }
         val lastMerchant = cooldown.lastMerchantNotified(primary.merchantId)
         if (lastMerchant != null && now - lastMerchant < MERCHANT_COOLDOWN_MS) {
-            trail.record(meta.geofenceId, primary.name, DwellOutcome.MERCHANT_COOLDOWN, fix)
+            done(context, meta, DwellOutcome.MERCHANT_COOLDOWN, fix)
             return
         }
-        // Composite "<category>@<areaBucket>" key so the 30-min category
-        // cooldown only suppresses repeats in roughly the SAME area — the
-        // same category across town (a different areaBucket) still posts.
-        // areaBucket falls back to the bare category when the fence has no
-        // lat/lng (meta written by an older build).
-        val categoryKey = compositeCategoryKey(primary.category, meta.lat, meta.lng)
-        val lastCategory = cooldown.lastCategoryNotified(categoryKey)
-        if (lastCategory != null && now - lastCategory < CATEGORY_COOLDOWN_MS) {
-            trail.record(meta.geofenceId, primary.name, DwellOutcome.CATEGORY_COOLDOWN, fix)
+        if (!NotificationHelper(context).postDwell(meta)) {
+            done(context, meta, DwellOutcome.NOTIFICATIONS_OFF, fix)
             return
         }
-        NotificationHelper(context).postDwell(meta)
-        val notifyOption = if (categoryKey != primary.category) {
-            primary.copy(category = categoryKey)
-        } else {
-            primary
+        if (visitLat != null && visitLng != null) {
+            VisitLock.write(context, VisitLock.Visit(visitLat, visitLng, now))
         }
-        cooldown.markNotified(notifyOption, now)
-        trail.record(meta.geofenceId, primary.name, DwellOutcome.POSTED, fix)
+        cooldown.markNotified(primary, now)
+        done(context, meta, DwellOutcome.POSTED, fix)
     }
 
-    /// "<category>@<lat>,<lng>" with lat/lng rounded to 2 decimal degrees
-    /// (~1.1km per degree of latitude, so 0.01 degree ≈ 1.1km) — a coarse
-    /// grid bucket, not a precise distance check. Points within the same
-    /// cell cooldown together; points across a cell edge don't, even if
-    /// they're a few hundred meters apart. That's an accepted approximation
-    /// for "same area" vs. "across town".
-    private fun compositeCategoryKey(category: String?, lat: Double?, lng: Double?): String? {
-        if (category.isNullOrEmpty()) return category
-        if (lat == null || lng == null) return category
-        val latBucket = Math.round(lat * 100.0) / 100.0
-        val lngBucket = Math.round(lng * 100.0) / 100.0
-        return "$category@$latBucket,$lngBucket"
+    /// Every exit of the dwell check ends here: a log line (release builds
+    /// too) plus the debug-only outcome row.
+    private fun done(context: Context, meta: MerchantMeta, outcome: DwellOutcome, fix: DwellFix? = null) {
+        WalkinLog.w(
+            context,
+            "dwell ${meta.geofenceId}: ${outcome.wire} " +
+                meta.options.joinToString("|") { it.name } +
+                (fix?.let { " dist=${it.distanceM.toInt()}m acc=${it.accuracyM.toInt()}m" } ?: ""),
+        )
+        DwellOutcomeStore(context).record(meta.geofenceId, meta.primary.name, outcome, fix)
     }
 
     companion object {
@@ -189,9 +239,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         private const val SLACK_M = 50f
         // Per-merchant: same Kohl's stays quiet for 6h after firing.
         private const val MERCHANT_COOLDOWN_MS = 6L * 60L * 60L * 1000L
-        // Per-category: walking through a strip mall full of retailers gets
-        // one notification, not five. 30 min is short enough that the next
-        // real shopping trip still triggers.
-        private const val CATEGORY_COOLDOWN_MS = 30L * 60L * 1000L
+        // Faster than a brisk walk (~1.5 m/s).
+        private const val MOVING_SPEED_MPS = 2f
     }
 }

@@ -65,6 +65,10 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             "getRegisteredCount" -> result.success(store.count())
             "consumePendingMerchant" -> result.success(PendingMerchantStore.consume())
             "fireTestNotification" -> fireTestNotification(call, result)
+            "walkinLog" -> {
+                WalkinLog.w(context, call.arguments as? String ?: "")
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }
@@ -106,6 +110,9 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     category = opt["category"] as String?,
                     bestCardName = opt["best_card_name"] as String?,
                     bestRate = (opt["best_rate"] as? Number)?.toDouble(),
+                    lat = (opt["lat"] as? Number)?.toDouble(),
+                    lng = (opt["lng"] as? Number)?.toDouble(),
+                    footprintM = (opt["footprint_m"] as? Number)?.toDouble() ?: 0.0,
                 )
             }
 
@@ -143,6 +150,13 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             )
         }
 
+        WalkinLog.w(
+            context,
+            "registerSet zones=${merchantGeofences.size} ids=" +
+                merchantGeofences.take(8).joinToString(",") { it.requestId } +
+                (if (merchantGeofences.size > 8) ",…" else "") +
+                " boundary_m=${(boundary?.get("radius_m") as? Number)?.toInt()}",
+        )
         Tasks.whenAllComplete(
             client.removeGeofences(merchantPendingIntent),
             client.removeGeofences(boundaryPendingIntent),

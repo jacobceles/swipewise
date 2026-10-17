@@ -14,6 +14,14 @@ import androidx.work.WorkManager
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        WalkinLog.w(context, "boot: restarting activity recognition, enqueueing re-register")
+        // A reboot also drops the activity-transition subscription. Only
+        // MainActivity started it, so after every reboot activity state stayed
+        // frozen until the app was opened: "driving" was never detected, and the
+        // boundary re-registered mid-drive with fences centred on the road
+        // (diagnosed 2026-10-16).
+        ActivitySubscriber.start(context)
+        DwellAlarms.clearAll(context)
         val request = OneTimeWorkRequestBuilder<ReregisterWorker>()
             .setConstraints(ReregisterScheduler.networkConstraints)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)

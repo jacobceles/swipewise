@@ -35,9 +35,14 @@ object ReregisterScheduler {
             .setConstraints(networkConstraints)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
+        // APPEND_OR_REPLACE, not REPLACE: replacing a running worker only
+        // interrupts its latch, while its Flutter engine carries on — two
+        // registerSet calls then interleave and the fence set and its metadata
+        // can come from different runs (`no_meta`). Appending runs this one
+        // after the current one finishes.
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_WORK,
-            ExistingWorkPolicy.REPLACE,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             request,
         )
     }

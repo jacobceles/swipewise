@@ -17,6 +17,9 @@ class ReregisterWorker(context: Context, params: WorkerParameters) :
     Worker(context, params) {
 
     override fun doWork(): Result {
+        // Idempotent; re-asserts the activity subscription on every background
+        // re-register, so an app update or a missed boot can't leave it off.
+        ActivitySubscriber.start(applicationContext)
         val loader = FlutterInjector.instance().flutterLoader()
         val latch = CountDownLatch(1)
         var ok = false

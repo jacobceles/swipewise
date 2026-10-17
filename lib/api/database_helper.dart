@@ -115,7 +115,7 @@ class DatabaseHelper {
       try {
         return await openDatabase(
           path,
-          version: 17,
+          version: 18,
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
@@ -441,6 +441,25 @@ class DatabaseHelper {
           where: 'key = ?',
           whereArgs: ['catalog_data_version'],
         );
+      }
+    }
+    // v18: each cached search records the circle it actually covered (its
+    // centre and how far out it returned every place), so a cache read only
+    // counts when the user is inside it (`TileCache.read`). Rows from older
+    // builds keep NULLs and never count as covering — the first read near them
+    // searches afresh. Guarded like v9: the cache is disposable.
+    if (oldVersion < 18) {
+      final cacheCols = (await db.rawQuery(
+        'PRAGMA table_info(merchant_tile_cache)',
+      )).map((r) => r['name'] as String).toSet();
+      if (cacheCols.isNotEmpty) {
+        for (final col in ['center_lat', 'center_lng', 'covered_m']) {
+          if (!cacheCols.contains(col)) {
+            await db.execute(
+              'ALTER TABLE merchant_tile_cache ADD COLUMN $col REAL',
+            );
+          }
+        }
       }
     }
   }
@@ -829,6 +848,9 @@ class DatabaseHelper {
         lng REAL NOT NULL,
         fetched_at INTEGER NOT NULL,
         last_accessed_at INTEGER NOT NULL,
+        center_lat REAL,
+        center_lng REAL,
+        covered_m REAL,
         PRIMARY KEY (cell_id, merchant_id)
       )
     ''');

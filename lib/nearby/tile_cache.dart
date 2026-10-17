@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import '../api/database_helper.dart';
 import 'merchant.dart';
+import 'merchant_search_provider.dart';
 
 /// Caches nearby merchant lookups by ~1km grid cell with a 7-day TTL.
 ///
@@ -11,6 +12,11 @@ import 'merchant.dart';
 ///   queries the 3×3 cell neighborhood and merges results, then filters by
 ///   actual distance — the user gets a stable set of merchants regardless
 ///   of which side of an arbitrary grid line they're on.
+/// - **Coverage-aware hits**: a read counts only when the user stands inside a
+///   cached search's covered circle (see [NearbySearchResult]) with at least
+///   [edgeM] to spare. Serving any fresh 3×3 neighbourhood instead handed an
+///   arrival 500 m from an old search that search's ~300 m ring, so the store
+///   being walked into was never fenced (Flemington, 2026-10-16).
 /// - **H5 (LRU eviction)**: `last_accessed_at` is bumped on every read, and
 ///   [evictTo] trims the cache to the N most-recently-accessed cells. Called
 ///   opportunistically on `write()` so the table doesn't grow unbounded.
@@ -44,7 +50,24 @@ class TileCache {
     return out;
   }
 
-  Future<List<NearbyMerchant>> read({
+  /// How far inside a cached search's covered circle the user must stand: a
+  /// fence radius plus margin, so the store they're walking into is one that
+  /// search saw.
+  static const double edgeM = 150;
+
+  /// Coverage the cached search centred at ([centerLat], [centerLng]) leaves
+  /// around the user at ([lat], [lng]) — negative when they're outside it.
+  static double coverageLeftM({
+    required double centerLat,
+    required double centerLng,
+    required double coveredM,
+    required double lat,
+    required double lng,
+  }) => coveredM - _distanceMi(centerLat, centerLng, lat, lng) * 1609.34;
+
+  /// The cached places around ([lat], [lng]) with the search that covers this
+  /// spot, or null when no fresh cached search does — the caller searches.
+  Future<NearbySearchResult?> read({
     required double lat,
     required double lng,
   }) async {
@@ -59,7 +82,27 @@ class TileCache {
       'WHERE cell_id IN ($placeholders) AND fetched_at >= ?',
       [...cells, cutoff],
     );
-    if (rows.isEmpty) return const [];
+    if (rows.isEmpty) return null;
+    Map<String, Object?>? covering;
+    var bestLeft = edgeM;
+    for (final r in rows) {
+      final cLat = r['center_lat'] as num?;
+      final cLng = r['center_lng'] as num?;
+      final cov = r['covered_m'] as num?;
+      if (cLat == null || cLng == null || cov == null) continue;
+      final left = coverageLeftM(
+        centerLat: cLat.toDouble(),
+        centerLng: cLng.toDouble(),
+        coveredM: cov.toDouble(),
+        lat: lat,
+        lng: lng,
+      );
+      if (left >= bestLeft) {
+        bestLeft = left;
+        covering = r;
+      }
+    }
+    if (covering == null) return null;
     // Bump last_accessed_at for every hit cell — drives the LRU eviction.
     final now = DateTime.now().millisecondsSinceEpoch;
     final hitCells = rows.map((r) => r['cell_id'] as String).toSet();
@@ -90,8 +133,13 @@ class TileCache {
         distanceMi: _distanceMi(lat, lng, mlat, mlng),
       );
     }
-    return byId.values.toList()
-      ..sort((a, b) => a.distanceMi.compareTo(b.distanceMi));
+    return NearbySearchResult(
+      merchants: byId.values.toList()
+        ..sort((a, b) => a.distanceMi.compareTo(b.distanceMi)),
+      centerLat: (covering['center_lat'] as num).toDouble(),
+      centerLng: (covering['center_lng'] as num).toDouble(),
+      coveredM: (covering['covered_m'] as num).toDouble(),
+    );
   }
 
   Future<void> clearAll() async {
@@ -99,11 +147,13 @@ class TileCache {
     await db.delete('merchant_tile_cache');
   }
 
+  /// Stores [result] under the cell of ([lat], [lng]), the user's fix.
   Future<void> write({
     required double lat,
     required double lng,
-    required List<NearbyMerchant> merchants,
+    required NearbySearchResult result,
   }) async {
+    final merchants = result.merchants;
     if (merchants.isEmpty) return; // Don't wipe a cell with no replacement.
     final db = await DatabaseHelper().database;
     final cell = cellIdFor(lat, lng);
@@ -127,6 +177,9 @@ class TileCache {
           'lng': m.lng,
           'fetched_at': now,
           'last_accessed_at': now,
+          'center_lat': result.centerLat,
+          'center_lng': result.centerLng,
+          'covered_m': result.coveredM,
         });
       }
       await batch.commit(noResult: true);

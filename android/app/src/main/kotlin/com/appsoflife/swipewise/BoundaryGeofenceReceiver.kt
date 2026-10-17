@@ -26,7 +26,9 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
         // owed, and let [ActivityTransitionReceiver] run it the moment the user
         // goes STILL/WALKING (i.e. parks / arrives). No churn during the drive,
         // geofences land at the destination.
-        if (ActivityState.isLikelyDriving(context)) {
+        val driving = ActivityState.isLikelyDriving(context)
+        WalkinLog.w(context, "boundary EXIT driving=$driving -> ${if (driving) "defer" else "re-register"}")
+        if (driving) {
             PendingReregister.set(context, true)
             // Safety net: if activity recognition never delivers the settle
             // event, this alarm consumes the pending flag on its own.

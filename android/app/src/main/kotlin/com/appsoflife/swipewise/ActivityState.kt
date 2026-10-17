@@ -27,15 +27,19 @@ object ActivityState {
             .apply()
     }
 
-    /// True iff the latest reported activity is IN_VEHICLE and recent
-    /// (older readings are ignored — drivers may have parked).
+    /// True iff the latest reported activity is IN_VEHICLE and recent.
+    ///
+    /// Transitions arrive only on a change, so a long drive produces one
+    /// IN_VEHICLE ENTER and then silence; the old 30-min cutoff read every
+    /// drive past half an hour as "not driving". Parking ends it explicitly
+    /// (IN_VEHICLE EXIT / STILL / WALKING, see ActivityTransitionReceiver), so
+    /// the cutoff is only a backstop for a lost transition.
     fun isLikelyDriving(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val type = prefs.getInt(KEY_TYPE, DetectedActivity.STILL)
         val at = prefs.getLong(KEY_AT, 0L)
         if (type != DetectedActivity.IN_VEHICLE) return false
-        // Ignore if we haven't seen an update in 30+ min — could be stale.
-        return System.currentTimeMillis() - at < 30L * 60L * 1000L
+        return System.currentTimeMillis() - at < 2L * 60L * 60L * 1000L
     }
 }
 

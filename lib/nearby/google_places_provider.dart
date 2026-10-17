@@ -49,7 +49,7 @@ class PlacesUpstreamError implements Exception {
 /// Circuit breaker state lives in SQLite (`api_circuit_breakers` table,
 /// shared between isolates) so the foreground UI and the background geofence
 /// re-register isolate share state rather than diverging.
-class GooglePlacesProvider implements MerchantSearchProvider {
+class GooglePlacesProvider extends MerchantSearchProvider {
   GooglePlacesProvider({DataRepository? repo, http.Client? client})
     : _repo = repo ?? DataRepository(),
       _client = client ?? http.Client();
@@ -122,12 +122,14 @@ class GooglePlacesProvider implements MerchantSearchProvider {
       'places.id,places.displayName,places.location,places.primaryType,places.businessStatus';
 
   static const int _failureThreshold = 3;
+  // The API's hard cap per request; there is no next page.
+  static const int _maxResultCount = 20;
   static const Duration _cooldown = Duration(minutes: 5);
 
   Future<void> resetCircuitBreaker() => _repo.resetCircuitBreaker(_serviceName);
 
   @override
-  Future<List<NearbyMerchant>> nearby({
+  Future<NearbySearchResult> nearbyCovered({
     required double lat,
     required double lng,
     required int radiusMi,
@@ -184,7 +186,7 @@ class GooglePlacesProvider implements MerchantSearchProvider {
     }
   }
 
-  Future<List<NearbyMerchant>> _fetch({
+  Future<NearbySearchResult> _fetch({
     required double lat,
     required double lng,
     required int radiusMi,
@@ -239,9 +241,17 @@ class GooglePlacesProvider implements MerchantSearchProvider {
             originLng: lng,
             types: batch,
           );
-          return (merchants: r, error: null as Object?);
+          return (
+            merchants: r.merchants,
+            coveredM: r.coveredM,
+            error: null as Object?,
+          );
         } catch (e) {
-          return (merchants: <NearbyMerchant>[], error: e as Object?);
+          return (
+            merchants: <NearbyMerchant>[],
+            coveredM: 0.0,
+            error: e as Object?,
+          );
         }
       }),
     );
@@ -268,10 +278,20 @@ class GooglePlacesProvider implements MerchantSearchProvider {
         }
       }
     }
-    return seen.values.toList();
+    return NearbySearchResult(
+      merchants: seen.values.toList(),
+      centerLat: coarseLat,
+      centerLng: coarseLng,
+      // A failed batch covered nothing for its types.
+      coveredM: outcomes.isEmpty
+          ? 0
+          : outcomes.map((o) => o.coveredM).reduce(math.min),
+    );
   }
 
-  Future<List<NearbyMerchant>> _fetchBatch({
+  /// [coveredM]: the search radius when the batch came back short of its
+  /// 20-place cap, else the farthest result's distance from the search centre.
+  Future<({List<NearbyMerchant> merchants, double coveredM})> _fetchBatch({
     required double coarseLat,
     required double coarseLng,
     required double radiusM,
@@ -287,7 +307,7 @@ class GooglePlacesProvider implements MerchantSearchProvider {
           'radius': radiusM,
         },
       },
-      'maxResultCount': 20,
+      'maxResultCount': _maxResultCount,
       'rankPreference': 'DISTANCE',
     });
 
@@ -347,8 +367,20 @@ class GooglePlacesProvider implements MerchantSearchProvider {
     final places = (json['places'] as List? ?? const [])
         .cast<Map<String, dynamic>>();
 
+    var farthestM = 0.0;
     final out = <NearbyMerchant>[];
     for (final p in places) {
+      final at = p['location'] as Map<String, dynamic>?;
+      final alat = (at?['latitude'] as num?)?.toDouble();
+      final alng = (at?['longitude'] as num?)?.toDouble();
+      if (alat != null && alng != null) {
+        // Before the closed-place skip: closed places still took a slot.
+        farthestM = math.max(
+          farthestM,
+          _haversineMi(coarseLat, coarseLng, alat, alng) * 1609.34,
+        );
+      }
+
       // Skip permanently closed places (free field).
       if (p['businessStatus'] == 'CLOSED_PERMANENTLY') continue;
 
@@ -377,7 +409,10 @@ class GooglePlacesProvider implements MerchantSearchProvider {
         ),
       );
     }
-    return out;
+    return (
+      merchants: out,
+      coveredM: places.length >= _maxResultCount ? farthestM : radiusM,
+    );
   }
 }
 

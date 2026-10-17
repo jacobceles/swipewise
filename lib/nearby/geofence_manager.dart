@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import '../api/brand_resolver.dart';
 import '../api/data_repository.dart';
@@ -31,13 +32,34 @@ class GeofenceManager {
   static const int merchantCap = 50;
   static const int defaultMerchantRadiusM = 100;
   static const int fallbackDwellSeconds = 60;
-  static const int boundaryMinM = 1000;
+  // The boundary is the searched area's real coverage (see _buildBoundary),
+  // ~300 m in a dense town; below this a GPS wobble alone would trip it.
+  static const int boundaryMinM = 300;
   static const int boundaryMaxM = 10000;
   // If two merchants are within this distance, we treat them as the same
   // physical zone (mall food court, strip mall) and only register the
   // closer one - same OS dwell would fire on both otherwise, leading to
   // double notifications.
   static const int dedupRadiusM = 50;
+
+  /// How far a big-box store's floor reaches past its Google pin. Its fence
+  /// grows by this much (so standing deep inside still counts as entering),
+  /// and the native dwell check measures to the store's edge rather than its
+  /// pin. About physical size, not priority: every store kind is fenced alike.
+  static const int bigBoxFootprintM = 80;
+  static const Set<String> bigBoxPlaceTypes = {
+    'department_store',
+    'warehouse_store',
+    'hypermarket',
+    'supermarket',
+    'home_improvement_store',
+    'shopping_mall',
+  };
+
+  /// Display labels (CategoryLabelResolver) whose wait is the "Big-box" kind
+  /// of visit in settings. Nothing produces a "Big-box" label itself, so
+  /// before this mapping that setting changed nothing.
+  static const Set<String> bigBoxLabels = {'Department Stores', 'Wholesale'};
 
   // RC2 coverage-gap beacon. On a failed re-register we deliberately keep the
   // last-good fence set (see the empty/catch paths below) — correct, but a
@@ -61,6 +83,11 @@ class GeofenceManager {
   /// Returns true when the registration completed (including the legitimate
   /// "nothing nearby / disabled" cases), false when it failed and should be
   /// retried — the background [ReregisterWorker] maps false to `Result.retry`.
+  ///
+  /// Calls in one isolate run one at a time: two interleaved `registerSet`s
+  /// can leave the fences from one run and the metadata from the other
+  /// (`no_meta`). The background worker's own isolate is serialised natively
+  /// (`ReregisterScheduler`, APPEND_OR_REPLACE).
   Future<bool> ensureRegistered({
     required String userId,
     required bool enabled,
@@ -69,25 +96,66 @@ class GeofenceManager {
     List<String> cardPreferenceOrder = const [],
     Set<String>? categoryIds,
     String trigger = 'app',
+  }) {
+    final previous = _inFlight;
+    final run = () async {
+      if (previous != null) await previous.catchError((_) => false);
+      return _ensureRegistered(
+        userId: userId,
+        enabled: enabled,
+        radiusMi: radiusMi,
+        dwellByCategory: dwellByCategory,
+        cardPreferenceOrder: cardPreferenceOrder,
+        categoryIds: categoryIds,
+        trigger: trigger,
+      );
+    }();
+    _inFlight = run;
+    run.whenComplete(() {
+      if (identical(_inFlight, run)) _inFlight = null;
+    }).ignore();
+    return run;
+  }
+
+  Future<bool>? _inFlight;
+
+  /// A WARN line (survives release builds) that also lands in the native
+  /// walk-in log file, so "fences were never set up here" is visible after a
+  /// day out, not just in a logcat buffer that has long rolled over.
+  Future<void> _trace(String message) async {
+    Log.w('geofence', message);
+    await GeofenceChannel.walkinLog('geofence: $message');
+  }
+
+  Future<bool> _ensureRegistered({
+    required String userId,
+    required bool enabled,
+    required int radiusMi,
+    required Map<String, int> dwellByCategory,
+    required List<String> cardPreferenceOrder,
+    required Set<String>? categoryIds,
+    required String trigger,
   }) async {
     if (!enabled) {
       await GeofenceChannel.unregisterAll();
+      await _trace('trigger=$trigger disabled -> unregistered all');
       return true;
     }
     try {
       final fix = await location.getOneShot();
-      var merchants = await cache.read(lat: fix.lat, lng: fix.lng);
-      if (merchants.isEmpty) {
-        merchants = await search.nearby(
+      var area = await cache.read(lat: fix.lat, lng: fix.lng);
+      var source = 'cache';
+      if (area == null) {
+        source = 'search';
+        area = await search.nearbyCovered(
           lat: fix.lat,
           lng: fix.lng,
           radiusMi: radiusMi,
           categoryIds: categoryIds,
         );
-        if (merchants.isNotEmpty) {
-          await cache.write(lat: fix.lat, lng: fix.lng, merchants: merchants);
-        }
+        await cache.write(lat: fix.lat, lng: fix.lng, result: area);
       }
+      var merchants = area.merchants;
       if (merchants.isEmpty) {
         // Don't wipe the last-good geofence set (including the boundary
         // tripwire) on an empty result. An empty return can be a transient
@@ -97,6 +165,9 @@ class GeofenceManager {
         // aren't near those old merchants, so they won't fire) and the next
         // successful register replaces the whole set atomically. Only an
         // explicit `enabled == false` unregisters.
+        await _trace(
+          'trigger=$trigger source=$source found nothing -> kept last fences',
+        );
         await _beacon(
           trigger,
           await GeofenceChannel.getRegisteredCount(),
@@ -112,8 +183,7 @@ class GeofenceManager {
       if (mutedIds.isNotEmpty) {
         merchants = merchants.where((m) => !mutedIds.contains(m.id)).toList();
       }
-      merchants.sort((a, b) => a.distanceMi.compareTo(b.distanceMi));
-      final clusters = _buildClusters(merchants);
+      final clusters = _clusterMerchants(merchants, _haversineMeters);
       final cappedClusters = clusters.length > merchantCap
           ? clusters.sublist(0, merchantCap)
           : clusters;
@@ -136,13 +206,28 @@ class GeofenceManager {
       final boundary = _buildBoundary(
         centerLat: fix.lat,
         centerLng: fix.lng,
-        clusters: cappedClusters,
+        coveredM: TileCache.coverageLeftM(
+          centerLat: area.centerLat,
+          centerLng: area.centerLng,
+          coveredM: area.coveredM,
+          lat: fix.lat,
+          lng: fix.lng,
+        ),
+        capped: clusters.length > merchantCap ? cappedClusters : null,
       );
       final count = await GeofenceChannel.registerSet(
         zones: payload,
         boundary: boundary,
       );
-      Log.i('geofence', 'registered $count geofences');
+      // One line that says where fences came from and how they sit, for
+      // diagnosing walk-ins after the fact.
+      await _trace(
+        'registered $count fences trigger=$trigger source=$source '
+        'merchants=${merchants.length} clusters=${clusters.length} '
+        'covered=${area.coveredM.round()}m '
+        'overlapping=${_overlappingPairs(cappedClusters)} '
+        'boundary=${boundary['radius_m']}m',
+      );
       await _beacon(trigger, count, countMeaningful: true);
       await _recordSuccessfulRegistration(userId, fix.lat, fix.lng);
       return true;
@@ -159,9 +244,13 @@ class GeofenceManager {
           st,
         );
         await _beacon(trigger, 0, countMeaningful: false, gmsUnavailable: true);
+        await _trace('trigger=$trigger FAILED: Play services unavailable');
         return false;
       }
       Log.e('geofence', 'ensureRegistered failed', e, st);
+      await GeofenceChannel.walkinLog(
+        'geofence: trigger=$trigger FAILED: ${e.runtimeType}: $e',
+      );
       // `trigger` (app/sync/background) names which re-registration path
       // failed in the field — the A2-F1 blind spot we couldn't see before.
       FirebaseCrashlytics.instance.setCustomKey('geofence_trigger', trigger);
@@ -281,67 +370,57 @@ class GeofenceManager {
     }
   }
 
-  /// Groups merchants within `dedupRadiusM` of each other into clusters.
-  /// Each cluster has a primary (closest to the user) and any number of
-  /// additional merchants. Driven by the pre-sorted-by-distance list - the
-  /// first merchant we visit in a region anchors that region.
-  List<_MerchantCluster> _buildClusters(List<NearbyMerchant> merchants) {
-    final clusters = <_MerchantCluster>[];
-    for (final m in merchants) {
-      _MerchantCluster? hit;
-      for (final c in clusters) {
-        if (_haversineMeters(c.primary.lat, c.primary.lng, m.lat, m.lng) <=
-            dedupRadiusM) {
-          hit = c;
-          break;
-        }
-      }
-      if (hit == null) {
-        clusters.add(_MerchantCluster(primary: m, others: const []));
-      } else {
-        hit.others = [...hit.others, m];
+  /// Fence pairs whose circles overlap: each one a place where a single walk-in
+  /// can wake two dwell timers (the native visit lock keeps it to one post).
+  int _overlappingPairs(List<_MerchantCluster> clusters) {
+    var n = 0;
+    for (var a = 0; a < clusters.length; a++) {
+      for (var b = a + 1; b < clusters.length; b++) {
+        final d = _haversineMeters(
+          clusters[a].primary.lat,
+          clusters[a].primary.lng,
+          clusters[b].primary.lat,
+          clusters[b].primary.lng,
+        );
+        if (d < 2 * defaultMerchantRadiusM) n++;
       }
     }
-    return clusters;
+    return n;
   }
 
+  /// Tripwire: fire when the user leaves the area whose stores are all
+  /// fenced, so the next registration runs where they are.
+  ///
+  /// That area is what the search actually covered around the user
+  /// ([coveredM]), not a guess from where the fenced stores sit: Places returns
+  /// at most 20 per request, nearest first, so a dense town is covered only
+  /// ~300 m out. The old median-of-fences radius (min 1 km) let the user park
+  /// 500 m from the covered ring without crossing anything — no
+  /// re-registration, no fence at the store (Flemington, 2026-10-16). When the
+  /// fence cap dropped clusters ([capped] is the kept ones), coverage also ends
+  /// at the farthest kept fence.
   Map<String, dynamic> _buildBoundary({
     required double centerLat,
     required double centerLng,
-    required List<_MerchantCluster> clusters,
+    required double coveredM,
+    required List<_MerchantCluster>? capped,
   }) {
-    // Tripwire semantics: fire when the user leaves the area we actually
-    // covered densely with merchant geofences. The old formula (furthest
-    // merchant + 500m outward buffer) created a dead ring — the 2026-07-03
-    // debug trail caught a store visit at 3570m from the registration
-    // center sitting 75m INSIDE the 3645m boundary: no EXIT, no
-    // re-registration, no geofence at the store, no notification. Google's
-    // distance-ranked, 20-per-batch results thin out well before the
-    // furthest hit, so real coverage ends around the median registered
-    // cluster, not the furthest one. Use the median (min-clamped to 1km);
-    // moving beyond it re-registers, and the tile cache absorbs the extra
-    // churn for short hops.
-    final dists =
-        clusters
-            .map(
-              (c) => _haversineMeters(
-                centerLat,
-                centerLng,
-                c.primary.lat,
-                c.primary.lng,
-              ),
-            )
-            .toList()
-          ..sort();
-    final medianM = dists.isEmpty ? 0.0 : dists[dists.length ~/ 2];
-    final radius = medianM
+    var radiusM = coveredM;
+    if (capped != null && capped.isNotEmpty) {
+      final last = capped.last.primary;
+      radiusM = math.min(
+        radiusM,
+        _haversineMeters(centerLat, centerLng, last.lat, last.lng),
+      );
+    }
+    final radius = radiusM
         .clamp(boundaryMinM.toDouble(), boundaryMaxM.toDouble())
         .round();
     // Privacy: the boundary center is the user's position when geofences
     // were registered, and it gets persisted in `boundary_geofence`. Round
-    // it to ~110 m before storing — the boundary is kilometers wide, so
-    // this is lossless for exit detection but keeps a precise fix off disk.
-    // (The radius above is computed from the full-precision center.)
+    // it to ~110 m before storing; the error is small against the radius and
+    // keeps a precise fix off disk. (The radius above is computed from the
+    // full-precision center.)
     return {
       'geofence_id': 'boundary',
       'lat': double.parse(centerLat.toStringAsFixed(3)),
@@ -377,20 +456,24 @@ class GeofenceManager {
     for (final c in clusters) {
       final primary = c.primary;
       final all = [primary, ...c.others];
-      // Cluster's circle: center + radius based on the primary merchant.
-      // Dwell time is the primary's category - we'd over-suppress if we
-      // averaged across mixed categories.
-      final primaryLabel = CategoryLabelResolver.labelFor(
-        categoryId: primary.placeType,
-        categoryName: primary.category,
-      );
-      final dwell = dwellByCategory[primaryLabel ?? ''] ?? fallbackDwellSeconds;
+      // Dwell is the shortest wait among the cluster's stores: the anchor is
+      // just the lowest place id, so its kind says nothing about which store
+      // the user walks into, and a longer wait would hold back that store's
+      // alert.
+      var dwell = 0;
+      var footprint = 0;
       final options = <Map<String, dynamic>>[];
       for (final m in all) {
         final label = CategoryLabelResolver.labelFor(
           categoryId: m.placeType,
           categoryName: m.category,
         );
+        final wait = dwellSecondsFor(label, dwellByCategory);
+        if (dwell == 0 || wait < dwell) dwell = wait;
+        final storeFootprint = bigBoxPlaceTypes.contains(m.placeType)
+            ? bigBoxFootprintM
+            : 0;
+        footprint = math.max(footprint, storeFootprint);
         // Authoritative curated place-type → category map (categories.json
         // googlePlaceTypes); label/name heuristics are the fallback.
         final category =
@@ -428,6 +511,11 @@ class GeofenceManager {
         options.add({
           'merchant_id': m.id,
           'name': m.name,
+          // Lets the native dwell check name the closest store from a fresh
+          // fix rather than every store in the cluster.
+          'lat': m.lat,
+          'lng': m.lng,
+          'footprint_m': storeFootprint,
           'category': label,
           'category_enum': category.name,
           'matched_brand': brandHit?.brand,
@@ -439,7 +527,7 @@ class GeofenceManager {
         'geofence_id': 'm_${primary.id}',
         'lat': primary.lat,
         'lng': primary.lng,
-        'radius_m': defaultMerchantRadiusM,
+        'radius_m': defaultMerchantRadiusM + footprint,
         'dwell_seconds': dwell,
         'options': options,
       });
@@ -448,8 +536,65 @@ class GeofenceManager {
   }
 }
 
+/// The wait before a walk-in alert for a store with display [label]: its kind
+/// of visit's setting, else [GeofenceManager.fallbackDwellSeconds].
+@visibleForTesting
+int dwellSecondsFor(String? label, Map<String, int> dwellByCategory) {
+  final kind = GeofenceManager.bigBoxLabels.contains(label) ? 'Big-box' : label;
+  return dwellByCategory[kind ?? ''] ?? GeofenceManager.fallbackDwellSeconds;
+}
+
 class _MerchantCluster {
   final NearbyMerchant primary;
   List<NearbyMerchant> others;
   _MerchantCluster({required this.primary, required this.others});
+}
+
+/// Groups merchants within [GeofenceManager.dedupRadiusM] of each other into
+/// one fence each, closest cluster first.
+///
+/// Anchored on place id, not on distance from the user. The fence id is
+/// `m_<anchor id>`, and anchoring on "the store nearest to wherever the user
+/// was at registration" gave the same strip mall a new id on every
+/// re-registration — orphaning any dwell timer already running for it
+/// (`no_meta`, diagnosed 2026-10-16). The same set of places now always
+/// produces the same fences.
+@visibleForTesting
+List<({NearbyMerchant anchor, List<NearbyMerchant> others})>
+clusterMerchantsForTest(
+  List<NearbyMerchant> merchants,
+  double Function(double, double, double, double) distanceM,
+) => [
+  for (final c in _clusterMerchants(merchants, distanceM))
+    (anchor: c.primary, others: c.others),
+];
+
+List<_MerchantCluster> _clusterMerchants(
+  List<NearbyMerchant> merchants,
+  double Function(double, double, double, double) distanceM,
+) {
+  final byId = [...merchants]..sort((a, b) => a.id.compareTo(b.id));
+  final clusters = <_MerchantCluster>[];
+  for (final m in byId) {
+    _MerchantCluster? hit;
+    for (final c in clusters) {
+      if (distanceM(c.primary.lat, c.primary.lng, m.lat, m.lng) <=
+          GeofenceManager.dedupRadiusM) {
+        hit = c;
+        break;
+      }
+    }
+    if (hit == null) {
+      clusters.add(_MerchantCluster(primary: m, others: const []));
+    } else {
+      hit.others = [...hit.others, m];
+    }
+  }
+  // Closest first: the merchant cap keeps the nearest fences.
+  clusters.sort((a, b) => a.primary.distanceMi.compareTo(b.primary.distanceMi));
+  for (final c in clusters) {
+    c.others = [...c.others]
+      ..sort((a, b) => a.distanceMi.compareTo(b.distanceMi));
+  }
+  return clusters;
 }

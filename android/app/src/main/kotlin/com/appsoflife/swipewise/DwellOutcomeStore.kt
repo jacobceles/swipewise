@@ -31,7 +31,22 @@ enum class DwellOutcome(val wire: String) {
 
     MUTED("muted"),
     MERCHANT_COOLDOWN("merchant_cooldown"),
-    CATEGORY_COOLDOWN("category_cooldown"),
+
+    /// The fix was inside the fence but the user was still moving (in a car per
+    /// activity recognition, or the fix's speed): a red light. Re-armed once.
+    MOVING_RECHECK("moving_recheck"),
+
+    /// [ResidentGuard]: this fence keeps firing, so the user lives or works
+    /// beside it. Suppressed without taking a fix.
+    RESIDENT("resident"),
+
+    /// The post was attempted but notifications are off, so nothing showed and
+    /// no cooldown or visit lock was set.
+    NOTIFICATIONS_OFF("notifications_off"),
+
+    /// Another store alert already posted near here within [VisitLock.WINDOW_MS]
+    /// — the same walk-in, seen through an overlapping fence.
+    SAME_VISIT("same_visit"),
 }
 
 /// The verification fix, kept together so an [DwellOutcome.OUTSIDE_FENCE] row can

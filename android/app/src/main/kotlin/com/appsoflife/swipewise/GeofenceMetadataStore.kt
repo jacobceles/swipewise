@@ -15,6 +15,14 @@ data class MerchantOption(
     val category: String?,
     val bestCardName: String?,
     val bestRate: Double?,
+    // The store's own position — a cluster fence is centred on one store, so
+    // without these the dwell check can't tell which of its stores is closest.
+    // Null for fences written by older builds.
+    val lat: Double? = null,
+    val lng: Double? = null,
+    // How far the store's floor reaches past its pin (big-box stores), so
+    // the user standing inside is measured as being at the store.
+    val footprintM: Double = 0.0,
 )
 
 data class MerchantMeta(
@@ -76,6 +84,9 @@ class GeofenceMetadataStore(context: Context) {
         prefs.edit().putString(meta.geofenceId, o.toString()).apply()
     }
 
+    /// Every registered merchant fence.
+    fun readAll(): List<MerchantMeta> = prefs.all.keys.mapNotNull { read(it) }
+
     fun clear() {
         prefs.edit().clear().apply()
     }
@@ -103,6 +114,9 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     put("category", category)
     put("best_card_name", bestCardName)
     if (bestRate != null) put("best_rate", bestRate) else put("best_rate", JSONObject.NULL)
+    if (lat != null) put("lat", lat)
+    if (lng != null) put("lng", lng)
+    if (footprintM > 0) put("footprint_m", footprintM)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -111,6 +125,9 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     category = nullableString("category"),
     bestCardName = nullableString("best_card_name"),
     bestRate = if (isNull("best_rate")) null else getDouble("best_rate"),
+    lat = if (has("lat") && !isNull("lat")) getDouble("lat") else null,
+    lng = if (has("lng") && !isNull("lng")) getDouble("lng") else null,
+    footprintM = optDouble("footprint_m", 0.0),
 )
 
 private fun JSONObject.nullableString(key: String): String? {
@@ -119,25 +136,20 @@ private fun JSONObject.nullableString(key: String): String? {
 }
 
 /// Cooldown bookkeeping, backed by the same SQLite file sqflite manages
-/// (`swipewise.db`). Two tables:
-///   - `merchant_notification_cooldown` — same Kohl's stays quiet for 6h,
-///   - `category_notification_cooldown` — strip-mall suppression at 30 min.
+/// (`swipewise.db`): `merchant_notification_cooldown` — same Kohl's stays quiet
+/// for 6h. (`category_notification_cooldown` is no longer written: its 30-min
+/// strip-mall suppression is [VisitLock]'s job now, and it silenced real
+/// second visits such as dinner, then dessert across the road.)
 class CooldownStore(private val context: Context) {
 
     fun lastMerchantNotified(merchantId: String): Long? =
         readTimestamp(MERCHANT_TABLE, MERCHANT_KEY, merchantId)
 
-    fun lastCategoryNotified(category: String?): Long? {
-        if (category.isNullOrEmpty()) return null
-        return readTimestamp(CATEGORY_TABLE, CATEGORY_KEY, category)
-    }
-
     /// Smart cooldown re-arm, called on boundary EXIT: leaving the whole
     /// mapped area makes the next visit to any of these merchants a new trip,
     /// so per-merchant cooldowns are cleared and a return re-notifies. In-area
     /// hops (walk to the car and back) never cross the boundary, so the 6h
-    /// window still suppresses same-visit repeats. The 30-min category
-    /// cooldown is left alone as the burst guard wherever the user lands next.
+    /// window still suppresses same-visit repeats.
     fun clearMerchantCooldowns(): Int =
         try {
             openDb().use { db ->
@@ -152,9 +164,6 @@ class CooldownStore(private val context: Context) {
         try {
             openDb().use { db ->
                 writeRow(db, MERCHANT_TABLE, MERCHANT_KEY, option.merchantId, atMillis)
-                if (!option.category.isNullOrEmpty()) {
-                    writeRow(db, CATEGORY_TABLE, CATEGORY_KEY, option.category, atMillis)
-                }
             }
         } catch (_: Exception) {
             // DB may not exist yet on a brand-new install (sqflite hasn't
@@ -203,8 +212,6 @@ class CooldownStore(private val context: Context) {
         private const val DB_NAME = "swipewise.db"
         private const val MERCHANT_TABLE = "merchant_notification_cooldown"
         private const val MERCHANT_KEY = "merchant_id"
-        private const val CATEGORY_TABLE = "category_notification_cooldown"
-        private const val CATEGORY_KEY = "category"
     }
 }
 

@@ -18,6 +18,15 @@ class GeofenceChannel {
     return count ?? 0;
   }
 
+  /// Appends [message] to the native walk-in log (`files/walkin.log`, see
+  /// `WalkinLog`), so registration lines sit beside the fence and dwell lines
+  /// they explain. Best-effort: logging never fails a registration.
+  static Future<void> walkinLog(String message) async {
+    try {
+      await _channel.invokeMethod('walkinLog', message);
+    } catch (_) {}
+  }
+
   static Future<void> unregisterAll() async {
     await _channel.invokeMethod('unregisterAll');
   }

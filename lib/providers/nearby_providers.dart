@@ -137,26 +137,26 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
   }
   final cache = ref.read(tileCacheProvider);
 
-  var raw = await cache.read(lat: fix.lat, lng: fix.lng);
-  if (raw.isEmpty) {
+  final cached = await cache.read(lat: fix.lat, lng: fix.lng);
+  var raw = cached?.merchants ?? const <NearbyMerchant>[];
+  if (cached == null) {
     if (kDebugMode) {
       // ignore: avoid_print
       print('[nearby] cache miss, calling Google Places…');
     }
     final search = ref.read(merchantSearchProvider);
-    raw = await search.nearby(
+    final result = await search.nearbyCovered(
       lat: fix.lat,
       lng: fix.lng,
       radiusMi: radiusMi,
       categoryIds: categoryIds,
     );
+    raw = result.merchants;
     if (kDebugMode) {
       // ignore: avoid_print
       print('[nearby] Google Places returned ${raw.length} merchants');
     }
-    if (raw.isNotEmpty) {
-      await cache.write(lat: fix.lat, lng: fix.lng, merchants: raw);
-    }
+    await cache.write(lat: fix.lat, lng: fix.lng, result: result);
   } else if (kDebugMode) {
     // ignore: avoid_print
     print('[nearby] cache hit (${raw.length} merchants)');

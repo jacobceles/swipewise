@@ -17,8 +17,20 @@ Privacy coarsening: lat/lng is rounded to 3 decimal places (~110 m) before sendi
 [`tile_cache.dart`](../lib/nearby/tile_cache.dart) caches results per **~1km grid cell**
 (`cell_id = "{round(lat*100)}:{round(lng*100)}"`) in `merchant_tile_cache`:
 - **7-day TTL**, **200-cell LRU** (evicted on write by `last_accessed_at`).
-- Reads scan the **3×3 neighborhood** around the user to avoid a "cache cliff" at cell
-  boundaries, dedup by `merchant_id`, sort by distance.
+- **A search is complete only near its centre.** Each request returns at most 20 places,
+  nearest first, with no next page (`maxResultCount` is capped at 20 by the API). In a
+  dense town that's ~300 m, far short of the search radius. So each search records its
+  covered circle (`NearbySearchResult`): the search radius when every request came back
+  short of 20, else the smallest of the full requests' farthest-result distances (0 if a
+  request failed). Cached rows carry it (`center_lat`, `center_lng`, `covered_m`, DB v18).
+- **A read is a hit only inside a covered circle**, with at least `TileCache.edgeM`
+  (150 m) to spare; otherwise the caller searches afresh from where the user is. Before
+  this, any fresh row in the 3×3 neighbourhood counted, so an arrival 500 m from an old
+  search got that search's ring and the store being walked into was never fenced
+  (Flemington, 2026-10-16). On a hit, rows from the whole **3×3 neighbourhood** are
+  merged, deduped by `merchant_id`, and sorted by distance. Rows from before v18 have no
+  coverage and never count as a hit.
+- Cost: about one search (2–3 requests) per stop outside every cached circle.
 - A cross-isolate circuit breaker (3 failures → 5-min cooldown) in `api_circuit_breakers`
   protects the API.
 
@@ -71,7 +83,7 @@ idempotent (runs on app open):
 ```mermaid
 flowchart TD
   L["getOneShot() position"] --> C["tile cache read"]
-  C -->|miss| F["GooglePlacesProvider.nearby() + cache write"]
+  C -->|"not inside a covered circle"| F["GooglePlacesProvider.nearbyCovered() + cache write"]
   C --> CL["cluster merchants within 50m<br/>(suppress mall duplicates)"]
   F --> CL
   CL --> BC["queryBestCardByCategory + queryBestCatchAllCard"]
@@ -79,11 +91,25 @@ flowchart TD
   P --> N["native registerSet(zones, boundary)"]
 ```
 
-Each merchant gets a **100m ENTER/EXIT geofence**; a single **boundary geofence** (median
-registered-cluster distance, clamped 1–10km) acts as a re-registration tripwire. The
-boundary must sit *inside* dense coverage — with the old "furthest merchant + 500m"
-formula you could park beyond the covered merchants yet inside the boundary: no EXIT,
-no re-registration, no notification. The native side
+Merchants within 50 m share one fence (a "cluster"). **Fence ids are anchored on place id**
+(`m_<lowest place id in the cluster>`), not on the store nearest the user at registration —
+that used to rename the same strip mall on every re-register and orphan any dwell timer
+already running for it (`no_meta`). Each option carries its store's own lat/lng so the dwell
+check can tell the stores in a cluster apart.
+
+Each merchant gets a **100m ENTER/EXIT geofence**. A big-box store's (department,
+warehouse, supermarket, hypermarket, home improvement, mall) is 80 m larger, and its
+options carry `footprint_m` = 80. Its Google pin can sit 150 m from where the user stands
+inside, so the native dwell check measures to the store's edge (distance − footprint).
+A cluster's dwell is the **shortest** wait among its stores. "Department Stores" and
+"Wholesale" use the **Big-box** wait setting, which before this mapping changed nothing.
+
+A single **boundary geofence** acts as a re-registration tripwire. Its radius is the
+search's **real coverage around the user** (what's left of the covered circle; capped at
+the farthest kept fence when the 50-fence cap dropped some), clamped 300 m–10 km. Both
+earlier formulas overshot coverage: "furthest merchant + 500 m", then the median fence
+distance clamped to ≥1 km. Either way you could park beyond the fenced stores yet inside
+the boundary: no EXIT, no re-registration, no notification. The native side
 ([`GeofencePlugin.kt`](../android/app/src/main/kotlin), channel `com.appsoflife/geofence`)
 uses Google Play Services `GeofencingClient` with `INITIAL_TRIGGER_ENTER` (so a fence
 registered around a store the user is already standing in still fires) — the OS monitors
@@ -97,11 +123,19 @@ geofences even when the app isn't running.
   the flag is consumed (worker runs) on the next activity-recognition STILL/WALKING
   transition, or by the fallback alarm if AR never delivers one (it re-arms itself while
   still driving). No churn mid-drive; fences land at the destination on arrival.
-- Boot (Android wipes geofences on reboot).
+- Boot (Android wipes geofences on reboot). Boot also **restarts activity recognition** —
+  only `MainActivity` used to start it, so after any reboot "driving" was never detected
+  until the app was opened, and the boundary re-registered mid-drive with fences centred
+  on the road (diagnosed 2026-10-16). `ReregisterWorker` re-asserts it too.
 
 The worker is **expedited** (`RUN_AS_NON_EXPEDITED_WORK_REQUEST` fallback) — a plain
 request can be deferred minutes under Doze, which defeats fencing the destination before
 the user walks into a store.
+
+**Registrations never overlap.** Two interleaved `registerSet` calls can leave fences from
+one run and metadata from the other (`no_meta`). In-isolate calls to `ensureRegistered`
+queue behind each other. The worker is enqueued with `APPEND_OR_REPLACE`: `REPLACE` only
+interrupted the running worker's latch while its Flutter engine kept going.
 
 **`registerSet` reports what the OS did, not what it was asked.** `addGeofences()` is
 asynchronous, so returning normally only means the request was accepted for delivery —
@@ -119,11 +153,52 @@ loitering lazily on the OS's own location cadence and can fire minutes late. Ins
 
 1. Fence **ENTER** → `MerchantGeofenceReceiver` arms a one-shot [`DwellAlarms`] timer for
    that fence's per-category dwell seconds (exact alarm when granted, inexact otherwise).
+   A timer already counting down is left alone. Indoor fixes drift across the fence edge,
+   and re-arming on each repeat ENTER restarted the countdown.
 2. Fence **EXIT** before it fires → timer cancelled (drove past / red light).
-3. Timer fires → `DwellCheckReceiver` takes **one fresh balanced-power fix** (8s budget)
+3. Timer fires → a **resident fence** is skipped before any fix (`ResidentGuard`,
+   outcome `resident`). Three checks on one fence within an hour means the user lives or
+   works beside it (a home business pinned next door), so the fence stays silent for
+   7 days. A real visit is one check, two with a moving recheck.
+4. Otherwise `DwellCheckReceiver` takes **one fresh balanced-power fix** (8s budget)
    and verifies: fix inside the fence (+accuracy +50m slack) → post; fix outside →
    rejected; no fix obtainable → post unless activity recognition says IN_VEHICLE
    (fail-open — a missed verification must not eat a legit notification).
+   **Inside but still moving** (AR says IN_VEHICLE, or the fix's speed is over 2 m/s) is
+   a red light beside the store. The timer re-arms once (`moving_recheck`), the second
+   look trusts the fix alone, and an EXIT in between cancels it.
+5. With a fix, **which store to name is decided across every registered fence**
+   (`StoreResolver` in `Walkin.kt`), not just the one that fired — fences overlap, so the
+   firing one is often a neighbour's. Stores count when within the same reach that
+   verified the visit, measured to their edge; muted stores are dropped first. The
+   closest store is named alone; only stores within 35 m of the closest become a "you may
+   be at one of these" list (max 4). Fix accuracy worse than 50 m, no fix, or no store
+   within reach → the firing fence's own options, closest four.
+
+Activity state: an IN_VEHICLE **EXIT** is stored as "not driving". IN_VEHICLE then counts
+for 2 h. Transitions arrive only on a change, so the old 30-min cutoff read every longer
+drive as parked.
+
+**One walk-in, one notification.** After a store alert posts, any other alert within 250 m
+in the next 20 minutes is the same visit (`VisitLock`, outcome `same_visit`). Overlapping
+fences entered seconds apart used to each post, since neighbouring stores have different
+categories and the per-category cooldown never caught them. The 20 minutes must exceed
+the longest wait setting (15 min), since overlapping fences can have different waits.
+**Known limit:** walking to the shop next door within the window stays silent.
+
+**Logs (release builds too):** every receiver writes one line under tag `SW.walkin` — fence
+ENTER/EXIT (with `no_meta` marks and fix accuracy), boundary EXIT and whether it deferred,
+activity transitions, boot, `registerSet`, and each dwell decision (candidates with
+distances → the store named → outcome). Dart writes one `geofence:` line per registration
+into the same log (trigger, cache vs search, merchant/cluster counts, covered radius,
+overlapping fence pairs, boundary), including failures and "found nothing". Before this,
+"fences were never set up here" left no trace after a day out.
+The same lines are appended to **`files/walkin.log`** in the app's storage (capped at 512 KB, trimmed to the
+newest half), because the phone is rarely plugged in when a walk-in happens. After a day out, from the
+debug build: `adb exec-out run-as com.appsoflife.swipewise.dev cat files/walkin.log`. (The Play build is
+not debuggable, so its file can't be read over adb.) Logcat's default buffer holds minutes on a busy
+phone; when you do stay plugged in, first run
+`adb logcat -G 16M`, then `adb logcat -d -s SW.walkin flutter` (Dart lines arrive under the `flutter` tag, prefixed `[SW.geofence]`).
 
 Fence geometry + dwell seconds ride along in `GeofenceMetadataStore` so the receivers
 need no Dart round-trip.
@@ -145,7 +220,11 @@ other 7.
 | `no_meta` | fence set replaced mid-flight — frequent means re-registration is racing arrivals |
 | `outside_fence` | verification fix put the user outside; `distance_m` vs `allowed_m` says by how much |
 | `no_fix_driving` | no fix in time and AR still says driving |
-| `muted` / `merchant_cooldown` / `category_cooldown` | suppressed on purpose |
+| `moving_recheck` | inside but still moving; re-armed once |
+| `resident` | fence keeps firing (home/work); skipped without a fix |
+| `notifications_off` | post attempted, but notifications are off; no cooldown or visit lock set |
+| `muted` / `same_visit` / `merchant_cooldown` | suppressed on purpose |
+| `category_cooldown` | older builds only; that cooldown is gone |
 
 `distance_m`/`accuracy_m`/`allowed_m` are set whenever a fix was obtained, so a `posted`
 row with no distance is itself the marker that verification failed open. Read it with:
@@ -171,15 +250,20 @@ sync path, just with two inputs instead of one ([architecture.md](architecture.m
 
 ## Notifications
 
-Before posting, `DwellCheckReceiver` checks two cooldowns (both backed by SQLite tables
-shared with the app):
+Before posting, `DwellCheckReceiver` checks the visit lock (above) and one cooldown,
+backed by a SQLite table shared with the app:
 
 - **per-merchant** — 6h (don't re-nudge the same store), with a smart re-arm: a
   **boundary EXIT clears all merchant cooldowns** — leaving the mapped area makes the
   next visit a new trip, so returning re-notifies. Walking to the car and back never
   crosses the boundary, so same-visit repeats stay suppressed by the 6h window.
-- **per-category** — 30 min (suppress strip-mall spam; not cleared on boundary EXIT —
-  it's the burst guard wherever the user lands next)
+
+The old 30-min **per-category** cooldown is gone. The visit lock does its burst-guard job,
+and it silenced real second visits, like dinner and then dessert across the road.
+(`category_notification_cooldown` stays in the schema, unwritten.)
+
+`postDwell` reports whether the notification could show. With notifications or the
+channel off, nothing counts as posted (`notifications_off`).
 
 The notification names the brand-specific card when matched ("Use Prime Visa at Whole Foods
 · 5%"), else the category's best card. Tapping carries the options JSON into the app, which
@@ -192,7 +276,9 @@ dwell notifications without hiding it from the list. Muted place ids live in the
 device-level `muted_merchants` table (DB v7, `merchant_id` = Google place id) — not
 user-scoped, matching the cooldown tables, since the native receivers read it without a user
 context. Mute/unmute writes happen only in Dart (`DataRepository.muteMerchant` /
-`unmuteMerchant`); native only reads. Manage the full list under **Profile → Muted Stores**.
+`unmuteMerchant`); native only reads. Manage the full list under **Profile → Alert timing & muted stores**. Search distance and kinds of places
+live only in Advisor's filter sheet (the tune button in Stores view), since they set what the list shows;
+the alerts page points there because the kinds also decide which stores get a fence.
 
 Suppression happens at two layers:
 

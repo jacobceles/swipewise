@@ -13,7 +13,20 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
         val result = ActivityTransitionResult.extractResult(intent) ?: return
         // Latest event wins.
         val latest = result.transitionEvents.lastOrNull() ?: return
-        ActivityState.set(context, latest.activityType, System.currentTimeMillis())
+        // An IN_VEHICLE *EXIT* means the drive ended; storing its bare
+        // activity type read as "still driving".
+        val leftVehicle = latest.activityType == DetectedActivity.IN_VEHICLE &&
+            latest.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT
+        ActivityState.set(
+            context,
+            if (leftVehicle) DetectedActivity.UNKNOWN else latest.activityType,
+            System.currentTimeMillis(),
+        )
+        WalkinLog.w(
+            context,
+            "activity type=${latest.activityType} transition=${latest.transitionType} " +
+                "pending_reregister=${PendingReregister.isPending(context)}",
+        )
 
         // The user just settled (parked / on foot). If a boundary crossing was
         // deferred while driving, this is when we run it — geofences catch up to

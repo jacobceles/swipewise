@@ -138,4 +138,6 @@ dependencies {
     // Backports java.time etc. to the minSdk. Paired with isCoreLibraryDesugaringEnabled
     // above; flutter_local_notifications declares this requirement in its AAR metadata.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    // JVM unit tests for the pure walk-in decisions (Walkin.kt): ./gradlew :app:testDebugUnitTest
+    testImplementation("junit:junit:4.13.2")
 }
