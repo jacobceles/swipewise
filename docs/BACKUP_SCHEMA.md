@@ -1,7 +1,7 @@
 # What a wallet backup contains
 
 Wallet backup is **off by default** and does nothing until you sign in and switch it on in
-*Profile → Back Up My Wallet*. This document is the complete and authoritative list of what
+*Profile → Account & backup → Back up my wallet*. This document is the complete and authoritative list of what
 leaves your device when you do — written here, in the public app repository, so it can be
 checked against the code that produces it.
 
@@ -60,6 +60,7 @@ Deliberately stays on the device:
 | `permissions_asked` | OS permissions are granted per device |
 | `onboarding_seen` | A per-install fact |
 | `backup_enabled` | Restoring a backup must never silently switch backup *on* for the phone receiving it |
+| `last_backup_at` | When *this* phone last uploaded; on another phone it would claim a backup that phone never made |
 | `last_sync_at`, `popular_banks_cache`, `catalog_data_version` | Caches and bookkeeping about one device, meaningless on another |
 
 ## When data moves
@@ -68,7 +69,7 @@ Deliberately stays on the device:
 |---|---|
 | Up | Only while backup is switched on, and only for a signed-in account |
 | Down, automatically | Only onto an **empty** wallet — the new-phone case |
-| Down, on request | *Profile → Restore From Backup*, after a confirmation that says what it replaces |
+| Down, on request | *Profile → Account & backup → Restore…*, after a confirmation that says what it replaces |
 
 If both your phone and your backup hold cards, **nothing happens automatically**. Silently
 replacing cards you can see would destroy edits you never agreed to lose, so that collision is
@@ -84,8 +85,8 @@ delete a backup and deliberately do not:
 - **Turning backup off** stops further uploads. The copy already stored is kept, so you can
   still restore it later or onto a new phone — it pauses backup rather than discarding it.
 
-**Deleting your account is what erases it**, along with everything else: *Profile → Delete my
-account*, or the [account deletion page](https://jacobcelestine.com/swipewise/delete_account.html)
+**Deleting your account is what erases it**, along with everything else: *Profile → Account & backup →
+Delete account*, or the [account deletion page](https://jacobcelestine.com/swipewise/delete_account.html)
 if you no longer have the app.
 
 ## Where it goes

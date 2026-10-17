@@ -144,6 +144,17 @@ class NearbyDwellNotifier extends Notifier<Map<String, int>> {
       await _settings.setDwellSecondsByCategory(userId, next);
     }
   }
+
+  /// One wait for every kind of visit — the common answer; per-kind values
+  /// are the exception.
+  Future<void> setAll(int seconds) async {
+    final userId = ref.read(authProvider).userId;
+    final next = {for (final k in state.keys) k: seconds};
+    state = next;
+    if (userId != null) {
+      await _settings.setDwellSecondsByCategory(userId, next);
+    }
+  }
 }
 
 final nearbyEnabledProvider = NotifierProvider<NearbyEnabledNotifier, bool>(

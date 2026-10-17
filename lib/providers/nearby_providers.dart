@@ -89,6 +89,24 @@ final reliabilityGrantsProvider = FutureProvider<bool>((ref) async {
   return alarm.isGranted && battery.isGranted;
 });
 
+/// The four phone settings that decide whether a store alert can arrive at
+/// all. Shown together on Profile so "why didn't I get an alert?" has one
+/// answer, instead of banners scattered across Stores and a sub-page.
+enum AlertCheck { notifications, location, battery, alarms }
+
+/// Granted state of each [AlertCheck]. Re-fetched on demand (Profile
+/// invalidates it when the app resumes from system settings).
+final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
+  return {
+    AlertCheck.notifications: (await Permission.notification.status).isGranted,
+    // "All the time": geofence transitions only reach the app with it.
+    AlertCheck.location: (await Permission.locationAlways.status).isGranted,
+    AlertCheck.battery:
+        (await Permission.ignoreBatteryOptimizations.status).isGranted,
+    AlertCheck.alarms: (await Permission.scheduleExactAlarm.status).isGranted,
+  };
+});
+
 /// Foreground discovery: one-shot location → tile cache → Google Places on miss
 /// → enrich with the user's best card per resolved category.
 final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((

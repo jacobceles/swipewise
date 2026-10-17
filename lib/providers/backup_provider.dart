@@ -140,7 +140,12 @@ class WalletBackupController {
     final snapshot = await _ref
         .read(walletBackupRepositoryProvider)
         .capture(userId);
-    return _ref.read(walletBackupClientProvider).push(snapshot);
+    final status = await _ref.read(walletBackupClientProvider).push(snapshot);
+    if (status == BackupStatus.ok) {
+      await _settings.setLastBackupAt(userId, DateTime.now());
+      _ref.invalidate(lastBackupAtProvider);
+    }
+    return status;
   }
 
   /// Pulls the stored backup and applies it over the local wallet.
@@ -206,6 +211,13 @@ class WalletBackupController {
     return outcome;
   }
 }
+
+/// When this phone last uploaded a backup, or null if it never has.
+final lastBackupAtProvider = FutureProvider<DateTime?>((ref) async {
+  final userId = ref.watch(authProvider.select((s) => s.userId));
+  if (userId == null) return null;
+  return _settings.getLastBackupAt(userId);
+});
 
 final walletBackupControllerProvider = Provider<WalletBackupController>(
   WalletBackupController.new,

@@ -11,7 +11,8 @@ import '../providers/data_providers.dart';
 import '../providers/nearby_providers.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
-import 'nearby_categories_screen.dart';
+import 'profile/store_filter_sheet.dart';
+import 'profile/profile_ui.dart';
 import 'reward_ranking_sheet.dart';
 import 'widgets/nearby_stores_view.dart';
 
@@ -85,11 +86,9 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
             _TopBar(
               showTune: view == AdvisorView.stores,
               searchOpen: _searchOpen,
-              onTune: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const NearbyCategoriesScreen(),
-                ),
-              ),
+              // The same sheet Profile opens: one home for every Nearby setting,
+              // reachable from where the user is looking at stores.
+              onTune: () => showProfileSheet(context, const StoreFilterSheet()),
               onToggleSearch: () => setState(() {
                 _searchOpen = !_searchOpen;
                 if (!_searchOpen) {

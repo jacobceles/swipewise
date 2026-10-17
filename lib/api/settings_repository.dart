@@ -38,6 +38,7 @@ class SettingsRepository {
   static const _kActivationRemindersEnabled = 'activation_reminders_enabled';
   static const _kBackupEnabled = 'backup_enabled';
   static const _kProCached = 'pro_cached';
+  static const _kLastBackupAt = 'last_backup_at';
 
   /// Settings keys that belong to the *user* and travel with a wallet backup.
   ///
@@ -60,6 +61,8 @@ class SettingsRepository {
   ///   lying around.
   /// * [_kLastSyncAt], [_kPopularBanksCache], [_kCatalogDataVersion] — caches
   ///   and bookkeeping about this device, meaningless on another.
+  /// * [_kLastBackupAt] — when THIS phone last uploaded; restored onto another
+  ///   phone it would claim a backup that phone never made.
   static const Set<String> syncableSettingsKeys = {
     _kDefaultScreen,
     _kDefaultAdvisorView,
@@ -372,6 +375,18 @@ class SettingsRepository {
 
   Future<void> setBackupEnabled(String userId, bool enabled) =>
       _repo.setSetting(userId, _kBackupEnabled, enabled.toString());
+
+  /// When this phone last uploaded a backup successfully, or null if never.
+  ///
+  /// Backup is not continuous — it uploads when turned on and on "Back up
+  /// now" — so "Backup on" alone says nothing about how stale the copy is.
+  Future<DateTime?> getLastBackupAt(String userId) async {
+    final raw = await _repo.getSetting(userId, _kLastBackupAt);
+    return raw == null ? null : DateTime.tryParse(raw);
+  }
+
+  Future<void> setLastBackupAt(String userId, DateTime at) =>
+      _repo.setSetting(userId, _kLastBackupAt, at.toUtc().toIso8601String());
 
   /// Last known answer to "is this user Pro?", so a launch without network
   /// does not demote a paying subscriber.

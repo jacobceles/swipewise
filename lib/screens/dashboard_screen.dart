@@ -10,6 +10,7 @@ import '../providers/sync_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/transaction_row.dart';
 import 'merchant_detail_screen.dart';
+import 'subscriptions_screen.dart';
 
 /// Wireframe `c8MKBm` - Transactions tab. Top bar with search toggle, 4
 /// filter chips (All / Cards / Category / Date), centered last-synced pill,
@@ -364,6 +365,31 @@ class _TopBar extends StatelessWidget {
             'Transactions',
             style: AppText.displayLg().copyWith(fontSize: 28),
           ),
+          const Spacer(),
+          // Recurring charges are content about your spending, so they live
+          // with it — they used to be a row on the Profile settings page.
+          Semantics(
+            label: 'Recurring transactions',
+            button: true,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SubscriptionsScreen(),
+                ),
+              ),
+              child: Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: palette.secondary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.repeat, size: 18),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: onToggleSearch,
             child: Container(
