@@ -173,9 +173,10 @@ the AAB carries the same compiled Dart and native code, so a clean APK gate cove
 track, including internal testing, so a re-upload always needs `version:` in `pubspec.yaml` bumped.
 
 ⚠️⚠️ **A release APK that builds, passes the credential gate and installs can still crash on
-launch — always launch one before believing it.** AGP 9 turned **R8 minification on by default**
-for the release build type. We ship no keep rules, and R8 stripped the Room-generated constructor
-WorkManager instantiates reflectively, so every release build died before reaching Flutter:
+launch — always launch one before believing it.** The release build runs **R8** (minify +
+obfuscate; Play flags DEX obfuscation under 25%). When AGP 9 first switched R8 on by default, with
+no keep rules, it stripped the Room-generated constructor WorkManager instantiates reflectively,
+and every release build died before reaching Flutter:
 
 ```
 java.lang.RuntimeException: Unable to get provider androidx.startup.InitializationProvider
@@ -183,13 +184,32 @@ Caused by: java.lang.NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl
     at androidx.work.WorkManagerInitializer.b(r8-map-id-…)
 ```
 
-`isMinifyEnabled = false` / `isShrinkResources = false` in
-[`build.gradle.kts`](../android/app/build.gradle.kts) pins the pre-AGP-9 behaviour. Nothing in the
-Dart toolchain sees this: `flutter analyze` is clean, the unit tests pass, `verify_release_apk.py`
-says ALL CLEAR — it checks for credentials, not for launchability. The obfuscated `r8-map-id-`
-frames in a stack trace are the tell that minification ran. Turning shrinking back on is worth
-doing deliberately, with keep rules and an on-device launch test, but never as a side effect of a
-toolchain upgrade.
+[`proguard-rules.pro`](../android/app/proguard-rules.pro) now keeps everything loaded by name: Room
+databases' no-arg constructors, WorkManager workers (`ReregisterWorker` is stored by class name),
+and `flutter_local_notifications`' Gson-persisted models (scheduled payment reminders are rebuilt
+from JSON after a reboot; the plugin ships no rules). Resource shrinking stays **off** — that
+plugin resolves notification icons by name. Nothing in the Dart toolchain sees an R8 break:
+`flutter analyze`, the unit tests and `verify_release_apk.py` all pass. The obfuscated
+`r8-map-id-` frames in a stack trace are the tell. **Any change to the keep rules, a new plugin, or
+a new WorkManager worker needs an on-device launch of a release build** — and a check of the
+background path (reboot → `ReregisterWorker` → `geofenceReregisterEntrypoint`). The R8 mapping
+(`build/app/outputs/mapping/release/mapping.txt`) travels inside the AAB, so Play gets it with the
+upload, and the Crashlytics Gradle plugin uploads it for release builds — no manual step.
+
+**Known, harmless Play validator warning — missing `FOREGROUND_SERVICE_LOCATION`.** It is about a
+service the `geolocator` plugin declares in its own manifest
+(`com.baseflow.geolocator.GeolocatorLocationService`, `foregroundServiceType="location"`), which
+manifest merging copies into ours. The plugin only *starts* it for a position stream with
+`foregroundNotificationConfig`, which the app never uses; one-shot positions, permissions and the
+walk-in geofences (`GeofencePlugin.kt`, `DwellCheckReceiver.kt`) never touch it. Don't silence it
+by adding the permission — Play then wants a foreground-service declaration for a feature that
+doesn't exist. Removing the service with `tools:node="remove"` would also clear it, but the plugin
+binds/unbinds that service in **every** Flutter engine, including the geofence re-registration
+worker, so that change needs an on-device check of walk-in notifications after a reboot.
+
+**After a plugin major upgrade, `flutter clean` first.** `GeneratedPluginRegistrant.java` keeps the
+old plugin class names until regenerated, and the build fails with `cannot find symbol` there
+(seen on the 2026-10-16 Firebase 5 upgrade, whose Android side moved to Kotlin).
 
 ⚠️ **`flutter clean` before any release build you intend to measure.** The release AOT
 snapshot has been observed going stale — source edits silently absent from the APK while the
@@ -200,7 +220,9 @@ confirm the installed bytes with `md5 -q <apk>` against
 `adb shell md5sum $(adb shell pm path <pkg>)` — `adb install` can also race the build's final
 file write.
 
-### Why the build is no longer obfuscated
+### Why the Dart code is not obfuscated
+
+This is Dart's `--obfuscate`, separate from R8 above (which obfuscates the Java/Kotlin side).
 
 `--obfuscate --split-debug-info` was here to raise the cost of recovering keys baked in next to
 readable symbols, on the stated condition that "true rotation needs a server proxy, which doesn't
