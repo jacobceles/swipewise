@@ -91,6 +91,24 @@ class WalkinTest {
     }
 
     @Test
+    fun `a store 93 m away is not one the user is in`() {
+        // The 2026-10-17 red light: nearest store 93 m, fix accuracy 12 m.
+        assertFalse(StoreResolver.atStore(93.0, 12.0))
+        // Inside Costco: 2 m from its pin at 18 m accuracy.
+        assertTrue(StoreResolver.atStore(2.0, 18.0))
+    }
+
+    @Test
+    fun `a stay that keeps being held back keeps the lock`() {
+        // Alert at 17:08, held back at 17:25 (lock restarted), next check 17:33.
+        val start = VisitLock.Visit(40.362, -74.303, 0L)
+        val refreshed = start.copy(atMillis = 17L * 60_000L)
+        val at1733 = 25L * 60_000L
+        assertFalse(VisitLock.isSameVisit(start, 40.362, -74.303, at1733))
+        assertTrue(VisitLock.isSameVisit(refreshed, 40.362, -74.303, at1733))
+    }
+
+    @Test
     fun `distance is roughly right`() {
         val d = distanceM(40.5014, -74.8549, 40.5262, -74.8543)
         assertTrue("got $d", d in 2700.0..2800.0)

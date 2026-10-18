@@ -48,6 +48,26 @@ object ReregisterScheduler {
     }
 }
 
+/// When the last re-registration on foot (boundary EXIT, not driving) ran.
+/// In a dense area the boundary is only ~300 m, so walking — or slow city
+/// traffic that activity recognition calls walking — crossed it every minute
+/// and ran a fresh Places search each time (4 in 4 min, 2026-10-17).
+object FootReregister {
+    const val COOLDOWN_MS = 5L * 60L * 1000L
+    private const val PREFS = "swipewise_reregister"
+    private const val KEY_AT = "foot_at"
+
+    fun tooSoon(context: Context, nowMillis: Long): Boolean =
+        nowMillis - prefs(context).getLong(KEY_AT, 0L) < COOLDOWN_MS
+
+    fun mark(context: Context, nowMillis: Long) {
+        prefs(context).edit().putLong(KEY_AT, nowMillis).apply()
+    }
+
+    private fun prefs(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+}
+
 /// One-bit persisted flag: "the user crossed the boundary while driving, so a
 /// re-registration is owed once they settle." Set by the boundary receiver
 /// when it defers, consumed by the activity receiver on the next STILL/WALKING

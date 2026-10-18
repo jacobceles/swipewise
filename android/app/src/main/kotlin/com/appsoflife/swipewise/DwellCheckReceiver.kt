@@ -109,18 +109,32 @@ class DwellCheckReceiver : BroadcastReceiver() {
             done(context, meta, DwellOutcome.OUTSIDE_FENCE, measured)
             return
         }
-        // Inside, but a car at a red light is inside too. Look once more after
-        // another dwell period instead of skipping: a parked car's activity
-        // state can lag, and the second look trusts the fix alone. An EXIT in
-        // between cancels the recheck, which is the red-light case.
-        val moving = ActivityState.isLikelyDriving(context) ||
-            (fix.hasSpeed() && fix.speed > MOVING_SPEED_MPS)
-        if (moving && !recheck) {
-            DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, recheck = true)
-            done(context, meta, DwellOutcome.MOVING_RECHECK, measured)
+        // Inside, but a car at a red light is inside too, and so is someone
+        // walking past (a 1-min wait is shorter than walking through a 100 m
+        // fence). Look once more after another dwell period instead of
+        // skipping: activity state can lag, and the second look trusts the fix
+        // alone. An EXIT in between cancels the recheck. A coarse fix gets the
+        // same second look: the next one is usually 10x sharper indoors.
+        if (!recheck) {
+            val again = when {
+                ActivityState.isLikelyDriving(context) ||
+                    ActivityState.isLikelyWalking(context) ||
+                    (fix.hasSpeed() && fix.speed > MOVING_SPEED_MPS) -> DwellOutcome.MOVING_RECHECK
+                fix.accuracy > StoreResolver.MAX_ACCURACY_M -> DwellOutcome.COARSE_RECHECK
+                else -> null
+            }
+            if (again != null) {
+                DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, recheck = true)
+                done(context, meta, again, measured)
+                return
+            }
+        }
+        val resolved = resolveAtFix(context, meta, fix, allowed.toDouble())
+        if (resolved == null) {
+            done(context, meta, DwellOutcome.NOT_AT_STORE, measured)
             return
         }
-        maybePost(context, resolveAtFix(context, meta, fix, allowed.toDouble()), measured, fix.latitude, fix.longitude)
+        maybePost(context, resolved, measured, fix.latitude, fix.longitude)
     }
 
     /// The store(s) to name, judged from the fix against every registered
@@ -129,7 +143,8 @@ class DwellCheckReceiver : BroadcastReceiver() {
     /// is too coarse to order stores or no store with a known position is in
     /// reach (fences from older builds carry none). Muted stores are dropped
     /// first, so a muted store next door can't silence the one the user is in.
-    private fun resolveAtFix(context: Context, meta: MerchantMeta, fix: Location, reach: Double): MerchantMeta {
+    /// Null when the closest store is too far for the user to be inside it.
+    private fun resolveAtFix(context: Context, meta: MerchantMeta, fix: Location, reach: Double): MerchantMeta? {
         val fallback = meta.copy(options = StoreResolver.capped(meta.options, fix.latitude, fix.longitude))
         if (fix.accuracy > StoreResolver.MAX_ACCURACY_M) {
             WalkinLog.w(context, "dwell ${meta.geofenceId}: fix acc=${fix.accuracy.toInt()} too coarse -> fence options")
@@ -150,7 +165,9 @@ class DwellCheckReceiver : BroadcastReceiver() {
                     .joinToString(",") { "${it.option.name}@${it.distanceM.toInt()}m" } +
                 " -> ${if (picked.isEmpty()) "fence options" else picked.joinToString("|") { it.name }}",
         )
-        return if (picked.isEmpty()) fallback else meta.copy(options = picked)
+        if (picked.isEmpty()) return fallback
+        val nearest = candidates.minOf { it.distanceM }
+        return if (StoreResolver.atStore(nearest, fix.accuracy.toDouble())) meta.copy(options = picked) else null
     }
 
     private fun verdictWithoutFix(context: Context, meta: MerchantMeta) {
@@ -200,9 +217,12 @@ class DwellCheckReceiver : BroadcastReceiver() {
         // Where the user is: the fix when there is one, else the fence centre.
         val visitLat = atLat ?: meta.lat
         val visitLng = atLng ?: meta.lng
+        val lastVisit = VisitLock.read(context)
         if (visitLat != null && visitLng != null &&
-            VisitLock.isSameVisit(VisitLock.read(context), visitLat, visitLng, now)
+            VisitLock.isSameVisit(lastVisit, visitLat, visitLng, now)
         ) {
+            // Still here: the window restarts, so it lasts as long as the stay.
+            VisitLock.write(context, lastVisit!!.copy(atMillis = now))
             done(context, meta, DwellOutcome.SAME_VISIT, fix)
             return
         }

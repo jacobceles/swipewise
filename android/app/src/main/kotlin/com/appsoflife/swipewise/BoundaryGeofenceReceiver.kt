@@ -27,7 +27,7 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
         // goes STILL/WALKING (i.e. parks / arrives). No churn during the drive,
         // geofences land at the destination.
         val driving = ActivityState.isLikelyDriving(context)
-        WalkinLog.w(context, "boundary EXIT driving=$driving -> ${if (driving) "defer" else "re-register"}")
+        WalkinLog.w(context, "boundary EXIT driving=$driving${if (driving) " -> defer" else ""}")
         if (driving) {
             PendingReregister.set(context, true)
             // Safety net: if activity recognition never delivers the settle
@@ -36,6 +36,16 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
             return
         }
 
+        // On foot: at most one search per FootReregister.COOLDOWN_MS. A later
+        // crossing leaves it owed; the fallback alarm runs it.
+        val now = System.currentTimeMillis()
+        if (FootReregister.tooSoon(context, now)) {
+            WalkinLog.w(context, "boundary EXIT on foot within 5 min of last search -> defer")
+            PendingReregister.set(context, true)
+            ReregisterFallbackReceiver.arm(context)
+            return
+        }
+        FootReregister.mark(context, now)
         PendingReregister.set(context, false)
         ReregisterScheduler.enqueue(context)
     }

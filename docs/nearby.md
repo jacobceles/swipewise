@@ -132,6 +132,11 @@ The worker is **expedited** (`RUN_AS_NON_EXPEDITED_WORK_REQUEST` fallback) — a
 request can be deferred minutes under Doze, which defeats fencing the destination before
 the user walks into a store.
 
+**Searches stay where you stop.** On foot, a boundary EXIT re-searches at most once per
+5 min (`FootReregister`); a later crossing leaves it owed to the fallback alarm. The worker
+itself defers while AR says driving, so neither the 12-hour validation run nor a boot fences
+a highway.
+
 **Registrations never overlap.** Two interleaved `registerSet` calls can leave fences from
 one run and metadata from the other (`no_meta`). In-isolate calls to `ensureRegistered`
 queue behind each other. The worker is enqueued with `APPEND_OR_REPLACE`: `REPLACE` only
@@ -164,13 +169,18 @@ loitering lazily on the OS's own location cadence and can fire minutes late. Ins
    and verifies: fix inside the fence (+accuracy +50m slack) → post; fix outside →
    rejected; no fix obtainable → post unless activity recognition says IN_VEHICLE
    (fail-open — a missed verification must not eat a legit notification).
-   **Inside but still moving** (AR says IN_VEHICLE, or the fix's speed is over 2 m/s) is
-   a red light beside the store. The timer re-arms once (`moving_recheck`), the second
-   look trusts the fix alone, and an EXIT in between cancels it.
+   **Inside but still moving** (AR says IN_VEHICLE or WALKING, or the fix's speed is over
+   2 m/s) is a red light beside the store or someone walking past: a 1-min wait is shorter
+   than walking through a 100 m fence, and AR reports stop-and-go city traffic as walking.
+   The timer re-arms once (`moving_recheck`), the second look trusts the fix alone, and an
+   EXIT in between cancels it. A fix coarser than 50 m gets the same second look
+   (`coarse_recheck`); indoors the next one is usually far sharper.
 5. With a fix, **which store to name is decided across every registered fence**
    (`StoreResolver` in `Walkin.kt`), not just the one that fired — fences overlap, so the
    firing one is often a neighbour's. Stores count when within the same reach that
-   verified the visit, measured to their edge; muted stores are dropped first. The
+   verified the visit, measured to their edge; muted stores are dropped first. If the
+   closest is more than 60 m + the fix's accuracy away, the user isn't in a store
+   (`not_at_store`; on 2026-10-17 a red light 93 m from a nail salon posted it). The
    closest store is named alone; only stores within 35 m of the closest become a "you may
    be at one of these" list (max 4). Fix accuracy worse than 50 m, no fix, or no store
    within reach → the firing fence's own options, closest four.
@@ -180,7 +190,9 @@ for 2 h. Transitions arrive only on a change, so the old 30-min cutoff read ever
 drive as parked.
 
 **One walk-in, one notification.** After a store alert posts, any other alert within 250 m
-in the next 20 minutes is the same visit (`VisitLock`, outcome `same_visit`). Overlapping
+in the next 20 minutes is the same visit (`VisitLock`, outcome `same_visit`). The window
+slides: each held-back alert restarts it, so it lasts as long as the stay (a fixed window
+let a 36-minute Costco trip post twice). Overlapping
 fences entered seconds apart used to each post, since neighbouring stores have different
 categories and the per-category cooldown never caught them. The 20 minutes must exceed
 the longest wait setting (15 min), since overlapping fences can have different waits.
@@ -220,7 +232,8 @@ other 7.
 | `no_meta` | fence set replaced mid-flight — frequent means re-registration is racing arrivals |
 | `outside_fence` | verification fix put the user outside; `distance_m` vs `allowed_m` says by how much |
 | `no_fix_driving` | no fix in time and AR still says driving |
-| `moving_recheck` | inside but still moving; re-armed once |
+| `moving_recheck` / `coarse_recheck` | inside but moving, or fix too coarse; re-armed once |
+| `not_at_store` | inside the fence, but no store close enough to be the one you're in |
 | `resident` | fence keeps firing (home/work); skipped without a fix |
 | `notifications_off` | post attempted, but notifications are off; no cooldown or visit lock set |
 | `muted` / `same_visit` / `merchant_cooldown` | suppressed on purpose |

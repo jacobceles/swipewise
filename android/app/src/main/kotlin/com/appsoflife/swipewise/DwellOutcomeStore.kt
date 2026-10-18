@@ -32,9 +32,17 @@ enum class DwellOutcome(val wire: String) {
     MUTED("muted"),
     MERCHANT_COOLDOWN("merchant_cooldown"),
 
-    /// The fix was inside the fence but the user was still moving (in a car per
-    /// activity recognition, or the fix's speed): a red light. Re-armed once.
+    /// The fix was inside the fence but the user was still moving (driving or
+    /// walking per activity recognition, or the fix's speed): a red light, or
+    /// walking past. Re-armed once.
     MOVING_RECHECK("moving_recheck"),
+
+    /// The fix was too coarse to tell stores apart; looked once more.
+    COARSE_RECHECK("coarse_recheck"),
+
+    /// Inside the fence, but no store close enough to be the one the user
+    /// is in ([StoreResolver.AT_STORE_M]): a red light, a car park, a street.
+    NOT_AT_STORE("not_at_store"),
 
     /// [ResidentGuard]: this fence keeps firing, so the user lives or works
     /// beside it. Suppressed without taking a fix.

@@ -63,7 +63,15 @@ object StoreResolver {
     /// own stores instead (capped, closest first).
     const val MAX_ACCURACY_M = 50f
 
+    /// The closest store must be this close (to its edge, plus the fix's
+    /// accuracy) for the user to count as inside it. A red light 93 m from a
+    /// nail salon passed the fence check (fence + accuracy + slack) and
+    /// posted it (2026-10-17).
+    const val AT_STORE_M = 60.0
+
     data class Candidate(val option: MerchantOption, val distanceM: Double)
+
+    fun atStore(nearestM: Double, accuracyM: Double): Boolean = nearestM <= AT_STORE_M + accuracyM
 
     /// Stores within [reachM] of the fix, measured to the store's edge rather
     /// than its pin: a big-box store's pin can sit 150 m from where the user
@@ -108,6 +116,10 @@ object StoreResolver {
 /// fences entered a few seconds apart, or a neighbour's timer firing while the
 /// user is still inside. The per-category cooldown never caught these because
 /// neighbouring stores have different categories.
+///
+/// The window slides: every alert it holds back restarts it, so it lasts as
+/// long as the user stays. A fixed 20 minutes let a 36-minute Costco trip post
+/// twice (2026-10-17).
 object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
     const val RADIUS_M = 250.0

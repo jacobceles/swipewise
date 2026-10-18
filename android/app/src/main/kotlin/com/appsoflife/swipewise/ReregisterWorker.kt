@@ -20,6 +20,15 @@ class ReregisterWorker(context: Context, params: WorkerParameters) :
         // Idempotent; re-asserts the activity subscription on every background
         // re-register, so an app update or a missed boot can't leave it off.
         ActivitySubscriber.start(applicationContext)
+        // Never fence the road: the 12-hour validation run (or a boot) mid-drive
+        // registered fences around a highway (2026-10-17). Leave it owed; the
+        // settle transition or the fallback alarm runs it on arrival.
+        if (ActivityState.isLikelyDriving(applicationContext)) {
+            WalkinLog.w(applicationContext, "worker: driving -> defer until settled")
+            PendingReregister.set(applicationContext, true)
+            ReregisterFallbackReceiver.arm(applicationContext)
+            return Result.success()
+        }
         val loader = FlutterInjector.instance().flutterLoader()
         val latch = CountDownLatch(1)
         var ok = false

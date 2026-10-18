@@ -41,6 +41,18 @@ object ActivityState {
         if (type != DetectedActivity.IN_VEHICLE) return false
         return System.currentTimeMillis() - at < 2L * 60L * 60L * 1000L
     }
+
+    /// True iff the latest reported activity is WALKING, within 30 min.
+    /// Activity recognition also reports stop-and-go city driving as
+    /// walking (seen 2026-10-17: "walking" while crossing a 300 m boundary
+    /// every minute), so the dwell check treats it as moving, not arrived.
+    fun isLikelyWalking(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val type = prefs.getInt(KEY_TYPE, DetectedActivity.STILL)
+        val at = prefs.getLong(KEY_AT, 0L)
+        return type == DetectedActivity.WALKING &&
+            System.currentTimeMillis() - at < 30L * 60L * 1000L
+    }
 }
 
 /// Subscribes to ActivityRecognition transitions for IN_VEHICLE / STILL /
