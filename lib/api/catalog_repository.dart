@@ -151,7 +151,8 @@ String issuerDisplayName(String issuer) {
   return _kIssuerDisplayNames[key] ?? issuer;
 }
 
-/// Issuers with a logo bundled at `assets/issuers/<key>.png` (128 px).
+/// Issuers with a logo bundled at `assets/issuers/<key>.png` (128 px opaque
+/// squares from logo.dev; transparent ones flattened onto white).
 /// Bundled, not served: ~23 small files that rarely change, so a catalog
 /// field plus a publish would cost more than the ~150 KB they add.
 const _kIssuerLogos = {

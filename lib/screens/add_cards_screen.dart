@@ -266,21 +266,11 @@ class _IssuerTile extends StatelessWidget {
           // card image, and one product's design says nothing about the
           // issuer as a whole. No bundled logo: a letter in the same light
           // circle the bank picker uses for logo-less institutions.
-          // On a white tile: some logos are transparent and would vanish
-          // on the dark card.
+          // Opaque square icons (logo.dev), so an app-icon tile needs no frame.
           if (issuerLogoAsset(issuer.id) case final logo?)
-            Container(
-              width: 40,
-              height: 40,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(kRadiusS),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(kRadiusS - 3),
-                child: Image.asset(logo),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(kRadiusS),
+              child: Image.asset(logo, width: 40, height: 40),
             )
           else
             Container(
