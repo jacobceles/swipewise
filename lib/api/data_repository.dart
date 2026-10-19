@@ -12,6 +12,7 @@ import 'engine_ranker.dart';
 import 'bank_write_repository.dart';
 import 'sync_state_repository.dart';
 import 'transaction_repository.dart';
+import 'travel.dart';
 import 'types.dart';
 
 /// Composition root. Holds long-lived instances of the per-concern
@@ -124,6 +125,30 @@ class DataRepository {
 
   Future<String?> dominantAccountCurrency(String userId) =>
       transactions.dominantAccountCurrency(userId);
+
+  /// Where the user lives, for travel mode: the main bank-account currency's
+  /// country, else the one country every card in the wallet is sold in, else
+  /// the phone's region. Without bank data the phone region alone made a
+  /// Canadian on an en_US phone "abroad" at home.
+  Future<String?> homeCountry(String userId) async {
+    final byCurrency = homeCountryForCurrency(
+      await dominantAccountCurrency(userId),
+    );
+    if (byCurrency != null) return byCurrency;
+    final wallet = await catalog.walletCountries(userId);
+    if (wallet.length == 1) return wallet.single;
+    return deviceLocaleCountry();
+  }
+
+  /// Whether ([lat], [lng]) is outside [homeCountry]. Any unknown → false.
+  Future<bool> isAbroadAt(String userId, double lat, double lng) async {
+    final home = await homeCountry(userId);
+    if (home == null) return false;
+    return isForeignTravel(
+      home: home,
+      current: await countryForCoordinate(lat, lng),
+    );
+  }
 
   Future<MerchantSummary?> queryMerchantSummary(
     String userId,
@@ -280,16 +305,26 @@ class DataRepository {
   Future<BestCardLookup> queryBestCardByCategory(
     String userId, {
     List<String> cardPreferenceOrder = const [],
+    bool isForeign = false,
   }) async {
-    final ranker = await _buildRanker(userId, cardPreferenceOrder);
+    final ranker = await _buildRanker(
+      userId,
+      cardPreferenceOrder,
+      isForeign: isForeign,
+    );
     return ranker?.bestCardByCategory() ?? BestCardLookup.empty;
   }
 
   Future<CardPick?> queryBestCatchAllCard(
     String userId, {
     List<String> cardPreferenceOrder = const [],
+    bool isForeign = false,
   }) async {
-    final ranker = await _buildRanker(userId, cardPreferenceOrder);
+    final ranker = await _buildRanker(
+      userId,
+      cardPreferenceOrder,
+      isForeign: isForeign,
+    );
     return ranker?.bestCatchAllCard();
   }
 

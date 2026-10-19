@@ -284,12 +284,16 @@ class BestCardEntry {
   final RewardCategory category;
   final String? brand;
 
+  /// 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x".
+  final String currency;
+
   const BestCardEntry({
     required this.id,
     required this.name,
     required this.rate,
     required this.category,
     this.brand,
+    this.currency = 'USD',
   });
 }
 
@@ -336,11 +340,15 @@ class CategoryPick {
   final double rate;
   final bool isBonus;
 
+  /// 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x".
+  final String currency;
+
   const CategoryPick({
     required this.category,
     required this.cardId,
     required this.cardName,
     required this.rate,
     required this.isBonus,
+    this.currency = 'USD',
   });
 }

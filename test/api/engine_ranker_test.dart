@@ -473,6 +473,18 @@ void main() {
         expect(ranking.first.cardId, 'cA'); // no-FX-fee card wins abroad
       },
     );
+
+    test('the everyday pick also pays the FX fee abroad', () {
+      EngineRanker r({required bool abroad}) => EngineRanker(
+        snapshot: s,
+        linkedCards: links,
+        when: when,
+        cardPreferenceOrder: const ['cB'],
+        isForeign: abroad,
+      );
+      expect(r(abroad: false).bestCatchAllCard()?.id, 'cB');
+      expect(r(abroad: true).bestCatchAllCard()?.id, 'cA');
+    });
   });
 
   group('foreign-travel mode — unknown fee is not a free pass', () {
@@ -545,5 +557,38 @@ void main() {
       final k = ranking.firstWhere((r) => r.cardId == 'cK');
       expect(u.rate, k.rate);
     });
+  });
+
+  test('picks carry the reward unit: points read "4x", cash back "%"', () {
+    final s = snap(
+      [
+        rule('gold', 'g-base', RewardRuleKind.baseline, rate: 1, ps: 'mr'),
+        rule(
+          'gold',
+          'g-dine',
+          RewardRuleKind.category,
+          category: RewardCategory.dining,
+          rate: 4,
+          ps: 'mr',
+        ),
+        rule('cad-cash', 'c-base', RewardRuleKind.baseline, rate: 1, ps: 'cad'),
+      ],
+      ps: const {'mr': 2.0, 'cad': 1.0},
+    );
+    final r = ranker(s, [
+      link('c1', 'gold', 'Gold'),
+      link('c2', 'cad-cash', 'Cash'),
+    ]);
+    expect(
+      r.bestCardByCategory().byCategory[RewardCategory.dining]?.currency,
+      'POINTS',
+    );
+    final dining = r.bestCardByCategoryAll().firstWhere(
+      (p) => p.category == RewardCategory.dining,
+    );
+    expect(dining.currency, 'POINTS');
+    expect(r.bestCatchAllCard()?.currency, 'POINTS'); // 1x mr at 2¢ > 1% cad
+    final cashOnly = ranker(s, [link('c2', 'cad-cash', 'Cash')]);
+    expect(cashOnly.bestCatchAllCard()?.currency, 'USD');
   });
 }

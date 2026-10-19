@@ -548,11 +548,7 @@ final travelIsForeignProvider = FutureProvider<bool>((ref) async {
   final auth = ref.watch(sessionProvider);
   if (!auth.isLoggedIn) return false;
   final repo = ref.watch(dataRepositoryProvider);
-  final home =
-      homeCountryForCurrency(
-        await repo.dominantAccountCurrency(auth.userId!),
-      ) ??
-      deviceLocaleCountry();
+  final home = await repo.homeCountry(auth.userId!);
   if (home == null) return false;
   // Everything below is best-effort, and the catch is load-bearing rather
   // than defensive. `Geolocator.getLastKnownPosition` THROWS when location
@@ -737,6 +733,7 @@ final categoryTilesProvider = FutureProvider<List<CategoryTileData>>((
         bestCardName: picks[c]?.cardName,
         isBonus: picks[c]?.isBonus ?? false,
         brandBonusCount: brandCounts[c] ?? 0,
+        currency: picks[c]?.currency ?? 'USD',
       ),
   ];
 });
@@ -752,6 +749,9 @@ class CategoryTileData {
   final bool isBonus;
   final int brandBonusCount;
 
+  /// 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x".
+  final String currency;
+
   /// No linked card earns anything here, so [bestRate] is 0 and there is no
   /// winning card to name. Not "unknown" — a secured / balance-transfer /
   /// credit-builder card genuinely pays nothing.
@@ -763,6 +763,7 @@ class CategoryTileData {
     required this.bestCardName,
     required this.isBonus,
     required this.brandBonusCount,
+    this.currency = 'USD',
   });
 }
 

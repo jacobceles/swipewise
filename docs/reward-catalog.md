@@ -182,7 +182,10 @@ Within a tier the richest rate is tried first, and the engine handles:
 - **Spend caps** — a `cap_spend_amount_usd` rule blends the bonus rate up to the cap and the
   baseline rate beyond it (the cap-aware blended rate); an exhausted cap cascades.
 - **Point valuations & FX** — `effectiveCentsPerDollar` = `rate × point-system cent value`,
-  minus the card's `foreign_tx_fee_pct` when the purchase is foreign. This single
+  minus the card's `foreign_tx_fee_pct` when the user is abroad (travel mode: home country =
+  main bank-account currency, else the wallet's one card country, else the phone region;
+  current = the geocoded fix). The Advisor, Nearby, walk-in alerts and the catch-all card all
+  apply it; an unknown fee docks nothing. This single
   cross-currency-comparable number is the **only** key ranking compares, so a 5% cashback
   rule and a 5×-points rule sort correctly against each other.
 
@@ -193,7 +196,8 @@ reward-ranking sheet). It's the engine-side analogue of `RewardRepository`'s thr
 queries; cards are ranked on `effectiveCentsPerDollar` while each row's displayed `rate`
 stays the raw multiplier. Ties break preference order → name desc (as the SQL did). **Brand
 beats category** when both apply (it sits higher in the resolution order). The catch-all
-card is the highest `baseline` rate.
+card is the highest `baseline` effective rate. Each pick carries its display bucket
+(`USD` = any cash back, CAD included, shown as "%"; `POINTS` / `MILES` shown as "x").
 
 `bestCardByBrand()` powers the Advisor's **Brands** tab: it resolves *every* registered
 merchant (the full `registeredBrands()` list, not just brands named in a rule) to the user's

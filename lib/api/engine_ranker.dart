@@ -188,6 +188,7 @@ class EngineRanker {
         rate: best.applied.rate,
         category: cat,
         brand: null,
+        currency: _currencyOf(best.applied.pointSystemId),
       );
     }
 
@@ -210,6 +211,7 @@ class EngineRanker {
         rate: best.applied.rate,
         category: cat,
         brand: null,
+        currency: _currencyOf(best.applied.pointSystemId),
       );
     }
 
@@ -230,6 +232,7 @@ class EngineRanker {
         rate: best.applied.rate,
         category: entry.value,
         brand: brand,
+        currency: _currencyOf(best.applied.pointSystemId),
       );
     }
 
@@ -264,6 +267,9 @@ class EngineRanker {
           cardName: best?.card.cardName,
           rate: best?.applied.rate ?? 0,
           isBonus: best != null && best.applied.kind != RewardRuleKind.baseline,
+          currency: best == null
+              ? 'USD'
+              : _currencyOf(best.applied.pointSystemId),
         ),
       );
     }
@@ -338,7 +344,13 @@ class EngineRanker {
     for (final c in linkedCards) {
       final baseline = _baselineOf(c.cardProductId);
       if (baseline == null) continue;
-      final eff = baseline.rate * _ranked.centValueOf(baseline.pointSystemId);
+      // Abroad, the FX fee comes off the everyday rate too, the same way
+      // `resolve` docks every other rule (unknown fee: nothing).
+      final fee = isForeign
+          ? (_ranked.products[c.cardProductId]?.foreignTxFeePct ?? 0.0)
+          : 0.0;
+      final eff =
+          baseline.rate * _ranked.centValueOf(baseline.pointSystemId) - fee;
       final scored = _Scored(
         c,
         AppliedRate(
@@ -356,6 +368,7 @@ class EngineRanker {
       id: best.card.cardId,
       name: best.card.cardName,
       rate: best.applied.rate,
+      currency: _currencyOf(best.applied.pointSystemId),
     );
   }
 

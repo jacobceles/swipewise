@@ -586,4 +586,13 @@ void main() {
       expect(at(s, RewardCategory.dining).ruleId, 'b'); // baseline only
     });
   });
+
+  test('CAD cash back reads as a percentage, like USD', () {
+    PointSystem ps(String id) =>
+        PointSystem(id: id, displayName: id, baselineCentValue: 1.0);
+    expect(ps('usd').currencyLabel, 'USD');
+    expect(ps('cad').currencyLabel, 'USD');
+    expect(ps('aeroplan_miles').currencyLabel, 'MILES');
+    expect(ps('scene_plus').currencyLabel, 'POINTS');
+  });
 }

@@ -114,6 +114,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     lng = (opt["lng"] as? Number)?.toDouble(),
                     footprintM = (opt["footprint_m"] as? Number)?.toDouble() ?: 0.0,
                     plaza = opt["plaza"] == true,
+                    bestCurrency = opt["best_currency"] as String?,
                 )
             }
 

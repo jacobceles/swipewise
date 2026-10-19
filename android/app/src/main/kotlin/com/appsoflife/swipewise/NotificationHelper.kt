@@ -9,6 +9,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import org.json.JSONArray
+import java.util.Locale
 
 class NotificationHelper(private val context: Context) {
 
@@ -95,7 +96,7 @@ class NotificationHelper(private val context: Context) {
 
     private fun cardLine(opt: MerchantOption): String {
         if (opt.bestCardName.isNullOrEmpty()) return "Open SwipeWise to see the best card here."
-        val rate = opt.bestRate?.let { formatRate(it) }
+        val rate = opt.bestRate?.let { formatRate(it, opt.bestCurrency) }
         return if (rate != null) "Use ${opt.bestCardName} for $rate" else "Use ${opt.bestCardName}"
     }
 
@@ -111,13 +112,21 @@ class NotificationHelper(private val context: Context) {
         return arr.toString()
     }
 
-    private fun formatRate(rate: Double): String {
-        val whole = rate.toLong()
-        return if (rate == whole.toDouble()) "$whole%" else String.format("%.1f%%", rate)
-    }
-
     companion object {
         const val CHANNEL_ID = "swipewise_dwell"
         const val EXTRA_OPTIONS_JSON = "swipewise.options_json"
+
+        /// "5%" for cash back, "5x points" / "2x miles" for a programme. A
+        /// points card used to read "5%" (2026-10-19). Locale.US so a French
+        /// phone doesn't print "1,5%".
+        fun formatRate(rate: Double, currency: String?): String {
+            val whole = rate.toLong()
+            val n = if (rate == whole.toDouble()) "$whole" else String.format(Locale.US, "%.1f", rate)
+            return when (currency) {
+                "POINTS" -> "${n}x points"
+                "MILES" -> "${n}x miles"
+                else -> "$n%"
+            }
+        }
     }
 }

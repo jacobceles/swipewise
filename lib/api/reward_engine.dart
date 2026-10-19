@@ -118,8 +118,10 @@ class PointSystem {
   RewardKind get kind => RewardKind.of(id);
 
   /// Display currency bucket the UI renders ("USD" → "%", else "x points").
+  /// "USD" means cash back, so CAD cash back lands there too: it is a
+  /// percentage, not a multiplier.
   String get currencyLabel {
-    if (id == 'usd') return 'USD';
+    if (kind == RewardKind.cash) return 'USD';
     if (id.contains('miles')) return 'MILES';
     return 'POINTS';
   }

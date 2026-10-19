@@ -165,13 +165,17 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
   final repo = ref.read(dataRepositoryProvider);
   final brandResolver = repo.loadBrandResolver();
   final prefOrder = await ref.watch(cardPreferenceOrderProvider.future);
+  // Abroad, rank with FX fees, the same answer the Advisor gives.
+  final isForeign = await ref.watch(travelIsForeignProvider.future);
   final lookup = await repo.queryBestCardByCategory(
     auth.userId!,
     cardPreferenceOrder: prefOrder,
+    isForeign: isForeign,
   );
   final catchAll = await repo.queryBestCatchAllCard(
     auth.userId!,
     cardPreferenceOrder: prefOrder,
+    isForeign: isForeign,
   );
 
   raw.sort((a, b) => a.distanceMi.compareTo(b.distanceMi));

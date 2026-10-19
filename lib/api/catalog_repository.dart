@@ -421,6 +421,21 @@ class CatalogRepository {
     ];
   }
 
+  /// Countries the wallet's linked cards are sold in (null country = 'US').
+  Future<Set<String>> walletCountries(String userId) async {
+    final db = await _dbHelper.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT DISTINCT COALESCE(p.country, 'US') AS country
+      FROM card_links cl
+      JOIN card_products p ON p.card_product_id = cl.card_product_id
+      WHERE cl.user_id = ?
+      ''',
+      [userId],
+    );
+    return {for (final r in rows) (r['country'] as String).toUpperCase()};
+  }
+
   Future<void> upsertLink({
     required String userId,
     required String cardId,
@@ -702,7 +717,9 @@ class CatalogRepository {
     };
   }
 
-  static String _currencyLabel(String pointSystemId) => pointSystemId == 'usd'
+  // Same buckets as [PointSystem.currencyLabel]: "USD" is any cash back.
+  static String _currencyLabel(String pointSystemId) =>
+      RewardKind.of(pointSystemId) == RewardKind.cash
       ? 'USD'
       : (pointSystemId.contains('miles') ? 'MILES' : 'POINTS');
 

@@ -187,13 +187,18 @@ class GeofenceManager {
       final cappedClusters = clusters.length > merchantCap
           ? clusters.sublist(0, merchantCap)
           : clusters;
+      // Abroad, rank with FX fees (travel mode), as the Advisor does. The
+      // search point decides; a failed geocode reads as home.
+      final isForeign = await repo.isAbroadAt(userId, fix.lat, fix.lng);
       final lookup = await repo.queryBestCardByCategory(
         userId,
         cardPreferenceOrder: cardPreferenceOrder,
+        isForeign: isForeign,
       );
       final catchAll = await repo.queryBestCatchAllCard(
         userId,
         cardPreferenceOrder: cardPreferenceOrder,
+        isForeign: isForeign,
       );
       final brandResolver = repo.loadBrandResolver();
       final payload = _buildPayload(
@@ -495,18 +500,23 @@ class GeofenceManager {
                 : null);
         final String? bestName;
         final double? bestRate;
+        final String? bestCurrency;
         if (brandHit != null) {
           bestName = brandHit.name;
           bestRate = brandHit.rate;
+          bestCurrency = brandHit.currency;
         } else if (categoryBest != null) {
           bestName = categoryBest.name;
           bestRate = categoryBest.rate;
+          bestCurrency = categoryBest.currency;
         } else if (catchAll != null) {
           bestName = catchAll.name;
           bestRate = catchAll.rate;
+          bestCurrency = catchAll.currency;
         } else {
           bestName = null;
           bestRate = null;
+          bestCurrency = null;
         }
         options.add({
           'merchant_id': m.id,
@@ -523,6 +533,8 @@ class GeofenceManager {
           'matched_brand': brandHit?.brand,
           'best_card_name': bestName,
           'best_rate': bestRate,
+          // 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x points".
+          'best_currency': bestCurrency,
         });
       }
       out.add({

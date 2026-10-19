@@ -147,8 +147,16 @@ class OrphanTransactionGroup {
 /// Per-card best-card pick + reason. Returned by the simpler "best card
 /// at this category" lookups.
 class CardPick {
-  const CardPick({required this.id, required this.name, required this.rate});
+  const CardPick({
+    required this.id,
+    required this.name,
+    required this.rate,
+    this.currency = 'USD',
+  });
   final String id;
   final String name;
   final double rate;
+
+  /// 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x".
+  final String currency;
 }

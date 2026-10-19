@@ -504,7 +504,7 @@ class _CategoryTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _rateText(tile.bestRate),
+                    _rateText(tile.bestRate, tile.currency),
                     style: AppText.titleLg(
                       // Only a real bonus gets the accent colour. A
                       // baseline fallback in primary would read as "5% at
@@ -556,14 +556,14 @@ class _CategoryTile extends StatelessWidget {
     );
   }
 
-  String _rateText(double? rate) {
+  String _rateText(double? rate, String currency) {
     // 0 renders as "0%", not "-". A no-rewards card (secured, balance-transfer,
     // credit-builder — 118 of the catalog's 410 products) really does earn
     // nothing, and a dash reads as missing data rather than as the answer.
     final s = (rate ?? 0) % 1 == 0
         ? (rate ?? 0).toInt().toString()
         : rate!.toStringAsFixed(1);
-    return '$s%';
+    return currency == 'USD' ? '$s%' : '${s}x';
   }
 
   Color _tintFor(RewardCategory c) {

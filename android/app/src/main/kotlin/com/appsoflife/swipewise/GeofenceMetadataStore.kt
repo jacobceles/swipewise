@@ -25,6 +25,9 @@ data class MerchantOption(
     val footprintM: Double = 0.0,
     // Google's pin for a whole shopping plaza ("JPA Plaza"), not a store.
     val plaza: Boolean = false,
+    // "USD" (any cash back) | "POINTS" | "MILES"; null from older builds,
+    // read as cash back.
+    val bestCurrency: String? = null,
 )
 
 data class MerchantMeta(
@@ -123,6 +126,7 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     if (lng != null) put("lng", lng)
     if (footprintM > 0) put("footprint_m", footprintM)
     if (plaza) put("plaza", true)
+    if (bestCurrency != null) put("best_currency", bestCurrency)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -135,6 +139,7 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     lng = if (has("lng") && !isNull("lng")) getDouble("lng") else null,
     footprintM = optDouble("footprint_m", 0.0),
     plaza = optBoolean("plaza", false),
+    bestCurrency = nullableString("best_currency"),
 )
 
 private fun JSONObject.nullableString(key: String): String? {

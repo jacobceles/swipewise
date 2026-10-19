@@ -81,6 +81,14 @@ class WalkinTest {
     }
 
     @Test
+    fun `alert rates say x for points and miles, percent for cash back`() {
+        assertEquals("3%", NotificationHelper.formatRate(3.0, "USD"))
+        assertEquals("1.5%", NotificationHelper.formatRate(1.5, null))
+        assertEquals("4x points", NotificationHelper.formatRate(4.0, "POINTS"))
+        assertEquals("2x miles", NotificationHelper.formatRate(2.0, "MILES"))
+    }
+
+    @Test
     fun `candidates outside reach are dropped`() {
         val opts = listOf(at("near", 40.5015), at("far", 40.5050))
         val c = StoreResolver.candidates(opts, 40.5014, -74.8549, 150.0)
