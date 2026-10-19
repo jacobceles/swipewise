@@ -2929,7 +2929,12 @@ String _money(double? v) {
 }
 
 String _formatRate(double amount, String currency) {
-  if (currency == 'PERCENT' || currency == '%' || currency.isEmpty) {
+  // 'USD' is the catalog's cash-back bucket (CAD included); the rest are the
+  // old seed's spellings. Only checking those printed cash back as "5x".
+  if (currency == 'USD' ||
+      currency == 'PERCENT' ||
+      currency == '%' ||
+      currency.isEmpty) {
     return '${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 1)}%';
   }
   return '${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 1)}x';
