@@ -120,6 +120,52 @@ void main() {
     expect(CatalogLoader.supportedSchemaVersion, 1);
   });
 
+  group('unchanged catalog at launch', () {
+    test(
+      'a cache without a stored version is read once, then skipped',
+      () async {
+        await seedUser('u1');
+        final remote = _DiskCatalogService();
+        final l = CatalogLoader(remote: remote);
+        expect(await l.hydrateIfNeeded('u1'), CatalogLoadResult.loaded);
+        expect(remote.reads, 1);
+        expect(remote.version, greaterThan(0));
+
+        expect(await l.hydrateIfNeeded('u1'), CatalogLoadResult.upToDate);
+        expect(remote.reads, 1, reason: 'the loaded cache must not be re-read');
+      },
+    );
+
+    test(
+      'a forced re-hydrate (loaded version reset to 0) reads it again',
+      () async {
+        await seedUser('u1');
+        final remote = _DiskCatalogService();
+        final l = CatalogLoader(remote: remote);
+        await l.hydrateIfNeeded('u1');
+        await SettingsRepository(
+          DataRepository(),
+        ).setLoadedCatalogDataVersion('u1', 0);
+
+        expect(await l.hydrateIfNeeded('u1'), CatalogLoadResult.loaded);
+        expect(remote.reads, 2);
+      },
+    );
+
+    test('a cache newer than what is loaded is read and loaded', () async {
+      await seedUser('u1');
+      final remote = _DiskCatalogService();
+      final l = CatalogLoader(remote: remote);
+      await l.hydrateIfNeeded('u1');
+      final settings = SettingsRepository(DataRepository());
+      await settings.setLoadedCatalogDataVersion('u1', remote.version! - 1);
+
+      expect(await l.hydrateIfNeeded('u1'), CatalogLoadResult.loaded);
+      expect(remote.reads, 2);
+      expect(await settings.getLoadedCatalogDataVersion('u1'), remote.version);
+    });
+  });
+
   test('migrated perks surface for a linked card', () async {
     await seedUser('u1');
     await loader().hydrateIfNeeded('u1');
@@ -150,9 +196,19 @@ void main() {
 /// Reads catalog.json directly from disk. Used in tests to bypass rootBundle
 /// (catalog.json is not a bundled app asset; it's served from R2 at runtime).
 class _DiskCatalogService extends RemoteAssetService {
+  int reads = 0;
+  int? version;
+
+  @override
+  Future<int?> cachedDataVersion(String key) async => version;
+
+  @override
+  Future<void> saveCachedDataVersion(String key, int v) async => version = v;
+
   @override
   Future<String?> readCached(String key) async {
     if (key != 'catalog') return null;
+    reads++;
     try {
       return await File(CatalogLoader.defaultAssetPath).readAsString();
     } catch (_) {

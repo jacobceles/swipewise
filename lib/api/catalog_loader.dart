@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../util/logger.dart';
@@ -73,14 +74,26 @@ class CatalogLoader {
     // Try R2 first (ETag-gated — free if catalog hasn't changed).
     final Map<String, dynamic>? remoteData = await _fetchRemote();
     final Map<String, dynamic> data;
+    String? cached;
     if (remoteData != null) {
       data = remoteData;
     } else {
+      // Unchanged (304) or offline, and the cached copy is what's loaded: done,
+      // without reading and decoding a multi-MB file on every launch. A
+      // migration that forces a re-hydrate resets the loaded version to 0, so
+      // it still reloads.
+      final cachedVersion = await _remote?.cachedDataVersion('catalog');
+      if (cachedVersion != null &&
+          cachedVersion != 0 &&
+          cachedVersion ==
+              await _settings.getLoadedCatalogDataVersion(userId)) {
+        return CatalogLoadResult.upToDate;
+      }
       // Fall back to the local R2 cache (written on a previous launch), then the
       // bundled asset — the offline floor shipped with the app, so a first launch
       // with no network still gets a working rewards engine instead of empty tables.
-      final raw =
-          await _remote?.readCached('catalog') ?? await _loadBundledCatalog();
+      cached = await _remote?.readCached('catalog');
+      final raw = cached ?? await _loadBundledCatalog();
       if (raw == null) {
         Log.w(
           'catalog',
@@ -98,7 +111,7 @@ class CatalogLoader {
         return CatalogLoadResult.error;
       }
       try {
-        data = jsonDecode(raw) as Map<String, dynamic>;
+        data = await compute(_decode, raw);
       } catch (e, st) {
         Log.e('catalog', 'failed to parse catalog (cache/bundle)', e, st);
         // ignore: unawaited_futures
@@ -123,6 +136,11 @@ class CatalogLoader {
     }
 
     final dataVersion = (data['dataVersion'] as num?)?.toInt() ?? 0;
+    // A cache written before versions were stored: record it, so the next
+    // launch can skip it.
+    if (cached != null) {
+      await _remote?.saveCachedDataVersion('catalog', dataVersion);
+    }
     final loaded = await _settings.getLoadedCatalogDataVersion(userId);
     if (loaded == dataVersion && dataVersion != 0) {
       return CatalogLoadResult.upToDate;
@@ -296,12 +314,15 @@ class CatalogLoader {
         RemoteAssetService.catalogUrl(),
       );
       if (raw == null) return null;
-      return jsonDecode(raw) as Map<String, dynamic>;
+      return await compute(_decode, raw);
     } catch (e) {
       Log.w('catalog', 'R2 fetch failed; falling back to bundle', e);
       return null;
     }
   }
+
+  static Map<String, dynamic> _decode(String raw) =>
+      jsonDecode(raw) as Map<String, dynamic>;
 
   static const _productPerkCols = [
     'card_product_id',

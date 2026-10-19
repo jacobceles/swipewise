@@ -35,7 +35,10 @@ flowchart LR
 - **Consume** — [`remote_asset_service.dart`](../lib/api/remote_asset_service.dart) fetches
   `$R2_BASE_URL/catalog.json` (the Worker URL) with `If-None-Match`, caches the body + ETag
   locally, and re-downloads only on a `200` (changed). `CatalogLoader` falls back to that
-  local cache when the service is unreachable — the offline floor.
+  local cache when the service is unreachable — the offline floor. The cached file's
+  `dataVersion` sits beside it (`catalog.version`); on a `304` or offline, when that version is
+  already loaded, the loader returns without reading the 5 MB file. Any parse runs off the UI
+  isolate.
 
 ## `catalog.json`
 

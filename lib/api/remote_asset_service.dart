@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -31,6 +32,28 @@ class RemoteAssetService {
     } catch (_) {
       return null;
     }
+  }
+
+  /// The `dataVersion` of the cached [key] file, or null if unknown.
+  ///
+  /// Lets a caller skip reading a large cached file it has already loaded.
+  /// Stored as `<key>.version`, beside the ETag.
+  Future<int?> cachedDataVersion(String key) async {
+    try {
+      final f = await _versionFile(key);
+      if (!f.existsSync()) return null;
+      return int.tryParse(f.readAsStringSync());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Records [version] as the cached [key] file's `dataVersion`. For a cache
+  /// written before versions were stored, once the caller has parsed it.
+  Future<void> saveCachedDataVersion(String key, int version) async {
+    try {
+      await (await _versionFile(key)).writeAsString('$version');
+    } catch (_) {}
   }
 
   /// Fetches [url] with an `If-None-Match` ETag header.
@@ -72,14 +95,23 @@ class RemoteAssetService {
       if (resp.statusCode != 200) return null;
 
       final body = resp.body;
+      final Object? decoded;
       try {
-        json.decode(body);
+        // Off the UI isolate: the catalog is several MB.
+        decoded = await compute(json.decode, body);
       } catch (_) {
         // Corrupt/truncated payload — leave body+ETag untouched so the next
         // fetch re-requests instead of caching a poisoned ETag.
         return null;
       }
+      // Drop the old version first: a crash between the two writes must leave
+      // "version unknown" (read the file), never the old version beside the
+      // new body (skipped forever).
+      final versionFile = await _versionFile(key);
+      if (versionFile.existsSync()) versionFile.deleteSync();
       await _writeCache(key, body);
+      final version = decoded is Map ? decoded['dataVersion'] : null;
+      if (version is num) await versionFile.writeAsString('${version.toInt()}');
       final newEtag = resp.headers['etag'];
       if (newEtag != null) await _writeEtag(key, newEtag);
       return body;
@@ -96,6 +128,11 @@ class RemoteAssetService {
   Future<File> _etagFile(String key) async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$key.etag');
+  }
+
+  Future<File> _versionFile(String key) async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$key.version');
   }
 
   Future<String?> _readEtag(String key) async {
