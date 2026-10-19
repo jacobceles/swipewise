@@ -88,12 +88,12 @@ object StoreResolver {
     /// The fallback list when nothing could be resolved: at most [MAX_OPTIONS],
     /// closest to ([lat], [lng]) first; stores without a position go last.
     fun capped(options: List<MerchantOption>, lat: Double?, lng: Double?): List<MerchantOption> {
-        if (options.size <= MAX_OPTIONS || lat == null || lng == null) return options.take(MAX_OPTIONS)
-        return options
-            .sortedBy { o ->
+        if (lat == null || lng == null) return foldSameAdvice(options).take(MAX_OPTIONS)
+        return foldSameAdvice(
+            options.sortedBy { o ->
                 if (o.lat == null || o.lng == null) Double.MAX_VALUE else distanceM(lat, lng, o.lat, o.lng)
-            }
-            .take(MAX_OPTIONS)
+            },
+        ).take(MAX_OPTIONS)
     }
 
     /// [candidates] are stores within reach of the fix (any order). Returns the
@@ -103,11 +103,29 @@ object StoreResolver {
         if (candidates.isEmpty()) return emptyList()
         val sorted = candidates.sortedBy { it.distanceM }
         val nearest = sorted.first().distanceM
-        return sorted
-            .takeWhile { it.distanceM <= nearest + AMBIGUITY_M }
-            .distinctBy { it.option.merchantId }
-            .take(MAX_OPTIONS)
-            .map { it.option }
+        return foldSameAdvice(
+            sorted
+                .takeWhile { it.distanceM <= nearest + AMBIGUITY_M }
+                .map { it.option },
+        ).take(MAX_OPTIONS)
+    }
+
+    /// Drops any store whose card advice equals a nearer one's: telling them
+    /// apart changes nothing about which card to use. Costco's bakery, food
+    /// court and kiosk fold into Costco; Starbucks inside a Target stays,
+    /// because coffee earns differently. Keeps order (nearest first).
+    fun foldSameAdvice(options: List<MerchantOption>): List<MerchantOption> =
+        options.distinctBy { it.merchantId }.distinctBy { it.bestCardName to it.bestRate }
+
+    /// [options] with the one the user last picked from a "one of these" list
+    /// moved to the front ([picks]: merchant id -> when picked; most recent
+    /// wins). Nothing is dropped, so visiting the other store is one tap.
+    /// Returns whether a pick reordered the list.
+    fun preferPicked(options: List<MerchantOption>, picks: Map<String, Long>): Pair<List<MerchantOption>, Boolean> {
+        if (options.size < 2) return options to false
+        val usual = options.filter { picks.containsKey(it.merchantId) }
+            .maxByOrNull { picks.getValue(it.merchantId) } ?: return options to false
+        return (listOf(usual) + options.filter { it !== usual }) to true
     }
 }
 

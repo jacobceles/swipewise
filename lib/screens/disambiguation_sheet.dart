@@ -1,13 +1,16 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../nearby/geofence_channel.dart';
+import '../providers/data_providers.dart';
 import '../theme/app_theme.dart';
 import '../util/category_icons.dart';
 import 'reward_ranking_sheet.dart';
 
 /// Wireframe `H0wTB` - Shown when a clustered geofence fires (e.g. a strip
 /// mall) and we can't tell which merchant the user actually walked into.
-/// First (closest) option is highlighted green.
+/// First option (the user's last pick here, else the closest) is highlighted
+/// green. Tapping one records the pick so the next alert here puts it first.
 Future<void> showDisambiguationSheet(
   BuildContext context, {
   required List<PendingMerchantOption> options,
@@ -53,7 +56,7 @@ class _DisambiguationSheet extends StatelessWidget {
           Text('You may be at one of these', style: AppText.titleLg()),
           const SizedBox(height: 4),
           Text(
-            'Closest first - tap the store you went to',
+            'Tap the store you went to - we will remember it',
             style: AppText.bodySm(),
           ),
           const SizedBox(height: 18),
@@ -100,6 +103,11 @@ class _OptionRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(kRadiusM),
         onTap: () {
           final cat = option.category;
+          // ignore: unawaited_futures
+          ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(dataRepositoryProvider).recordStorePick(option.merchantId);
           Navigator.of(context).pop();
           if (cat == null || cat.isEmpty) return;
           showRewardRankingSheetForLabel(

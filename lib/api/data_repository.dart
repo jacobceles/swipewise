@@ -563,6 +563,23 @@ class DataRepository {
     );
   }
 
+  /// Records that the user picked [merchantId] from a "one of these" list.
+  /// Keeps the newest [_storePicksCap] picks, so the table stays tiny.
+  Future<void> recordStorePick(String merchantId) async {
+    final db = await DatabaseHelper().database;
+    await db.insert('store_picks', {
+      'merchant_id': merchantId,
+      'picked_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.rawDelete(
+      'DELETE FROM store_picks WHERE merchant_id NOT IN '
+      '(SELECT merchant_id FROM store_picks ORDER BY picked_at DESC LIMIT ?)',
+      [_storePicksCap],
+    );
+  }
+
+  static const int _storePicksCap = 500;
+
   Future<Set<String>> queryMutedMerchantIds() async {
     final db = await DatabaseHelper().database;
     final rows = await db.query('muted_merchants', columns: ['merchant_id']);

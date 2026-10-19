@@ -45,20 +45,19 @@ class NotificationHelper(private val context: Context) {
         }
         val title: String
         val body: String
-        if (meta.isCluster) {
+        if (meta.isCluster && meta.usualFirst) {
+            // The user picked this store here before; the others stay one tap away.
+            val opt = meta.primary
+            title = "You're probably at ${opt.name}"
+            body = "${cardLine(opt)} · or ${meta.options.drop(1).joinToString(", ") { it.name }} — tap to switch"
+        } else if (meta.isCluster) {
             val names = meta.options.map { it.name }
             title = "You may be at one of these"
             body = formatClusterBody(names)
         } else {
             val opt = meta.primary
             title = "You're at ${opt.name}"
-            body = if (!opt.bestCardName.isNullOrEmpty()) {
-                val rate = opt.bestRate?.let { formatRate(it) }
-                if (rate != null) "Use ${opt.bestCardName} for $rate"
-                else "Use ${opt.bestCardName}"
-            } else {
-                "Open SwipeWise to see the best card here."
-            }
+            body = cardLine(opt)
         }
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
@@ -92,6 +91,12 @@ class NotificationHelper(private val context: Context) {
             // POST_NOTIFICATIONS not granted on Android 13+.
             false
         }
+    }
+
+    private fun cardLine(opt: MerchantOption): String {
+        if (opt.bestCardName.isNullOrEmpty()) return "Open SwipeWise to see the best card here."
+        val rate = opt.bestRate?.let { formatRate(it) }
+        return if (rate != null) "Use ${opt.bestCardName} for $rate" else "Use ${opt.bestCardName}"
     }
 
     private fun formatClusterBody(names: List<String>): String {

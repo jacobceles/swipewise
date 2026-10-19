@@ -6,7 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WalkinTest {
-    private fun store(id: String) = MerchantOption(id, id, null, null, null)
+    // Each test store gets its own card, so folding by card advice leaves it alone.
+    private fun store(id: String) = MerchantOption(id, id, null, "card-$id", null)
 
     private fun c(id: String, m: Double) = StoreResolver.Candidate(store(id), m)
 
@@ -56,7 +57,7 @@ class WalkinTest {
     }
 
     private fun at(id: String, lat: Double, footprint: Double = 0.0) =
-        MerchantOption(id, id, null, null, null, lat, -74.8549, footprint)
+        MerchantOption(id, id, null, "card-$id", null, lat, -74.8549, footprint)
 
     @Test
     fun `inside a big-box store, the store beats the pad site out front`() {
@@ -106,6 +107,35 @@ class WalkinTest {
         val at1733 = 25L * 60_000L
         assertFalse(VisitLock.isSameVisit(start, 40.362, -74.303, at1733))
         assertTrue(VisitLock.isSameVisit(refreshed, 40.362, -74.303, at1733))
+    }
+
+    private fun advised(id: String, card: String?, rate: Double?) = MerchantOption(id, id, null, card, rate)
+
+    @Test
+    fun `places with the same card advice fold into the nearest`() {
+        // Costco's bakery and kiosk get the Costco card; Starbucks inside a
+        // Target earns differently, so it stays.
+        val picked = StoreResolver.resolve(
+            listOf(
+                StoreResolver.Candidate(advised("costco", "Costco Visa", 2.0), 0.0),
+                StoreResolver.Candidate(advised("bakery", "Costco Visa", 2.0), 29.0),
+                StoreResolver.Candidate(advised("starbucks", "Gold", 4.0), 20.0),
+            ),
+        )
+        assertEquals(listOf("costco", "starbucks"), picked.map { it.merchantId })
+    }
+
+    @Test
+    fun `the last pick goes first, nothing is dropped, most recent wins`() {
+        val opts = listOf(store("pharmacy"), store("patidar"))
+        val (none, noneReordered) = StoreResolver.preferPicked(opts, emptyMap())
+        assertEquals(listOf("pharmacy", "patidar"), none.map { it.merchantId })
+        assertFalse(noneReordered)
+        val (once, reordered) = StoreResolver.preferPicked(opts, mapOf("patidar" to 100L))
+        assertEquals(listOf("patidar", "pharmacy"), once.map { it.merchantId })
+        assertTrue(reordered)
+        val (later, _) = StoreResolver.preferPicked(opts, mapOf("patidar" to 100L, "pharmacy" to 200L))
+        assertEquals(listOf("pharmacy", "patidar"), later.map { it.merchantId })
     }
 
     @Test

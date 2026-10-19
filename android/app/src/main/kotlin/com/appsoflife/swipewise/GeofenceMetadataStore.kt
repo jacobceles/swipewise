@@ -36,6 +36,9 @@ data class MerchantMeta(
     val lng: Double? = null,
     val radiusM: Float? = null,
     val dwellSeconds: Int = DEFAULT_DWELL_SECONDS,
+    // Not stored: set at post time when the first option is the user's past
+    // pick, so the notification says "probably" rather than "one of these".
+    val usualFirst: Boolean = false,
 ) {
     val primary: MerchantOption get() = options.first()
     val isCluster: Boolean get() = options.size > 1
@@ -249,5 +252,34 @@ class MutedStore(private val context: Context) {
         private const val DB_NAME = "swipewise.db"
         private const val TABLE = "muted_merchants"
         private const val KEY = "merchant_id"
+    }
+}
+
+/// Read-only view of `store_picks`: when the user last chose each store from a
+/// "you may be at one of these" list (written by Dart's disambiguation sheet).
+/// Two pins at one address (Patidar Supermarket and the pharmacy beside it)
+/// can't be told apart by location, so the last pick goes first next time.
+/// Fail-safe: any DB failure reads as "no picks".
+class PickStore(private val context: Context) {
+
+    fun picks(merchantIds: List<String>): Map<String, Long> {
+        if (merchantIds.isEmpty()) return emptyMap()
+        return try {
+            SQLiteDatabase.openDatabase(
+                context.getDatabasePath("swipewise.db").absolutePath,
+                null,
+                SQLiteDatabase.OPEN_READONLY,
+            ).use { db ->
+                val marks = merchantIds.joinToString(",") { "?" }
+                db.rawQuery(
+                    "SELECT merchant_id, picked_at FROM store_picks WHERE merchant_id IN ($marks)",
+                    merchantIds.toTypedArray(),
+                ).use { c ->
+                    buildMap { while (c.moveToNext()) put(c.getString(0), c.getLong(1)) }
+                }
+            }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 }

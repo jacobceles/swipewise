@@ -174,20 +174,30 @@ loitering lazily on the OS's own location cadence and can fire minutes late. Ins
    than walking through a 100 m fence, and AR reports stop-and-go city traffic as walking.
    The timer re-arms once (`moving_recheck`), the second look trusts the fix alone, and an
    EXIT in between cancels it. A fix coarser than 50 m gets the same second look
-   (`coarse_recheck`); indoors the next one is usually far sharper.
+   (`coarse_recheck`); indoors the next one is usually far sharper. The second look asks
+   for `PRIORITY_HIGH_ACCURACY` (GPS blended with wifi): a few seconds of GPS, only on a
+   recheck, to tell stores ~25 m apart. The first look stays balanced-power.
 5. With a fix, **which store to name is decided across every registered fence**
    (`StoreResolver` in `Walkin.kt`), not just the one that fired — fences overlap, so the
    firing one is often a neighbour's. Stores count when within the same reach that
    verified the visit, measured to their edge; muted stores are dropped first. If the
    closest is more than 60 m + the fix's accuracy away, the user isn't in a store
    (`not_at_store`; on 2026-10-17 a red light 93 m from a nail salon posted it). The
-   closest store is named alone; only stores within 35 m of the closest become a "you may
+   closest store is named alone (after **folding** any store whose card advice equals a
+   nearer one's: Costco's bakery, food court and kiosk fold into Costco Wholesale, while a
+   Starbucks inside a Target stays because coffee earns differently); only stores within 35 m of the closest become a "you may
    be at one of these" list (max 4). Fix accuracy worse than 50 m, no fix, or no store
    within reach → the firing fence's own options, closest four.
 
 Activity state: an IN_VEHICLE **EXIT** is stored as "not driving". IN_VEHICLE then counts
 for 2 h. Transitions arrive only on a change, so the old 30-min cutoff read every longer
 drive as parked.
+
+**Remembered picks.** Two pins at one address (a supermarket and the pharmacy in the same
+building) can't be separated by any fix. Tapping a store in the "one of these" sheet records
+it in `store_picks` (DB v19, newest 500 kept, device-level). Next time that store is in a
+list it goes first and the alert reads "You're probably at X · or Y — tap to switch".
+Nothing is dropped, and the most recent pick wins, so visiting the other store is one tap.
 
 **One walk-in, one notification.** After a store alert posts, any other alert within 250 m
 in the next 20 minutes is the same visit (`VisitLock`, outcome `same_visit`). The window

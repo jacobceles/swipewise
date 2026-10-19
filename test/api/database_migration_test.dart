@@ -257,6 +257,27 @@ void main() {
     },
   );
 
+  test('onUpgrade(18→19) adds store_picks; fresh install has it', () async {
+    Future<bool> has(Database d) async => (await d.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='store_picks'",
+    )).isNotEmpty;
+    final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    expect(await has(db), isFalse);
+    await DatabaseHelper.runUpgrade(db, 18, 19);
+    expect(await has(db), isTrue);
+    await DatabaseHelper.runUpgrade(db, 18, 19); // re-runnable
+    await db.close();
+    final fresh = await databaseFactoryFfi.openDatabase(
+      inMemoryDatabasePath,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+      ),
+    );
+    expect(await has(fresh), isTrue);
+    await fresh.close();
+  });
+
   test(
     'onUpgrade(17→18) adds tile-cache coverage columns; fresh install has them',
     () async {

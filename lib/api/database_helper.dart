@@ -115,7 +115,7 @@ class DatabaseHelper {
       try {
         return await openDatabase(
           path,
-          version: 18,
+          version: 19,
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
@@ -155,6 +155,17 @@ class DatabaseHelper {
       distance_m REAL,
       accuracy_m REAL,
       allowed_m REAL
+    )
+  ''';
+
+  /// When the user last chose each store from a "you may be at one of these"
+  /// list. The native dwell check puts the most recent pick first, so two
+  /// stores sharing one address stop being a guess after the first tap.
+  /// Device-level like `muted_merchants`; capped by [DataRepository.recordStorePick].
+  static const String _createStorePicksSql = '''
+    CREATE TABLE IF NOT EXISTS store_picks (
+      merchant_id TEXT PRIMARY KEY,
+      picked_at INTEGER NOT NULL
     )
   ''';
 
@@ -461,6 +472,10 @@ class DatabaseHelper {
           }
         }
       }
+    }
+    // v19: store_picks (see [_createStorePicksSql]). Additive.
+    if (oldVersion < 19) {
+      await db.execute(_createStorePicksSql);
     }
   }
 
@@ -912,6 +927,7 @@ class DatabaseHelper {
 
     // Device-level per-store mute list for dwell notifications.
     await db.execute(_createMutedMerchantsSql);
+    await db.execute(_createStorePicksSql);
 
     // Temporary diagnostic trail for dwell notifications (see the SQL above).
     await db.execute(_createDwellOutcomesSql);

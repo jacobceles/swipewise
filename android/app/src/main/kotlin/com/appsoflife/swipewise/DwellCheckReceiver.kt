@@ -56,8 +56,11 @@ class DwellCheckReceiver : BroadcastReceiver() {
         }
 
         // Single fresh fix, bounded to fit inside the broadcast window.
-        // BALANCED (wifi/cell) beats HIGH_ACCURACY here: we're indoors where
-        // GPS is weakest, and ~30m accuracy is plenty against a 100m fence.
+        // BALANCED (wifi/cell) first: indoors GPS is weakest, and ~30 m is
+        // plenty to verify against a 100 m fence. The second look (taken only
+        // after a coarse or moving first one) asks for HIGH_ACCURACY, which
+        // blends GPS with wifi: a few seconds of GPS, a handful of times a day,
+        // to tell stores 25 m apart.
         val pending = goAsync()
         val cts = CancellationTokenSource()
         val handler = Handler(Looper.getMainLooper())
@@ -79,7 +82,9 @@ class DwellCheckReceiver : BroadcastReceiver() {
         try {
             val client = LocationServices.getFusedLocationProviderClient(context)
             val request = CurrentLocationRequest.Builder()
-                .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+                .setPriority(
+                    if (recheck) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                )
                 .setDurationMillis(FIX_TIMEOUT_MS)
                 .build()
             client.getCurrentLocation(request, cts.token)
@@ -192,11 +197,16 @@ class DwellCheckReceiver : BroadcastReceiver() {
     /// itself the signal that verification failed open.
     private fun maybePost(
         context: Context,
-        meta: MerchantMeta,
+        found: MerchantMeta,
         fix: DwellFix? = null,
         atLat: Double? = null,
         atLng: Double? = null,
     ) {
+        val (ordered, usualFirst) = StoreResolver.preferPicked(
+            found.options,
+            PickStore(context).picks(found.options.map { it.merchantId }),
+        )
+        val meta = found.copy(options = ordered, usualFirst = usualFirst)
         val cooldown = CooldownStore(context)
         val now = System.currentTimeMillis()
         val primary = meta.primary
