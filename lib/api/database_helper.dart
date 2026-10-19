@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../util/logger.dart';
+
 /// Every table keyed on `user_id` — i.e. everything that belongs to one
 /// identity rather than to the device or the catalog.
 ///
@@ -90,14 +92,7 @@ class DatabaseHelper {
     Duration(seconds: 2),
   ];
 
-  /// True for SQLITE_BUSY, primary or extended. Android reports extended codes,
-  /// so `BUSY_SNAPSHOT`/`BUSY_TIMEOUT` arrive as 517/773 — mask to the low byte.
-  static bool _isBusy(DatabaseException e) {
-    final int? code = e.getResultCode();
-    return code != null && (code & 0xFF) == 5;
-  }
-
-  /// Opens the database, retrying a transient SQLITE_BUSY rather than dying.
+  /// Opens the database, retrying a lost startup race rather than dying.
   ///
   /// sqflite only wraps the version check in `BEGIN EXCLUSIVE` when the stored
   /// schema version differs from [version], so this races on exactly one
@@ -109,6 +104,12 @@ class DatabaseHelper {
   /// still throws, and this is the startup path (`AuthNotifier.checkStatus`),
   /// so an uncaught throw takes the app down before first frame. Retrying the
   /// whole open is what makes losing the race survivable.
+  ///
+  /// Any DatabaseException, not only SQLITE_BUSY: on 2026-10-19 (v19→v20) the
+  /// losing connection got "no current transaction" on the upgrade's COMMIT,
+  /// was not retried, and the launch gate read the failure as "never
+  /// onboarded" — the welcome screen for a signed-in user. Reopening is safe:
+  /// the upgrade re-reads the stored version and each step is guarded.
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), 'swipewise.db');
     for (int attempt = 0; ; attempt++) {
@@ -126,7 +127,8 @@ class DatabaseHelper {
           onDowngrade: onDatabaseDowngradeDelete,
         );
       } on DatabaseException catch (e) {
-        if (attempt >= _kOpenRetryDelays.length || !_isBusy(e)) rethrow;
+        if (attempt >= _kOpenRetryDelays.length) rethrow;
+        Log.w('db', 'open failed, retrying', e);
         await Future<void>.delayed(_kOpenRetryDelays[attempt]);
       }
     }
