@@ -73,11 +73,52 @@ class _LaunchGate extends ConsumerWidget {
         .when(
           data: (seen) => seen ? const HomeScreen() : const WelcomeScreen(),
           loading: () => const _Splash(),
-          // Nothing here is worth an error screen: if the flag can't be read,
-          // offering the choice again is harmless — the cost of asking twice
-          // is far lower than skipping the choice entirely.
-          error: (_, _) => const WelcomeScreen(),
+          // Not the welcome screen: an unreadable database (a lost startup
+          // race, 2026-10-19) is not a new user, and "Sign in, or skip" to a
+          // signed-in user reads as "your data is gone".
+          error: (_, _) => _LaunchError(
+            onRetry: () => ref.invalidate(onboardingSeenProvider),
+          ),
         );
+  }
+}
+
+/// The onboarding flag couldn't be read even after retries.
+class _LaunchError extends StatelessWidget {
+  const _LaunchError({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "SwipeWise couldn't open your data",
+                style: AppText.titleMd(),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nothing is lost. Try again in a moment.',
+                style: AppText.bodySm(),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

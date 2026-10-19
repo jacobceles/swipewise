@@ -282,7 +282,7 @@ class OnboardingSeenNotifier extends AsyncNotifier<bool> {
       // timeout `HomeScreen` uses for the permission gate.
       return Future<bool>.delayed(const Duration(seconds: 10), () => false);
     }
-    final seen = await _settings.getOnboardingSeen(userId);
+    final seen = await _readSeen(userId);
     // Re-checked AFTER the await, and that is the whole point. Signing in
     // re-keys `users.id`, so a rebuild starts the moment the id changes —
     // which is *before* `markSeen` runs. That rebuild reads the flag under the
@@ -290,6 +290,21 @@ class OnboardingSeenNotifier extends AsyncNotifier<bool> {
     // true, overwriting it and throwing the user back to the welcome screen.
     // Checking only at the top of build() misses this by construction.
     return _answered || seen;
+  }
+
+  /// The flag, retried: the first launch after an upgrade can lose a race for
+  /// the database to a background job (2026-10-19), and a failed open is not
+  /// cached, so a second read reopens it. Still failing → the error reaches
+  /// the launch gate, which offers "Try again", never the welcome screen.
+  Future<bool> _readSeen(String userId) async {
+    for (var attempt = 1; ; attempt++) {
+      try {
+        return await _settings.getOnboardingSeen(userId);
+      } catch (_) {
+        if (attempt == 3) rethrow;
+        await Future<void>.delayed(Duration(seconds: attempt));
+      }
+    }
   }
 
   /// Records that the choice was made, and shows the app immediately rather
