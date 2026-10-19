@@ -1,6 +1,7 @@
 package com.appsoflife.swipewise
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
@@ -15,15 +16,21 @@ import kotlin.math.sqrt
 /// release builds. Before this the receivers logged nothing, so a missed or
 /// doubled notification on a real phone could not be explained afterwards.
 ///
-/// Also appended to `files/walkin.log`, because logcat's ring buffer holds only
-/// minutes and the phone is rarely plugged in when a walk-in happens. Pull it
-/// after a day out (debug build):
+/// Debug builds also append to `files/walkin.log`, because logcat's ring buffer
+/// holds only minutes and the phone is rarely plugged in when a walk-in happens.
+/// Pull it after a day out:
 /// `adb exec-out run-as com.appsoflife.swipewise.dev cat files/walkin.log`
+///
+/// Never in a store build: the file is a list of stores visited, with times, and
+/// the background-location disclosure promises no history of where you've been.
+/// A store build deletes any copy an earlier version (1.0.4) left behind.
 object WalkinLog {
     private const val TAG = "SW.walkin"
     private const val FILE = "walkin.log"
     private const val MAX_BYTES = 512 * 1024
     private val stamp = SimpleDateFormat("MM-dd HH:mm:ss", Locale.US)
+
+    private var staleFileDeleted = false
 
     @Synchronized
     fun w(context: Context, message: String) {
@@ -31,6 +38,15 @@ object WalkinLog {
         // Diagnostics must never cost a notification: every failure is swallowed.
         try {
             val file = File(context.applicationContext.filesDir, FILE)
+            val debuggable =
+                context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+            if (!debuggable) {
+                if (!staleFileDeleted) {
+                    file.delete()
+                    staleFileDeleted = true
+                }
+                return
+            }
             if (file.length() > MAX_BYTES) {
                 // Keep the newest half, from the next line boundary.
                 val bytes = file.readBytes()

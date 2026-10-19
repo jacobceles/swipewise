@@ -215,10 +215,11 @@ distances → the store named → outcome). Dart writes one `geofence:` line per
 into the same log (trigger, cache vs search, merchant/cluster counts, covered radius,
 overlapping fence pairs, boundary), including failures and "found nothing". Before this,
 "fences were never set up here" left no trace after a day out.
-The same lines are appended to **`files/walkin.log`** in the app's storage (capped at 512 KB, trimmed to the
-newest half), because the phone is rarely plugged in when a walk-in happens. After a day out, from the
-debug build: `adb exec-out run-as com.appsoflife.swipewise.dev cat files/walkin.log`. (The Play build is
-not debuggable, so its file can't be read over adb.) Logcat's default buffer holds minutes on a busy
+In **debug builds only**, the same lines are appended to **`files/walkin.log`** in the app's storage
+(capped at 512 KB, trimmed to the newest half), because the phone is rarely plugged in when a walk-in
+happens. After a day out: `adb exec-out run-as com.appsoflife.swipewise.dev cat files/walkin.log`. Store
+builds never write it — it is a list of stores visited, with times, and the background-location
+disclosure promises no history of where you've been — and delete any copy 1.0.4 left behind. Logcat's default buffer holds minutes on a busy
 phone; when you do stay plugged in, first run
 `adb logcat -G 16M`, then `adb logcat -d -s SW.walkin flutter` (Dart lines arrive under the `flutter` tag, prefixed `[SW.geofence]`).
 
