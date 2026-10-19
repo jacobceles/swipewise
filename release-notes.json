@@ -1,6 +1,6 @@
 [
   {
     "language": "en-US",
-    "text": "First production release.\n\n• Rewards data refreshed across all 24 supported issuers\n• Corrected earn rates on several cards\n• Wider foreign-transaction-fee coverage, with unknown fees shown as unknown rather than assumed"
+    "text": "• Store alerts are much more accurate: one alert per visit, naming the store you're in\n• No more alerts at red lights or while walking past a store\n• Picked a store from a \"one of these\" alert? We'll remember it next time\n• Alerts follow you to new places, wherever you stop\n• A simpler, cleaner Profile page\n• Under-the-hood updates for speed and reliability"
   }
 ]
