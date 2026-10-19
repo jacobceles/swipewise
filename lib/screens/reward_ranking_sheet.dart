@@ -318,6 +318,7 @@ class _Entry {
     this.programName,
     this.wording,
     this.isMatchedBrand = false,
+    this.miles = false,
   });
 
   final String cardId;
@@ -335,6 +336,9 @@ class _Entry {
   final String? programName;
   final String? wording;
   final bool isMatchedBrand;
+
+  /// A miles programme (United MileagePlus): a points kind, labelled "Miles".
+  final bool miles;
 }
 
 typedef _Entries = ({List<_Entry> general, List<_Entry> brand});
@@ -355,6 +359,7 @@ _Entries _entriesOf(RewardRankingResult result) => (
         eff: r.effectiveCentsPerDollar,
         programName: r.programName,
         wording: r.issuerWording,
+        miles: r.currency == 'MILES',
       ),
   ],
   brand: [
@@ -371,6 +376,7 @@ _Entries _entriesOf(RewardRankingResult result) => (
         programName: r.programName,
         wording: r.issuerWording,
         isMatchedBrand: r.isMatchedBrand,
+        miles: r.currency == 'MILES',
       ),
   ],
 );
@@ -617,7 +623,7 @@ class _RewardRow extends StatelessWidget {
       case RewardKind.cash:
         description = 'cash back';
       case RewardKind.points:
-        description = e.programName ?? 'points';
+        description = e.programName ?? (e.miles ? 'miles' : 'points');
       case RewardKind.other:
         description = _otherWording(e);
     }
@@ -669,7 +675,9 @@ class _RewardRow extends StatelessWidget {
                       )
                     else if (topPill)
                       _Pill(
-                        label: 'Top ${_kindLabel(e.kind).toLowerCase()}',
+                        label: e.miles
+                            ? 'Top miles'
+                            : 'Top ${_kindLabel(e.kind).toLowerCase()}',
                         color: AppColors.foreground,
                         background: AppColors.card,
                       ),
@@ -687,7 +695,7 @@ class _RewardRow extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              _KindPill(kind: e.kind),
+              _KindPill(kind: e.kind, miles: e.miles),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -747,8 +755,9 @@ class _Pill extends StatelessWidget {
 }
 
 class _KindPill extends StatelessWidget {
-  const _KindPill({required this.kind});
+  const _KindPill({required this.kind, this.miles = false});
   final RewardKind kind;
+  final bool miles;
 
   @override
   Widget build(BuildContext context) {
@@ -765,10 +774,14 @@ class _KindPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_kindIcon(kind), size: 12, color: color),
+          Icon(
+            miles ? LucideIcons.plane : _kindIcon(kind),
+            size: 12,
+            color: color,
+          ),
           const SizedBox(width: 4),
           Text(
-            _kindLabel(kind),
+            miles ? 'Miles' : _kindLabel(kind),
             style: AppText.bodySm(
               color: color,
             ).copyWith(fontSize: 12, fontWeight: FontWeight.w600),
