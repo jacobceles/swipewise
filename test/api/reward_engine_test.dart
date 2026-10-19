@@ -593,6 +593,7 @@ void main() {
     expect(ps('usd').currencyLabel, 'USD');
     expect(ps('cad').currencyLabel, 'USD');
     expect(ps('aeroplan_miles').currencyLabel, 'MILES');
+    expect(ps('united.mileageplus').currencyLabel, 'MILES');
     expect(ps('scene_plus').currencyLabel, 'POINTS');
   });
 }

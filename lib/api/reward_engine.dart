@@ -122,7 +122,8 @@ class PointSystem {
   /// percentage, not a multiplier.
   String get currencyLabel {
     if (kind == RewardKind.cash) return 'USD';
-    if (id.contains('miles')) return 'MILES';
+    // 'mile', not 'miles': United's id is `united.mileageplus`.
+    if (id.contains('mile')) return 'MILES';
     return 'POINTS';
   }
 }

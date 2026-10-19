@@ -721,7 +721,7 @@ class CatalogRepository {
   static String _currencyLabel(String pointSystemId) =>
       RewardKind.of(pointSystemId) == RewardKind.cash
       ? 'USD'
-      : (pointSystemId.contains('miles') ? 'MILES' : 'POINTS');
+      : (pointSystemId.contains('mile') ? 'MILES' : 'POINTS');
 
   static String _ruleLabel(RewardRule r) {
     switch (r.kind) {
