@@ -368,9 +368,13 @@ class SettingsRepository {
   /// Default OFF, and meaningless without a signed-in account to key the
   /// backup to — the Profile toggle is disabled until then. Nothing leaves
   /// the device until this is deliberately switched on.
-  Future<bool> getBackupEnabled(String userId) async {
+  Future<bool> getBackupEnabled(String userId) async =>
+      await getBackupEnabledOrNull(userId) ?? false;
+
+  /// Null when this phone has never set the switch either way.
+  Future<bool?> getBackupEnabledOrNull(String userId) async {
     final raw = await _repo.getSetting(userId, _kBackupEnabled);
-    return raw == 'true';
+    return raw == null ? null : raw == 'true';
   }
 
   Future<void> setBackupEnabled(String userId, bool enabled) =>

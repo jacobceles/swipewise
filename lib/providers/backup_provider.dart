@@ -23,14 +23,36 @@ final walletBackupRepositoryProvider = Provider<WalletBackupRepository>(
 /// must be signed in — a backup keyed to a device-local UUID could never be
 /// restored anywhere, because nothing identifies its owner — and they must
 /// have switched this on. Default OFF; nothing leaves the device otherwise.
+///
+/// Except one case, so two phones (or the Play and dev builds) on one account
+/// agree: a phone that has *never* set the switch, signed in to an account
+/// that already has a backup, starts with it ON. That backup is the user's
+/// earlier "yes" on another phone. Turning it on uploads nothing — uploads
+/// happen only on "Back up now" or switching it on by hand, which still asks
+/// before replacing cards this phone lacks. A phone where the user chose OFF
+/// stays off.
 class BackupEnabledNotifier extends Notifier<bool> {
   @override
   bool build() {
     final auth = ref.watch(authProvider);
-    if (auth.userId != null) {
+    final userId = auth.userId;
+    if (userId != null) {
       Future.microtask(() async {
-        final loaded = await _settings.getBackupEnabled(auth.userId!);
-        if (ref.mounted && state != loaded) state = loaded;
+        var loaded = await _settings.getBackupEnabledOrNull(userId);
+        if (loaded == null &&
+            auth.email != null &&
+            WalletBackupClient.isConfigured) {
+          // A failed lookup reads as "no backup" and leaves the switch unset,
+          // so the next launch asks again.
+          final remote = await ref
+              .read(walletBackupControllerProvider)
+              .remoteInfo();
+          if (remote.exists) {
+            await _settings.setBackupEnabled(userId, true);
+            loaded = true;
+          }
+        }
+        if (ref.mounted && state != (loaded ?? false)) state = loaded ?? false;
       });
     }
     return false;

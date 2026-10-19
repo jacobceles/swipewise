@@ -59,7 +59,7 @@ Deliberately stays on the device:
 |---|---|
 | `permissions_asked` | OS permissions are granted per device |
 | `onboarding_seen` | A per-install fact |
-| `backup_enabled` | Restoring a backup must never silently switch backup *on* for the phone receiving it |
+| `backup_enabled` | A choice made on one phone. Restoring never sets it. One exception keeps phones on one account in step: a phone that has **never** set it starts with it on when the signed-in account already has a backup. That turns nothing into an upload — uploads still happen only on *Back up now* or switching it on by hand |
 | `last_backup_at` | When *this* phone last uploaded; on another phone it would claim a backup that phone never made |
 | `last_sync_at`, `popular_banks_cache`, `catalog_data_version` | Caches and bookkeeping about one device, meaningless on another |
 

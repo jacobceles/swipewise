@@ -132,9 +132,9 @@ kotlin {
 }
 
 dependencies {
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("com.google.android.gms:play-services-location:21.4.0")
+    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
     // Backports java.time etc. to the minSdk. Paired with isCoreLibraryDesugaringEnabled
     // above; flutter_local_notifications declares this requirement in its AAR metadata.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
