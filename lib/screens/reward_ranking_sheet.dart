@@ -846,7 +846,8 @@ class _HiddenBestCallout extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_valueLine(best)} in ${_kindLabel(best.kind).toLowerCase()}'
+                  '${_valueLine(best)} in '
+                  '${best.miles ? 'miles' : _kindLabel(best.kind).toLowerCase()}'
                   ' — hidden by this filter',
                   style: AppText.bodySm().copyWith(fontSize: 11),
                 ),
