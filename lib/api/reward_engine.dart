@@ -104,28 +104,42 @@ class BonusSelectionGroup {
 /// A points/miles currency with its app-curated cents-per-point valuation.
 /// `usd` is 1.0 — so a 5% cashback rule and a 5x-points rule become
 /// comparable on a single `effectiveCentsPerDollar` axis.
+/// Display bucket for a point system: 'USD' (any cash back, CAD included,
+/// shown as "%") | 'POINTS' | 'MILES'. [unit] is the catalog's own word for
+/// it; a catalog without one (the bundled floor, an older cache) falls back
+/// to the id, which can't tell AAdvantage or Flying Blue are miles.
+String rewardCurrencyLabel(String pointSystemId, String? unit) =>
+    switch (unit) {
+      'cash' => 'USD',
+      'miles' => 'MILES',
+      'points' || 'other' => 'POINTS',
+      _ =>
+        RewardKind.of(pointSystemId) == RewardKind.cash
+            ? 'USD'
+            // 'mile', not 'miles': United's id is `united.mileageplus`.
+            : (pointSystemId.contains('mile') ? 'MILES' : 'POINTS'),
+    };
+
 class PointSystem {
   const PointSystem({
     required this.id,
     required this.displayName,
     required this.baselineCentValue,
+    this.unit,
   });
 
   final String id;
   final String displayName;
   final double baselineCentValue;
 
+  /// The catalog's word for one unit: 'cash' | 'points' | 'miles' | 'other'.
+  /// Null on catalogs published before the engine sent it.
+  final String? unit;
+
   RewardKind get kind => RewardKind.of(id);
 
   /// Display currency bucket the UI renders ("USD" → "%", else "x points").
-  /// "USD" means cash back, so CAD cash back lands there too: it is a
-  /// percentage, not a multiplier.
-  String get currencyLabel {
-    if (kind == RewardKind.cash) return 'USD';
-    // 'mile', not 'miles': United's id is `united.mileageplus`.
-    if (id.contains('mile')) return 'MILES';
-    return 'POINTS';
-  }
+  String get currencyLabel => rewardCurrencyLabel(id, unit);
 }
 
 /// One earn rule for a card product. A flattened catalog `reward_rules` row.

@@ -115,7 +115,7 @@ class DatabaseHelper {
       try {
         return await openDatabase(
           path,
-          version: 19,
+          version: 20,
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
@@ -476,6 +476,17 @@ class DatabaseHelper {
     // v19: store_picks (see [_createStorePicksSql]). Additive.
     if (oldVersion < 19) {
       await db.execute(_createStorePicksSql);
+    }
+    // v20: point_systems.unit, the catalog's own "points" / "miles" word.
+    // Nullable and filled by the next catalog import — the catalog that
+    // carries it has a new dataVersion, so no forced re-hydrate is needed.
+    if (oldVersion < 20) {
+      final psCols = (await db.rawQuery(
+        'PRAGMA table_info(point_systems)',
+      )).map((r) => r['name'] as String).toSet();
+      if (psCols.isNotEmpty && !psCols.contains('unit')) {
+        await db.execute('ALTER TABLE point_systems ADD COLUMN unit TEXT');
+      }
     }
   }
 
@@ -1094,7 +1105,10 @@ class DatabaseHelper {
         -- Which currency `baseline_cent_value` is denominated in. NULL = USD.
         -- Values are NOT converted between currencies — see the ranking note in
         -- reward_engine.dart.
-        currency TEXT
+        currency TEXT,
+        -- 'cash' | 'points' | 'miles' | 'other' (v20). NULL on catalogs
+        -- published before the engine sent it: see rewardCurrencyLabel.
+        unit TEXT
       )
     ''');
 

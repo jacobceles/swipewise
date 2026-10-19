@@ -593,13 +593,15 @@ class CatalogRepository {
     final db = await _dbHelper.database;
     final rows = await db.rawQuery(
       '''
-      SELECT rr.*
+      SELECT rr.*, ps.unit AS ps_unit
       FROM card_links cl
       JOIN reward_rules rr ON rr.card_product_id = cl.card_product_id
+      LEFT JOIN point_systems ps ON ps.point_system_id = rr.point_system_id
       WHERE cl.user_id = ? AND cl.card_id = ?
       ''',
       [userId, cardId],
     );
+    final labels = _currencyLabels(rows);
     final out = <WalletRewardRow>[];
     for (final r in rows) {
       final rule = _rule(r);
@@ -617,7 +619,7 @@ class CatalogRepository {
           brandId: rule.brand,
           isBaseline: rule.kind == RewardRuleKind.baseline,
           amount: rule.rate,
-          currency: _currencyLabel(rule.pointSystemId),
+          currency: labels[rule.pointSystemId]!,
           iconId: null,
           earnConstraint: rule.earnConstraint,
         ),
@@ -642,16 +644,18 @@ class CatalogRepository {
     final db = await _dbHelper.database;
     final rows = await db.rawQuery(
       '''
-      SELECT rr.*, cp.issuer
+      SELECT rr.*, cp.issuer, ps.unit AS ps_unit
       FROM card_links cl
       JOIN reward_rules rr ON rr.card_product_id = cl.card_product_id
       JOIN card_products cp ON cp.card_product_id = cl.card_product_id
+      LEFT JOIN point_systems ps ON ps.point_system_id = rr.point_system_id
       WHERE cl.user_id = ? AND cl.card_id = ? AND rr.kind = 'rotating'
       ''',
       [userId, cardId],
     );
     if (rows.isEmpty) return null;
     final rules = rows.map(_rule).toList();
+    final labels = _currencyLabels(rows);
 
     RotatingQuarter? quarterAt(int year, int quarter) {
       final members = rules
@@ -672,7 +676,7 @@ class CatalogRepository {
               brandId: r.brand,
               isBaseline: false,
               amount: r.rate,
-              currency: _currencyLabel(r.pointSystemId),
+              currency: labels[r.pointSystemId]!,
               iconId: null,
             ),
         ],
@@ -688,7 +692,7 @@ class CatalogRepository {
       issuerName: issuerDisplayName(rows.first['issuer'] as String),
       requiresActivation: rules.any((r) => r.requiresActivation),
       rate: rules.first.rate,
-      currency: _currencyLabel(rules.first.pointSystemId),
+      currency: labels[rules.first.pointSystemId]!,
       current: quarterAt(when.year, quarter),
       next: quarter == 4
           ? quarterAt(when.year + 1, 1)
@@ -703,25 +707,32 @@ class CatalogRepository {
     final db = await _dbHelper.database;
     final rows = await db.rawQuery(
       '''
-      SELECT cl.card_id, rr.point_system_id
+      SELECT cl.card_id, rr.point_system_id, ps.unit AS ps_unit
       FROM card_links cl
       JOIN reward_rules rr ON rr.card_product_id = cl.card_product_id
                           AND rr.kind = 'baseline'
+      LEFT JOIN point_systems ps ON ps.point_system_id = rr.point_system_id
       WHERE cl.user_id = ?
       ''',
       [userId],
     );
+    final labels = _currencyLabels(rows);
     return {
       for (final r in rows)
-        r['card_id'] as String: _currencyLabel(r['point_system_id'] as String),
+        r['card_id'] as String: labels[r['point_system_id'] as String]!,
     };
   }
 
-  // Same buckets as [PointSystem.currencyLabel]: "USD" is any cash back.
-  static String _currencyLabel(String pointSystemId) =>
-      RewardKind.of(pointSystemId) == RewardKind.cash
-      ? 'USD'
-      : (pointSystemId.contains('mile') ? 'MILES' : 'POINTS');
+  /// Same buckets as [PointSystem.currencyLabel]: point_system_id → label,
+  /// from rows that joined `point_systems.unit AS ps_unit`.
+  static Map<String, String> _currencyLabels(List<Map<String, Object?>> rows) =>
+      {
+        for (final r in rows)
+          r['point_system_id'] as String: rewardCurrencyLabel(
+            r['point_system_id'] as String,
+            r['ps_unit'] as String?,
+          ),
+      };
 
   static String _ruleLabel(RewardRule r) {
     switch (r.kind) {
@@ -823,5 +834,6 @@ class CatalogRepository {
     id: r['point_system_id'] as String,
     displayName: r['display_name'] as String,
     baselineCentValue: (r['baseline_cent_value'] as num).toDouble(),
+    unit: r['unit'] as String?,
   );
 }

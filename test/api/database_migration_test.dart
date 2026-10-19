@@ -257,6 +257,37 @@ void main() {
     },
   );
 
+  test(
+    'onUpgrade(19→20) adds point_systems.unit; fresh install has it',
+    () async {
+      Future<Set<String>> cols(Database d) async => (await d.rawQuery(
+        'PRAGMA table_info(point_systems)',
+      )).map((r) => r['name'] as String).toSet();
+      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      await db.execute('''
+      CREATE TABLE point_systems (
+        point_system_id TEXT PRIMARY KEY,
+        display_name TEXT NOT NULL,
+        baseline_cent_value REAL NOT NULL,
+        currency TEXT
+      )
+    ''');
+      await DatabaseHelper.runUpgrade(db, 19, 20);
+      expect(await cols(db), contains('unit'));
+      await DatabaseHelper.runUpgrade(db, 19, 20); // re-runnable
+      await db.close();
+      final fresh = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        ),
+      );
+      expect(await cols(fresh), contains('unit'));
+      await fresh.close();
+    },
+  );
+
   test('onUpgrade(18→19) adds store_picks; fresh install has it', () async {
     Future<bool> has(Database d) async => (await d.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='store_picks'",

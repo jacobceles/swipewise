@@ -258,6 +258,7 @@ class CatalogLoader {
     'valuation_source',
     'valuation_updated_at',
     'currency',
+    'unit',
   ];
   static const _cardProductCols = [
     'card_product_id',

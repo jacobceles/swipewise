@@ -197,7 +197,10 @@ queries; cards are ranked on `effectiveCentsPerDollar` while each row's displaye
 stays the raw multiplier. Ties break preference order → name desc (as the SQL did). **Brand
 beats category** when both apply (it sits higher in the resolution order). The catch-all
 card is the highest `baseline` effective rate. Each pick carries its display bucket
-(`USD` = any cash back, CAD included, shown as "%"; `POINTS` / `MILES` shown as "x").
+(`USD` = any cash back, CAD included, shown as "%"; `POINTS` / `MILES` shown as "x"), from
+the point system's catalog `unit` (`rewardCurrencyLabel`). A catalog without `unit` (the
+bundled floor until it is refreshed, an older cache) falls back to the id, which misses
+miles programmes whose id doesn't say so (AAdvantage, Flying Blue).
 
 `bestCardByBrand()` powers the Advisor's **Brands** tab: it resolves *every* registered
 merchant (the full `registeredBrands()` list, not just brands named in a rule) to the user's

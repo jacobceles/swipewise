@@ -596,4 +596,17 @@ void main() {
     expect(ps('united.mileageplus').currencyLabel, 'MILES');
     expect(ps('scene_plus').currencyLabel, 'POINTS');
   });
+
+  test("the catalog's unit wins over the id guess", () {
+    // AAdvantage and Flying Blue earn miles but their ids don't say so.
+    expect(
+      rewardCurrencyLabel('americanairlines.aadvantage', 'miles'),
+      'MILES',
+    );
+    expect(rewardCurrencyLabel('americanairlines.aadvantage', null), 'POINTS');
+    expect(rewardCurrencyLabel('usd', 'cash'), 'USD');
+    expect(rewardCurrencyLabel('other', 'other'), 'POINTS');
+    // An unknown word from a newer engine falls back to the id.
+    expect(rewardCurrencyLabel('cad', 'kilometres'), 'USD');
+  });
 }

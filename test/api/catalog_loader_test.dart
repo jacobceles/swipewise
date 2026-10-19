@@ -166,6 +166,23 @@ void main() {
     });
   });
 
+  test("a point system's unit is imported (older catalogs: null)", () async {
+    await seedUser('u1');
+    final data =
+        jsonDecode(await File(CatalogLoader.defaultAssetPath).readAsString())
+            as Map<String, dynamic>;
+    final systems = data['point_systems'] as List;
+    (systems.first as Map)['unit'] = 'miles';
+    await CatalogLoader(
+      remote: _InlineCatalogService(jsonEncode(data)),
+    ).hydrateIfNeeded('u1');
+    final snap = await CatalogRepository(DatabaseHelper()).loadSnapshot();
+    final first = (systems.first as Map)['point_system_id'] as String;
+    expect(snap.pointSystems[first]?.unit, 'miles');
+    final second = (systems[1] as Map)['point_system_id'] as String;
+    expect(snap.pointSystems[second]?.unit, isNull);
+  });
+
   test('migrated perks surface for a linked card', () async {
     await seedUser('u1');
     await loader().hydrateIfNeeded('u1');
@@ -215,4 +232,12 @@ class _DiskCatalogService extends RemoteAssetService {
       return null;
     }
   }
+}
+
+class _InlineCatalogService extends RemoteAssetService {
+  _InlineCatalogService(this.raw);
+  final String raw;
+
+  @override
+  Future<String?> readCached(String key) async => key == 'catalog' ? raw : null;
 }
