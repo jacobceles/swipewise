@@ -158,20 +158,18 @@ class NearbyPermissionGate {
 
     if (!context.mounted) return false;
 
+    // Say why each one is needed, not just that it's missing: physical
+    // activity in particular reads as creepy without a reason.
+    final why = [
+      for (final l in [...permanent, ...denied]) _why[l]!,
+    ].join(' ');
     if (permanent.isNotEmpty) {
-      _showSettingsSnack(
-        context,
-        'Permission denied for: ${permanent.join(", ")}. '
-        'Please enable in Settings to use nearby store alerts.',
-      );
+      _showSettingsSnack(context, '$why Turn it on in Settings.');
     } else if (denied.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 4),
-          content: Text(
-            'Permission denied for: ${denied.join(", ")}. '
-            'Nearby store alerts will not work without these.',
-          ),
+          duration: const Duration(seconds: 8),
+          content: Text('$why You can allow it later in Profile.'),
         ),
       );
     }
@@ -295,12 +293,11 @@ class NearbyPermissionGate {
             'SwipeWise collects location data to alert you when you arrive '
             'at a store where one of your cards earns extra rewards — even '
             'when the app is closed or not in use.\n\n'
-            'Your device watches for those stores locally. To find stores '
-            'near you, an approximate location is sent to Google Places. '
-            'SwipeWise keeps no history of where you have been and sends '
-            'your location nowhere else.\n\n'
-            "Without this the app still works — you'll just miss arrival "
-            'alerts.',
+            'Your phone watches for those stores itself. To find stores '
+            'near you, an approximate location is sent to Google Places — '
+            'nowhere else. SwipeWise keeps no history of where you have '
+            'been.\n\n'
+            "Without this the app still works; you'll just miss the alerts.",
           ),
         ),
         actions: [
@@ -331,11 +328,24 @@ class NearbyPermissionGate {
     );
   }
 
+  /// Why store alerts need each permission, keyed by [_label].
+  static const _why = {
+    'Notifications': 'Notifications are how a store alert reaches you.',
+    'Physical activity':
+        'Physical activity tells driving from walking or standing still, so '
+        "alerts come when you're shopping, not when you drive past a store.",
+    'Location': 'Location finds the stores around you.',
+    'Location all the time':
+        '"Allow all the time" lets alerts work when the app is closed.',
+    'Precise location': 'Precise location tells stores next door apart.',
+  };
+
   static String _label(Permission p) {
     if (p == Permission.notification) return 'Notifications';
-    if (p == Permission.activityRecognition) return 'Activity recognition';
+    // Android's own names, so they match what the user sees in Settings.
+    if (p == Permission.activityRecognition) return 'Physical activity';
     if (p == Permission.locationWhenInUse) return 'Location';
-    if (p == Permission.locationAlways) return 'Background location';
+    if (p == Permission.locationAlways) return 'Location all the time';
     return p.toString();
   }
 }

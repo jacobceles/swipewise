@@ -174,10 +174,10 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
       c == AlertCheck.notifications || c == AlertCheck.alarms;
 
   static String _hint(AlertCheck c) => switch (c) {
-    AlertCheck.notifications => 'Let SwipeWise alert you',
-    AlertCheck.location => 'Choose “Allow all the time”',
-    AlertCheck.battery => 'Set to “Unrestricted”',
-    AlertCheck.alarms => 'Allow alarms & reminders',
+    AlertCheck.notifications => 'Needed to show an alert',
+    AlertCheck.location => '“Allow all the time”, so alerts work when the app is closed',
+    AlertCheck.battery => '“Unrestricted”, so Android doesn’t pause alerts',
+    AlertCheck.alarms => 'Times the alert for about a minute after you walk in',
   };
 }
 

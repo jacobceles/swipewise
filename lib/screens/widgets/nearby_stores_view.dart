@@ -189,14 +189,14 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
   }
 
   String _titleForError(Object e) {
-    if (e is LocationDenied) return 'Location permission needed';
+    if (e is LocationDenied) return 'Allow location';
     if (e is LocationServiceDisabled) return 'Location services off';
     return 'Could not load nearby stores';
   }
 
   String _subtitleForError(Object e) {
     if (e is LocationDenied) {
-      return 'Allow location to see stores near you.';
+      return 'To show stores around you and the best card for each.';
     }
     if (e is LocationServiceDisabled) {
       return 'Turn on location services to see stores near you.';
@@ -229,12 +229,12 @@ class _BackgroundPermissionBanner extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Allow background location',
+                  'Allow location all the time',
                   style: AppText.titleMd().copyWith(fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'To get card alerts when you arrive at a store, set Location to "Allow all the time".',
+                  'So you get an alert when you walk into a store, even with the app closed.',
                   style: AppText.bodySm().copyWith(fontSize: 11),
                 ),
               ],
@@ -313,11 +313,10 @@ class _ReliabilityBanner extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '"Alarms & reminders" is the timer that fires your alert '
-                  '~1 min after you walk in (no alarms are set). '
-                  'Unrestricted battery stops Android from pausing alerts '
-                  'in the background. Don\'t worry — neither has a '
-                  'noticeable effect on battery life.',
+                  '"Alarms & reminders" times your alert for about a minute '
+                  'after you walk in (it sets no alarms). "Unrestricted" '
+                  'battery stops Android pausing alerts. Neither noticeably '
+                  'affects battery life.',
                   style: AppText.bodySm().copyWith(fontSize: 11),
                 ),
               ],
