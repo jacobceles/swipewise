@@ -151,6 +151,42 @@ String issuerDisplayName(String issuer) {
   return _kIssuerDisplayNames[key] ?? issuer;
 }
 
+/// Issuers with a logo bundled at `assets/issuers/<key>.png` (128 px).
+/// Bundled, not served: ~23 small files that rarely change, so a catalog
+/// field plus a publish would cost more than the ~150 KB they add.
+const _kIssuerLogos = {
+  'amex',
+  'bankofamerica',
+  'barclays',
+  'bilt',
+  'bmo',
+  'capitalone',
+  'chase',
+  'cibc',
+  'citi',
+  'discover',
+  'goldmansachs',
+  'nationalbank',
+  'navyfederal',
+  'penfed',
+  'rbc',
+  'robinhood',
+  'scotiabank',
+  'sofi',
+  'synchrony',
+  'td',
+  'usaa',
+  'usbank',
+  'wellsfargo',
+};
+
+/// Asset path of the issuer's logo, or null when none is bundled (the
+/// caller shows a letter instead).
+String? issuerLogoAsset(String issuer) {
+  final key = issuer.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  return _kIssuerLogos.contains(key) ? 'assets/issuers/$key.png' : null;
+}
+
 /// All DB access for the catalog Track-B tables: the six global catalog
 /// tables (`point_systems`/`card_products`/`reward_rules`/
 /// `reward_rule_exclusions`/`product_perks`/`bonus_selection_groups`), the

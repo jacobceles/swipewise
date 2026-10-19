@@ -262,25 +262,42 @@ class _IssuerTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // A letter tile rather than the issuer's card art: the art is a
-          // rectangular card image, and one product's design says nothing
-          // about the issuer as a whole. Same light circle the bank picker
-          // uses for logo-less institutions, so the two flows look related.
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.bankLogoTile,
-              shape: BoxShape.circle,
+          // The issuer's logo rather than card art: the art is a rectangular
+          // card image, and one product's design says nothing about the
+          // issuer as a whole. No bundled logo: a letter in the same light
+          // circle the bank picker uses for logo-less institutions.
+          // On a white tile: some logos are transparent and would vanish
+          // on the dark card.
+          if (issuerLogoAsset(issuer.id) case final logo?)
+            Container(
+              width: 40,
+              height: 40,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(kRadiusS),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(kRadiusS - 3),
+                child: Image.asset(logo),
+              ),
+            )
+          else
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: AppColors.bankLogoTile,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                issuer.displayName.isEmpty
+                    ? '?'
+                    : issuer.displayName.substring(0, 1).toUpperCase(),
+                style: AppText.titleMd(color: AppColors.onPrimary),
+              ),
             ),
-            child: Text(
-              issuer.displayName.isEmpty
-                  ? '?'
-                  : issuer.displayName.substring(0, 1).toUpperCase(),
-              style: AppText.titleMd(color: AppColors.onPrimary),
-            ),
-          ),
           const SizedBox(height: 8),
           Text(
             issuer.displayName,
