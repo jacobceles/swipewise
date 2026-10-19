@@ -516,6 +516,8 @@ class GeofenceManager {
           'lat': m.lat,
           'lng': m.lng,
           'footprint_m': storeFootprint,
+          // A shopping plaza's own pin: never the store you pay at.
+          if (m.placeType == 'shopping_mall') 'plaza': true,
           'category': label,
           'category_enum': category.name,
           'matched_brand': brandHit?.brand,

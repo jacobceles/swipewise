@@ -23,6 +23,8 @@ data class MerchantOption(
     // How far the store's floor reaches past its pin (big-box stores), so
     // the user standing inside is measured as being at the store.
     val footprintM: Double = 0.0,
+    // Google's pin for a whole shopping plaza ("JPA Plaza"), not a store.
+    val plaza: Boolean = false,
 )
 
 data class MerchantMeta(
@@ -120,6 +122,7 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     if (lat != null) put("lat", lat)
     if (lng != null) put("lng", lng)
     if (footprintM > 0) put("footprint_m", footprintM)
+    if (plaza) put("plaza", true)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -131,6 +134,7 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     lat = if (has("lat") && !isNull("lat")) getDouble("lat") else null,
     lng = if (has("lng") && !isNull("lng")) getDouble("lng") else null,
     footprintM = optDouble("footprint_m", 0.0),
+    plaza = optBoolean("plaza", false),
 )
 
 private fun JSONObject.nullableString(key: String): String? {

@@ -68,6 +68,19 @@ class WalkinTest {
     }
 
     @Test
+    fun `a plaza's own pin never leads when a store is in reach`() {
+        // 2026-10-19: JPA Plaza (pin mid-lot, big-box footprint) at 0 m beat
+        // Desi Halal Meat & Fish at 9 m, the store the user was in.
+        val plaza = at("jpa-plaza", 40.5014, footprint = 80.0).copy(plaza = true)
+        val opts = listOf(plaza, at("desi-halal", 40.50148))
+        val picked = StoreResolver.resolve(StoreResolver.candidates(opts, 40.5014, -74.8549, 200.0))
+        assertEquals(listOf("desi-halal"), picked.map { it.merchantId })
+        assertEquals(listOf("desi-halal"), StoreResolver.capped(opts, 40.5014, -74.8549).map { it.merchantId })
+        // Alone, it is still offered.
+        assertEquals(listOf("jpa-plaza"), StoreResolver.capped(listOf(plaza), null, null).map { it.merchantId })
+    }
+
+    @Test
     fun `candidates outside reach are dropped`() {
         val opts = listOf(at("near", 40.5015), at("far", 40.5050))
         val c = StoreResolver.candidates(opts, 40.5014, -74.8549, 150.0)

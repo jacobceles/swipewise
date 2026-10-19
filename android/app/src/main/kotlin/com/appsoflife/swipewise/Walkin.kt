@@ -103,7 +103,8 @@ object StoreResolver {
 
     /// The fallback list when nothing could be resolved: at most [MAX_OPTIONS],
     /// closest to ([lat], [lng]) first; stores without a position go last.
-    fun capped(options: List<MerchantOption>, lat: Double?, lng: Double?): List<MerchantOption> {
+    fun capped(all: List<MerchantOption>, lat: Double?, lng: Double?): List<MerchantOption> {
+        val options = all.filterNot { it.plaza }.ifEmpty { all }
         if (lat == null || lng == null) return foldSameAdvice(options).take(MAX_OPTIONS)
         return foldSameAdvice(
             options.sortedBy { o ->
@@ -115,8 +116,14 @@ object StoreResolver {
     /// [candidates] are stores within reach of the fix (any order). Returns the
     /// ones to offer, closest first: one store when it is clearly the closest,
     /// else the few that are all about as close.
-    fun resolve(candidates: List<Candidate>): List<MerchantOption> {
-        if (candidates.isEmpty()) return emptyList()
+    ///
+    /// A plaza's own pin is dropped whenever a real store is in reach: it sits
+    /// mid-lot with a big-box footprint, so it always measured closest and led
+    /// the list ahead of the store the user was in (2026-10-19: "JPA Plaza ·
+    /// Desi Halal Meat & Fish"). It stays only when it is all there is.
+    fun resolve(all: List<Candidate>): List<MerchantOption> {
+        if (all.isEmpty()) return emptyList()
+        val candidates = all.filterNot { it.option.plaza }.ifEmpty { all }
         val sorted = candidates.sortedBy { it.distanceM }
         val nearest = sorted.first().distanceM
         return foldSameAdvice(
