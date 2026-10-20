@@ -81239,6 +81239,1039 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "ZGwwO",
+      "x": 75,
+      "y": 10772,
+      "name": "Play Store listing",
+      "width": 5640,
+      "height": 1920,
+      "fill": "#00000000",
+      "gap": 60,
+      "children": [
+        {
+          "type": "frame",
+          "id": "AFcwx",
+          "name": "Listing 1 — Alert",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FFC21A",
+                "position": 0
+              },
+              {
+                "color": "#FF6A00",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "BuT2i",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "h81AY",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Know which card to use",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "lL4if",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "The moment you walk into a store",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "x210TV",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ijjvv",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "pEanj",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot blurred",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/stores.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552,
+                      "effect": {
+                        "type": "blur",
+                        "radius": 10
+                      }
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "pQHwo",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Dim",
+                      "fill": "#000000A6",
+                      "width": 768,
+                      "height": 1608
+                    },
+                    {
+                      "type": "text",
+                      "id": "cRQGU",
+                      "x": 0,
+                      "y": 110,
+                      "name": "Clock",
+                      "fill": "#FFFFFF",
+                      "textGrowth": "fixed-width",
+                      "width": 768,
+                      "content": "9:41",
+                      "textAlign": "center",
+                      "fontFamily": "Inter",
+                      "fontSize": 160,
+                      "fontWeight": "200"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SbAyM",
+                      "x": 0,
+                      "y": 310,
+                      "name": "Date",
+                      "fill": "#FFFFFFCC",
+                      "textGrowth": "fixed-width",
+                      "width": 768,
+                      "content": "Tuesday, October 20",
+                      "textAlign": "center",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "X0AIm",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#00000000",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "xAQNX",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "b3NpK1",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "vfgeg",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "g121Uy",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "w3eclY",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 96.4,
+              "id": "wiq3a",
+              "x": 60,
+              "y": 860,
+              "name": "Notification",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "play_store_listing/screenshots/raw/alert-notification.png",
+                "mode": "stretch"
+              },
+              "width": 960,
+              "height": 192.77,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#000000AA",
+                "offset": {
+                  "x": 0,
+                  "y": 24
+                },
+                "blur": 60
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "I6QCk2",
+          "name": "Listing 2 — Stores",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FFB300",
+                "position": 0
+              },
+              {
+                "color": "#FF5A1F",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "f13K0",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "a6U78",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Best card, every store",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "Z24eP",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "See the top pick for places near you",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "p7dSQU",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "arBgZ",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "C1yyE",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/stores.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552
+                    },
+                    {
+                      "type": "frame",
+                      "id": "goNDm",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#111111",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "M0iLip",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "YQVzH",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "WKXro",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "oVWV5",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "g838em",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qQ0NA",
+          "name": "Listing 3 — Ranking",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FFA51F",
+                "position": 0
+              },
+              {
+                "color": "#F8501F",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "PrDRs",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "h01Gd",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Every card, ranked",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "Teewo",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Compare all your cards for one place",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wY2Du",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "q2KP1",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "Ay2Ej",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/store-ranking.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jLSIj",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#111111",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "aSDMP",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "u7k0A",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Z51qn4",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "UAKPJ",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "YeClM",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "X5CO7",
+          "name": "Listing 4 — Categories",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FF9733",
+                "position": 0
+              },
+              {
+                "color": "#EF432A",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "KoKFx",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Q9Z000",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Best card per category",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "xfP2i",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Dining, grocery, gas and more at a glance",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wg8cC",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "W3sbn",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "ZO7dv",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/categories.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J5fwJ",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#111111",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Azivv",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KUgCV",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "PwStI",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "wSLJ6",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "p2KB1u",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "eF74q",
+          "name": "Listing 5 — Add cards",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FF8A3D",
+                "position": 0
+              },
+              {
+                "color": "#E8362A",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "XJQ5T",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X9rR5C",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Add your cards in seconds",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "EVi4u",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Pick from a catalog. No bank login needed.",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "QZAz4",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "j4iKx8",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "K5LhNk",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/add-cards.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mzvGg",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#111111",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "L8vAo",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "NJERx",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "r1cwwE",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "Ef1Vj",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "Frj60",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
