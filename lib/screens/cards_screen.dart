@@ -255,29 +255,41 @@ class _Body extends ConsumerWidget {
         ).toLowerCase().compareTo(labelFor(b, groups[b]!).toLowerCase());
       });
 
+    // Free has no bank data: Used is always $0 and Available would repeat
+    // the limit, so free shows only the limits the user typed (wireframe
+    // "Cards — Free tier", z8kQf).
+    final isPro = ref.watch(proEntitlementProvider);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _RollupTile(label: 'Used', value: _money(totalBalance)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _RollupTile(label: 'Limit', value: _money(totalLimit)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _RollupTile(
-                label: 'Available',
-                value: _money(available),
-                valueColor: palette.green,
-              ),
-            ),
+        if (!isPro) ...[
+          if (limitedCC.isNotEmpty) ...[
+            _RollupTile(label: 'Total limit', value: _money(totalLimit)),
+            const SizedBox(height: 16),
           ],
-        ),
-        const SizedBox(height: 16),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: _RollupTile(label: 'Used', value: _money(totalBalance)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RollupTile(label: 'Limit', value: _money(totalLimit)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RollupTile(
+                  label: 'Available',
+                  value: _money(available),
+                  valueColor: palette.green,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           height: 44,
@@ -584,7 +596,7 @@ class _BankSectionState extends ConsumerState<_BankSection> {
               style: AppText.bodySm(color: palette.muted),
             ),
           ],
-        ] else ...[
+        ] else if (isPro) ...[
           Row(
             children: [
               Expanded(
@@ -1227,12 +1239,16 @@ class _MiniStat extends StatelessWidget {
     required this.value,
     this.valueColor,
     this.onEdit,
+    this.placeholder = false,
   });
 
   final String label;
   final String value;
   final Color? valueColor;
   final VoidCallback? onEdit;
+
+  /// [value] is a prompt ("Add limit"), not a figure: body font, muted.
+  final bool placeholder;
 
   @override
   Widget build(BuildContext context) {
@@ -1259,9 +1275,11 @@ class _MiniStat extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               value,
-              style: AppText.monoMd(
-                color: valueColor ?? AppColors.foreground,
-              ).copyWith(fontWeight: FontWeight.w600),
+              style: placeholder
+                  ? AppText.bodySm(color: palette.muted)
+                  : AppText.monoMd(
+                      color: valueColor ?? AppColors.foreground,
+                    ).copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1290,6 +1308,7 @@ class _CardRow extends ConsumerWidget {
         card.creditAvailable ??
         (card.creditLimit != null ? card.creditLimit! - card.balance : null);
     final showIdentify = IdentifyCardBanner.shouldShowFor(card);
+    final isPro = ref.watch(proEntitlementProvider);
 
     final rowContainer = Container(
       decoration: BoxDecoration(
@@ -1377,35 +1396,62 @@ class _CardRow extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Used',
-                        value: _money(card.balance),
-                      ),
+                if (!isPro)
+                  // Free: the limit the user typed and the due date, side by
+                  // side. No Used/Available without bank data.
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _MiniStat(
+                            label: 'Limit',
+                            value: card.creditLimit == null
+                                ? 'Add limit'
+                                : _money(card.creditLimit),
+                            placeholder: card.creditLimit == null,
+                            onEdit: card.isCreditCard
+                                ? () => _editLimit(context, ref, card)
+                                : null,
+                          ),
+                        ),
+                        if (card.isCreditCard) ...[
+                          const SizedBox(width: 8),
+                          Expanded(child: _DueDateLine(card: card, pill: true)),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Limit',
-                        value: _money(card.creditLimit),
-                        onEdit: card.isCreditCard
-                            ? () => _editLimit(context, ref, card)
-                            : null,
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _MiniStat(
+                          label: 'Used',
+                          value: _money(card.balance),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Available',
-                        value: _money(available),
-                        valueColor: palette.green,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _MiniStat(
+                          label: 'Limit',
+                          value: _money(card.creditLimit),
+                          onEdit: card.isCreditCard
+                              ? () => _editLimit(context, ref, card)
+                              : null,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                if (util != null && !hideUtilization) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _MiniStat(
+                          label: 'Available',
+                          value: _money(available),
+                          valueColor: palette.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                if (isPro && util != null && !hideUtilization) ...[
                   const SizedBox(height: 10),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
@@ -1417,7 +1463,7 @@ class _CardRow extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (card.isCreditCard) ...[
+                if (isPro && card.isCreditCard) ...[
                   const SizedBox(height: 10),
                   _DueDateLine(card: card),
                 ],
@@ -1619,11 +1665,14 @@ class _CardDetailsSheet extends ConsumerWidget {
                 IdentifyCardBanner(card: card),
               ],
               const SizedBox(height: 16),
-              _StatStrip(
-                balance: card.balance,
-                limit: card.creditLimit,
-                available: available,
-              ),
+              if (ref.watch(proEntitlementProvider))
+                _StatStrip(
+                  balance: card.balance,
+                  limit: card.creditLimit,
+                  available: available,
+                )
+              else
+                _LimitRow(card: card),
               const SizedBox(height: 12),
               TabBar(
                 labelColor: AppColors.foreground,
@@ -1804,6 +1853,48 @@ class _TabLabel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Free tier's stand-in for [_StatStrip]: only the limit the user typed.
+class _LimitRow extends ConsumerWidget {
+  const _LimitRow({required this.card});
+  final CardSummary card;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final limit = card.creditLimit;
+    final editable = card.isCreditCard;
+    return GestureDetector(
+      onTap: editable ? () => _editLimit(context, ref, card) : null,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: palette.secondary,
+          borderRadius: BorderRadius.circular(kRadiusM),
+        ),
+        child: Row(
+          children: [
+            Text('Credit limit', style: AppText.labelSm()),
+            const Spacer(),
+            Text(
+              limit == null ? 'Add limit' : _money(limit),
+              style: limit == null
+                  ? AppText.bodySm(color: palette.muted)
+                  : AppText.monoMd(
+                      color: AppColors.foreground,
+                    ).copyWith(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
+            if (editable) ...[
+              const SizedBox(width: 8),
+              Icon(LucideIcons.pencil, size: 13, color: palette.muted),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -2982,8 +3073,11 @@ String _formatRate(double amount, String currency) {
 /// error. Most cards will never have one, because banks don't supply a due date
 /// and the user has to type it.
 class _DueDateLine extends ConsumerWidget {
-  const _DueDateLine({required this.card});
+  const _DueDateLine({required this.card, this.pill = false});
   final CardSummary card;
+
+  /// Free tier: a tile beside the Limit tile instead of a centred line.
+  final bool pill;
 
   static String ordinal(int day) {
     if (day >= 11 && day <= 13) return '${day}th';
@@ -3001,26 +3095,50 @@ class _DueDateLine extends ConsumerWidget {
     final dueDay = card.dueDay;
 
     // Wireframe: a calendar icon then the text, left-aligned on its own line.
-    Widget line(List<InlineSpan> spans, Color iconColor) => InkWell(
-      onTap: () => showDueDateSheet(context, ref, card),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          // Centered on its own line under the card's stats.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.calendar, size: 13, color: iconColor),
-            const SizedBox(width: 6),
-            Text.rich(
+    Widget line(List<InlineSpan> spans, Color iconColor) {
+      final row = Row(
+        // Centered on its own line under the card's stats.
+        mainAxisAlignment: pill
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
+        children: [
+          Icon(LucideIcons.calendar, size: 13, color: iconColor),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text.rich(
               TextSpan(
                 style: AppText.bodySm(color: palette.muted),
                 children: spans,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
+          ),
+        ],
+      );
+      if (pill) {
+        return GestureDetector(
+          onTap: () => showDueDateSheet(context, ref, card),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            alignment: Alignment.centerLeft,
+            decoration: BoxDecoration(
+              color: palette.secondary,
+              borderRadius: BorderRadius.circular(kRadiusS),
+            ),
+            child: row,
+          ),
+        );
+      }
+      return InkWell(
+        onTap: () => showDueDateSheet(context, ref, card),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: row,
         ),
-      ),
-    );
+      );
+    }
 
     if (dueDay == null) {
       return line([const TextSpan(text: 'Add due date')], palette.muted);

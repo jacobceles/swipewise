@@ -33,8 +33,8 @@ one, change all three.
 free build** (`screenshots/raw/`, a demo wallet, no personal data), not wireframes. Free shows three
 tabs (Cards, Advisor, Profile); the wireframe screen frames draw four.
 
-The Cards tab is deliberately not shown: without bank data its Used / Limit / Available figures
-all read $0.
+The Cards tab is not in the set: in the free tier it is a plain list of cards until the user types
+limits (`Cards — Free tier`, z8kQf, in `../wireframe.pen`).
 
 `screenshots/pro/` holds the four-tab set, kept for when those tabs ship. **Never upload it to the
 current listing** — two of them show screens the listed build does not have, which is a misleading
