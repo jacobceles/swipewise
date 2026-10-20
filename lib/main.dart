@@ -273,6 +273,8 @@ void geofenceReregisterEntrypoint() {
   const channel = MethodChannel('com.appsoflife/geofence-reregister');
   channel.setMethodCallHandler((call) async {
     if (call.method == 'run') {
+      DatabaseHelper.upgradeElsewhere =
+          (call.arguments as Map?)?['uiAlive'] == true;
       try {
         return await _runGeofenceReregister();
       } catch (e) {

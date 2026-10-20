@@ -52,6 +52,7 @@ class DatabaseHelper {
   static void setTestDatabaseFactory(Future<Database> Function()? init) {
     _testInit = init;
     _database = null;
+    _opening = null;
   }
 
   /// Test-only: schema bootstrap that callers can invoke on a freshly opened
@@ -79,12 +80,42 @@ class DatabaseHelper {
   static Future<void> configureForTesting(Database db) =>
       _instance._onConfigure(db);
 
+  /// One open per isolate, shared by everyone who asks while it's in flight:
+  /// two first callers used to both see `_database == null` and both open.
   Future<Database> get database async {
     if (_database != null) return _database!;
-    final init = _testInit;
-    _database = await (init != null ? init() : _initDatabase());
-    return _database!;
+    final opening = _opening ??= () async {
+      final init = _testInit;
+      try {
+        return _database = await (init != null ? init() : _initDatabase());
+      } finally {
+        _opening = null;
+      }
+    }();
+    return opening;
   }
+
+  static Future<Database>? _opening;
+
+  /// Set in the background `ReregisterWorker` engine when the app's UI is
+  /// running in the same process: that engine then opens without a version
+  /// and leaves create/upgrade to the UI.
+  ///
+  /// Both engines share ONE native connection (sqflite's single-instance map
+  /// is process-wide) and sqflite runs every connection in the process on one
+  /// worker thread. What went wrong:
+  /// * Opening a native connection that is mid-transaction makes sqflite
+  ///   force a ROLLBACK (`rollbackActiveTransactionOnOpen`, on by default in
+  ///   debug builds, meant for hot restart). The background engine's open
+  ///   rolled back the UI's upgrade: v19→v20 then failed COMMIT with "no
+  ///   current transaction" (2026-10-19), v20→v21 recorded version 21 with
+  ///   the DROP undone (2026-10-20). Both opens now pass false.
+  /// * Separate connections (`singleInstance: false`, tried 2026-10-20)
+  ///   deadlock instead: the waiter's BEGIN EXCLUSIVE holds the only thread
+  ///   the lock holder needs to commit, so every first launch sat out the
+  ///   10 s busy timeout (owner's phone).
+  /// One connection, and one engine doing the handshake.
+  static bool upgradeElsewhere = false;
 
   /// Backoff between open attempts. Three attempts total.
   static const List<Duration> _kOpenRetryDelays = [
@@ -114,29 +145,32 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'swipewise.db');
     for (int attempt = 0; ; attempt++) {
       try {
+        if (upgradeElsewhere) {
+          // No version: no create/upgrade handshake from this engine.
+          return await openDatabase(
+            path,
+            options: OpenDatabaseOptions(
+              onConfigure: _onConfigure,
+              rollbackActiveTransactionOnOpen: false,
+            ),
+          );
+        }
         return await openDatabase(
           path,
-          version: 21,
-          onConfigure: _onConfigure,
-          onCreate: _onCreate,
-          onUpgrade: _onUpgrade,
-          onOpen: _onOpen,
-          // One connection per isolate, not sqflite's default shared one. Its
-          // single-instance map is process-wide (static in the Android
-          // plugin), so the UI engine and the background `ReregisterWorker`
-          // engine got the SAME native connection and ran their upgrades
-          // interleaved on it: v19→v20 hit "no current transaction" on
-          // COMMIT (2026-10-19), and v20→v21 wrote version 21 while one
-          // side's ROLLBACK undid the DROP (2026-10-20, owner's phone). With
-          // separate connections SQLite's own locking serialises them: one
-          // upgrades, the other waits (busy_timeout) and re-runs the guarded
-          // steps.
-          singleInstance: false,
-          // Internal testers can side-load an older build over a newer DB. sqflite's
-          // default onDowngrade throws (hard crash on open); delete-and-recreate is
-          // safe here because every local table is re-derivable — the catalog
-          // rehydrates from the API/bundled fallback and bank data re-syncs.
-          onDowngrade: onDatabaseDowngradeDelete,
+          options: OpenDatabaseOptions(
+            version: 21,
+            onConfigure: _onConfigure,
+            onCreate: _onCreate,
+            onUpgrade: _onUpgrade,
+            onOpen: _onOpen,
+            // Internal testers can side-load an older build over a newer DB.
+            // sqflite's default onDowngrade throws (hard crash on open);
+            // delete-and-recreate is safe here because every local table is
+            // re-derivable — the catalog rehydrates from the API/bundled
+            // fallback and bank data re-syncs.
+            onDowngrade: onDatabaseDowngradeDelete,
+            rollbackActiveTransactionOnOpen: false,
+          ),
         );
       } on DatabaseException catch (e) {
         if (attempt >= _kOpenRetryDelays.length) rethrow;
@@ -540,9 +574,9 @@ class DatabaseHelper {
 
   /// sqflite defaults `PRAGMA foreign_keys` OFF. Without this, every
   /// `FOREIGN KEY ... ON DELETE CASCADE` we declare is decorative.
-  /// Cleans up after an upgrade the shared-connection race half-undid (see
-  /// `singleInstance` in [_initDatabase]): v21 was recorded on the owner's
-  /// phone with `dwell_outcomes` still present. Idempotent and cheap.
+  /// Cleans up after an upgrade the two-engine race half-undid (see
+  /// [upgradeElsewhere]): v21 was recorded on the owner's phone with
+  /// `dwell_outcomes` still present. Idempotent and cheap.
   Future<void> _onOpen(Database db) async {
     await db.execute('DROP TABLE IF EXISTS dwell_outcomes');
   }
@@ -550,9 +584,9 @@ class DatabaseHelper {
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
     // Two isolates open this same file: the UI engine, and the background
-    // engine `ReregisterWorker` spins up to re-register geofences. Each gets
-    // its own connection (`singleInstance: false`), so they genuinely
-    // contend. Without a busy
+    // engine `ReregisterWorker` spins up to re-register geofences. They share
+    // one native connection, but the native receivers open their own, so
+    // writers genuinely contend. Without a busy
     // timeout the loser fails its open-time `BEGIN EXCLUSIVE` the instant the
     // other holds the lock — SQLITE_BUSY out of `_initDatabase`, which is
     // fatal because it surfaces during `AuthNotifier.checkStatus` at startup.

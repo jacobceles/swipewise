@@ -12,10 +12,16 @@ import java.util.concurrent.TimeUnit
 class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        uiAlive = true
         super.onCreate(savedInstanceState)
         captureMerchantFromIntent(intent)
         scheduleGeofenceValidation()
         ActivitySubscriber.start(applicationContext)
+    }
+
+    override fun onDestroy() {
+        uiAlive = false
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -51,5 +57,12 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val VALIDATION_WORK = "swipewise.geofence.validate"
+
+        /// The UI engine is up in this process: `ReregisterWorker` tells its
+        /// background engine to leave database create/upgrade to it (see
+        /// `DatabaseHelper.upgradeElsewhere`).
+        @Volatile
+        @JvmStatic
+        var uiAlive = false
     }
 }

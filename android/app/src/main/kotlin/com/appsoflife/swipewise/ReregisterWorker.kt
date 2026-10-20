@@ -68,7 +68,7 @@ class ReregisterWorker(context: Context, params: WorkerParameters) :
                 )
                 channel.invokeMethod(
                     "run",
-                    null,
+                    mapOf("uiAlive" to MainActivity.uiAlive),
                     object : MethodChannel.Result {
                         override fun success(result: Any?) {
                             // Dart returns false when registration failed (no

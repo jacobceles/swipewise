@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
@@ -470,51 +468,6 @@ void main() {
     await DatabaseHelper.runUpgrade(db, 10, 11); // must not throw
     await db.close();
   });
-
-  // 2026-10-20: the UI and background engines shared ONE native connection
-  // (sqflite's single-instance map is process-wide) and their upgrades
-  // interleaved on it, so v21 was recorded with the DROP undone. With
-  // `singleInstance: false` each opens its own connection and SQLite's
-  // locking serialises the two upgrades; the second re-runs guarded steps.
-  test(
-    'two connections upgrading the same file at once both land v21',
-    () async {
-      final dir = await Directory.systemTemp.createTemp('sw_race');
-      addTearDown(() => dir.delete(recursive: true));
-      final path = '${dir.path}/swipewise.db';
-      final seed = await databaseFactoryFfi.openDatabase(
-        path,
-        options: OpenDatabaseOptions(
-          version: 20,
-          onCreate: (db, _) => db.execute(
-            'CREATE TABLE dwell_outcomes (id INTEGER PRIMARY KEY, outcome TEXT)',
-          ),
-        ),
-      );
-      await seed.close();
-
-      Future<Database> open() => databaseFactoryFfi.openDatabase(
-        path,
-        options: OpenDatabaseOptions(
-          version: 21,
-          singleInstance: false,
-          onConfigure: (db) => db.rawQuery('PRAGMA busy_timeout = 10000'),
-          onUpgrade: DatabaseHelper.runUpgrade,
-        ),
-      );
-      final both = await Future.wait([open(), open()]);
-      for (final db in both) {
-        expect(await db.getVersion(), 21);
-        expect(
-          await db.rawQuery(
-            "SELECT name FROM sqlite_master WHERE name='dwell_outcomes'",
-          ),
-          isEmpty,
-        );
-        await db.close();
-      }
-    },
-  );
 
   test(
     'onUpgrade(20→21) drops dwell_outcomes; fresh install never has it',
