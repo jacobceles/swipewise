@@ -20,6 +20,7 @@ void main() {
     double rate,
     double eff, {
     bool isBest = false,
+    String? currency,
   }) => CategoryRewardRanking(
     cardId: id,
     cardName: name,
@@ -30,6 +31,7 @@ void main() {
     kind: kind,
     effectiveCentsPerDollar: eff,
     programName: kind == RewardKind.points ? 'Membership Rewards' : null,
+    currency: currency,
   );
 
   final result = RewardRankingResult(
@@ -37,6 +39,7 @@ void main() {
       row('g', 'Amex Gold', RewardKind.points, 4, 8, isBest: true),
       row('f', 'Freedom Flex', RewardKind.cash, 5, 5),
       row('d', 'Double Cash', RewardKind.cash, 2, 2),
+      row('u', 'United Explorer', RewardKind.points, 2, 2.6, currency: 'MILES'),
     ],
     brandBonuses: const [],
   );
@@ -121,8 +124,21 @@ void main() {
     expect(find.text('No “Other” rewards here'), findsOneWidget);
     expect(find.text('Freedom Flex'), findsNothing);
 
-    await tester.tap(find.text('Show all 3 cards'));
+    await tester.tap(find.text('Show all 4 cards'));
     await tester.pumpAndSettle();
     expect(find.text('Freedom Flex'), findsOneWidget);
+  });
+
+  testWidgets('Miles get their own tab, apart from Points', (tester) async {
+    await open(tester);
+    await tester.tap(find.text('Miles').first);
+    await tester.pumpAndSettle();
+    expect(find.text('United Explorer'), findsOneWidget);
+    expect(find.text('Amex Gold'), findsNothing);
+
+    await tester.tap(find.text('Points').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Amex Gold'), findsOneWidget);
+    expect(find.text('United Explorer'), findsNothing);
   });
 }

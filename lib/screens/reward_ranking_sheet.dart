@@ -77,8 +77,8 @@ class _RewardRankingSheet extends ConsumerStatefulWidget {
 }
 
 class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
-  /// The kind filter; null is "All".
-  RewardKind? _filter;
+  /// The filter tab; null is "All".
+  _Tab? _filter;
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +202,7 @@ class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
     final best = topEntry?.kind == RewardKind.other ? null : topEntry;
 
     final filter = _filter;
-    bool shown(_Entry e) => filter == null || e.kind == filter;
+    bool shown(_Entry e) => filter == null || e.tab == filter;
     final visibleGeneral = general.where(shown).toList();
     final visibleBrand = brand.where(shown).toList();
     final bestHidden = best != null && !shown(best);
@@ -212,7 +212,7 @@ class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
       selected: filter,
       counts: {
         null: allCount,
-        for (final k in RewardKind.values)
+        for (final k in _Tab.values)
           k: _cardCount((general: general, brand: brand), k),
       },
       onChanged: (k) => setState(() => _filter = k),
@@ -227,7 +227,7 @@ class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
             ? 'at ${widget.merchantName}'
             : 'in ${widget.category.label}',
         counts: {
-          for (final k in RewardKind.values)
+          for (final k in _Tab.values)
             if (k != filter) k: _cardCount((general: general, brand: brand), k),
         },
         allCount: allCount,
@@ -339,7 +339,33 @@ class _Entry {
 
   /// A miles programme (United MileagePlus): a points kind, labelled "Miles".
   final bool miles;
+
+  _Tab get tab => miles
+      ? _Tab.miles
+      : switch (kind) {
+          RewardKind.cash => _Tab.cash,
+          RewardKind.points => _Tab.points,
+          RewardKind.other => _Tab.other,
+        };
 }
+
+/// The filter tabs. Miles are a points kind to the engine, but they get their
+/// own tab: people collect airline miles apart from bank points.
+enum _Tab { cash, points, miles, other }
+
+String _tabLabel(_Tab t) => switch (t) {
+  _Tab.cash => 'Cash',
+  _Tab.points => 'Points',
+  _Tab.miles => 'Miles',
+  _Tab.other => 'Other',
+};
+
+IconData _tabIcon(_Tab t) => switch (t) {
+  _Tab.cash => LucideIcons.banknote,
+  _Tab.points => LucideIcons.coins,
+  _Tab.miles => LucideIcons.plane,
+  _Tab.other => LucideIcons.tag,
+};
 
 typedef _Entries = ({List<_Entry> general, List<_Entry> brand});
 
@@ -381,10 +407,10 @@ _Entries _entriesOf(RewardRankingResult result) => (
   ],
 );
 
-/// Distinct cards with a row of [kind] (any kind when null).
-int _cardCount(_Entries entries, RewardKind? kind) => {
+/// Distinct cards with a row in [tab] (any tab when null).
+int _cardCount(_Entries entries, _Tab? tab) => {
   for (final e in [...entries.general, ...entries.brand])
-    if (kind == null || e.kind == kind) e.cardId,
+    if (tab == null || e.tab == tab) e.cardId,
 }.length;
 
 class _KindFilter extends StatelessWidget {
@@ -394,9 +420,9 @@ class _KindFilter extends StatelessWidget {
     required this.onChanged,
   });
 
-  final RewardKind? selected;
-  final Map<RewardKind?, int> counts;
-  final ValueChanged<RewardKind?> onChanged;
+  final _Tab? selected;
+  final Map<_Tab?, int> counts;
+  final ValueChanged<_Tab?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +436,7 @@ class _KindFilter extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (final k in <RewardKind?>[null, ...RewardKind.values])
+          for (final k in <_Tab?>[null, ..._Tab.values])
             Expanded(
               child: GestureDetector(
                 onTap: () => onChanged(k),
@@ -428,7 +454,7 @@ class _KindFilter extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          k == null ? 'All' : _kindLabel(k),
+                          k == null ? 'All' : _tabLabel(k),
                           style:
                               AppText.bodyMd(
                                 color: selected == k
@@ -879,13 +905,13 @@ class _EmptyFilter extends StatelessWidget {
     required this.onShowAll,
   });
 
-  final RewardKind kind;
+  final _Tab kind;
 
   /// "at Joe's Diner" / "in Dining".
   final String where;
 
-  /// Card counts for the other kinds.
-  final Map<RewardKind, int> counts;
+  /// Card counts for the other tabs.
+  final Map<_Tab, int> counts;
   final int allCount;
   final VoidCallback onShowAll;
 
@@ -893,13 +919,14 @@ class _EmptyFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final what = switch (kind) {
-      RewardKind.cash => 'cash back',
-      RewardKind.points => 'points',
-      RewardKind.other => 'store money or special points',
+      _Tab.cash => 'cash back',
+      _Tab.points => 'points',
+      _Tab.miles => 'miles',
+      _Tab.other => 'store money or special points',
     };
     final parts = [
       for (final e in counts.entries)
-        if (e.value > 0) '${e.value} ${_kindLabel(e.key).toLowerCase()}',
+        if (e.value > 0) '${e.value} ${_tabLabel(e.key).toLowerCase()}',
     ];
     final elsewhere = parts.isEmpty
         ? ''
@@ -917,11 +944,11 @@ class _EmptyFilter extends StatelessWidget {
                 color: palette.secondary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(_kindIcon(kind), size: 24, color: palette.muted),
+              child: Icon(_tabIcon(kind), size: 24, color: palette.muted),
             ),
             const SizedBox(height: 16),
             Text(
-              'No “${_kindLabel(kind)}” rewards here',
+              'No “${_tabLabel(kind)}” rewards here',
               style: AppText.titleMd(),
               textAlign: TextAlign.center,
             ),
