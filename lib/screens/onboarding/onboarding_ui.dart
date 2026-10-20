@@ -91,8 +91,11 @@ extension SetupStepStyle on SetupStep {
 /// Cards · Notifications · Location · All the time. Each node fills with its
 /// step's colour when done and turns red when that step is what's missing.
 class SetupTracker extends StatelessWidget {
-  const SetupTracker({super.key, required this.states});
+  const SetupTracker({super.key, required this.states, this.onTap});
   final Map<SetupStep, TrackState> states;
+
+  /// Go back to a step to change it. Null: not tappable.
+  final ValueChanged<SetupStep>? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +107,11 @@ class SetupTracker extends StatelessWidget {
           for (final s in SetupStep.values) ...[
             if (s != SetupStep.cards) const SizedBox(width: 4),
             Expanded(
-              child: _TrackerStep(step: s, state: states[s] ?? TrackState.todo),
+              child: _TrackerStep(
+                step: s,
+                state: states[s] ?? TrackState.todo,
+                onTap: onTap == null ? null : () => onTap!(s),
+              ),
             ),
           ],
         ],
@@ -114,9 +121,10 @@ class SetupTracker extends StatelessWidget {
 }
 
 class _TrackerStep extends StatelessWidget {
-  const _TrackerStep({required this.step, required this.state});
+  const _TrackerStep({required this.step, required this.state, this.onTap});
   final SetupStep step;
   final TrackState state;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -133,35 +141,40 @@ class _TrackerStep extends StatelessWidget {
     };
     return Semantics(
       label: '${step.label}: ${state.name}',
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: fill,
-              shape: BoxShape.circle,
-              border: switch (state) {
-                TrackState.off => Border.all(color: Ob.red, width: 2),
-                TrackState.now => Border.all(color: step.color, width: 2),
-                _ => null,
-              },
-              boxShadow: state == TrackState.now
-                  ? const [BoxShadow(color: Ob.glowPrimary, blurRadius: 14)]
-                  : null,
+      button: onTap != null,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: fill,
+                shape: BoxShape.circle,
+                border: switch (state) {
+                  TrackState.off => Border.all(color: Ob.red, width: 2),
+                  TrackState.now => Border.all(color: step.color, width: 2),
+                  _ => null,
+                },
+                boxShadow: state == TrackState.now
+                    ? const [BoxShadow(color: Ob.glowPrimary, blurRadius: 14)]
+                    : null,
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 15, color: iconColor),
             ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 15, color: iconColor),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            step.label,
-            style: AppText.labelSm(color: label),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              step.label,
+              style: AppText.labelSm(color: label),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

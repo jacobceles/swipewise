@@ -88,6 +88,24 @@ FlowStep nextAlertStep(Perms p) {
   return FlowStep.done;
 }
 
+/// Where tapping [step] on the tracker goes, to change it. Nothing is asked
+/// with an empty wallet, so every step leads to cards until there is one;
+/// "All the time" needs location first (Android asks them in that order).
+FlowStep stepFor(SetupStep step, Perms p, bool hasCards) {
+  if (!hasCards) return FlowStep.cards;
+  FlowStep location() =>
+      p.locationBlocked ? FlowStep.locationBlocked : FlowStep.location;
+  return switch (step) {
+    SetupStep.cards => FlowStep.cardsAdded,
+    SetupStep.notifications =>
+      p.notificationsBlocked
+          ? FlowStep.notificationsBlocked
+          : FlowStep.notifications,
+    SetupStep.location => location(),
+    SetupStep.always => p.location ? FlowStep.always : location(),
+  };
+}
+
 /// The tracker for [step]: done steps in their colour, the current one
 /// ringed, and on "alerts off" the first missing step red.
 Map<SetupStep, TrackState> trackerFor(FlowStep step, Perms p, bool hasCards) {
@@ -293,6 +311,7 @@ class _SetupFlowState extends ConsumerState<SetupFlow>
     final picks = _Picks.from(tiles);
     final tracker = SetupTracker(
       states: trackerFor(_step, _perms, cards.isNotEmpty),
+      onTap: _busy ? null : (s) => _go(stepFor(s, _perms, cards.isNotEmpty)),
     );
     return PopScope(
       canPop: false,

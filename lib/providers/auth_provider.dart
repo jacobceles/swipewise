@@ -1,11 +1,13 @@
 import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sqflite/sqflite.dart';
 import '../api/account_delete_client.dart';
 import '../api/database_helper.dart';
+import '../util/logger.dart';
 import '../api/sophtron_auth_service.dart';
 
 class AuthState {
@@ -249,6 +251,23 @@ class AuthNotifier extends Notifier<AuthState> {
         await db.insert('users', {'id': firebaseUser.uid, ...values});
       }
       await checkStatus();
+    } on GoogleSignInException catch (e, st) {
+      // 2026-10-20, first sign-in after a data wipe: "unknownError, [28404]
+      // Failed to retrieve an ID token" after an account was picked, and the
+      // same account worked from Profile minutes later. Google's raw text
+      // means nothing to a user; keep it for us.
+      Log.w('auth', 'Google sign-in failed: ${e.code.name} ${e.description}');
+      // ignore: unawaited_futures
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'google_sign_in_failed',
+        fatal: false,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        error: "Google sign-in didn't finish. Please try again.",
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

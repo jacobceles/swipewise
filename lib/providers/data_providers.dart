@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'auth_provider.dart';
@@ -521,6 +522,20 @@ final cardCurrencyMapProvider = FutureProvider<Map<String, String>>((
 final catalogReadyProvider = FutureProvider<CatalogLoadResult>((ref) async {
   final auth = ref.watch(sessionProvider);
   if (!auth.isLoggedIn) return CatalogLoadResult.upToDate;
+  // A new install: let the intro paint first. Its first launch imports ~10k
+  // rows through the main isolate, and starting that while the launch gate
+  // was still reading the onboarding flag kept the blank launch screen up
+  // until the import finished: the intro appeared after 7.4 s instead of
+  // ~3 s (debug build, emulator, 2026-10-20). Onboarded users don't wait —
+  // the Advisor's snapshot cascades off this provider. Read, not watch:
+  // answering the welcome screen must not restart the import.
+  final onboarded = await ref
+      .read(onboardingSeenProvider.future)
+      .catchError((_) => true);
+  if (!onboarded) {
+    await SchedulerBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+  }
   final result = await CatalogLoader().hydrateIfNeeded(auth.userId!);
   // Bind the user's existing cards now so the engine has data on app open,
   // not only after the next sync. Idempotent; never downgrades a confirmed link.

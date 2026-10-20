@@ -76,6 +76,32 @@ void main() {
     });
   });
 
+  group('stepFor (tapping the tracker)', () {
+    test('each step opens its screen; a blocked one its Settings screen', () {
+      const p = Perms(notifications: true, location: true);
+      expect(stepFor(SetupStep.cards, p, true), FlowStep.cardsAdded);
+      expect(stepFor(SetupStep.notifications, p, true), FlowStep.notifications);
+      expect(stepFor(SetupStep.always, p, true), FlowStep.always);
+      expect(
+        stepFor(SetupStep.location, const Perms(locationBlocked: true), true),
+        FlowStep.locationBlocked,
+      );
+    });
+
+    test('all the time without location goes to location first', () {
+      expect(
+        stepFor(SetupStep.always, const Perms(notifications: true), true),
+        FlowStep.location,
+      );
+    });
+
+    test('no cards: every step leads to cards, nothing is asked', () {
+      for (final s in SetupStep.values) {
+        expect(stepFor(s, const Perms(), false), FlowStep.cards);
+      }
+    });
+  });
+
   test('card names as the design shows them', () {
     expect(shortCardName('Chase Freedom Flex® Credit Card'), 'Freedom Flex');
     expect(
@@ -237,6 +263,18 @@ void main() {
     await pump(tester, FlowStep.cards);
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('2 cards added'), findsOneWidget);
+  });
+
+  testWidgets('tapping a step on the tracker goes back to it', (tester) async {
+    await pump(
+      tester,
+      FlowStep.done,
+      perms: const Perms(notifications: true, location: true, always: true),
+    );
+    expect(find.text("You're set up"), findsOneWidget);
+    await tester.tap(find.text('Location'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Allow location'), findsWidgets);
   });
 
   testWidgets('Not now on cards asks nothing and says so', (tester) async {
