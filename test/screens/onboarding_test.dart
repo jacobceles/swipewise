@@ -229,6 +229,16 @@ void main() {
     expect(find.text('Allow location all the time'), findsOneWidget);
   });
 
+  testWidgets('a restored wallet moves "Add your cards" on by itself', (
+    tester,
+  ) async {
+    // The backup restore can land after setup opened at "Add your cards":
+    // someone who signed in must not be asked for cards they already have.
+    await pump(tester, FlowStep.cards);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('2 cards added'), findsOneWidget);
+  });
+
   testWidgets('Not now on cards asks nothing and says so', (tester) async {
     await pump(tester, FlowStep.cards, wallet: []);
     await tester.tap(find.text('Not now'));

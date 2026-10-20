@@ -281,6 +281,13 @@ class _SetupFlowState extends ConsumerState<SetupFlow>
   @override
   Widget build(BuildContext context) {
     final cards = ref.watch(cardsProvider).value ?? const <CardSummary>[];
+    // Cards arrived while "Add your cards" was up (a backup restore landing
+    // late): move on rather than ask for cards they already have.
+    if (_step == FlowStep.cards && cards.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _step == FlowStep.cards) _go(FlowStep.cardsAdded);
+      });
+    }
     final tiles =
         ref.watch(categoryTilesProvider).value ?? const <CategoryTileData>[];
     final picks = _Picks.from(tiles);

@@ -53,13 +53,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _askPermissionsOnce();
       _consumePendingMerchant();
       _topUpPaymentReminders();
       // Restore first: it refuses a wallet that already has cards, so a bank
       // sync landing first on a new phone would block the backup's manual
-      // cards and nicknames from coming back.
-      _maybeRestoreWallet().whenComplete(_syncBanksIfDue);
+      // cards and nicknames from coming back. And setup waits for it too: a
+      // signed-in user with a backup must land on "cards added", not be asked
+      // to add the cards they already have.
+      // At most 10 s: a slow network must not hold setup back, and a restore
+      // landing later still moves "Add your cards" on by itself.
+      () async {
+        await _awaitUserId();
+        if (!mounted) return;
+        final restore = _maybeRestoreWallet().catchError((Object _) {});
+        await restore.timeout(const Duration(seconds: 10), onTimeout: () {});
+        if (!mounted) return;
+        _askPermissionsOnce();
+        restore.whenComplete(() {
+          if (mounted) _syncBanksIfDue();
+        });
+      }();
     });
   }
 
