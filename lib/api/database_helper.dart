@@ -120,6 +120,18 @@ class DatabaseHelper {
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
+          onOpen: _onOpen,
+          // One connection per isolate, not sqflite's default shared one. Its
+          // single-instance map is process-wide (static in the Android
+          // plugin), so the UI engine and the background `ReregisterWorker`
+          // engine got the SAME native connection and ran their upgrades
+          // interleaved on it: v19→v20 hit "no current transaction" on
+          // COMMIT (2026-10-19), and v20→v21 wrote version 21 while one
+          // side's ROLLBACK undid the DROP (2026-10-20, owner's phone). With
+          // separate connections SQLite's own locking serialises them: one
+          // upgrades, the other waits (busy_timeout) and re-runs the guarded
+          // steps.
+          singleInstance: false,
           // Internal testers can side-load an older build over a newer DB. sqflite's
           // default onDowngrade throws (hard crash on open); delete-and-recreate is
           // safe here because every local table is re-derivable — the catalog
@@ -528,11 +540,19 @@ class DatabaseHelper {
 
   /// sqflite defaults `PRAGMA foreign_keys` OFF. Without this, every
   /// `FOREIGN KEY ... ON DELETE CASCADE` we declare is decorative.
+  /// Cleans up after an upgrade the shared-connection race half-undid (see
+  /// `singleInstance` in [_initDatabase]): v21 was recorded on the owner's
+  /// phone with `dwell_outcomes` still present. Idempotent and cheap.
+  Future<void> _onOpen(Database db) async {
+    await db.execute('DROP TABLE IF EXISTS dwell_outcomes');
+  }
+
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
     // Two isolates open this same file: the UI engine, and the background
     // engine `ReregisterWorker` spins up to re-register geofences. Each gets
-    // its own sqflite connection, so they genuinely contend. Without a busy
+    // its own connection (`singleInstance: false`), so they genuinely
+    // contend. Without a busy
     // timeout the loser fails its open-time `BEGIN EXCLUSIVE` the instant the
     // other holds the lock — SQLITE_BUSY out of `_initDatabase`, which is
     // fatal because it surfaces during `AuthNotifier.checkStatus` at startup.
