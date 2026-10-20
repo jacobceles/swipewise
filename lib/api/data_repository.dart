@@ -14,6 +14,7 @@ import 'sync_state_repository.dart';
 import 'transaction_repository.dart';
 import 'travel.dart';
 import 'types.dart';
+import '../util/logger.dart';
 
 /// Composition root. Holds long-lived instances of the per-concern
 /// repositories and exposes them as fields ([cards], [transactions],
@@ -144,10 +145,9 @@ class DataRepository {
   Future<bool> isAbroadAt(String userId, double lat, double lng) async {
     final home = await homeCountry(userId);
     if (home == null) return false;
-    return isForeignTravel(
-      home: home,
-      current: await countryForCoordinate(lat, lng),
-    );
+    final current = await countryForCoordinate(lat, lng);
+    Log.i('travel', 'home=$home current=$current');
+    return isForeignTravel(home: home, current: current);
   }
 
   Future<MerchantSummary?> queryMerchantSummary(

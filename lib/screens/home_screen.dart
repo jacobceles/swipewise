@@ -203,7 +203,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (state == AppLifecycleState.resumed) {
       _consumePendingMerchant();
       _syncBanksIfDue();
+      _recheckAbroad();
     }
+  }
+
+  /// "Abroad" was otherwise decided only at cold start and after a sync, so
+  /// crossing a border with the app open kept the home-country ranking.
+  /// Refreshes only on a change: invalidating rebuilds every recommendation.
+  Future<void> _recheckAbroad() async {
+    final auth = ref.read(sessionProvider);
+    final before = ref.read(travelIsForeignProvider).value;
+    if (!auth.isLoggedIn || before == null) return;
+    final now = await travelIsForeignNow(
+      ref.read(dataRepositoryProvider),
+      auth.userId!,
+    );
+    if (mounted && now != before) ref.invalidate(travelIsForeignProvider);
   }
 
   Future<void> _consumePendingMerchant() async {
