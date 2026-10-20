@@ -40,12 +40,16 @@ class LocationService {
   Future<LocationPermission> currentPermission() =>
       Geolocator.checkPermission();
 
-  Future<({double lat, double lng})> getOneShot() async {
+  /// [ask] false never shows Android's dialog: a missing grant throws
+  /// [LocationDenied]. Background registration and the Stores list pass
+  /// false; the first-run setup flow is where location is asked for, with
+  /// an explanation, and the Stores list's "Allow location" button after it.
+  Future<({double lat, double lng})> getOneShot({bool ask = true}) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw LocationServiceDisabled();
     }
     var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
+    if (perm == LocationPermission.denied && ask) {
       perm = await Geolocator.requestPermission();
     }
     if (perm == LocationPermission.deniedForever) {

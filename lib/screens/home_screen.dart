@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/data_repository.dart';
 import '../api/settings_repository.dart';
+import '../models/card.dart';
 import '../providers/entitlement_provider.dart';
 import '../nearby/geofence_channel.dart';
-import '../nearby/nearby_permission_gate.dart';
 import '../providers/auth_provider.dart';
 import '../providers/backup_provider.dart';
 import '../providers/bank_sync_provider.dart';
@@ -20,6 +20,7 @@ import '../theme/app_theme.dart';
 import '../util/logger.dart';
 import '../widgets/app_tab_bar.dart';
 import 'dashboard_screen.dart';
+import 'onboarding/setup_flow.dart';
 import 'cards_screen.dart';
 import 'advisor_screen.dart';
 import 'disambiguation_sheet.dart';
@@ -122,14 +123,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await ref.read(activationReminderControllerProvider).reschedule();
   }
 
-  /// Fires the four OS permission dialogs (notifications, activity
-  /// recognition, foreground location, background location) exactly once
-  /// per install - on first HomeScreen entry after login. Re-enabling
-  /// later requires the system Settings.
-  ///
-  /// Flips `permissionGateCompleteProvider` true on either exit path -
-  /// the Stores tab's nearby providers watch this and stay idle until
-  /// it's true so their Geolocator request doesn't race the gate.
   /// Waits for the device-local identity to land.
   ///
   /// `_askPermissionsOnce` runs from a post-frame callback on the first build,
@@ -155,6 +148,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  /// Opens the first-run setup flow when it's due, instead of asking for
+  /// permissions straight away:
+  ///  * a new user who just answered the welcome screen starts at "Add your
+  ///    cards" (or "Cards added" when a restored wallet already has some);
+  ///  * anyone never asked for alert permissions who has a card gets the
+  ///    alert steps once;
+  ///  * an empty wallet is asked nothing: alerts would have no card to name.
+  ///    Adding the first card later brings the alert steps up
+  ///    ([_offerAlertsAfterFirstCard]).
+  ///
+  /// `permissionGateCompleteProvider` stays false while the flow is up: the
+  /// Stores tab and geofence registration request location through
+  /// Geolocator, and overlapping requests null each other's dialogs.
   Future<void> _askPermissionsOnce() async {
     void markGateDone() {
       if (!mounted) return;
@@ -166,30 +172,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // tab spinning for the whole session — which is exactly what the old
     // `if (userId == null) return;` did whenever identity lost the race.
     final userId = await _awaitUserId();
+    if (!mounted || userId == null) {
+      markGateDone();
+      return;
+    }
+    final pending = ref.read(setupPendingProvider);
+    ref.read(setupPendingProvider.notifier).set(false);
+    final settings = SettingsRepository(ref.read(dataRepositoryProvider));
+    final asked = await settings.getPermissionsAsked(userId);
+    final cards = await ref
+        .read(cardsProvider.future)
+        .catchError((_) => const <CardSummary>[]);
     if (!mounted) {
       markGateDone();
       return;
     }
-    if (userId == null) {
-      // No identity at all: still release the gate rather than strand the tab.
-      // The nearby providers have their own `userId == null` guard.
-      markGateDone();
-      return;
+    if (pending) {
+      await _runSetup(
+        userId,
+        cards.isEmpty ? FlowStep.cards : FlowStep.cardsAdded,
+      );
+    } else if (!asked && cards.isNotEmpty) {
+      await _runSetup(userId, FlowStep.notifications);
     }
-    final repo = ref.read(dataRepositoryProvider);
-    final settings = SettingsRepository(repo);
-
-    if (await settings.getPermissionsAsked(userId)) {
-      markGateDone();
-      return;
-    }
-    if (!mounted) {
-      markGateDone();
-      return;
-    }
-    await NearbyPermissionGate.ensureAll(context);
-    await settings.setPermissionsAsked(userId);
     markGateDone();
+  }
+
+  bool _setupShowing = false;
+
+  Future<void> _runSetup(String userId, FlowStep start) async {
+    if (_setupShowing) return;
+    _setupShowing = true;
+    ref.read(permissionGateCompleteProvider.notifier).hold();
+    try {
+      final offered = await Navigator.of(context).push<bool>(
+        PageRouteBuilder(
+          pageBuilder: (_, _, _) => SetupFlow(start: start),
+          transitionsBuilder: (_, anim, _, child) =>
+              FadeTransition(opacity: anim, child: child),
+        ),
+      );
+      if (offered ?? false) {
+        await SettingsRepository(
+          ref.read(dataRepositoryProvider),
+        ).setPermissionsAsked(userId);
+      }
+    } finally {
+      _setupShowing = false;
+      if (mounted) {
+        ref.read(permissionGateCompleteProvider.notifier).markComplete();
+      }
+    }
+  }
+
+  /// The wallet's first card arrived (from the Cards tab, after skipping it in
+  /// setup): offer store alerts once, now that an alert has a card to name.
+  Future<void> _offerAlertsAfterFirstCard() async {
+    final userId = ref.read(authProvider).userId;
+    if (userId == null || _setupShowing || !mounted) return;
+    final settings = SettingsRepository(ref.read(dataRepositoryProvider));
+    if (await settings.getPermissionsAsked(userId)) return;
+    // The card lands while Add-a-Card is still on screen: wait until the
+    // user is back on Home rather than open over its "Done".
+    while (mounted && !(ModalRoute.of(context)?.isCurrent ?? true)) {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    if (!mounted || !ref.read(permissionGateCompleteProvider)) return;
+    await _runSetup(userId, FlowStep.notifications);
   }
 
   @override
@@ -380,6 +429,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(cardsProvider, (prev, next) {
+      final before = prev?.value?.length ?? 0;
+      final now = next.value?.length ?? 0;
+      if (before == 0 && now > 0 && prev?.hasValue == true) {
+        _offerAlertsAfterFirstCard();
+      }
+    });
     // Changing the preference in Profile should move the user to that tab, so
     // drop their manual pick and fall back to following the setting again.
     ref.listen<DefaultScreen>(defaultScreenProvider, (prev, next) {

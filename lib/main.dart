@@ -87,13 +87,13 @@ class SwipeWiseApp extends ConsumerWidget {
     // rebuild during boot - only changed inputs trigger a real run.
     //
     // Gated on `permissionGateCompleteProvider` so the geofence manager's
-    // internal `getOneShot()` (which calls Geolocator.requestPermission)
+    // internal `getOneShot()` (location reads, never asks: `ask: false`)
     // doesn't race the up-front permission gate on first launch and null
     // out its dialogs.
     final inputs = ref.watch(_nearbyBootstrapInputs);
     final gateDone = ref.watch(permissionGateCompleteProvider);
     final sig =
-        '${inputs.userId}|${inputs.enabled}|${inputs.radius}|${inputs.dwell.entries.map((e) => '${e.key}:${e.value}').join(',')}|${inputs.cardOrder.join(',')}|${inputs.placeTypeIds.join(',')}';
+        '${inputs.userId}|${inputs.enabled}|${inputs.radius}|${inputs.dwell.entries.map((e) => '${e.key}:${e.value}').join(',')}|${inputs.cardOrder.join(',')}|${inputs.placeTypeIds.join(',')}|${inputs.hasCards}';
     if (gateDone && inputs.userId != null && _lastBootstrapSig != sig) {
       _lastBootstrapSig = sig;
       _scheduleEnsureRegistered(() {
@@ -246,10 +246,14 @@ final _nearbyBootstrapInputs =
         Map<String, int> dwell,
         List<String> cardOrder,
         Set<String> placeTypeIds,
+        bool hasCards,
       })
     >((ref) {
       final auth = ref.watch(authProvider);
       return (
+        // The first card turns fences on (and the last one removed turns them
+        // off): GeofenceManager registers nothing for an empty wallet.
+        hasCards: ref.watch(cardsProvider).value?.isNotEmpty ?? false,
         userId: auth.userId,
         enabled: ref.watch(nearbyEnabledProvider),
         radius: ref.watch(nearbyRadiusProvider),

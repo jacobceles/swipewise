@@ -45,6 +45,7 @@ Future<void> _pumpCard(
 const _allOk = {
   AlertCheck.notifications: true,
   AlertCheck.location: true,
+  AlertCheck.activity: true,
   AlertCheck.battery: true,
   AlertCheck.alarms: true,
 };
@@ -77,7 +78,24 @@ void main() {
       expect(find.text('2 phone settings need a quick fix'), findsOneWidget);
       expect(find.text('Allow'), findsOneWidget);
       expect(find.text('Fix'), findsOneWidget);
-      expect(find.text('Battery and alarms are fine'), findsOneWidget);
+      expect(
+        find.text('Physical activity, battery and alarms are fine'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('physical activity has its own row, and alerts still arrive', (
+      tester,
+    ) async {
+      await _pumpCard(
+        tester,
+        nearbyOn: true,
+        checks: {..._allOk, AlertCheck.activity: false},
+      );
+      expect(find.text('Alerts may be late'), findsOneWidget);
+      expect(find.text('Physical activity'), findsOneWidget);
+      expect(find.text('Tells walking in from driving past'), findsOneWidget);
+      expect(find.text('Allow'), findsOneWidget);
     });
 
     testWidgets('paused: location alone is enough to stop alerts', (

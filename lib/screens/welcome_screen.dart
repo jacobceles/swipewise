@@ -34,12 +34,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     // so the signal that Google actually completed is the email landing.
     // A cancelled picker leaves it null and keeps the user on this screen.
     if (ref.read(authProvider).email != null) {
+      ref.read(setupPendingProvider.notifier).set(true);
       await ref.read(onboardingSeenProvider.notifier).markSeen();
     }
   }
 
-  Future<void> _skip() =>
-      ref.read(onboardingSeenProvider.notifier).markSeen();
+  /// Either answer hands over to the setup flow (cards, then alerts), which
+  /// Home opens once it's on screen.
+  Future<void> _skip() {
+    ref.read(setupPendingProvider.notifier).set(true);
+    return ref.read(onboardingSeenProvider.notifier).markSeen();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +81,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     Text('SwipeWise', style: AppText.displayLg()),
                     const SizedBox(height: 6),
                     Text(
-                      'Smart Credit Card Management',
+                      'Know which card to use, wherever you pay',
                       style: AppText.bodyMd(color: palette.muted),
                     ),
                   ],

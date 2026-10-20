@@ -4,177 +4,122 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../util/logger.dart';
 
-/// One-shot up-front gate that prompts for every permission the nearby
-/// stores feature needs. Fired exactly once per install - on the first
-/// paint of HomeScreen after login.
+/// Every OS permission store alerts need, asked one at a time.
 ///
-/// Order (intentional - see prompt-race notes below):
-///   1. Notifications        (POST_NOTIFICATIONS,    Android 13+)
-///   2. Activity recognition (ACTIVITY_RECOGNITION,  Android 10+)
-///   3. Foreground location  (ACCESS_FINE_LOCATION)  - via Geolocator
-///   4. Explainer dialog     - "we need always-allow to alert you near
-///      stores in the background"
-///   5. Background location  (ACCESS_BACKGROUND_LOCATION) - on Android
-///      11+ this deep-links into Settings → "Allow all the time".
+/// The first-run setup flow (`lib/screens/onboarding/setup_flow.dart`) calls
+/// these from its own screens, each of which explains the ask right before
+/// Android's dialog. They replaced `ensureAll`, which fired four OS dialogs
+/// back to back on the first Home paint with no explanation but one.
 ///
-/// **Why location is asked AFTER notifications + activity-recognition**:
-/// The rest of the app (Stores tab) uses `Geolocator` to request
-/// foreground location. If `permission_handler`'s bulk request runs in
-/// parallel with a Geolocator request, the OS silently nulls one of the
-/// two. We block the Stores tab via `permissionGateCompleteProvider`
-/// until the gate finishes, so by the time we get to step 3 there's no
-/// Geolocator competitor in flight.
-///
-/// **Why the explainer dialog**: background location is intrusive; on
-/// Android 11+ it punts to Settings. A short "here's why" gives the
-/// user a chance to opt in deliberately instead of being yanked into
-/// system Settings unannounced.
-class NearbyPermissionGate {
-  static Future<bool> ensureAll(BuildContext context) async {
-    // Step 1 + 2: Notifications + Activity Recognition. Bulk request via
-    // permission_handler - the only API on this plugin that reliably
-    // sequences multiple dialogs without back-to-back individual calls
-    // silently returning `denied`.
-    final nonLocation = [
-      Permission.notification,
-      Permission.activityRecognition,
-    ];
-    final beforeNonLoc = {for (final p in nonLocation) p: await p.status};
-    final nonLocResults = await nonLocation.request();
-    for (final p in nonLocation) {
-      Log.i(
-        'permissions',
-        '${_label(p)}: before=${beforeNonLoc[p]} → after=${nonLocResults[p]}',
-      );
-    }
+/// **Location is asked through Geolocator, never `permission_handler`.** The
+/// Stores tab requests foreground location through Geolocator too; if the two
+/// plugins' requests overlap, the OS silently nulls one of them. The setup flow
+/// holds `permissionGateCompleteProvider` while it is on screen, so the Stores
+/// tab and geofence registration stay idle until it is done.
+enum AskResult { granted, denied, blocked }
 
-    // Step 3: Foreground location via Geolocator (same plugin Stores tab
-    // uses → no two-plugin race once we get here).
-    final beforeLoc = await Geolocator.checkPermission();
-    final locResult = await Geolocator.requestPermission();
+class NearbyPermissionGate {
+  /// Notifications (POST_NOTIFICATIONS, Android 13+). [AskResult.blocked]
+  /// when Android won't show its dialog any more: Settings is the only way.
+  static Future<AskResult> askNotifications() async {
+    final before = await Permission.notification.status;
+    if (before.isGranted) return AskResult.granted;
+    if (before.isPermanentlyDenied) return AskResult.blocked;
+    final after = await Permission.notification.request();
+    Log.i('permissions', 'Notifications: before=$before → after=$after');
+    if (after.isGranted) return AskResult.granted;
+    return after.isPermanentlyDenied ? AskResult.blocked : AskResult.denied;
+  }
+
+  /// Foreground location ("While using the app").
+  static Future<AskResult> askLocation() async {
+    final before = await Geolocator.checkPermission();
+    if (_foreground(before)) return AskResult.granted;
+    if (before == LocationPermission.deniedForever) return AskResult.blocked;
+    final after = await Geolocator.requestPermission();
     Log.i(
       'permissions',
-      'Location (Geolocator): before=$beforeLoc → after=$locResult',
+      'Location (Geolocator): before=$before → after=$after',
     );
-
-    final fgGranted =
-        locResult == LocationPermission.always ||
-        locResult == LocationPermission.whileInUse;
-
-    // Only show the always-allow explainer if foreground was JUST granted
-    // (i.e., we actually prompted this run). If location was already
-    // whileInUse on entry - e.g., user logged out and back in as a new
-    // user, so `permissionsAsked` reset but OS-level grants persisted -
-    // the bulk requests above are silent no-ops and the explainer would
-    // otherwise pop up alone, which feels like a random nag.
-    final justPromptedFg =
-        beforeLoc == LocationPermission.denied ||
-        beforeLoc == LocationPermission.deniedForever ||
-        beforeLoc == LocationPermission.unableToDetermine;
-
-    // Step 4 + 5: Explainer dialog → background location.
-    // Only attempt if foreground was granted; without foreground the OS
-    // won't show the background prompt at all.
-    if (fgGranted &&
-        locResult != LocationPermission.always &&
-        justPromptedFg &&
-        context.mounted) {
-      final wantsAlways = await _showAlwaysAllowExplainer(context);
-      if (wantsAlways) {
-        final beforeBg = await Permission.locationAlways.status;
-        final afterBg = await Permission.locationAlways.request();
-        Log.i(
+    if (_foreground(after)) {
+      if (await Geolocator.getLocationAccuracy() ==
+          LocationAccuracyStatus.reduced) {
+        Log.w(
           'permissions',
-          'Background location: before=$beforeBg → after=$afterBg',
-        );
-      } else {
-        Log.i(
-          'permissions',
-          'user declined Always-Allow explainer; skipping background',
+          'location granted as Approximate (reduced accuracy); '
+              'geofencing needs Precise',
         );
       }
-    } else if (!fgGranted) {
-      Log.i(
-        'permissions',
-        'skipping Background location - foreground not granted',
-      );
-    } else if (!justPromptedFg) {
-      Log.i(
-        'permissions',
-        'skipping Always-Allow explainer - foreground was already granted on entry',
-      );
+      return AskResult.granted;
     }
-
-    // Re-read for the final evaluation. Some OEMs flap status briefly
-    // after a dialog dismiss; a fresh check is the only reliable signal.
-    final statuses = <Permission, PermissionStatus>{
-      Permission.notification: await Permission.notification.status,
-      Permission.activityRecognition:
-          await Permission.activityRecognition.status,
-      Permission.locationWhenInUse: await Permission.locationWhenInUse.status,
-      Permission.locationAlways: await Permission.locationAlways.status,
-    };
-
-    // Android 12+ (API 31+) lets the user grant "Approximate" location instead
-    // of "Precise". Geolocator still reports whileInUse/always for an
-    // approximate grant, so it sails past the isGranted checks below — but
-    // geofences built on coarse (~1-3 km) fixes misfire. When location is
-    // granted but only approximately, treat it as not-fully-granted for the
-    // geofencing gate so the user is nudged to switch to Precise.
-    final locationGranted =
-        statuses[Permission.locationWhenInUse]?.isGranted ?? false;
-    final approximateOnly =
-        locationGranted &&
-        (await Geolocator.getLocationAccuracy()) ==
-            LocationAccuracyStatus.reduced;
-    if (approximateOnly) {
-      Log.w(
-        'permissions',
-        'location granted as Approximate (reduced accuracy); '
-            'geofencing needs Precise',
-      );
-    }
-
-    if (!approximateOnly && statuses.values.every((s) => s.isGranted)) {
-      return true;
-    }
-
-    final permanent = <String>[];
-    final denied = <String>[];
-    statuses.forEach((perm, status) {
-      if (status.isGranted) return;
-      final label = _label(perm);
-      if (status.isPermanentlyDenied || status.isRestricted) {
-        permanent.add(label);
-      } else {
-        denied.add(label);
-      }
-    });
-    // Approximate-only location is granted-but-degraded: surface it alongside
-    // any outright-denied permissions so the same Settings nudge covers it.
-    if (approximateOnly) {
-      denied.add('Precise location');
-    }
-
-    if (!context.mounted) return false;
-
-    // Say why each one is needed, not just that it's missing: physical
-    // activity in particular reads as creepy without a reason.
-    final why = [
-      for (final l in [...permanent, ...denied]) _why[l]!,
-    ].join(' ');
-    if (permanent.isNotEmpty) {
-      _showSettingsSnack(context, '$why Turn it on in Settings.');
-    } else if (denied.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 8),
-          content: Text('$why You can allow it later in Profile.'),
-        ),
-      );
-    }
-    return false;
+    return after == LocationPermission.deniedForever
+        ? AskResult.blocked
+        : AskResult.denied;
   }
+
+  /// Background location ("Allow all the time"). On Android 11+ this opens
+  /// the app's location page in Settings. The caller must have shown the
+  /// prominent disclosure ([disclosureTitle] and the two paragraphs) on screen
+  /// first, with an affirmative tap on it; the setup flow's screen is that
+  /// disclosure, and [requestBackgroundLocation] shows it as a dialog.
+  static Future<bool> askLocationAlways() async {
+    final before = await Permission.locationAlways.status;
+    if (before.isGranted) return true;
+    final after = await Permission.locationAlways.request();
+    Log.i('permissions', 'Background location: before=$before → after=$after');
+    return after.isGranted;
+  }
+
+  /// Physical activity: tells driving from walking, so a store passed in the
+  /// car doesn't alert.
+  static Future<bool> askActivity() async {
+    final before = await Permission.activityRecognition.status;
+    if (before.isGranted) return true;
+    if (before.isPermanentlyDenied) {
+      await openAppSettings();
+      return (await Permission.activityRecognition.status).isGranted;
+    }
+    final after = await Permission.activityRecognition.request();
+    Log.i('permissions', 'Physical activity: before=$before → after=$after');
+    return after.isGranted;
+  }
+
+  static Future<bool> askExactAlarms() async {
+    final after = await Permission.scheduleExactAlarm.request();
+    Log.i('permissions', 'Exact alarms → $after');
+    return after.isGranted;
+  }
+
+  static Future<bool> askBattery() async {
+    final after = await Permission.ignoreBatteryOptimizations.request();
+    Log.i('permissions', 'Ignore battery optimizations → $after');
+    return after.isGranted;
+  }
+
+  static bool _foreground(LocationPermission p) =>
+      p == LocationPermission.always || p == LocationPermission.whileInUse;
+
+  /// Play's prominent disclosure for background location, worded once and
+  /// shown on every path that asks for it: the setup flow's "All the time"
+  /// screen and its blocked variant, and [requestBackgroundLocation]'s dialog.
+  ///
+  /// Google's Location Permissions policy sets the shape: it has to name the
+  /// data ("location"), say it is collected in the background ("even when the
+  /// app is closed or not in use"), say what the feature is, sit outside the
+  /// privacy policy, and require an affirmative tap. Rejections on this policy
+  /// are common and cost a review cycle each, so keep it close to Google's own
+  /// phrasing. The Google Places clause is not padding: location does leave the
+  /// device, and the disclosure has to match the hosted privacy policy; change
+  /// both together.
+  static const disclosureTitle =
+      'SwipeWise uses your location in the background';
+  static const disclosureCollect =
+      'SwipeWise collects location data in the background to send you store '
+      'alerts — even when the app is closed or not in use.';
+  static const disclosureUse =
+      "Your location is used only to find the store you're in: an "
+      'approximate location is sent to Google Places to look up stores near '
+      'you. SwipeWise does not keep a location history.';
 
   /// Requests the two background-reliability grants, skipping any already
   /// held:
@@ -262,22 +207,11 @@ class NearbyPermissionGate {
     return after.isGranted;
   }
 
-  /// Play's **prominent disclosure** for background location. Must be shown
-  /// before *every* path that asks for it, which is why both [ensureAll] and
-  /// [requestBackgroundLocation] route through here.
-  ///
-  /// Google's Location Permissions policy sets the shape, not our taste:
-  /// it has to name the data ("location"), say it is collected in the
-  /// background ("even when the app is closed or not in use"), say what the
-  /// feature is, sit outside the privacy policy, and require an affirmative
-  /// tap. Hence `barrierDismissible: false` and two explicit buttons — a
-  /// dialog the user can swipe away doesn't count as consent. Rejections on
-  /// this policy are common and cost a review cycle each, so keep the wording
-  /// close to Google's own phrasing when editing.
-  ///
-  /// The third paragraph is not padding: the disclosure has to be *accurate*,
-  /// and location does leave the device — a coarse fix goes to Google Places.
-  /// It must match the hosted privacy policy; change both together.
+  /// [disclosureTitle]'s wording as a dialog, for the paths that ask from
+  /// outside the setup flow (the Stores banner, Profile's Fix). The policy
+  /// requires an affirmative tap, hence `barrierDismissible: false` and two
+  /// explicit buttons: a dialog the user can swipe away doesn't count as
+  /// consent.
   ///
   /// `true` = user opted in (we then trigger the OS flow, which on this
   /// minSdk deep-links to the per-app Location settings page); `false` = user
@@ -290,13 +224,7 @@ class NearbyPermissionGate {
         title: const Text('Allow location all the time?'),
         content: const SingleChildScrollView(
           child: Text(
-            'SwipeWise collects location data to alert you when you arrive '
-            'at a store where one of your cards earns extra rewards — even '
-            'when the app is closed or not in use.\n\n'
-            'Your phone watches for those stores itself. To find stores '
-            'near you, an approximate location is sent to Google Places — '
-            'nowhere else. SwipeWise keeps no history of where you have '
-            'been.\n\n'
+            '$disclosureCollect\n\n$disclosureUse\n\n'
             "Without this the app still works; you'll just miss the alerts.",
           ),
         ),
@@ -313,39 +241,5 @@ class NearbyPermissionGate {
       ),
     );
     return result ?? false;
-  }
-
-  static void _showSettingsSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 6),
-        content: Text(message),
-        action: SnackBarAction(
-          label: 'OPEN SETTINGS',
-          onPressed: openAppSettings,
-        ),
-      ),
-    );
-  }
-
-  /// Why store alerts need each permission, keyed by [_label].
-  static const _why = {
-    'Notifications': 'Notifications are how a store alert reaches you.',
-    'Physical activity':
-        'Physical activity tells driving from walking or standing still, so '
-        "alerts come when you're shopping, not when you drive past a store.",
-    'Location': 'Location finds the stores around you.',
-    'Location all the time':
-        '"Allow all the time" lets alerts work when the app is closed.',
-    'Precise location': 'Precise location tells stores next door apart.',
-  };
-
-  static String _label(Permission p) {
-    if (p == Permission.notification) return 'Notifications';
-    // Android's own names, so they match what the user sees in Settings.
-    if (p == Permission.activityRecognition) return 'Physical activity';
-    if (p == Permission.locationWhenInUse) return 'Location';
-    if (p == Permission.locationAlways) return 'Location all the time';
-    return p.toString();
   }
 }

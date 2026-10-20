@@ -141,8 +141,17 @@ class GeofenceManager {
       await _trace('trigger=$trigger disabled -> unregistered all');
       return true;
     }
+    // An empty wallet gets no fences: an alert would have no card to name
+    // ("Open SwipeWise to see the best card here", then nothing useful). And
+    // no location is asked for on its behalf: the check runs before
+    // getOneShot.
+    if ((await repo.queryAllCards(userId)).isEmpty) {
+      await GeofenceChannel.unregisterAll();
+      await _trace('trigger=$trigger no cards -> unregistered all');
+      return true;
+    }
     try {
-      final fix = await location.getOneShot();
+      final fix = await location.getOneShot(ask: false);
       var area = await cache.read(lat: fix.lat, lng: fix.lng);
       var source = 'cache';
       if (area == null) {
@@ -237,6 +246,12 @@ class GeofenceManager {
       await _recordSuccessfulRegistration(userId, fix.lat, fix.lng);
       return true;
     } catch (e, st) {
+      if (e is LocationDenied) {
+        // Not a failure to retry: nothing can be fenced until the user allows
+        // location (in setup, or from Stores / Profile).
+        await _trace('trigger=$trigger no location permission -> skipped');
+        return true;
+      }
       if (e is PlatformException && e.code == _kGmsUnavailable) {
         // Play services missing/disabled: not a transient register failure —
         // the GeofencingClient can never register. Fire the existing degraded

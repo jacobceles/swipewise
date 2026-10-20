@@ -94,7 +94,10 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
       data: (p) => isAtLeastWhileInUse(p) && !isAlwaysAllowed(p),
       orElse: () => false,
     );
+    // No cards, no alerts to make reliable (and nothing asked yet).
+    final hasCards = ref.watch(cardsProvider).value?.isNotEmpty ?? false;
     final needsReliabilityBanner =
+        hasCards &&
         !needsBgBanner &&
         ref
             .watch(reliabilityGrantsProvider)
@@ -121,7 +124,15 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
     // where `nearbyMerchantsProvider` already settled to `[]` from the
     // pre-gate run and stays on the empty-state card until they pull to
     // refresh.
-    final merchants = async.hasValue ? async.requireValue : null;
+    // A location problem outranks any earlier (pre-gate) empty list the
+    // error still carries.
+    final locationError =
+        async.hasError &&
+        (async.error is LocationDenied ||
+            async.error is LocationServiceDisabled);
+    final merchants = async.hasValue && !locationError
+        ? async.requireValue
+        : null;
     final showLoader =
         !gateDone ||
         (async.isLoading && (merchants == null || merchants.isEmpty));
@@ -132,6 +143,15 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
       );
     }
     if (merchants != null) {
+      if (merchants.isEmpty && ref.read(cardsProvider).value?.isEmpty == true) {
+        return const _StateCard(
+          icon: LucideIcons.walletCards,
+          title: 'Add a card to see stores',
+          subtitle:
+              'Stores near you are ranked by the cards you own. Add one from '
+              'the Cards tab.',
+        );
+      }
       if (merchants.isEmpty) {
         return const _StateCard(
           icon: LucideIcons.mapPinOff,
@@ -158,6 +178,12 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
         icon: _iconForError(e),
         title: _titleForError(e),
         subtitle: _subtitleForError(e),
+        // The list never asks on its own (setup does, with an explanation);
+        // here the user asks for it.
+        action: e is LocationDenied
+            ? (e.permanent ? 'Open settings' : 'Allow location')
+            : null,
+        onAction: e is LocationDenied ? () => _allowLocation(e) : null,
       );
     }
     return const Padding(
@@ -178,6 +204,16 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
       final resolved = (m.resolvedLabel ?? '').toLowerCase();
       return name.contains(q) || label.contains(q) || resolved.contains(q);
     }).toList();
+  }
+
+  Future<void> _allowLocation(LocationDenied e) async {
+    if (e.permanent) {
+      await openAppLocationSettings();
+    } else {
+      await NearbyPermissionGate.askLocation();
+    }
+    ref.invalidate(locationPermissionProvider);
+    ref.invalidate(nearbyMerchantsProvider);
   }
 
   IconData _iconForError(Object e) {
@@ -520,10 +556,14 @@ class _StateCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.action,
+    this.onAction,
   });
   final IconData icon;
   final String title;
   final String subtitle;
+  final String? action;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -556,6 +596,10 @@ class _StateCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppText.bodySm(),
             ),
+          ],
+          if (action != null) ...[
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: onAction, child: Text(action!)),
           ],
         ],
       ),

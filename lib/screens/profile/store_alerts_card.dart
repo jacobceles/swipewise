@@ -171,11 +171,14 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
   }
 
   static bool _allows(AlertCheck c) =>
-      c == AlertCheck.notifications || c == AlertCheck.alarms;
+      c == AlertCheck.notifications ||
+      c == AlertCheck.activity ||
+      c == AlertCheck.alarms;
 
   static String _hint(AlertCheck c) => switch (c) {
     AlertCheck.notifications => 'Needed to show an alert',
     AlertCheck.location => '“Allow all the time”, so alerts work when the app is closed',
+    AlertCheck.activity => 'Tells walking in from driving past',
     AlertCheck.battery => '“Unrestricted”, so Android doesn’t pause alerts',
     AlertCheck.alarms => 'Times the alert for about a minute after you walk in',
   };
@@ -184,6 +187,7 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
 String checkLabel(AlertCheck c) => switch (c) {
   AlertCheck.notifications => 'Notifications',
   AlertCheck.location => 'Location',
+  AlertCheck.activity => 'Physical activity',
   AlertCheck.battery => 'Battery',
   AlertCheck.alarms => 'Alarms',
 };
@@ -226,6 +230,8 @@ Future<void> fixAlertCheck(BuildContext context, AlertCheck check) async {
       if (context.mounted) {
         await NearbyPermissionGate.requestBackgroundLocation(context);
       }
+    case AlertCheck.activity:
+      await NearbyPermissionGate.askActivity();
     case AlertCheck.battery:
       await Permission.ignoreBatteryOptimizations.request();
     case AlertCheck.alarms:

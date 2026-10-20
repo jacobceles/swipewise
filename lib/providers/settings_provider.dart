@@ -244,6 +244,13 @@ class PermissionGateCompleteNotifier extends Notifier<bool> {
   void markComplete() {
     if (!state) state = true;
   }
+
+  /// Back to "asking" while the setup flow's permission screens are up (the
+  /// first card can arrive after the gate was released), so the Stores tab
+  /// and geofence registration don't request location under them.
+  void hold() {
+    if (state) state = false;
+  }
 }
 
 final permissionGateCompleteProvider =
@@ -251,11 +258,25 @@ final permissionGateCompleteProvider =
       PermissionGateCompleteNotifier.new,
     );
 
+/// Set by the welcome screen when a new user answers it: Home then opens the
+/// setup flow at "Add your cards". In memory only. If the app dies mid-setup,
+/// the next launch has no pending flag; Home then asks for alert permissions
+/// once there is a card, which is where the flow would have gone anyway.
+class SetupPendingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool value) => state = value;
+}
+
+final setupPendingProvider = NotifierProvider<SetupPendingNotifier, bool>(
+  SetupPendingNotifier.new,
+);
+
 /// Whether the first-run welcome screen has already been answered.
 ///
 /// `/` renders the welcome screen until this is true, which puts the
-/// sign-in-or-skip choice ahead of everything else — including the four OS
-/// permission dialogs, which only fire once `HomeScreen` builds.
+/// sign-in-or-skip choice ahead of everything else — including the setup
+/// flow and its permission asks, which only start once `HomeScreen` builds.
 class OnboardingSeenNotifier extends AsyncNotifier<bool> {
   /// Sticky for the life of the provider. Signing in re-keys `users.id` from
   /// the local UUID to the Firebase UID, which changes the value watched

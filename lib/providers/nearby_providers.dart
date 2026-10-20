@@ -89,10 +89,12 @@ final reliabilityGrantsProvider = FutureProvider<bool>((ref) async {
   return alarm.isGranted && battery.isGranted;
 });
 
-/// The four phone settings that decide whether a store alert can arrive at
-/// all. Shown together on Profile so "why didn't I get an alert?" has one
+/// The phone settings that decide whether, and how well, a store alert
+/// arrives. Shown together on Profile so "why didn't I get an alert?" has one
 /// answer, instead of banners scattered across Stores and a sub-page.
-enum AlertCheck { notifications, location, battery, alarms }
+/// Physical activity is the one without which alerts still arrive, but also
+/// from the car: it tells driving past from walking in.
+enum AlertCheck { notifications, location, activity, battery, alarms }
 
 /// Granted state of each [AlertCheck]. Re-fetched on demand (Profile
 /// invalidates it when the app resumes from system settings).
@@ -101,6 +103,8 @@ final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
     AlertCheck.notifications: (await Permission.notification.status).isGranted,
     // "All the time": geofence transitions only reach the app with it.
     AlertCheck.location: (await Permission.locationAlways.status).isGranted,
+    AlertCheck.activity:
+        (await Permission.activityRecognition.status).isGranted,
     AlertCheck.battery:
         (await Permission.ignoreBatteryOptimizations.status).isGranted,
     AlertCheck.alarms: (await Permission.scheduleExactAlarm.status).isGranted,
@@ -109,6 +113,14 @@ final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
 
 /// Foreground discovery: one-shot location → tile cache → Google Places on miss
 /// → enrich with the user's best card per resolved category.
+/// No automatic retry while location is off or not allowed: it can't fix
+/// itself, and each retry re-reads permission every few seconds behind a
+/// spinner. The Stores view shows its "Allow location" card instead.
+Duration? _retryUnlessLocationOff(int count, Object error) =>
+    error is LocationDenied || error is LocationServiceDisabled
+    ? null
+    : ProviderContainer.defaultRetry(count, error);
+
 final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
   ref,
 ) async {
@@ -123,6 +135,10 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
   // the Stores tab's Geolocator request races permission_handler's bulk
   // request inside the gate and silently nullifies the other dialogs.
   if (!ref.watch(permissionGateCompleteProvider)) return const [];
+  // No cards, nothing to rank, and no location asked for on its behalf: the
+  // first-run promise to someone who skipped adding cards is that nothing
+  // has been asked yet. The Stores view says to add a card instead.
+  if ((await ref.watch(cardsProvider.future)).isEmpty) return const [];
 
   final radiusMi = ref.watch(nearbyRadiusProvider);
   final categoryIds = ref.watch(nearbyPlaceTypesProvider);
@@ -130,7 +146,7 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
     // ignore: avoid_print
     print('[nearby] requesting one-shot location…');
   }
-  final fix = await ref.read(locationServiceProvider).getOneShot();
+  final fix = await ref.read(locationServiceProvider).getOneShot(ask: false);
   if (kDebugMode) {
     // ignore: avoid_print
     print('[nearby] got fix lat=${fix.lat}, lng=${fix.lng}');
@@ -227,7 +243,7 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
       matchedBrand: brandHit?.brand,
     );
   }).toList();
-});
+}, retry: _retryUnlessLocationOff);
 
 /// Resolves the merchant name to a canonical `brand_id` via [BrandResolver]
 /// (whole-token, longest-match) and returns the user's best card for that

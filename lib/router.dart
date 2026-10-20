@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding/intro_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/add_bank_v2_screen.dart';
 import 'screens/add_cards_screen.dart';
@@ -60,9 +61,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 ///
 /// Done as a widget rather than a `redirect` because the answer comes out of
 /// SQLite: a redirect would have to let `/` build first and then bounce, which
-/// flashes the app — and worse, `HomeScreen` fires the four OS permission
-/// dialogs from its first post-frame callback, so the flash would put system
-/// prompts on screen *before* the user had chosen anything.
+/// flashes the app — and worse, `HomeScreen` opens the setup flow from its
+/// first post-frame callback, so the flash would start it *before* the user
+/// had chosen anything.
 class _LaunchGate extends ConsumerWidget {
   const _LaunchGate();
 
@@ -71,7 +72,7 @@ class _LaunchGate extends ConsumerWidget {
     return ref
         .watch(onboardingSeenProvider)
         .when(
-          data: (seen) => seen ? const HomeScreen() : const WelcomeScreen(),
+          data: (seen) => seen ? const HomeScreen() : const _FirstRun(),
           loading: () => const _Splash(),
           // Not the welcome screen: an unreadable database (a lost startup
           // race, 2026-10-19) is not a new user, and "Sign in, or skip" to a
@@ -80,6 +81,30 @@ class _LaunchGate extends ConsumerWidget {
             onRetry: () => ref.invalidate(onboardingSeenProvider),
           ),
         );
+  }
+}
+
+/// A new install: what SwipeWise does (no asks), then sign in or skip. The
+/// rest of setup (cards, alerts) runs from Home, because answering the welcome
+/// screen re-keys the user on sign-in and rebuilds this gate.
+class _FirstRun extends StatefulWidget {
+  const _FirstRun();
+
+  @override
+  State<_FirstRun> createState() => _FirstRunState();
+}
+
+class _FirstRunState extends State<_FirstRun> {
+  bool _started = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      child: _started
+          ? const WelcomeScreen()
+          : IntroScreen(onStart: () => setState(() => _started = true)),
+    );
   }
 }
 

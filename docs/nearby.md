@@ -60,11 +60,23 @@ place-roots search, so nearby detection doesn't route to them (a known follow-up
 [`location_service.dart`](../lib/nearby/location_service.dart) `getOneShot()` returns
 `(lat, lng)` via Geolocator (medium accuracy, 10s timeout).
 
-[`nearby_permission_gate.dart`](../lib/nearby/nearby_permission_gate.dart) runs an up-front
-gate once per install, in a deliberate order (avoids a dialog race): notifications →
-activity recognition → foreground location → explainer → background location (deep-links to
-Settings on Android 11+). The OS won't grant background without foreground first.
-`permissionGateCompleteProvider` blocks the Stores tab until the gate finishes.
+**Permissions are asked in the first-run setup flow**
+([`setup_flow.dart`](../lib/screens/onboarding/setup_flow.dart), design "Onboarding v4 — hybrid"
+in `wireframe.pen`): after sign-in or skip, Home opens it at "Add your cards"; then one screen per
+ask, each explaining it right before Android's dialog — notifications → location (while using)
+→ location all the time (the screen is Play's prominent disclosure) → a summary with physical
+activity, exact alarms and battery as optional switches. Denying stops at an honest "Store alerts
+are off" naming the missing step; a permission Android won't ask for again gets a Settings screen,
+re-checked on return. The asks themselves are per-step methods on
+[`NearbyPermissionGate`](../lib/nearby/nearby_permission_gate.dart) (location through Geolocator,
+never `permission_handler`, so it can't race the Stores tab's own Geolocator calls).
+
+**An empty wallet is asked nothing and fenced nothing.** Skipping cards ends setup with no
+dialog shown; the alert steps run once when the first card arrives (Home listens for it and waits
+until Add-a-Card has closed). `GeofenceManager` registers no fences for an empty wallet, and
+neither registration nor the Stores list ever *requests* location (`getOneShot(ask: false)`): the
+Stores list shows "Add a card to see stores" or an "Allow location" card with a button instead.
+`permissionGateCompleteProvider` is held false while the flow is on screen.
 
 Two background-reliability grants — **exact alarms** (SCHEDULE_EXACT_ALARM, denied by
 default on Android 14+; powers the app-side dwell timers) and **ignore battery

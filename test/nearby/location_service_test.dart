@@ -11,7 +11,14 @@ import 'package:swipewise/nearby/location_service.dart';
 /// token and so passes `GeolocatorPlatform.instance`'s verification without
 /// any mock mixin.
 class _FakeGeolocator extends GeolocatorPlatform {
-  _FakeGeolocator({required this.onGetCurrent, this.lastKnown});
+  _FakeGeolocator({
+    required this.onGetCurrent,
+    this.lastKnown,
+    this.permission = LocationPermission.always,
+  });
+
+  final LocationPermission permission;
+  int requestCalls = 0;
 
   /// Called for every getCurrentPosition; branch on `accuracy` to distinguish
   /// the first medium attempt from the high-accuracy retry.
@@ -25,12 +32,13 @@ class _FakeGeolocator extends GeolocatorPlatform {
   Future<bool> isLocationServiceEnabled() async => true;
 
   @override
-  Future<LocationPermission> checkPermission() async =>
-      LocationPermission.always;
+  Future<LocationPermission> checkPermission() async => permission;
 
   @override
-  Future<LocationPermission> requestPermission() async =>
-      LocationPermission.always;
+  Future<LocationPermission> requestPermission() async {
+    requestCalls++;
+    return LocationPermission.always;
+  }
 
   @override
   Future<Position?> getLastKnownPosition({
@@ -126,6 +134,27 @@ void main() {
     expect(fix.lng, 8);
     expect(fake.currentCalls, 2);
     expect(fake.requestedAccuracies.last, LocationAccuracy.high);
+  });
+
+  // Background registration and the Stores list pass ask: false — location is
+  // asked for in the setup flow, with an explanation, never by a side effect
+  // (2026-10-20: adding the first card popped Android's dialog over
+  // Add-a-Card).
+  test('ask: false never shows the dialog, it throws instead', () async {
+    final fake = _FakeGeolocator(
+      permission: LocationPermission.denied,
+      onGetCurrent: (_) async => _pos(timestamp: DateTime.now()),
+    );
+    GeolocatorPlatform.instance = fake;
+
+    await expectLater(
+      LocationService().getOneShot(ask: false),
+      throwsA(isA<LocationDenied>()),
+    );
+    expect(fake.requestCalls, 0);
+
+    await LocationService().getOneShot();
+    expect(fake.requestCalls, 1);
   });
 
   test('timeout + STALE last-known + retry also fails → throws', () async {
