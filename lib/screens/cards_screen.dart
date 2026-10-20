@@ -222,8 +222,9 @@ class _Body extends ConsumerWidget {
       if (key == manualKey) return 'Manual';
       if (isManualGroup(groupCards)) {
         final cardProvider = groupCards.first.provider;
+        // `provider` is the catalog's issuer key ("Capitalone", "Amex").
         final issuer = (cardProvider != null && cardProvider.isNotEmpty)
-            ? cardProvider
+            ? issuerDisplayName(cardProvider)
             : 'Manual';
         return '$issuer (Manual)';
       }
