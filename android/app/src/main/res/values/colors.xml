@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- The app's dark background (AppColors.background). Splash, window and
+         the first Flutter frame all use it, so launch reads as one screen. -->
+    <color name="splash_background">#111111</color>
 </resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ splash icon: the card logo, inset so the system's circular
+     mask (2/3 of the icon area) never crops its corners. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/launch_image"
+    android:inset="22%" />

@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/intro_screen.dart';
@@ -149,32 +148,14 @@ class _LaunchError extends StatelessWidget {
 
 /// Held for the few milliseconds it takes to read the onboarding flag.
 ///
-/// Deliberately the welcome screen's own hero, so the first frame the user
-/// sees is already in place and neither branch arrives as a jump cut.
+/// Deliberately empty: Android's own launch screen (the card logo on this same
+/// dark background, `res/values-v31/styles.xml`) has just been on screen, and a
+/// second, different logo here read as two splash screens (2026-10-20).
 class _Splash extends StatelessWidget {
   const _Splash();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: SizedBox(
-          width: 88,
-          height: 88,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.creditCard,
-              size: 38,
-              color: AppColors.onPrimary,
-            ),
-          ),
-        ),
-      ),
-    );
+    return const Scaffold(backgroundColor: AppColors.background);
   }
 }
