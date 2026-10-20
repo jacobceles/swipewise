@@ -27,10 +27,10 @@ final walletBackupRepositoryProvider = Provider<WalletBackupRepository>(
 /// Except one case, so two phones (or the Play and dev builds) on one account
 /// agree: a phone that has *never* set the switch, signed in to an account
 /// that already has a backup, starts with it ON. That backup is the user's
-/// earlier "yes" on another phone. Turning it on uploads nothing — uploads
-/// happen only on "Back up now" or switching it on by hand, which still asks
-/// before replacing cards this phone lacks. A phone where the user chose OFF
-/// stays off.
+/// earlier "yes" on another phone. Turning it on uploads nothing by itself,
+/// and automatic backup stops rather than replace cards this phone lacks
+/// ([WalletBackupController.maybeAutoBackup]). A phone where the user chose
+/// OFF stays off.
 class BackupEnabledNotifier extends Notifier<bool> {
   @override
   bool build() {
@@ -99,6 +99,8 @@ final backupAvailableProvider = Provider<bool>((ref) {
 
 enum RestoreOutcome { restored, nothingToRestore, unavailable, failed }
 
+enum AutoBackupOutcome { off, unchanged, uploaded, held, failed }
+
 /// What the service already holds, so the UI can warn before overwriting it.
 class RemoteBackupInfo {
   const RemoteBackupInfo({
@@ -138,15 +140,15 @@ class WalletBackupController {
     final userId = _userId;
     final result = await _ref.read(walletBackupClientProvider).pull();
     final snapshot = result.snapshot;
-    if (result.status != BackupStatus.ok || snapshot == null || userId == null) {
+    if (result.status != BackupStatus.ok ||
+        snapshot == null ||
+        userId == null) {
       return const RemoteBackupInfo(exists: false);
     }
     final here = await _ref
         .read(walletBackupRepositoryProvider)
         .localCardIds(userId);
-    final missing = snapshot.cards
-        .where((c) => !here.contains(c['id']))
-        .length;
+    final missing = snapshot.cards.where((c) => !here.contains(c['id'])).length;
     return RemoteBackupInfo(
       exists: true,
       capturedAt: snapshot.capturedAt,
@@ -163,11 +165,67 @@ class WalletBackupController {
         .read(walletBackupRepositoryProvider)
         .capture(userId);
     final status = await _ref.read(walletBackupClientProvider).push(snapshot);
-    if (status == BackupStatus.ok) {
+    if (status == BackupStatus.ok) await _recordSynced(userId, snapshot);
+    return status;
+  }
+
+  /// Uploads the wallet if backup is on and it changed since this phone last
+  /// uploaded or restored. Called when the app goes to the background.
+  ///
+  /// Holds back instead of uploading when the stored backup was written
+  /// elsewhere (its fingerprint isn't the one this phone left) *and* has
+  /// cards this phone lacks: another phone added them, or this is a new phone
+  /// whose switch came on because the account had a backup. Replacing it
+  /// would lose those cards, and only the user can say which copy wins, so
+  /// Profile says why it stopped. Cards deleted here are not a conflict:
+  /// when the backup is still the one this phone uploaded, it is replaced.
+  Future<AutoBackupOutcome> maybeAutoBackup() async {
+    final userId = _userId;
+    if (userId == null || !await _settings.getBackupEnabled(userId)) {
+      return AutoBackupOutcome.off;
+    }
+    final snapshot = await _ref
+        .read(walletBackupRepositoryProvider)
+        .capture(userId);
+    final known = await _settings.getBackupFingerprint(userId);
+    if (snapshot.fingerprint == known) return AutoBackupOutcome.unchanged;
+
+    final client = _ref.read(walletBackupClientProvider);
+    final remote = await client.pull();
+    if (remote.status == BackupStatus.failed ||
+        remote.status == BackupStatus.unavailable) {
+      return AutoBackupOutcome.failed;
+    }
+    final stored = remote.snapshot;
+    if (stored != null && stored.fingerprint != known) {
+      final here = snapshot.cards.map((c) => c['id']).toSet();
+      final missing = stored.cards.where((c) => !here.contains(c['id'])).length;
+      if (missing > 0) {
+        await _settings.setBackupHeldCards(userId, missing);
+        _ref.invalidate(backupHeldCardsProvider);
+        return AutoBackupOutcome.held;
+      }
+    }
+    if (await client.push(snapshot) != BackupStatus.ok) {
+      return AutoBackupOutcome.failed;
+    }
+    await _recordSynced(userId, snapshot);
+    return AutoBackupOutcome.uploaded;
+  }
+
+  /// This phone and the stored backup now agree on [snapshot].
+  Future<void> _recordSynced(
+    String userId,
+    WalletSnapshot snapshot, {
+    bool uploaded = true,
+  }) async {
+    if (uploaded) {
       await _settings.setLastBackupAt(userId, DateTime.now());
       _ref.invalidate(lastBackupAtProvider);
     }
-    return status;
+    await _settings.setBackupFingerprint(userId, snapshot.fingerprint);
+    await _settings.setBackupHeldCards(userId, 0);
+    _ref.invalidate(backupHeldCardsProvider);
   }
 
   /// Pulls the stored backup and applies it over the local wallet.
@@ -193,6 +251,7 @@ class WalletBackupController {
     await _ref
         .read(walletBackupRepositoryProvider)
         .apply(snapshot, userId: userId);
+    await _recordSynced(userId, snapshot, uploaded: false);
     for (final p in syncInvalidatedProviders) {
       _ref.invalidate(p);
     }
@@ -239,6 +298,15 @@ final lastBackupAtProvider = FutureProvider<DateTime?>((ref) async {
   final userId = ref.watch(authProvider.select((s) => s.userId));
   if (userId == null) return null;
   return _settings.getLastBackupAt(userId);
+});
+
+/// Cards in the stored backup this phone lacks, while automatic backup is
+/// held back rather than overwrite them; 0 otherwise. See
+/// [WalletBackupController.maybeAutoBackup].
+final backupHeldCardsProvider = FutureProvider<int>((ref) async {
+  final userId = ref.watch(authProvider.select((s) => s.userId));
+  if (userId == null) return 0;
+  return _settings.getBackupHeldCards(userId);
 });
 
 final walletBackupControllerProvider = Provider<WalletBackupController>(

@@ -272,8 +272,8 @@ class _Header extends ConsumerWidget {
 }
 
 /// Backup state as a fact, not a promise: the time of the last upload from
-/// this phone, since backup is not continuous. Only "not backed up yet" is
-/// coloured — it is the one that needs the user.
+/// this phone, since automatic backup can be held back. Only "not backed up
+/// yet" and "paused" are coloured — they are the ones that need the user.
 class _BackupLine extends ConsumerWidget {
   const _BackupLine();
 
@@ -282,8 +282,11 @@ class _BackupLine extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final enabled = ref.watch(backupEnabledProvider);
     final last = ref.watch(lastBackupAtProvider).value;
+    final held = ref.watch(backupHeldCardsProvider).value ?? 0;
     final (icon, color, text) = !enabled
         ? (LucideIcons.cloudOff, palette.muted, 'Backup is off')
+        : held > 0
+        ? (LucideIcons.cloudAlert, palette.amber, 'Backup paused')
         : last == null
         ? (LucideIcons.cloudUpload, palette.amber, 'Not backed up yet')
         : (

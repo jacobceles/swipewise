@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../api/database_helper.dart';
@@ -57,6 +60,24 @@ class WalletSnapshot {
       cardLinks.isEmpty &&
       settings.isEmpty &&
       mutedMerchants.isEmpty;
+
+  /// Identifies the content, ignoring [capturedAt]: two captures of an
+  /// unchanged wallet match, so automatic backup can skip the upload, and a
+  /// pulled backup matching what this phone last uploaded was not touched by
+  /// another phone since. Map keys are sorted, so a round trip through the
+  /// service doesn't change it.
+  String get fingerprint {
+    Object? canonical(Object? v) => switch (v) {
+      Map() => {
+        for (final k in v.keys.map((k) => k.toString()).toList()..sort())
+          k: canonical(v[k]),
+      },
+      List() => v.map(canonical).toList(),
+      _ => v,
+    };
+    final json = toJson()..remove('capturedAt');
+    return sha256.convert(utf8.encode(jsonEncode(canonical(json)))).toString();
+  }
 
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,

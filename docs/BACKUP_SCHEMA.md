@@ -59,21 +59,28 @@ Deliberately stays on the device:
 |---|---|
 | `permissions_asked` | OS permissions are granted per device |
 | `onboarding_seen` | A per-install fact |
-| `backup_enabled` | A choice made on one phone. Restoring never sets it. One exception keeps phones on one account in step: a phone that has **never** set it starts with it on when the signed-in account already has a backup. That turns nothing into an upload — uploads still happen only on *Back up now* or switching it on by hand |
+| `backup_enabled` | A choice made on one phone. Restoring never sets it. One exception keeps phones on one account in step: a phone that has **never** set it starts with it on when the signed-in account already has a backup. Automatic backup then still won't replace a backup holding cards that phone lacks (see below) |
 | `last_backup_at` | When *this* phone last uploaded; on another phone it would claim a backup that phone never made |
+| `backup_fingerprint`, `backup_held_cards` | This phone's view of the stored backup, used by automatic backup |
 | `last_sync_at`, `popular_banks_cache`, `catalog_data_version` | Caches and bookkeeping about one device, meaningless on another |
 
 ## When data moves
 
 | Direction | When |
 |---|---|
-| Up | Only while backup is switched on, and only for a signed-in account |
+| Up | Only while backup is switched on, and only for a signed-in account: when you switch it on, on *Back up now*, and automatically when you leave the app if the wallet changed |
 | Down, automatically | Only onto an **empty** wallet — the new-phone case |
 | Down, on request | *Profile → Account & backup → Restore…*, after a confirmation that says what it replaces |
 
 If both your phone and your backup hold cards, **nothing happens automatically**. Silently
 replacing cards you can see would destroy edits you never agreed to lose, so that collision is
 always yours to resolve with the two manual buttons.
+
+The same rule holds going up. Automatic backup stops, rather than upload, when the stored backup
+was written by another phone (or before this phone ever synced) **and** has cards this phone
+doesn't. *Profile → Account & backup* then says how many cards and offers both directions:
+*Restore…* brings them here, *Back up now* (after a confirmation) replaces the backup. Cards you
+delete on the phone that made the backup are not a conflict; the backup just follows.
 
 ## Deleting a backup
 

@@ -39,7 +39,26 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     }
   }
 
-  Future<void> _backUpNow() => _run(() async {
+  Future<void> _backUpNow() async {
+    // Automatic backup stopped because this would remove cards; the tap is
+    // the user choosing this phone's copy, so say what it costs once more.
+    final held = ref.read(backupHeldCardsProvider).value ?? 0;
+    if (held > 0) {
+      final replace = await confirmAction(
+        context,
+        title: 'Replace your backup?',
+        body:
+            'Your backup has $held ${held == 1 ? 'card' : 'cards'} that this '
+            'phone does not. Backing up replaces it with what is here, and '
+            'those cards would be gone.',
+        action: 'Replace',
+      );
+      if (!replace) return;
+    }
+    await _backUpNowConfirmed();
+  }
+
+  Future<void> _backUpNowConfirmed() => _run(() async {
     final status = await ref.read(walletBackupControllerProvider).backUpNow();
     return switch (status) {
       BackupStatus.ok => 'Wallet backed up.',
@@ -174,6 +193,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final available = ref.watch(backupAvailableProvider);
     final enabled = ref.watch(backupEnabledProvider) && available;
     final last = ref.watch(lastBackupAtProvider).value;
+    final held = ref.watch(backupHeldCardsProvider).value ?? 0;
+    final paused = enabled && held > 0;
 
     return SettingsPage(
       title: 'Account',
@@ -239,24 +260,37 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              last == null
-                                  ? LucideIcons.cloudAlert
-                                  : LucideIcons.circleCheck,
-                              size: 15,
-                              color: last == null
-                                  ? palette.amber
-                                  : palette.muted,
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Icon(
+                                last == null || paused
+                                    ? LucideIcons.cloudAlert
+                                    : LucideIcons.circleCheck,
+                                size: 15,
+                                color: last == null || paused
+                                    ? palette.amber
+                                    : palette.muted,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                last == null
+                                paused
+                                    ? 'Automatic backup paused. Your backup '
+                                          'has $held ${held == 1 ? 'card' : 'cards'} '
+                                          'this phone doesn\'t, and backing up '
+                                          'would remove them. Restore to bring '
+                                          'them here, or Back up now to '
+                                          'replace the backup.'
+                                    : last == null
                                     ? 'Not backed up from this phone yet'
                                     : 'Backed up ${backupWhen(last)}',
                                 style: rowSubtitleStyle(palette).copyWith(
-                                  color: last == null ? palette.amber : null,
+                                  color: last == null || paused
+                                      ? palette.amber
+                                      : null,
                                 ),
                               ),
                             ),

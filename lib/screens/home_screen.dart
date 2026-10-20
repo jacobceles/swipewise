@@ -262,11 +262,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _autoBackup();
     if (state == AppLifecycleState.resumed) {
       _consumePendingMerchant();
       _syncBanksIfDue();
       _recheckAbroad();
       _rescheduleRemindersIfZoneChanged();
+    }
+  }
+
+  /// Leaving the app is when edits are done, and the wallet only changes while
+  /// it is open, so no background job is needed. Uploads only on a change.
+  Future<void> _autoBackup() async {
+    try {
+      final outcome = await ref
+          .read(walletBackupControllerProvider)
+          .maybeAutoBackup();
+      if (outcome != AutoBackupOutcome.off &&
+          outcome != AutoBackupOutcome.unchanged) {
+        Log.i('backup', 'auto: ${outcome.name}');
+      }
+    } catch (e) {
+      Log.w('backup', 'auto backup failed', e);
     }
   }
 

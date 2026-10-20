@@ -39,6 +39,8 @@ class SettingsRepository {
   static const _kBackupEnabled = 'backup_enabled';
   static const _kProCached = 'pro_cached';
   static const _kLastBackupAt = 'last_backup_at';
+  static const _kBackupFingerprint = 'backup_fingerprint';
+  static const _kBackupHeldCards = 'backup_held_cards';
 
   /// Settings keys that belong to the *user* and travel with a wallet backup.
   ///
@@ -63,6 +65,8 @@ class SettingsRepository {
   ///   and bookkeeping about this device, meaningless on another.
   /// * [_kLastBackupAt] — when THIS phone last uploaded; restored onto another
   ///   phone it would claim a backup that phone never made.
+  /// * [_kBackupFingerprint], [_kBackupHeldCards] — this phone's view of the
+  ///   stored backup, for automatic backup; meaningless anywhere else.
   static const Set<String> syncableSettingsKeys = {
     _kDefaultScreen,
     _kDefaultAdvisorView,
@@ -382,8 +386,8 @@ class SettingsRepository {
 
   /// When this phone last uploaded a backup successfully, or null if never.
   ///
-  /// Backup is not continuous — it uploads when turned on and on "Back up
-  /// now" — so "Backup on" alone says nothing about how stale the copy is.
+  /// Automatic backup can be held back (see [getBackupHeldCards]), so
+  /// "Backup on" alone says nothing about how stale the copy is.
   Future<DateTime?> getLastBackupAt(String userId) async {
     final raw = await _repo.getSetting(userId, _kLastBackupAt);
     return raw == null ? null : DateTime.tryParse(raw);
@@ -391,6 +395,23 @@ class SettingsRepository {
 
   Future<void> setLastBackupAt(String userId, DateTime at) =>
       _repo.setSetting(userId, _kLastBackupAt, at.toUtc().toIso8601String());
+
+  /// [WalletSnapshot.fingerprint] of what this phone last uploaded or
+  /// restored: the backup as this phone last knew it.
+  Future<String?> getBackupFingerprint(String userId) =>
+      _repo.getSetting(userId, _kBackupFingerprint);
+
+  Future<void> setBackupFingerprint(String userId, String fingerprint) =>
+      _repo.setSetting(userId, _kBackupFingerprint, fingerprint);
+
+  /// Cards in the stored backup that this phone lacks, when automatic backup
+  /// stopped rather than overwrite them; 0 when it isn't held.
+  Future<int> getBackupHeldCards(String userId) async =>
+      int.tryParse(await _repo.getSetting(userId, _kBackupHeldCards) ?? '') ??
+      0;
+
+  Future<void> setBackupHeldCards(String userId, int cards) =>
+      _repo.setSetting(userId, _kBackupHeldCards, cards.toString());
 
   /// Last known answer to "is this user Pro?", so a launch without network
   /// does not demote a paying subscriber.
