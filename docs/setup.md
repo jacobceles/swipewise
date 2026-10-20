@@ -74,19 +74,19 @@ nothing to authenticate with, and a value that isn't in the binary can't be extr
 
   | Build | Provider | To make it attest |
   |---|---|---|
-  | debug (`.dev`) | debug provider | Register the per-install debug secret it prints to logcat on first run (`Enter this debug secret (…)`) at Firebase Console → App Check → **Manage debug tokens** |
+  | debug (`.dev`) | debug provider | Register one token at Firebase Console → App Check → **Manage debug tokens**, put it in the git-ignored `keys.debug.json` (`{"APP_CHECK_DEBUG_TOKEN": "<uuid>"}`) and build with `--dart-define-from-file=keys.free.json --dart-define-from-file=keys.debug.json`. Without the file the build mints a random per-install secret (logged once: `Enter this debug secret (…)`) |
   | release, sideloaded | Play Integrity | **Cannot** — Play Integrity only recognises Play-distributed builds; `getToken` returns `403 App attestation failed` |
   | release, testable | Play Integrity | Upload via Play **Internal App Sharing** (an install link, Play-signed, no release needed) or the internal-testing track |
 
   ⛔ **Never add a flag that lets a release build use the debug provider.** It would hand anyone a
   way to bypass the control that replaced the forgeable `X-Android-Package` header check.
 
-  ⚠️ **A registered debug token dies with the install, and the console name lies about that.**
-  The secret is a random UUID v4 minted by `DebugAppCheckProvider` into app-private storage — not
-  derived from the device — so an uninstall or a clear-data mints a new one and the old console
-  entry is orphaned. Naming an entry "Pixel 10 Pro" makes it read as device-scoped, so
-  `403 App attestation failed` with a token "already registered" is the expected symptom, not a
-  misconfiguration. **Re-register after any reinstall, and delete the stale entry.**
+  ⚠️ **Without `keys.debug.json`, a registered debug token dies with the install.** The secret is
+  then a random UUID v4 minted by `DebugAppCheckProvider` into app-private storage — not derived
+  from the device — so an uninstall or a clear-data mints a new one and the old console entry is
+  orphaned (`403 App attestation failed` with a token "already registered"). The fixed token in
+  `keys.debug.json` (read only in debug builds, `AppCheckService`) survives both; one console
+  entry covers every dev install and emulator.
 
   ⛔ **Treat a registered debug token as a project credential.** Never commit one, never paste one
   into an issue or a log excerpt, and remove it from the console the moment you are done with it.

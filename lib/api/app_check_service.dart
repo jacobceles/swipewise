@@ -68,6 +68,16 @@ class AppCheckService {
   /// Never throws: App Check is an access-control layer, and a failure to
   /// attest must degrade to "no token" — which the Worker can reject on its own
   /// terms — rather than take down app startup or a background worker.
+  /// A fixed debug token for debug builds, from the git-ignored
+  /// `keys.debug.json` (`--dart-define-from-file=keys.debug.json`). Without
+  /// it every install or data wipe mints a new random token that must be
+  /// registered in the console again. Null (absent) keeps that behaviour;
+  /// release builds never read it (Play Integrity).
+  static String? get _debugToken {
+    const token = String.fromEnvironment('APP_CHECK_DEBUG_TOKEN');
+    return token.isEmpty ? null : token;
+  }
+
   static Future<void> activate() async {
     if (_activated) return;
     try {
@@ -77,7 +87,7 @@ class AppCheckService {
             // and is rejected by an enforcing Worker unless its token is
             // registered.
             providerAndroid: kDebugMode
-                ? const AndroidDebugProvider()
+                ? AndroidDebugProvider(debugToken: _debugToken)
                 : const AndroidPlayIntegrityProvider(),
           )
           .timeout(_timeout);
