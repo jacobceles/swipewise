@@ -71536,7 +71536,8 @@
           "content": "v3's structure (plain headlines, app components, your own cards and switches) with v2's energy, held in one rounded panel per step that only ever shows your state or the thing being asked for. The step tracker at the top is also the checklist: Cards · Notifications · Location · All the time, each lighting up in its colour.",
           "lineHeight": 1.4,
           "fontFamily": "$--font-primary",
-          "fontSize": 14
+          "fontSize": 14,
+          "fontWeight": "normal"
         },
         {
           "type": "text",
@@ -71679,7 +71680,8 @@
                               "content": "Saturday, October 18",
                               "lineHeight": 1.35,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "frame",
@@ -71802,7 +71804,8 @@
                                           "content": "Use Freedom Flex for",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "frame",
@@ -71867,7 +71870,8 @@
                               "content": "See which of your cards earns the most wherever you pay. Setup takes about a minute.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -71974,7 +71978,8 @@
                                           "content": "So SwipeWise can compare them",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -72057,7 +72062,8 @@
                                           "content": "A heads-up like the one above",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -72168,7 +72174,8 @@
                       "content": "The panel is the product itself: the exact alert SwipeWise posts. No asks here. Start setup → existing Welcome (Sign in / Skip), unchanged; a restored wallet jumps to 2b.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -72180,7 +72187,8 @@
                       "content": "Motion: the alert drops onto the lock-screen panel 400 ms after load with a soft haptic; the 3% counts up.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -72654,7 +72662,8 @@
                               "content": "SwipeWise only compares cards you own. Pick them by name — Chase, Amex, Citi, Capital One and more. No bank login.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -72761,7 +72770,8 @@
                                           "content": "Drugstore",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -72781,7 +72791,8 @@
                                           "content": "Your best card",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -72864,7 +72875,8 @@
                                           "content": "Category",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -72884,7 +72896,8 @@
                                           "content": "Your best card",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -73017,7 +73030,8 @@
                       "content": "The panel is the user's wallet — empty right now. Add a card → existing Add-a-Card flow. Not now → 6c (no cards: no permission asks).",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -73029,7 +73043,8 @@
                       "content": "Motion: the empty slots breathe gently; the Cards step on the tracker glows pink.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -73923,7 +73938,8 @@
                               "content": "SwipeWise is already ranking them:",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -74030,7 +74046,8 @@
                                           "content": "Drugstore",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -74050,7 +74067,8 @@
                                           "content": "Freedom Flex",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -74133,7 +74151,8 @@
                                           "content": "Travel",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -74153,7 +74172,8 @@
                                           "content": "Sapphire Preferred",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -74273,7 +74293,8 @@
                                           "content": "Three quick permissions. Optional.",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -74405,7 +74426,8 @@
                       "content": "The panel now holds the user's real cards; the rows below are the Advisor's own, ranked for them. Continue → 3.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -74417,7 +74439,8 @@
                       "content": "Motion: each card slides down into the wallet (spring, 120 ms stagger), the badge pops +1 → +2, one short confetti burst at the panel edges, and the Cards node fills pink with a check.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -74909,7 +74932,8 @@
                                           "content": "Use Freedom Flex for",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "frame",
@@ -74974,7 +74998,8 @@
                               "content": "So SwipeWise can tell you which card to use when you walk into a store.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -75081,7 +75106,8 @@
                                           "content": "Your best card as you walk in",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     }
@@ -75153,7 +75179,8 @@
                                           "content": "Only if you set a due date",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     }
@@ -75191,7 +75218,8 @@
                               "content": "Android asks next — tap Allow.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -75307,7 +75335,8 @@
                       "content": "The panel is the alert this permission delivers, with the user's own card. Allow notifications → Android's dialog. Allow → 4. Don't allow / Not now → 6b (location isn't asked: no alert could arrive). Blocked before → Settings variant.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -75319,7 +75348,8 @@
                       "content": "Motion: the bell rings (±12°, 3 cycles); on Allow the Notifications node fills gold, haptic tick, and the screen slides to Location.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -75908,7 +75938,8 @@
                               "content": "So SwipeWise knows which store you're in and picks the right card.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -76015,7 +76046,8 @@
                                           "content": "Drugstore · 0.1 mi",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -76035,7 +76067,8 @@
                                           "content": "Freedom Flex",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -76118,7 +76151,8 @@
                                           "content": "Dining · 0.3 mi",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -76138,7 +76172,8 @@
                                           "content": "Freedom Flex",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "text",
@@ -76187,7 +76222,8 @@
                               "content": "Android asks next — choose “While using the app”.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -76303,7 +76339,8 @@
                       "content": "The panel is the user's position matched to a store with their card; the rows are the Advisor's Stores list that location powers. Allow location → Android's dialog (keep Precise on). While using → 5. Don't allow / Not now → 6b. Android won't ask any more → 4-blocked.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -76315,7 +76352,8 @@
                       "content": "Motion: the dot pulses; on grant it glides into the Walgreens block, the store tag pops 3%, the Location node fills teal.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -76763,7 +76801,8 @@
                                       "content": "You're at Walgreens",
                                       "lineHeight": 1.4,
                                       "fontFamily": "$--font-primary",
-                                      "fontSize": 14
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -76773,7 +76812,8 @@
                                       "content": "Use Freedom Flex for 3%",
                                       "lineHeight": 1.35,
                                       "fontFamily": "$--font-primary",
-                                      "fontSize": 12
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 }
@@ -76812,7 +76852,8 @@
                               "content": "Store alerts need this while SwipeWise is closed. On the next screen, choose “Allow all the time”.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -76872,7 +76913,8 @@
                               "content": "SwipeWise collects location data in the background to send you store alerts — even when the app is closed or not in use.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "text",
@@ -76884,7 +76926,8 @@
                               "content": "Your location is used only to find the store you're in. SwipeWise does not keep a location history.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -76990,7 +77033,8 @@
                       "content": "Its own step right before the background request, never combined with another ask; the bordered box is the required wording, unchanged. The panel shows exactly what this grant enables: the alert arriving while the app is closed.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -77002,7 +77046,8 @@
                       "content": "Continue to settings → Android's app location page. All the time → 6. Back unchanged / Not now → 6b.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -77712,7 +77757,8 @@
                                           "content": "Use Freedom Flex for",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "frame",
@@ -77815,7 +77861,8 @@
                               "content": "Store alerts are on — all four steps above are done.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -77922,7 +77969,8 @@
                                           "content": "Skips stores you drive past",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -78019,7 +78067,8 @@
                                           "content": "Fires right as you walk in",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -78112,7 +78161,8 @@
                                           "content": "Never paused · uses a little more",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     },
@@ -78233,7 +78283,8 @@
                       "content": "The tracker is the summary: four lit steps, shown only when notifications AND all-the-time location are really granted (checked live), otherwise 6b. The panel's LIVE alert is the real one. Extras start off; each switch opens its own Android page and reflects the real result.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -78245,7 +78296,8 @@
                       "content": "Motion: the four nodes light left to right (80 ms apart), the medal stamps in, one confetti burst at the panel edges.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -78737,7 +78789,8 @@
                               "content": "You chose “Don't allow” before, so Android won't ask again.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -78797,7 +78850,8 @@
                               "content": "SwipeWise collects location data in the background to send you store alerts — even when the app is closed or not in use.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "text",
@@ -78809,7 +78863,8 @@
                               "content": "Your location is used only to find the store you're in. SwipeWise does not keep a location history.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -79031,7 +79086,8 @@
                       "content": "Replaces 4 when Android won't show its dialog; the Location node turns red. Settings allows “all the time” directly, so the full Play disclosure is shown here too.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -79043,7 +79099,8 @@
                       "content": "On return: all the time → 6; while using only → 5; still off → 6b. Blocked notifications: same layout in gold, path “Notifications › Allow”, no disclosure.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -79488,7 +79545,8 @@
                                           "content": "Use Freedom Flex for",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         },
                                         {
                                           "type": "frame",
@@ -79591,7 +79649,8 @@
                               "content": "They need location “all the time” to notice store visits — the red step above. Everything else in SwipeWise works.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -79694,7 +79753,8 @@
                                           "content": "Open the Advisor tab when you pay",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     }
@@ -79806,7 +79866,8 @@
                       "content": "Shown whenever notifications or all-the-time location is missing; never says “on”. The tracker marks the missing step red and the sentence names it (e.g. “They need notifications to reach you”). The panel's alert is greyed and PAUSED.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -79818,7 +79879,8 @@
                       "content": "Turn on store alerts → resumes at the first missing step, or its Settings variant if blocked. Optional extras aren't offered while alerts are off.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -80327,7 +80389,8 @@
                                           "content": "Open SwipeWise to see the best card here",
                                           "lineHeight": 1.4,
                                           "fontFamily": "$--font-primary",
-                                          "fontSize": 14
+                                          "fontSize": 14,
+                                          "fontWeight": "normal"
                                         }
                                       ]
                                     }
@@ -80393,7 +80456,8 @@
                               "content": "SwipeWise compares only your own cards. Store alerts are offered after your first card — nothing has been asked yet.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 14
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -80509,7 +80573,8 @@
                       "content": "Reached from Not now on 2a. No Android dialog has been shown; all four steps stay grey. Steps 2–4 run once, right after the first card is added, then never again on their own.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -80521,7 +80586,8 @@
                       "content": "The panel shows the honest state: an empty wallet, and an alert with no card to name (the app's own wording for that case), locked.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -80985,7 +81051,8 @@
                                       "content": "You're at Walgreens",
                                       "lineHeight": 1.4,
                                       "fontFamily": "$--font-primary",
-                                      "fontSize": 28
+                                      "fontSize": 28,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -80995,7 +81062,8 @@
                                       "content": "Use Freedom Flex for 3%",
                                       "lineHeight": 1.35,
                                       "fontFamily": "$--font-primary",
-                                      "fontSize": 24
+                                      "fontSize": 24,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 }
@@ -81034,7 +81102,8 @@
                               "content": "Store alerts need this while SwipeWise is closed. On the next screen, choose “Allow all the time”.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 28
+                              "fontSize": 28,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -81094,7 +81163,8 @@
                               "content": "SwipeWise collects location data in the background to send you store alerts — even when the app is closed or not in use.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 28
+                              "fontSize": 28,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "text",
@@ -81106,7 +81176,8 @@
                               "content": "Your location is used only to find the store you're in. SwipeWise does not keep a location history.",
                               "lineHeight": 1.4,
                               "fontFamily": "$--font-primary",
-                              "fontSize": 28
+                              "fontSize": 28,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -81230,7 +81301,8 @@
                       "content": "Android 200% text (non-linear: 11→22, 14→28, 16→30, 32→44). The picture panel and the tracker labels fold away at ≥1.5× (the coloured nodes stay); content scrolls under the pinned buttons, which grow with their labels. The disclosure is never cut. Only frame off the type scale, deliberately.",
                       "lineHeight": 1.4,
                       "fontFamily": "$--font-primary",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -82270,6 +82342,2671 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "z8kQf",
+      "x": 9506,
+      "y": 6487,
+      "name": "Cards — Free tier",
+      "fill": "$--secondary",
+      "gap": 40,
+      "padding": 40,
+      "children": [
+        {
+          "type": "frame",
+          "id": "XKNuz",
+          "name": "FREE — Cards (no limits entered)",
+          "clip": true,
+          "width": 390,
+          "height": 844,
+          "fill": "$--background",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "HE98H",
+              "type": "ref",
+              "ref": "Elmkk",
+              "name": "Status Bar",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "abEVO",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "llTZa",
+                  "name": "Top Bar",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "AbAwK",
+                      "name": "Title",
+                      "fill": "$--foreground",
+                      "content": "Cards",
+                      "fontFamily": "Inter",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Zo0zT",
+                      "name": "Add Button",
+                      "width": 36,
+                      "height": 36,
+                      "fill": "$--secondary",
+                      "cornerRadius": 18,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "f8HLnI",
+                          "name": "Add Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "plus",
+                          "library": "lucide",
+                          "fill": "$--foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DmKm1",
+                  "name": "Search Bar",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$--secondary",
+                  "cornerRadius": 22,
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "LvLmD",
+                      "name": "Search Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "$--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zjvzH",
+                      "name": "Search Placeholder",
+                      "fill": "$--muted-foreground",
+                      "content": "Search cards...",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Ah7Xv",
+                  "name": "American Express Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Vn19m",
+                      "name": "American Express Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Q2IOxm",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "m0PVYI",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "dfhmc",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#006FCF"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "vjMd2",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "bnPKx",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "American Express (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "L9WCF",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "2 cards",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dmrmy",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "sVqs7",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "r0jVRi",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-up",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DdXWl",
+                      "name": "Amex Gold Card",
+                      "width": "fill_container",
+                      "fill": "$--card",
+                      "cornerRadius": "$--radius-m",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "YtdsB",
+                          "name": "Card Top",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "HORu2",
+                              "name": "Card Art",
+                              "width": 48,
+                              "height": 32,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#8A6A1F",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#D4AF37",
+                                    "position": 1
+                                  }
+                                ]
+                              },
+                              "cornerRadius": 6,
+                              "layout": "none"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "SDbIt",
+                              "name": "Card Info",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "u0mZr1",
+                                  "name": "Name Row",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "kz6Ja",
+                                      "name": "Card Name",
+                                      "fill": "$--foreground",
+                                      "content": "Amex Gold",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "F8S6B",
+                                      "name": "Rename Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "oE6sg",
+                                  "name": "Card Number",
+                                  "fill": "$--muted-foreground",
+                                  "content": "•••• ----",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "jWZ2v",
+                          "name": "Limit and Due Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "pl05i",
+                              "name": "Limit Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "eun2t",
+                                  "name": "Limit Tile Header",
+                                  "gap": 4,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "X1kd0j",
+                                      "name": "Limit Tile Label",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Limit",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 10,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "H6hsY",
+                                      "name": "Edit Icon",
+                                      "width": 10,
+                                      "height": 10,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "DCdLs",
+                                  "name": "Limit Tile Value",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add limit",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "apMWt",
+                              "name": "Due Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "gap": 6,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "WA24T",
+                                  "name": "Calendar Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ZbwQR",
+                                  "name": "Due Text",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add due date",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wDCwb",
+                      "name": "Amex Blue Cash Preferred Card",
+                      "width": "fill_container",
+                      "fill": "$--card",
+                      "cornerRadius": "$--radius-m",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Hi3As",
+                          "name": "Card Top",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Q5Mtv4",
+                              "name": "Card Art",
+                              "width": 48,
+                              "height": 32,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#1A3A6B",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#2D5FA0",
+                                    "position": 1
+                                  }
+                                ]
+                              },
+                              "cornerRadius": 6,
+                              "layout": "none"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "WHah6",
+                              "name": "Card Info",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "o1Acx",
+                                  "name": "Name Row",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "g6OlW",
+                                      "name": "Card Name",
+                                      "fill": "$--foreground",
+                                      "content": "Amex Blue Cash Preferred",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "BYpvo",
+                                      "name": "Rename Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "L9gZnv",
+                                  "name": "Card Number",
+                                  "fill": "$--muted-foreground",
+                                  "content": "•••• ----",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "VHJ9J",
+                          "name": "Limit and Due Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Ez28q",
+                              "name": "Limit Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "RZm20",
+                                  "name": "Limit Tile Header",
+                                  "gap": 4,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "PJjnl",
+                                      "name": "Limit Tile Label",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Limit",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 10,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "FOGbx",
+                                      "name": "Edit Icon",
+                                      "width": 10,
+                                      "height": 10,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "I294c",
+                                  "name": "Limit Tile Value",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add limit",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "r9pPo",
+                              "name": "Due Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "gap": 6,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "cLnXs",
+                                  "name": "Calendar Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "BN295",
+                                  "name": "Due Text",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add due date",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "oTeiN",
+                  "name": "Capital One Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "oacTb",
+                      "name": "Capital One Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "P4GSx",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "C6Sii",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "eL4AJ",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#D03027"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "tAU3L",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "d1tYDP",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Capital One (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "AJ2gj",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "1 card",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "S6XHW",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "q09uzq",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "H29eCO",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yIC40",
+                  "name": "Chase Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lgs4s",
+                      "name": "Chase Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gZ5by",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "v7TlQ",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "M6Eh2",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#117ACA"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "tYaJ7",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "rKEvp",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Chase (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "EeMoI",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "2 cards",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "L78Hz",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "LLvyg",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "SHA3u",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZmW9D",
+                  "name": "Citi Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "vzoo9",
+                      "name": "Citi Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "s5s7X",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jDa7O",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "qmlVP",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#056DAE"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Cbo2j",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "D784NF",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Citi (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "r90ZR",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "1 card",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oxnZf",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "wczNk",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "N6aOvf",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "ILTMc",
+              "type": "ref",
+              "ref": "kr0AR",
+              "name": "Tab Bar",
+              "width": "fill_container",
+              "descendants": {
+                "o53Er": {
+                  "enabled": false
+                },
+                "QX4kC": {
+                  "fill": "#FF840026"
+                },
+                "H6BYFy": {
+                  "fill": "$--primary"
+                },
+                "n2Qto": {
+                  "fill": "$--primary"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "GGb1c",
+          "name": "FREE — Cards (limits entered)",
+          "clip": true,
+          "width": 390,
+          "height": 844,
+          "fill": "$--background",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "vOJ6w",
+              "type": "ref",
+              "ref": "Elmkk",
+              "name": "Status Bar",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "LLxyX",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "V3zH71",
+                  "name": "Top Bar",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qRGti",
+                      "name": "Title",
+                      "fill": "$--foreground",
+                      "content": "Cards",
+                      "fontFamily": "Inter",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RCuZg",
+                      "name": "Add Button",
+                      "width": 36,
+                      "height": 36,
+                      "fill": "$--secondary",
+                      "cornerRadius": 18,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "M7k3K0",
+                          "name": "Add Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "plus",
+                          "library": "lucide",
+                          "fill": "$--foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fj8hq",
+                  "name": "Total Limit Card",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cy2Ln",
+                      "name": "Total Limit Label",
+                      "fill": "$--muted-foreground",
+                      "content": "Total limit",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "WD7PJ",
+                      "name": "Total Limit Value",
+                      "fill": "$--foreground",
+                      "content": "$23,500",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "op0Rp",
+                  "name": "Search Bar",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$--secondary",
+                  "cornerRadius": 22,
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Q4Je6",
+                      "name": "Search Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "$--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aQVOu",
+                      "name": "Search Placeholder",
+                      "fill": "$--muted-foreground",
+                      "content": "Search cards...",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "cWy3S",
+                  "name": "American Express Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "iDWl6",
+                      "name": "American Express Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "DZBp9",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "i0lqPK",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "DfTVE",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#006FCF"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ts00c",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ZUoRz",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "American Express (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "sBCMy",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "2 cards",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qFHML",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "y0w8i",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "Odu8z",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-up",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "kxSuQ",
+                      "name": "Amex Gold Card",
+                      "width": "fill_container",
+                      "fill": "$--card",
+                      "cornerRadius": "$--radius-m",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JdSEB",
+                          "name": "Card Top",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "IfJTh",
+                              "name": "Card Art",
+                              "width": 48,
+                              "height": 32,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#8A6A1F",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#D4AF37",
+                                    "position": 1
+                                  }
+                                ]
+                              },
+                              "cornerRadius": 6,
+                              "layout": "none"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "R0Xzp",
+                              "name": "Card Info",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "A95I4u",
+                                  "name": "Name Row",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "zMsjT",
+                                      "name": "Card Name",
+                                      "fill": "$--foreground",
+                                      "content": "Amex Gold",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "MpELO",
+                                      "name": "Rename Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "mpyDk",
+                                  "name": "Card Number",
+                                  "fill": "$--muted-foreground",
+                                  "content": "•••• 1234",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "O7ycS",
+                          "name": "Limit and Due Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "RhFWH",
+                              "name": "Limit Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "kP4kZ",
+                                  "name": "Limit Tile Header",
+                                  "gap": 4,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "io2JZ",
+                                      "name": "Limit Tile Label",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Limit",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 10,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "YbOp3",
+                                      "name": "Edit Icon",
+                                      "width": 10,
+                                      "height": 10,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "baA0x",
+                                  "name": "Limit Tile Value",
+                                  "fill": "$--foreground",
+                                  "content": "$10,000",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "cOYhF",
+                              "name": "Due Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "gap": 6,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "lyQVW",
+                                  "name": "Calendar Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "USlMB",
+                                  "name": "Due Text",
+                                  "fill": "$--foreground",
+                                  "content": "Due on the 15th",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IgchW",
+                      "name": "Amex Blue Cash Preferred Card",
+                      "width": "fill_container",
+                      "fill": "$--card",
+                      "cornerRadius": "$--radius-m",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "E1GNcB",
+                          "name": "Card Top",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "z3OfBQ",
+                              "name": "Card Art",
+                              "width": 48,
+                              "height": 32,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#1A3A6B",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#2D5FA0",
+                                    "position": 1
+                                  }
+                                ]
+                              },
+                              "cornerRadius": 6,
+                              "layout": "none"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "XszSU",
+                              "name": "Card Info",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "tCwdH",
+                                  "name": "Name Row",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ZGki5",
+                                      "name": "Card Name",
+                                      "fill": "$--foreground",
+                                      "content": "Amex Blue Cash Preferred",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "L2hNKJ",
+                                      "name": "Rename Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "FTmmH",
+                                  "name": "Card Number",
+                                  "fill": "$--muted-foreground",
+                                  "content": "•••• ----",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qLZ1w",
+                          "name": "Limit and Due Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jx1iG",
+                              "name": "Limit Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "AtSSu",
+                                  "name": "Limit Tile Header",
+                                  "gap": 4,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "yG0i1",
+                                      "name": "Limit Tile Label",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Limit",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 10,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "jere7",
+                                      "name": "Edit Icon",
+                                      "width": 10,
+                                      "height": 10,
+                                      "icon": "pencil",
+                                      "library": "lucide",
+                                      "fill": "$--muted-foreground"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "HbHn0",
+                                  "name": "Limit Tile Value",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add limit",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "tIKMw",
+                              "name": "Due Tile",
+                              "width": "fill_container",
+                              "height": 50,
+                              "fill": "$--accent",
+                              "cornerRadius": "$--radius-s",
+                              "gap": 6,
+                              "padding": [
+                                8,
+                                10
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "wwQYr",
+                                  "name": "Calendar Icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "igJgk",
+                                  "name": "Due Text",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Add due date",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TtDmN",
+                  "name": "Capital One Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "mXSjG",
+                      "name": "Capital One Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "P2Nm8",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "y1mZkQ",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "WLJF6",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#D03027"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "hTDa3",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ymfBw",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Capital One (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "HCKzZ",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "1 card",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qpHKP",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Hy7yH",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "KlGRX",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XxAId",
+                  "name": "Chase Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "W5FX2",
+                      "name": "Chase Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "hvMQt",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "czkI7",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "BjvCF",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#117ACA"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "oAf9C",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "bnUZu",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Chase (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "FlVsi",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "2 cards",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "F1TMs",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "O2KpA",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "b0O9p6",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JZmxy",
+                  "name": "Citi Section",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "R68xh",
+                      "name": "Citi Header",
+                      "width": "fill_container",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "KKx3U",
+                          "name": "Left",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "uTdxx",
+                              "name": "Logo",
+                              "width": 36,
+                              "height": 36,
+                              "fill": "#F0F0F0",
+                              "cornerRadius": 18,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "HQPz0",
+                                  "name": "Bank Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "landmark",
+                                  "library": "lucide",
+                                  "fill": "#056DAE"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "CD3rR",
+                              "name": "Info",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "lWGbA",
+                                  "name": "Bank Name",
+                                  "fill": "$--foreground",
+                                  "content": "Citi (Manual)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "EIoCY",
+                                  "name": "Card Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "1 card",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QCdKi",
+                          "name": "Right Controls",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "VSKNy",
+                              "name": "Chevron Button",
+                              "width": 36,
+                              "height": 36,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "p3JuII",
+                                  "name": "Chevron",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "chevron-down",
+                                  "library": "lucide",
+                                  "fill": "$--muted-foreground"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "YftXJ",
+              "type": "ref",
+              "ref": "kr0AR",
+              "name": "Tab Bar",
+              "width": "fill_container",
+              "descendants": {
+                "o53Er": {
+                  "enabled": false
+                },
+                "QX4kC": {
+                  "fill": "#FF840026"
+                },
+                "H6BYFy": {
+                  "fill": "$--primary"
+                },
+                "n2Qto": {
+                  "fill": "$--primary"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "syAc4",
+          "name": "FREE — Card details",
+          "width": 390,
+          "height": 844,
+          "fill": "$--overlay",
+          "layout": "vertical",
+          "justifyContent": "end",
+          "children": [
+            {
+              "type": "frame",
+              "id": "VN9Ly",
+              "name": "Sheet",
+              "width": "fill_container",
+              "fill": "$--sheet",
+              "cornerRadius": [
+                24,
+                24,
+                0,
+                0
+              ],
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "I9zeV",
+                  "name": "Handle Wrap",
+                  "width": "fill_container",
+                  "padding": [
+                    12,
+                    0,
+                    8,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "TYL6f",
+                      "name": "Handle",
+                      "fill": "$--muted-foreground",
+                      "width": 36,
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GFUpO",
+                  "name": "Header",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "GNo7h",
+                      "name": "Name Row",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LOBUi",
+                          "name": "Card Name",
+                          "fill": "$--foreground",
+                          "content": "Amex Gold",
+                          "fontFamily": "Inter",
+                          "fontSize": 20,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "KHkI6",
+                          "name": "Rename Icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "pencil",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "psp58",
+                      "name": "Card Number",
+                      "fill": "$--muted-foreground",
+                      "content": "•••• 1234",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "l4gVP",
+                  "name": "Stat Strip",
+                  "width": "fill_container",
+                  "padding": [
+                    0,
+                    20,
+                    16,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lsz22",
+                      "name": "Credit Limit Row",
+                      "width": "fill_container",
+                      "fill": "$--accent",
+                      "cornerRadius": "$--radius-m",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "jL1Zl",
+                          "name": "Credit Limit Label",
+                          "fill": "$--muted-foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Credit limit",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "DOL6e",
+                          "name": "Credit Limit Value",
+                          "fill": "$--foreground",
+                          "content": "$10,000",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "opX68",
+                          "name": "Edit Icon",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "pencil",
+                          "library": "lucide",
+                          "fill": "$--muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Akbnr",
+                  "name": "Tab Section",
+                  "width": "fill_container",
+                  "padding": [
+                    0,
+                    20
+                  ],
+                  "justifyContent": "space_around",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "RzOdF",
+                      "name": "Rewards Tab",
+                      "width": "fill_container",
+                      "stroke": "$--primary",
+                      "strokeWidth": {
+                        "bottom": 2
+                      },
+                      "strokeAlignment": "inner",
+                      "strokeLinejoin": "round",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "A62INX",
+                          "name": "Rewards Label Row",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "b2Rz8l",
+                              "name": "Rewards Text",
+                              "fill": "$--foreground",
+                              "content": "Rewards",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "KMIBs",
+                              "name": "Rewards Badge",
+                              "fill": "$--primary",
+                              "cornerRadius": "$--radius-pill",
+                              "padding": [
+                                2,
+                                6
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "P75ua",
+                                  "name": "Rewards Count",
+                                  "fill": "$--primary-foreground",
+                                  "content": "3",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "EzEJ9",
+                      "name": "Credits Tab",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Rnp3f",
+                          "name": "Credits Label Row",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "C4DFcs",
+                              "name": "Credits Text",
+                              "fill": "$--muted-foreground",
+                              "content": "Credits",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "qbueP",
+                              "name": "Credits Badge",
+                              "fill": "$--secondary",
+                              "cornerRadius": "$--radius-pill",
+                              "padding": [
+                                2,
+                                6
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "nnmxP",
+                                  "name": "Credits Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "3",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MJuqx",
+                      "name": "Benefits Tab",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "hJid9",
+                          "name": "Benefits Label Row",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dv3q4",
+                              "name": "Benefits Text",
+                              "fill": "$--muted-foreground",
+                              "content": "Benefits",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "EtzlH",
+                              "name": "Benefits Badge",
+                              "fill": "$--secondary",
+                              "cornerRadius": "$--radius-pill",
+                              "padding": [
+                                2,
+                                6
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Qazfs",
+                                  "name": "Benefits Count",
+                                  "fill": "$--muted-foreground",
+                                  "content": "4",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "P1paI",
+                  "name": "Separator",
+                  "fill": "$--border",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "p01rY",
+                  "name": "Rewards List",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "s3U8zA",
+                      "name": "Dining Row",
+                      "width": "fill_container",
+                      "padding": [
+                        14,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "eRtsT",
+                          "name": "Travel Label",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dining",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "nYo79",
+                          "name": "Travel Right",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Z9LLS",
+                              "name": "Travel Rate",
+                              "fill": "$--green",
+                              "content": "4x Points",
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "b1gmI",
+                              "name": "Travel Chevron",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "chevron-right",
+                              "library": "lucide",
+                              "fill": "$--muted-foreground"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dQHUR",
+                      "name": "Grocery Row",
+                      "width": "fill_container",
+                      "padding": [
+                        14,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "rlZTr",
+                          "name": "Dining Label",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Grocery",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lDrNB",
+                          "name": "Dining Right",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "saAfI",
+                              "name": "Dining Rate",
+                              "fill": "$--green",
+                              "content": "4x Points",
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "FtQdx",
+                              "name": "Dining Chevron",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "chevron-right",
+                              "library": "lucide",
+                              "fill": "$--muted-foreground"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FiBVW",
+                      "name": "All Other Row",
+                      "width": "fill_container",
+                      "padding": [
+                        14,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "d0HXY",
+                          "name": "Online Groceries Label",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "All other purchases",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "sXMd6",
+                          "name": "Online Groceries Right",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Jm4cg",
+                              "name": "Online Groceries Rate",
+                              "fill": "$--muted-foreground",
+                              "content": "1x Points",
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "Dvo83",
+                              "name": "Online Groceries Chevron",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "chevron-right",
+                              "library": "lucide",
+                              "fill": "$--muted-foreground"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "BDuFr",
+                      "name": "Foreign Fee Row",
+                      "width": "fill_container",
+                      "padding": [
+                        14,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "jM7UR",
+                          "name": "Streaming Label",
+                          "fill": "$--foreground",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Foreign transaction fee",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "orP3Y",
+                          "name": "Streaming Right",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WBTVU",
+                              "name": "Streaming Rate",
+                              "fill": "$--muted-foreground",
+                              "content": "None",
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "J7kxLS",
+                  "name": "Delete Wrap",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    20,
+                    32,
+                    20
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PIFRl",
+                      "name": "Delete Button",
+                      "fill": "$--destructive",
+                      "content": "Delete card",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "RjsKV",
+      "x": 1445,
+      "y": 10940,
+      "name": "Note — Free tier",
+      "width": 300,
+      "fill": "$--card",
+      "cornerRadius": "$--radius-m",
+      "layout": "vertical",
+      "padding": 16,
+      "children": [
+        {
+          "type": "text",
+          "id": "PBWmX",
+          "name": "Note Text",
+          "fill": "$--foreground",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Free tier. Pro keeps 'Cards' (iDYBq) unchanged. Free has no Used/Available (no bank data); limit is user-entered and optional; totals tile only when ≥1 limit.",
+          "lineHeight": 1.4,
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
         }
       ]
     }
