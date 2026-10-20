@@ -1963,9 +1963,43 @@ class _RewardsTab extends ConsumerWidget {
                   if (i > 0) Divider(height: 1, color: palette.border),
                   _RewardRateRow(row: r),
                 ],
+                if (ref.watch(cardForeignFeeProvider(card.cardId)).value
+                    case final fee?)
+                  _ForeignFeeLine(feePct: fee),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Foreign transaction fee · None / 3% / Not known" — what the card costs
+/// abroad, which ranking only applies while the user is abroad.
+class _ForeignFeeLine extends StatelessWidget {
+  const _ForeignFeeLine({required this.feePct});
+  final double feePct;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final value = feePct < 0
+        ? 'Not known'
+        : feePct == 0
+        ? 'None'
+        : '${feePct.toStringAsFixed(feePct.truncateToDouble() == feePct ? 0 : 1)}%';
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Foreign transaction fee',
+              style: AppText.bodySm(color: palette.muted),
+            ),
+          ),
+          Text(value, style: AppText.bodySm(color: palette.muted)),
         ],
       ),
     );

@@ -8,6 +8,7 @@ import '../../providers/nearby_providers.dart';
 import '../../providers/settings_provider.dart';
 import '../../theme/app_theme.dart';
 import 'profile_ui.dart';
+import '../../util/units.dart';
 
 /// Wireframe `lwrJJ` — Advisor's filter (the tune button in Stores view):
 /// how far to look and which kinds of places to look for.
@@ -99,7 +100,7 @@ class _StoreFilterSheetState extends ConsumerState<StoreFilterSheet> {
               options: _radii,
               selected: radius,
               background: AppColors.background,
-              labelOf: (m) => '$m mi',
+              labelOf: (m) => formatRadiusMi(m),
               onChanged: (m) => ref.read(nearbyRadiusProvider.notifier).set(m),
             ),
             const SizedBox(height: 24),

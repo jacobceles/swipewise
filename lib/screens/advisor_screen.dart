@@ -15,6 +15,7 @@ import 'profile/store_filter_sheet.dart';
 import 'profile/profile_ui.dart';
 import 'reward_ranking_sheet.dart';
 import 'widgets/nearby_stores_view.dart';
+import '../util/units.dart';
 
 /// Wireframe `dngVk` / `N86r3` - best card by nearby store, by reward
 /// category, or by merchant brand. Three views toggled by a pill segmented
@@ -329,8 +330,8 @@ class _StoresCaption extends ConsumerWidget {
     final radiusMi = ref.watch(nearbyRadiusProvider);
     final count = ref.watch(nearbyMerchantsProvider).value?.length;
     final caption = count == null
-        ? 'within $radiusMi mi'
-        : '$count within $radiusMi mi';
+        ? 'within ${formatRadiusMi(radiusMi)}'
+        : '$count within ${formatRadiusMi(radiusMi)}';
     return Text(
       caption,
       textAlign: TextAlign.center,

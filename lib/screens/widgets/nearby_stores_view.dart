@@ -11,6 +11,7 @@ import '../../providers/settings_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../util/category_icons.dart';
 import '../reward_ranking_sheet.dart';
+import '../../util/units.dart';
 
 /// Lives inside Advisor → Stores tab. Renders a list of nearby merchants
 /// with their best reward card / rate, or a state card explaining why
@@ -425,7 +426,7 @@ class _StoreRow extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${merchant.distanceMi.toStringAsFixed(1)} mi',
+                            formatDistanceMi(merchant.distanceMi),
                             style: AppText.monoXs().copyWith(fontSize: 11),
                           ),
                         ],

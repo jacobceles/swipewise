@@ -422,6 +422,23 @@ class CatalogRepository {
     ];
   }
 
+  /// The linked product's foreign-transaction fee in percent: 0 = none, a
+  /// negative value = never captured (the loader's sentinel), null = the card
+  /// isn't linked to a catalog product.
+  Future<double?> foreignFeeForCard(String userId, String cardId) async {
+    final db = await _dbHelper.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT p.foreign_tx_fee_pct AS fee
+      FROM card_links cl
+      JOIN card_products p ON p.card_product_id = cl.card_product_id
+      WHERE cl.user_id = ? AND cl.card_id = ?
+      ''',
+      [userId, cardId],
+    );
+    return rows.isEmpty ? null : (rows.first['fee'] as num?)?.toDouble();
+  }
+
   /// Countries the wallet's linked cards are sold in (null country = 'US').
   Future<Set<String>> walletCountries(String userId) async {
     final db = await _dbHelper.database;

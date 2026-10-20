@@ -204,7 +204,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _consumePendingMerchant();
       _syncBanksIfDue();
       _recheckAbroad();
+      _rescheduleRemindersIfZoneChanged();
     }
+  }
+
+  Duration _zoneOffset = DateTime.now().timeZoneOffset;
+
+  /// Reminders are fixed instants computed for 09:00 local, so after a flight
+  /// (or a DST switch) they would keep firing at 09:00 back home until the
+  /// next cold start. A changed UTC offset on resume rebuilds them now.
+  void _rescheduleRemindersIfZoneChanged() {
+    final now = DateTime.now().timeZoneOffset;
+    if (now == _zoneOffset) return;
+    Log.i('reminders', 'time zone $_zoneOffset -> $now, rescheduling');
+    _zoneOffset = now;
+    _topUpPaymentReminders();
   }
 
   /// "Abroad" was otherwise decided only at cold start and after a sync, so

@@ -326,6 +326,18 @@ final cardRewardsByCardProvider =
       return repo.catalog.rewardsForCard(auth.userId!, cardId);
     });
 
+/// See [CatalogRepository.foreignFeeForCard].
+final cardForeignFeeProvider = FutureProvider.family<double?, String>((
+  ref,
+  cardId,
+) async {
+  final auth = ref.watch(sessionProvider);
+  if (!auth.isLoggedIn) return null;
+  final repo = ref.watch(dataRepositoryProvider);
+  await ref.watch(catalogReadyProvider.future);
+  return repo.catalog.foreignFeeForCard(auth.userId!, cardId);
+});
+
 final cardRotatingScheduleProvider =
     FutureProvider.family<RotatingSchedule?, String>((ref, cardId) async {
       final auth = ref.watch(sessionProvider);
@@ -855,6 +867,7 @@ final List<ProviderOrFamily> syncInvalidatedProviders = [
   recurringPaymentsProvider,
   cardPerksProvider,
   cardRewardsByCardProvider,
+  cardForeignFeeProvider,
   merchantSummaryProvider,
   categoryDrilldownProvider,
   rewardRankingProvider,
