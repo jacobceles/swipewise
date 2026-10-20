@@ -277,7 +277,8 @@
     "aliases": [
       "in n out",
       "innout",
-      "in n out burger"
+      "in n out burger",
+      "in-n-out"
     ]
   },
   {
@@ -3924,16 +3925,6 @@
     ]
   },
   {
-    "brandId": "in-n-out",
-    "displayName": "In-N-Out Burger",
-    "category": "dining",
-    "aliases": [
-      "in n out",
-      "in-n-out",
-      "innout"
-    ]
-  },
-  {
     "brandId": "white-castle",
     "displayName": "White Castle",
     "category": "dining",
@@ -3983,14 +3974,6 @@
     "aliases": [
       "perkins restaurant",
       "perkins"
-    ]
-  },
-  {
-    "brandId": "cracker-barrel-old-country-store",
-    "displayName": "Cracker Barrel",
-    "category": "dining",
-    "aliases": [
-      "cracker barrel"
     ]
   },
   {
@@ -4100,40 +4083,6 @@
     "aliases": [
       "tropical smoothie",
       "tropical smoothie cafe"
-    ]
-  },
-  {
-    "brandId": "peets",
-    "displayName": "Peet's Coffee",
-    "category": "coffee",
-    "aliases": [
-      "peets",
-      "peets coffee"
-    ]
-  },
-  {
-    "brandId": "scooters",
-    "displayName": "Scooter's Coffee",
-    "category": "coffee",
-    "aliases": [
-      "scooters coffee"
-    ]
-  },
-  {
-    "brandId": "biggby",
-    "displayName": "Biggby Coffee",
-    "category": "coffee",
-    "aliases": [
-      "biggby coffee"
-    ]
-  },
-  {
-    "brandId": "smart-final",
-    "displayName": "Smart & Final",
-    "category": "grocery",
-    "aliases": [
-      "smart and final",
-      "smart final"
     ]
   },
   {
@@ -4409,22 +4358,6 @@
     ]
   },
   {
-    "brandId": "alds",
-    "displayName": "ALDI",
-    "category": "grocery",
-    "aliases": [
-      "aldi"
-    ]
-  },
-  {
-    "brandId": "lidls",
-    "displayName": "Lidl",
-    "category": "grocery",
-    "aliases": [
-      "lidl"
-    ]
-  },
-  {
     "brandId": "buy-low-foods",
     "displayName": "Buy-Low Foods",
     "category": "grocery",
@@ -4511,15 +4444,6 @@
     "category": "gas",
     "aliases": [
       "arco"
-    ]
-  },
-  {
-    "brandId": "am-pm",
-    "displayName": "ampm",
-    "category": "gas",
-    "aliases": [
-      "ampm",
-      "am pm"
     ]
   },
   {
@@ -4697,15 +4621,6 @@
     "category": "wholesale",
     "aliases": [
       "menards"
-    ]
-  },
-  {
-    "brandId": "bjs-wholesale",
-    "displayName": "BJ's Wholesale Club",
-    "category": "wholesale",
-    "aliases": [
-      "bjs wholesale",
-      "bj s wholesale"
     ]
   },
   {

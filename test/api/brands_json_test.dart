@@ -49,6 +49,23 @@ void main() {
       );
     });
 
+    // 2026-10-20: ten stores (ALDI, Lidl, Peet's…) had two slugs each, so the
+    // Brands tab listed them twice.
+    test('no two entries share a displayName', () {
+      final seen = <String, String>{};
+      for (final e in entries) {
+        final m = e as Map;
+        final name = (m['displayName'] as String).toLowerCase();
+        final id = m['brandId'] as String;
+        expect(
+          seen[name],
+          isNull,
+          reason: '"${m['displayName']}" is both ${seen[name]} and $id',
+        );
+        seen[name] = id;
+      }
+    });
+
     test('every category resolves to a real RewardCategory', () {
       for (final e in entries) {
         final m = e as Map;
