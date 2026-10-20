@@ -55,11 +55,11 @@ Free, no account required — your wallet lives on your phone. Prefer to build i
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="play_store_listing/screenshots/free/1-best-card-at-every-store.png" width="220"><br><sub><b>Best card at every store</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/free/2-where-your-cards-win.png" width="220"><br><sub><b>Where your cards win</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/free/3-every-category-ranked.png" width="220"><br><sub><b>Every category ranked</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/free/4-your-wallet.png" width="220"><br><sub><b>Your whole wallet</b></sub></td>
-    <td align="center"><img src="play_store_listing/screenshots/free/5-no-account-needed.png" width="220"><br><sub><b>No account needed</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/1-know-which-card-to-use.png" width="220"><br><sub><b>Know which card to use</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/2-best-card-every-store.png" width="220"><br><sub><b>Best card, every store</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/3-every-card-ranked.png" width="220"><br><sub><b>Every card, ranked</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/4-best-card-per-category.png" width="220"><br><sub><b>Best card per category</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/5-add-your-cards-in-seconds.png" width="220"><br><sub><b>Add your cards in seconds</b></sub></td>
   </tr>
 </table>
 </div>

@@ -28,14 +28,13 @@ one, change all three.
 | Category / tag | — | Finance / Personal finance |
 | Target audience | — | **18+ only** — any younger band triggers Families policy |
 
-⚠️ **Screenshots must match the build being listed.** `shellTabs(isPro)` in
-`lib/widgets/app_tab_bar.dart` gives a free user three tabs — Cards, Advisor, Profile — while every
-original frame in `../wireframe.pen` draws four. `screenshots/free/` was exported from the
-`FREE — *` frames, which disable the extra tab; the bar is `space_around`, so the remaining three
-re-space cleanly. **Re-export from the original frames and you ship a tab that does not exist.**
+⚠️ **Screenshots must match the build being listed.** `screenshots/free/` is exported from the
+`Play Store listing` section of `../wireframe.pen`: captioned frames around **real captures of the
+free build** (`screenshots/raw/`, a demo wallet, no personal data), not wireframes. Free shows three
+tabs (Cards, Advisor, Profile); the wireframe screen frames draw four.
 
-Two frames are deliberately excluded: `Merchant Detail` is spend/visits/history, and `Card Details
-Sheet` shows a transaction-derived "Used" figure. Neither is available in the listed build.
+The Cards tab is deliberately not shown: without bank data its Used / Limit / Available figures
+all read $0.
 
 `screenshots/pro/` holds the four-tab set, kept for when those tabs ship. **Never upload it to the
 current listing** — two of them show screens the listed build does not have, which is a misleading
@@ -167,5 +166,9 @@ disclosure in `NearbyPermissionGate`, which is what reviewers cross-check.
 - **Icon** — `magick assets/icon_foreground.png -resize 512x512 -background white -alpha remove -flatten play_store_listing/icon_512.png`
 - **Feature graphic** — Gemini, with [`../assets/logo.png`](../assets/logo.png) as the brand
   reference; 1024×500, dark background, no baked-in text.
-- **Screenshots** — export the `FREE — *` frames from `../wireframe.pen` (Pencil MCP), then pad to
-  ≤2:1 using each screen's own background.
+- **Screenshots** — capture the free build on an emulator with a demo wallet (debug build, so App
+  Check passes; `adb shell pm grant` background location and activity recognition, allow alarms and
+  unrestricted battery, so no banners show). Crop the status bar (it carries the DEBUG ribbon) into
+  `screenshots/raw/`, then export the 1080×1920 children of `Play Store listing` in
+  `../wireframe.pen` (Pencil MCP `Export`, scale 1) over `screenshots/free/`. The store alert is a
+  real notification from Profile's debug-only *Test store alert*.
