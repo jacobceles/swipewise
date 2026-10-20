@@ -56,6 +56,41 @@ class WalkinTest {
         assertFalse(VisitLock.isSameVisit(null, 40.5014, -74.8549, 0L))
     }
 
+    @Test
+    fun `walking next door, a sharp fix naming a new store is a new visit`() {
+        val last = VisitLock.Visit(
+            40.5014, -74.8549, 1_000_000L, "m_a",
+            listOf("a"), listOf(VisitLock.adviceOf(store("a"))),
+        )
+        val later = 1_000_000L + 300_000L
+        // ~40 m on, in the shop next door, with its own card advice.
+        assertFalse(VisitLock.isSameVisit(last, 40.50176, -74.8549, later, listOf(store("b"))))
+        // Still in store a, or a fix too close to tell a from b: same visit.
+        assertTrue(VisitLock.isSameVisit(last, 40.5014, -74.8549, later, listOf(store("a"))))
+        assertTrue(VisitLock.isSameVisit(last, 40.5014, -74.8549, later, listOf(store("b"), store("a"))))
+        // No sharp fix: nothing says the store changed.
+        assertTrue(VisitLock.isSameVisit(last, 40.50176, -74.8549, later, null))
+    }
+
+    @Test
+    fun `a next-door store with the same card advice stays held back`() {
+        val coffee = MerchantOption("starbucks", "Starbucks", null, "Gold", 4.0)
+        val other = MerchantOption("dunkin", "Dunkin", null, "Gold", 4.0)
+        val last = VisitLock.Visit(
+            40.5014, -74.8549, 1_000_000L, "m_s",
+            listOf("starbucks"), listOf(VisitLock.adviceOf(coffee)),
+        )
+        assertTrue(VisitLock.isSameVisit(last, 40.5016, -74.8549, 1_100_000L, listOf(other)))
+    }
+
+    @Test
+    fun `a visit first named by a coarse fix is corrected, not alerted twice`() {
+        // Costco 2026-10-17: the first alert came from a 244 m fix, so the visit
+        // remembers no store, and the sharp look at Costco Wholesale is held back.
+        val last = VisitLock.Visit(40.5014, -74.8549, 1_000_000L, "m_tire")
+        assertTrue(VisitLock.isSameVisit(last, 40.5016, -74.8549, 1_200_000L, listOf(store("costco"))))
+    }
+
     private fun at(id: String, lat: Double, footprint: Double = 0.0) =
         MerchantOption(id, id, null, "card-$id", null, lat, -74.8549, footprint)
 

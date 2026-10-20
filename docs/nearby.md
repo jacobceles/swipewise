@@ -206,7 +206,16 @@ let a 36-minute Costco trip post twice). Overlapping
 fences entered seconds apart used to each post, since neighbouring stores have different
 categories and the per-category cooldown never caught them. The 20 minutes must exceed
 the longest wait setting (15 min), since overlapping fences can have different waits.
-**Known limit:** walking to the shop next door within the window stays silent.
+
+**The shop next door is a new visit.** Its fence was usually entered on arrival (fences
+overlap) and its alert held back, so no new ENTER comes when the user walks over. Instead,
+activity recognition reporting STILL after WALKING during a visit arms one dwell check from
+the visit's fence (`ActivityTransitionReceiver`, `nextDoor`, which doesn't count towards
+`ResidentGuard`). It posts only if a sharp fix names a store the visit hasn't alerted for,
+with different card advice (`VisitLock.isSameVisit`). Indoor drift can't fake it: the store
+the user is really in stays within 35 m of the closest, so it stays in the resolved list. A
+visit whose alert came from a coarse fix or the fallback remembers no store, so a sharper
+look later is a correction, not a second alert.
 
 **Logs (release builds too):** every receiver writes one line under tag `SW.walkin` — fence
 ENTER/EXIT (with `no_meta` marks and fix accuracy), boundary EXIT and whether it deferred,
@@ -226,42 +235,27 @@ phone; when you do stay plugged in, first run
 Fence geometry + dwell seconds ride along in `GeofenceMetadataStore` so the receivers
 need no Dart round-trip.
 
-### Outcome trail (temporary)
+### Outcomes
 
-`DwellCheckReceiver` has seven exits and six of them are a bare `return`, so a
-correctly-suppressed drive-by and an eaten real visit look identical from outside —
-both are just silence. A device pulled on 2026-08-16 had **12 dwell timers fire over
-two days and only 5 post**, with nothing on the device able to say which path ate the
-other 7.
-
-`DwellOutcomeStore` writes one `dwell_outcomes` row per fired timer (DB v15,
-**debug builds only**, capped at 500, best-effort):
+Every exit of `DwellCheckReceiver` ends in one `dwell <fence>: <outcome>` log line
+(`DwellOutcome` in `DwellOutcome.kt`), so a correctly suppressed drive-by and an eaten
+real visit no longer look the same (both used to be silence):
 
 | outcome | meaning |
 | --- | --- |
 | `posted` | notification shown |
 | `no_meta` | fence set replaced mid-flight — frequent means re-registration is racing arrivals |
-| `outside_fence` | verification fix put the user outside; `distance_m` vs `allowed_m` says by how much |
+| `outside_fence` | verification fix put the user outside; `dist` vs the allowed reach says by how much |
 | `no_fix_driving` | no fix in time and AR still says driving |
 | `moving_recheck` / `coarse_recheck` | inside but moving, or fix too coarse; re-armed once |
 | `not_at_store` | inside the fence, but no store close enough to be the one you're in |
 | `resident` | fence keeps firing (home/work); skipped without a fix |
 | `notifications_off` | post attempted, but notifications are off; no cooldown or visit lock set |
 | `muted` / `same_visit` / `merchant_cooldown` | suppressed on purpose |
-| `category_cooldown` | older builds only; that cooldown is gone |
 
-`distance_m`/`accuracy_m`/`allowed_m` are set whenever a fix was obtained, so a `posted`
-row with no distance is itself the marker that verification failed open. Read it with:
-
-```
-adb exec-out run-as com.appsoflife.swipewise.dev cat databases/swipewise.db > /tmp/sw.db
-sqlite3 /tmp/sw.db "SELECT datetime(at/1000,'unixepoch','localtime'), merchant_name,
-  outcome, round(distance_m), round(allowed_m) FROM dwell_outcomes ORDER BY id DESC;"
-```
-
-**This is a rig, not a feature.** Its ancestor `debug_trail` went in at DB v6 and was
-dropped at v8 once it had proven the pipeline. Delete the table, `DwellOutcomeStore.kt`
-and its call sites the same way once the silent drops are attributed.
+A `posted` line with no `dist=` is itself the marker that verification failed open. The
+debug-only `dwell_outcomes` table that used to hold these (DB v15) was dropped at v21: the
+log replaced it.
 
 ## Recommendation
 

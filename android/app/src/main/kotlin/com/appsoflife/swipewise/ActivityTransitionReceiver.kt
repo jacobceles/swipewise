@@ -13,6 +13,7 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
         val result = ActivityTransitionResult.extractResult(intent) ?: return
         // Latest event wins.
         val latest = result.transitionEvents.lastOrNull() ?: return
+        val wasWalking = ActivityState.isLikelyWalking(context)
         // An IN_VEHICLE *EXIT* means the drive ended; storing its bare
         // activity type read as "still driving".
         val leftVehicle = latest.activityType == DetectedActivity.IN_VEHICLE &&
@@ -39,6 +40,24 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
             PendingReregister.set(context, false)
             ReregisterScheduler.enqueue(context)
         }
+
+        // Stopped after walking, during a visit: maybe the shop next door,
+        // whose fence was entered (and its alert held back) on arrival, so no
+        // new ENTER will come. One dwell check from the visit's fence; it
+        // posts only if the fix names a store this visit hasn't alerted for.
+        val stopped = latest.activityType == DetectedActivity.STILL &&
+            latest.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER
+        if (stopped && wasWalking) armNextDoorCheck(context)
+    }
+
+    private fun armNextDoorCheck(context: Context) {
+        val visit = VisitLock.read(context)
+        if (!VisitLock.isActive(visit, System.currentTimeMillis())) return
+        val fenceId = visit!!.fenceId ?: return
+        val meta = GeofenceMetadataStore(context).read(fenceId) ?: return
+        if (DwellAlarms.isArmed(context, fenceId)) return
+        DwellAlarms.arm(context, fenceId, meta.dwellSeconds, nextDoor = true)
+        WalkinLog.w(context, "visit: still after walking -> next-door check $fenceId in ${meta.dwellSeconds}s")
     }
 
     companion object {

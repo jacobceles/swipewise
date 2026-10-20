@@ -161,16 +161,51 @@ object StoreResolver {
 /// The window slides: every alert it holds back restarts it, so it lasts as
 /// long as the user stays. A fixed 20 minutes let a 36-minute Costco trip post
 /// twice (2026-10-17).
+///
+/// Walking to the shop next door is a new visit: when a sharp fix names the
+/// store(s) the user is in ([resolved]) and none of them is a store this
+/// visit already alerted for, the lock doesn't hold. Indoor drift can't fake
+/// it: the store the user is really in stays within [StoreResolver.AMBIGUITY_M]
+/// of the closest, so it stays in [resolved]. Only a visit whose own alert was
+/// named by a sharp fix remembers its stores: a coarse first alert is a guess,
+/// and the sharper look minutes later is a correction, not a new store (Costco
+/// Tire Service, then Costco Wholesale, 2026-10-17). A store with the same card
+/// advice as one already named stays held back too, as in [StoreResolver.foldSameAdvice].
 object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
     const val RADIUS_M = 250.0
 
-    data class Visit(val lat: Double, val lng: Double, val atMillis: Long)
+    /// [fenceId]: the fence the visit alerted from. [merchantIds] / [advice]:
+    /// the store(s) it named and their "card|rate", when a sharp fix named them.
+    data class Visit(
+        val lat: Double,
+        val lng: Double,
+        val atMillis: Long,
+        val fenceId: String? = null,
+        val merchantIds: List<String> = emptyList(),
+        val advice: List<String> = emptyList(),
+    )
 
-    fun isSameVisit(last: Visit?, lat: Double, lng: Double, nowMillis: Long): Boolean {
-        if (last == null) return false
-        if (nowMillis - last.atMillis >= WINDOW_MS) return false
-        return distanceM(last.lat, last.lng, lat, lng) < RADIUS_M
+    fun adviceOf(o: MerchantOption): String = "${o.bestCardName}|${o.bestRate}"
+
+    fun isActive(last: Visit?, nowMillis: Long): Boolean =
+        last != null && nowMillis - last.atMillis < WINDOW_MS
+
+    /// [resolved]: the stores a sharp fix put the user in, or null when the
+    /// fix couldn't tell (no fix, coarse fix, fence options as a fallback).
+    fun isSameVisit(
+        last: Visit?,
+        lat: Double,
+        lng: Double,
+        nowMillis: Long,
+        resolved: List<MerchantOption>? = null,
+    ): Boolean {
+        if (last == null || !isActive(last, nowMillis)) return false
+        if (distanceM(last.lat, last.lng, lat, lng) >= RADIUS_M) return false
+        val movedNextDoor = !resolved.isNullOrEmpty() && last.merchantIds.isNotEmpty() &&
+            resolved.none { it.merchantId in last.merchantIds } &&
+            adviceOf(resolved.first()) !in last.advice
+        return !movedNextDoor
     }
 
     private const val PREFS = "swipewise_visit_lock"
@@ -182,6 +217,9 @@ object VisitLock {
             Double.fromBits(p.getLong("lat", 0L)),
             Double.fromBits(p.getLong("lng", 0L)),
             p.getLong("at", 0L),
+            p.getString("fence", null),
+            p.getString("ids", "")!!.split(',').filter { it.isNotEmpty() },
+            p.getString("advice", "")!!.split('\n').filter { it.isNotEmpty() },
         )
     }
 
@@ -192,6 +230,9 @@ object VisitLock {
             .putLong("lat", visit.lat.toRawBits())
             .putLong("lng", visit.lng.toRawBits())
             .putLong("at", visit.atMillis)
+            .putString("fence", visit.fenceId)
+            .putString("ids", visit.merchantIds.joinToString(","))
+            .putString("advice", visit.advice.joinToString("\n"))
             .commit()
     }
 }

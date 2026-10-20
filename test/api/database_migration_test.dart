@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
@@ -472,19 +470,19 @@ void main() {
   });
 
   test(
-    'onUpgrade(14→15) creates dwell_outcomes; fresh install has it',
+    'onUpgrade(20→21) drops dwell_outcomes; fresh install never has it',
     () async {
-      final db = await databaseFactoryFfi.openDatabase(
-        inMemoryDatabasePath,
-        options: OpenDatabaseOptions(
-          onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
-        ),
+      Future<bool> hasTable(Database db) async => (await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='dwell_outcomes'",
+      )).isNotEmpty;
+
+      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      await db.execute(
+        'CREATE TABLE dwell_outcomes (id INTEGER PRIMARY KEY, outcome TEXT)',
       );
-      await DatabaseHelper.runUpgrade(db, 14, 15);
-      final cols = (await db.rawQuery(
-        'PRAGMA table_info(dwell_outcomes)',
-      )).map((r) => r['name'] as String).toSet();
-      expect(cols, equals(_dwellOutcomeColumns));
+      await DatabaseHelper.runUpgrade(db, 20, 21);
+      expect(await hasTable(db), isFalse);
+      await DatabaseHelper.runUpgrade(db, 20, 21); // re-runnable
       await db.close();
 
       final fresh = await databaseFactoryFfi.openDatabase(
@@ -494,10 +492,7 @@ void main() {
           onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
         ),
       );
-      final freshCols = (await fresh.rawQuery(
-        'PRAGMA table_info(dwell_outcomes)',
-      )).map((r) => r['name'] as String).toSet();
-      expect(freshCols, equals(_dwellOutcomeColumns));
+      expect(await hasTable(fresh), isFalse);
       await fresh.close();
     },
   );
@@ -672,39 +667,4 @@ void main() {
       await db.close();
     },
   );
-
-  // The native writer carries its own copy of this CREATE (it can fire before
-  // Dart has ever opened the DB), so the two can drift into an INSERT that
-  // silently fails inside DwellOutcomeStore's catch-all. Pin them together.
-  test('DwellOutcomeStore.CREATE_SQL matches the Dart schema', () async {
-    final kotlin = File(
-      'android/app/src/main/kotlin/com/appsoflife/swipewise/DwellOutcomeStore.kt',
-    ).readAsStringSync();
-    final create = RegExp(
-      r'CREATE TABLE IF NOT EXISTS dwell_outcomes \(([^)]*)\)',
-    ).firstMatch(kotlin);
-    expect(
-      create,
-      isNotNull,
-      reason: 'CREATE_SQL not found in the Kotlin store',
-    );
-    final nativeCols = create!
-        .group(1)!
-        .split(',')
-        .map((l) => l.trim().split(RegExp(r'\s+')).first)
-        .where((c) => c.isNotEmpty)
-        .toSet();
-    expect(nativeCols, equals(_dwellOutcomeColumns));
-  });
 }
-
-const _dwellOutcomeColumns = <String>{
-  'id',
-  'at',
-  'geofence_id',
-  'merchant_name',
-  'outcome',
-  'distance_m',
-  'accuracy_m',
-  'allowed_m',
-};

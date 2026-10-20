@@ -116,7 +116,7 @@ class DatabaseHelper {
       try {
         return await openDatabase(
           path,
-          version: 20,
+          version: 21,
           onConfigure: _onConfigure,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
@@ -134,32 +134,6 @@ class DatabaseHelper {
     }
   }
 
-  /// Device-level per-store mute list for dwell notifications. A row here
-  /// suppresses geofence registration (Dart, in `GeofenceManager`) and, as a
-  /// belt-and-braces guard for fences registered before the mute, the native
-  /// dwell post. Keyed by the Google place id. Not user-scoped — the native
-  /// receivers read it without a user context, exactly like the cooldown
-  /// tables. Mute/unmute writes happen only in Dart; native only reads.
-  /// Disposable diagnostic trail: one row per fired dwell timer, saying which of
-  /// `DwellCheckReceiver`'s seven exits it took. Written only by the native
-  /// `DwellOutcomeStore`, and only in debug builds — Dart just owns the schema.
-  ///
-  /// **Temporary.** Its ancestor `debug_trail` went in at v6 and was dropped at
-  /// v8 once it had proven the pipeline; this one gets the same ending once the
-  /// silent drops are attributed. Keep in step with `DwellOutcomeStore.CREATE_SQL`.
-  static const String _createDwellOutcomesSql = '''
-    CREATE TABLE IF NOT EXISTS dwell_outcomes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      at INTEGER NOT NULL,
-      geofence_id TEXT NOT NULL,
-      merchant_name TEXT,
-      outcome TEXT NOT NULL,
-      distance_m REAL,
-      accuracy_m REAL,
-      allowed_m REAL
-    )
-  ''';
-
   /// When the user last chose each store from a "you may be at one of these"
   /// list. The native dwell check puts the most recent pick first, so two
   /// stores sharing one address stop being a guess after the first tap.
@@ -171,6 +145,12 @@ class DatabaseHelper {
     )
   ''';
 
+  /// Device-level per-store mute list for dwell notifications. A row here
+  /// suppresses geofence registration (Dart, in `GeofenceManager`) and, as a
+  /// belt-and-braces guard for fences registered before the mute, the native
+  /// dwell post. Keyed by the Google place id. Not user-scoped — the native
+  /// receivers read it without a user context, exactly like the cooldown
+  /// tables. Mute/unmute writes happen only in Dart; native only reads.
   static const String _createMutedMerchantsSql = '''
     CREATE TABLE IF NOT EXISTS muted_merchants (
       merchant_id TEXT PRIMARY KEY,
@@ -404,13 +384,7 @@ class DatabaseHelper {
       }
     }
 
-    // v15 — dwell_outcomes, the temporary diagnostic trail. Additive and
-    // debug-write-only, so nothing reads it in a release build; it exists so a
-    // dwell timer that fires and posts nothing can say which of the six silent
-    // paths ate it. Drop it (and the native writer) once that's answered.
-    if (oldVersion < 15) {
-      await db.execute(_createDwellOutcomesSql);
-    }
+    // v15: `dwell_outcomes` was a disposable diagnostic trail; dropped in v21.
 
     // v17 — selectable bonus categories (N17). Some cards pay their bonus only
     // on a category the cardholder SELECTED (or one the issuer picks from
@@ -489,6 +463,12 @@ class DatabaseHelper {
       if (psCols.isNotEmpty && !psCols.contains('unit')) {
         await db.execute('ALTER TABLE point_systems ADD COLUMN unit TEXT');
       }
+    }
+    // v21: drop the disposable `dwell_outcomes` — `files/walkin.log` (debug
+    // builds) replaced it. Never written in store builds. `IF EXISTS` covers
+    // upgrades from before v15.
+    if (oldVersion < 21) {
+      await db.execute('DROP TABLE IF EXISTS dwell_outcomes');
     }
   }
 
@@ -941,9 +921,6 @@ class DatabaseHelper {
     // Device-level per-store mute list for dwell notifications.
     await db.execute(_createMutedMerchantsSql);
     await db.execute(_createStorePicksSql);
-
-    // Temporary diagnostic trail for dwell notifications (see the SQL above).
-    await db.execute(_createDwellOutcomesSql);
 
     // One row per bank Member (link) we resolve from Sophtron v2. Drives
     // the per-link transaction sync. `user_institution_id` holds the

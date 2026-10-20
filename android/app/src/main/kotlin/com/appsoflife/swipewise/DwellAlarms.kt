@@ -28,16 +28,25 @@ import android.os.SystemClock
 object DwellAlarms {
     private const val ACTION_PREFIX = "com.appsoflife.swipewise.DWELL_CHECK:"
     private const val EXTRA_RECHECK = "recheck"
+    private const val EXTRA_NEXT_DOOR = "next_door"
     private const val PREFS = "swipewise_dwell_armed"
 
     fun isArmed(context: Context, geofenceId: String): Boolean =
         prefs(context).getLong(geofenceId, 0L) > System.currentTimeMillis()
 
     /// [recheck]: this is the second and last look after the first one found
-    /// the user still moving (see [DwellCheckReceiver]).
-    fun arm(context: Context, geofenceId: String, dwellSeconds: Int, recheck: Boolean = false) {
+    /// the user still moving (see [DwellCheckReceiver]). [nextDoor]: armed by
+    /// the user settling during a visit, not by a fence ENTER, so it must not
+    /// count towards [ResidentGuard].
+    fun arm(
+        context: Context,
+        geofenceId: String,
+        dwellSeconds: Int,
+        recheck: Boolean = false,
+        nextDoor: Boolean = false,
+    ) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pi = pendingIntent(context, geofenceId, recheck)
+        val pi = pendingIntent(context, geofenceId, recheck, nextDoor)
         val at = SystemClock.elapsedRealtime() + dwellSeconds * 1000L
         prefs(context).edit()
             .putLong(geofenceId, System.currentTimeMillis() + dwellSeconds * 1000L)
@@ -88,15 +97,23 @@ object DwellAlarms {
 
     fun isRecheck(intent: Intent): Boolean = intent.getBooleanExtra(EXTRA_RECHECK, false)
 
+    fun isNextDoor(intent: Intent): Boolean = intent.getBooleanExtra(EXTRA_NEXT_DOOR, false)
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    private fun pendingIntent(context: Context, geofenceId: String, recheck: Boolean = false): PendingIntent {
+    private fun pendingIntent(
+        context: Context,
+        geofenceId: String,
+        recheck: Boolean = false,
+        nextDoor: Boolean = false,
+    ): PendingIntent {
         // Extras don't take part in matching, and FLAG_UPDATE_CURRENT replaces
         // them, so a plain ENTER arm always resets the recheck flag.
         val intent = Intent(context, DwellCheckReceiver::class.java).apply {
             action = ACTION_PREFIX + geofenceId
             putExtra(EXTRA_RECHECK, recheck)
+            putExtra(EXTRA_NEXT_DOOR, nextDoor)
         }
         return PendingIntent.getBroadcast(
             context,

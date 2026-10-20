@@ -36,15 +36,15 @@ class DwellCheckReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val geofenceId = DwellAlarms.geofenceIdFromIntent(intent) ?: return
         val recheck = DwellAlarms.isRecheck(intent)
+        val nextDoor = DwellAlarms.isNextDoor(intent)
         DwellAlarms.markFired(context, geofenceId)
         val meta = GeofenceMetadataStore(context).read(geofenceId)
         if (meta == null) {
             // Fence set was replaced while this timer was in flight.
             WalkinLog.w(context, "dwell $geofenceId: no_meta (fence set replaced mid-dwell)")
-            DwellOutcomeStore(context).record(geofenceId, null, DwellOutcome.NO_META)
             return
         }
-        if (!recheck && ResidentGuard.check(context, geofenceId, System.currentTimeMillis())) {
+        if (!recheck && !nextDoor && ResidentGuard.check(context, geofenceId, System.currentTimeMillis())) {
             done(context, meta, DwellOutcome.RESIDENT)
             return
         }
@@ -139,7 +139,8 @@ class DwellCheckReceiver : BroadcastReceiver() {
             done(context, meta, DwellOutcome.NOT_AT_STORE, measured)
             return
         }
-        maybePost(context, resolved, measured, fix.latitude, fix.longitude)
+        val (found, byFix) = resolved
+        maybePost(context, found, measured, fix.latitude, fix.longitude, byFix)
     }
 
     /// The store(s) to name, judged from the fix against every registered
@@ -149,8 +150,14 @@ class DwellCheckReceiver : BroadcastReceiver() {
     /// reach (fences from older builds carry none). Muted stores are dropped
     /// first, so a muted store next door can't silence the one the user is in.
     /// Null when the closest store is too far for the user to be inside it.
-    private fun resolveAtFix(context: Context, meta: MerchantMeta, fix: Location, reach: Double): MerchantMeta? {
-        val fallback = meta.copy(options = StoreResolver.capped(meta.options, fix.latitude, fix.longitude))
+    /// The flag says the fix named the store(s), rather than the fallback.
+    private fun resolveAtFix(
+        context: Context,
+        meta: MerchantMeta,
+        fix: Location,
+        reach: Double,
+    ): Pair<MerchantMeta, Boolean>? {
+        val fallback = meta.copy(options = StoreResolver.capped(meta.options, fix.latitude, fix.longitude)) to false
         if (fix.accuracy > StoreResolver.MAX_ACCURACY_M) {
             WalkinLog.w(context, "dwell ${meta.geofenceId}: fix acc=${fix.accuracy.toInt()} too coarse -> fence options")
             return fallback
@@ -172,7 +179,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         )
         if (picked.isEmpty()) return fallback
         val nearest = candidates.minOf { it.distanceM }
-        return if (StoreResolver.atStore(nearest, fix.accuracy.toDouble())) meta.copy(options = picked) else null
+        return if (StoreResolver.atStore(nearest, fix.accuracy.toDouble())) meta.copy(options = picked) to true else null
     }
 
     private fun verdictWithoutFix(context: Context, meta: MerchantMeta) {
@@ -193,7 +200,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         maybePost(context, meta.copy(options = StoreResolver.capped(meta.options, meta.lat, meta.lng)))
     }
 
-    /// [fix] is null on the no-fix path, so a `posted` row with no distance is
+    /// [fix] is null on the no-fix path, so a `posted` line with no distance is
     /// itself the signal that verification failed open.
     private fun maybePost(
         context: Context,
@@ -201,6 +208,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         fix: DwellFix? = null,
         atLat: Double? = null,
         atLng: Double? = null,
+        byFix: Boolean = false,
     ) {
         val (ordered, usualFirst) = StoreResolver.preferPicked(
             found.options,
@@ -228,8 +236,9 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val visitLat = atLat ?: meta.lat
         val visitLng = atLng ?: meta.lng
         val lastVisit = VisitLock.read(context)
+        val resolved = if (byFix) meta.options else null
         if (visitLat != null && visitLng != null &&
-            VisitLock.isSameVisit(lastVisit, visitLat, visitLng, now)
+            VisitLock.isSameVisit(lastVisit, visitLat, visitLng, now, resolved)
         ) {
             // Still here: the window restarts, so it lasts as long as the stay.
             VisitLock.write(context, lastVisit!!.copy(atMillis = now))
@@ -246,14 +255,24 @@ class DwellCheckReceiver : BroadcastReceiver() {
             return
         }
         if (visitLat != null && visitLng != null) {
-            VisitLock.write(context, VisitLock.Visit(visitLat, visitLng, now))
+            VisitLock.write(
+                context,
+                VisitLock.Visit(
+                    visitLat,
+                    visitLng,
+                    now,
+                    meta.geofenceId,
+                    resolved.orEmpty().map { it.merchantId },
+                    resolved.orEmpty().map { VisitLock.adviceOf(it) },
+                ),
+            )
         }
         cooldown.markNotified(primary, now)
         done(context, meta, DwellOutcome.POSTED, fix)
     }
 
-    /// Every exit of the dwell check ends here: a log line (release builds
-    /// too) plus the debug-only outcome row.
+    /// Every exit of the dwell check ends here: one log line (release builds
+    /// too).
     private fun done(context: Context, meta: MerchantMeta, outcome: DwellOutcome, fix: DwellFix? = null) {
         WalkinLog.w(
             context,
@@ -261,7 +280,6 @@ class DwellCheckReceiver : BroadcastReceiver() {
                 meta.options.joinToString("|") { it.name } +
                 (fix?.let { " dist=${it.distanceM.toInt()}m acc=${it.accuracyM.toInt()}m" } ?: ""),
         )
-        DwellOutcomeStore(context).record(meta.geofenceId, meta.primary.name, outcome, fix)
     }
 
     companion object {

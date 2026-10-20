@@ -100,7 +100,6 @@ the same stable id reappears. A user's card reaches its rewards/perks through it
 | `boundary_geofence` | **vestigial** — created by the schema, never read or written (`CHECK id = 1`) |
 | `merchant_notification_cooldown` | per-merchant notify throttle (6h) |
 | `category_notification_cooldown` | per-category notify throttle (30 min) |
-| `dwell_outcomes` | **temporary** diagnostic trail: why each fired dwell timer did/didn't post (debug builds only, capped at 500) |
 
 Geofence state is **not** in SQLite, despite the two table names above. Registered fences live
 in the OS via `GeofencingClient`, and their metadata (merchant options, geometry, dwell
