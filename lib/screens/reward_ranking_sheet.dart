@@ -326,7 +326,8 @@ class _Entry {
   /// Card name for a general row, the brand for a brand bonus.
   final String title;
 
-  /// The line under the title: "•••• 1234  $0.00 earned recently" or the card.
+  /// The line under the title: "•••• 1234  $4.20 earned recently" or the card.
+  /// Either part is left out without a value; empty hides the line.
   final String detail;
   final String? cardName;
   final String? cardImage;
@@ -375,9 +376,13 @@ _Entries _entriesOf(RewardRankingResult result) => (
       _Entry(
         cardId: r.cardId,
         title: r.cardName ?? 'Card',
-        detail:
-            '•••• ${r.lastFour ?? '----'}  '
+        detail: [
+          if (r.lastFour != null) '•••• ${r.lastFour}',
+          // Always 0 from the engine today (engine_ranker), so it showed
+          // "$0.00 earned recently" on every row.
+          if (r.earnedRecently > 0)
             '${NumberFormat.simpleCurrency().format(r.earnedRecently)} earned recently',
+        ].join('  '),
         cardName: r.cardName,
         cardImage: r.cardImage,
         kind: r.kind,
@@ -678,13 +683,15 @@ class _RewardRow extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      e.detail,
-                      style: AppText.monoXs(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    if (e.detail.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        e.detail,
+                        style: AppText.monoXs(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
               ),

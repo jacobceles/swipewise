@@ -76,6 +76,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('a row shows its last four, never a \$0.00 earned line', (
+    tester,
+  ) async {
+    await open(tester);
+    expect(find.text('•••• 1234'), findsWidgets);
+    expect(find.textContaining('earned recently'), findsNothing);
+  });
+
   testWidgets('All shows every card with the winner marked Best', (
     tester,
   ) async {
