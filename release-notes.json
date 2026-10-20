@@ -1,6 +1,6 @@
 [
   {
     "language": "en-US",
-    "text": "• Store alerts name the store you're in, not the shopping plaza around it\n• Cash back shows as %, points and miles as x — fixed on card details and alerts\n• Travelling? Recommendations now account for foreign transaction fees, and each card shows its fee\n• Distances in km where you use km\n• Payment reminders follow your time zone\n• Issuer logos when adding a card\n• More reliable start-up"
+    "text": "• A short first-run setup that explains each permission before Android asks\n• Store alerts notice when you walk into the shop next door\n• Miles get their own filter when comparing cards\n• Store alerts wait until you've added a card"
   }
 ]
