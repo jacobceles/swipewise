@@ -655,7 +655,8 @@ class _ConnectionMethodView extends StatelessWidget {
     final logo = (institution['Logo'] ?? institution['logo'])
         ?.toString()
         .trim();
-    return Padding(
+    // Scrolls: on a short screen the two options don't fit below the header.
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

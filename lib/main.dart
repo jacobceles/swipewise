@@ -44,7 +44,16 @@ Future<void> main() async {
   // `runZonedGuarded` wrapper is needed. Collection is left on in every build
   // (dev + prod are both registered Firebase apps) so tester and dev-device
   // failures surface during internal testing.
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Silent errors are ones Flutter itself keeps out of release logs — chiefly
+  // an image URL that failed to load (an issuer CDN's 504), which the widget
+  // already covers with its fallback. They are not crashes.
+  FlutterError.onError = (details) {
+    if (details.silent) {
+      FlutterError.presentError(details);
+      return;
+    }
+    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+  };
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;

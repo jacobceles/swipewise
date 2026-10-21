@@ -205,12 +205,13 @@ class _IssuerList extends StatelessWidget {
             : GridView.builder(
                 itemCount: issuers.length,
                 // Fixed height rather than an aspect ratio so a tile with the
-                // "N added" tag is the same size as one without it.
+                // "N added" tag is the same size as one without it. Sized for
+                // the tallest tile: a country tag AND an "N added" line.
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  mainAxisExtent: 116,
+                  mainAxisExtent: 120,
                 ),
                 itemBuilder: (_, index) {
                   final issuer = issuers[index];
