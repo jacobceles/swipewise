@@ -2200,7 +2200,13 @@
     "aliases": [
       "loblaws",
       "loblaw"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "sobeys",
@@ -2234,7 +2240,13 @@
     "category": "grocery",
     "aliases": [
       "no frills"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "food-basics",
@@ -2252,7 +2264,13 @@
       "real canadian superstore",
       "rcss",
       "superstore"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "save-on-foods",
@@ -2277,7 +2295,13 @@
     "category": "grocery",
     "aliases": [
       "zehrs"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "fortinos",
@@ -2285,7 +2309,13 @@
     "category": "grocery",
     "aliases": [
       "fortinos"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "provigo",
@@ -2293,7 +2323,13 @@
     "category": "grocery",
     "aliases": [
       "provigo"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "farm-boy",
@@ -2319,7 +2355,13 @@
     "aliases": [
       "maxi et cie",
       "maxi and cie"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "t-and-t",
@@ -2673,7 +2715,13 @@
     "category": "grocery",
     "aliases": [
       "valu mart"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "independent",
@@ -2682,7 +2730,13 @@
     "aliases": [
       "independent grocer",
       "your independent grocer"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "petro-canada",
@@ -4641,7 +4695,15 @@
       "costco gasoline",
       "costco gas stations",
       "costco fuel"
-    ]
+    ],
+    "acceptedNetworks": {
+      "US": [
+        "visa"
+      ],
+      "CA": [
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "costco",
@@ -4651,7 +4713,15 @@
       "costco",
       "costco wholesale",
       "costcobusinesscentre"
-    ]
+    ],
+    "acceptedNetworks": {
+      "US": [
+        "visa"
+      ],
+      "CA": [
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "target",

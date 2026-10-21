@@ -95,6 +95,25 @@ nearby path runs the same registry but splits the inputs — see
 - `category` must be a real `RewardCategory.name`.
 - `aliases` are lowercase match phrases. Because normalization splits on non-alphanumerics,
   POS strings that drop apostrophes need both forms (`"mcdonalds"` **and** `"mcdonald s"`).
+- `acceptedNetworks` (optional) — the card networks the store takes, per country:
+  `{"US": ["visa"], "CA": ["mastercard"]}`. Tokens are `visa` / `mastercard` / `amex` /
+  `discover`; countries `US` / `CA`. A card on a network missing from the list is listed last
+  on the store sheet, dimmed, with the reason ("Costco takes Visa only"), and is never the
+  store's best card in the Stores list, the Brands tab or an arrival notification. **Absent means
+  unknown, not "takes nothing"**: an uncurated store, or a card whose catalog `network` names
+  zero or two networks, never rules a card out. The country is the wallet's (most of its cards).
+
+  Hand-curated, because no feed publishes it and it rarely changes. Add a store only from a
+  primary source, and record it here:
+
+  | Store(s) | Rule | Source (verified 2026-10-20) |
+  |---|---|---|
+  | `costco`, `costco-gas` | US Visa only · CA Mastercard only | [costco.com](https://customerservice.costco.com/app/answers/answer_view/a_id/719/), [costco.ca](https://customerservice.costco.ca/app/answers/answer_view/a_id/1017193/) |
+  | Loblaw banners: `loblaws`, `no-frills`, `real-canadian-superstore`, `zehrs`, `fortinos`, `provigo`, `maxi`, `valumart`, `independent` | CA Visa + Mastercard (no Amex) | [loblaws.ca help](https://www.loblaws.ca/en/help/payments/why-dont-you-accept-american-express) |
+
+  Deliberately **not** curated: Shoppers Drug Mart (sources disagree on Amex) and T&T
+  (unverified). Costco.com takes more networks than the warehouse; the rule is the warehouse's,
+  because the app answers "which card at the till".
 
 It's loaded once at boot by **`initBrandRegistry()`** (called from
 [main.dart](../lib/main.dart) before the first sync): it reads the local R2 cache from the

@@ -155,6 +155,7 @@ bool applyBrandsJson(String raw) {
             e['category'] as String? ?? 'other',
           ),
           matchers: aliases,
+          acceptedNetworks: _parseAcceptedNetworks(e['acceptedNetworks']),
         ),
       );
     }
@@ -186,6 +187,42 @@ String? brandDisplayNameFor(String brandId) =>
 RewardCategory brandDefaultCategory(String brandId) =>
     _allBrandsById[brandId]?.category ?? RewardCategory.other;
 
+/// The card networks a brand's stores take in [country] ('US' | 'CA'), or null
+/// when nothing is curated — which means "no restriction known", never "takes
+/// nothing". Costco US is `{visa}`; Loblaw banners in Canada leave out amex.
+Set<String>? brandAcceptedNetworks(String brandId, String country) =>
+    _allBrandsById[brandId]?.acceptedNetworks[country];
+
+/// A catalog `network` string as one of `visa` / `mastercard` / `amex` /
+/// `discover`. The catalog spells it many ways ("Visa Signature", "Mastercard
+/// (World Elite Mastercard)"); anything naming two networks ("Visa or
+/// Mastercard") or none is null — unknown, so it is never ruled out.
+String? normalizeCardNetwork(String? raw) {
+  if (raw == null) return null;
+  final s = raw.toLowerCase();
+  final found = {
+    if (s.contains('visa')) 'visa',
+    if (s.contains('master')) 'mastercard',
+    if (s.contains('american express') || s.contains('amex')) 'amex',
+    if (s.contains('discover')) 'discover',
+  };
+  return found.length == 1 ? found.single : null;
+}
+
+/// `{"US": ["visa"], "CA": ["mastercard"]}` → country → network set. Malformed
+/// or missing → empty (no restriction).
+Map<String, Set<String>> _parseAcceptedNetworks(Object? raw) {
+  if (raw is! Map) return const {};
+  return {
+    for (final e in raw.entries)
+      if (e.key is String && e.value is List)
+        e.key as String: {
+          for (final n in e.value as List)
+            if (n is String) n.toLowerCase(),
+        },
+  };
+}
+
 /// Returns every brand we ship a canonical id for. The brand resolver
 /// builds its runtime index from this list; each entry's `aliases` is a
 /// list of normalized matcher phrases so the resolver can match merchant
@@ -199,11 +236,15 @@ class BrandRegistryEntry {
     required this.displayName,
     required this.category,
     required this.aliases,
+    this.acceptedNetworks = const {},
   });
   final String brandId;
   final String displayName;
   final RewardCategory category;
   final List<String> aliases;
+
+  /// Country → card networks the brand's stores take. Empty = not curated.
+  final Map<String, Set<String>> acceptedNetworks;
 }
 
 class _BrandEntry {
@@ -212,12 +253,14 @@ class _BrandEntry {
     required this.displayName,
     required this.category,
     required this.matchers,
+    this.acceptedNetworks = const {},
   }) : tokenMatchers = [for (final m in matchers) _normalize(m)]
          ..sort((a, b) => b.length.compareTo(a.length));
   final String brandId;
   final String displayName;
   final RewardCategory category;
   final List<String> matchers;
+  final Map<String, Set<String>> acceptedNetworks;
   final List<List<String>> tokenMatchers;
 }
 
@@ -249,6 +292,7 @@ Map<String, BrandRegistryEntry> _buildBrandsById(List<_BrandEntry> table) => {
       displayName: b.displayName,
       category: b.category,
       aliases: b.matchers,
+      acceptedNetworks: b.acceptedNetworks,
     ),
 };
 

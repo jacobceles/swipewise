@@ -81,6 +81,27 @@ void main() {
       }
     });
 
+    // A typo ("Visa", "mc") would match no card, so the store would refuse
+    // every card in the wallet instead of the ones it really refuses.
+    test('acceptedNetworks uses known countries and network tokens', () {
+      const countries = {'US', 'CA'};
+      const networks = {'visa', 'mastercard', 'amex', 'discover'};
+      for (final e in entries) {
+        final m = e as Map;
+        final acc = m['acceptedNetworks'];
+        if (acc == null) continue;
+        expect(acc, isA<Map>(), reason: 'acceptedNetworks for ${m['brandId']}');
+        for (final entry in (acc as Map).entries) {
+          expect(countries, contains(entry.key), reason: '${m['brandId']}');
+          final list = entry.value as List;
+          expect(list, isNotEmpty, reason: '${m['brandId']} ${entry.key}');
+          for (final n in list) {
+            expect(networks, contains(n), reason: '${m['brandId']}: "$n"');
+          }
+        }
+      }
+    });
+
     test('the shipped asset loads cleanly via applyBrandsJson', () {
       final raw = File('assets/vocab/brands.json').readAsStringSync();
       expect(applyBrandsJson(raw), isTrue);
