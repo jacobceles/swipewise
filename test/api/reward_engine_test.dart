@@ -587,6 +587,73 @@ void main() {
     });
   });
 
+  group('dining is the superset of coffee', () {
+    AppliedRate at(CatalogSnapshot s, RewardCategory c) =>
+        resolve(snapshot: s, product: 'p', category: c, when: when);
+
+    test('a general dining rule applies at a coffee-shop lookup', () {
+      // Amex Gold / Scotiabank Gold earn their dining bonus at Starbucks.
+      final s = snap([
+        rule(
+          'd',
+          RewardRuleKind.category,
+          category: RewardCategory.dining,
+          rate: 5,
+        ),
+        rule('b', RewardRuleKind.baseline, rate: 1),
+      ]);
+      final r = at(s, RewardCategory.coffee);
+      expect(r.ruleId, 'd'); // the dining rule, not the baseline
+      expect(r.rate, 5);
+    });
+
+    test('a richer card-specific coffee rule still wins', () {
+      final s = snap([
+        rule(
+          'd',
+          RewardRuleKind.category,
+          category: RewardCategory.dining,
+          rate: 2,
+        ),
+        rule(
+          'c',
+          RewardRuleKind.category,
+          category: RewardCategory.coffee,
+          rate: 3,
+        ),
+        rule('b', RewardRuleKind.baseline, rate: 1),
+      ]);
+      expect(at(s, RewardCategory.coffee).ruleId, 'c');
+    });
+
+    test('a dining rule that excludes coffee earns only baseline there', () {
+      final s = snap([
+        rule(
+          'd',
+          RewardRuleKind.category,
+          category: RewardCategory.dining,
+          rate: 4,
+          excludedCategories: const [RewardCategory.coffee],
+        ),
+        rule('b', RewardRuleKind.baseline, rate: 1),
+      ]);
+      expect(at(s, RewardCategory.coffee).ruleId, 'b');
+    });
+
+    test('coffee does not leak into dining', () {
+      final s = snap([
+        rule(
+          'c',
+          RewardRuleKind.category,
+          category: RewardCategory.coffee,
+          rate: 3,
+        ),
+        rule('b', RewardRuleKind.baseline, rate: 1),
+      ]);
+      expect(at(s, RewardCategory.dining).ruleId, 'b');
+    });
+  });
+
   test('CAD cash back reads as a percentage, like USD', () {
     PointSystem ps(String id) =>
         PointSystem(id: id, displayName: id, baselineCentValue: 1.0);

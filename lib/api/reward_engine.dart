@@ -424,6 +424,9 @@ AppliedRate resolve({
           !r.excludedCategories.contains(category)) ||
       (category.isEntertainmentSubcategory &&
           r.category == RewardCategory.entertainment &&
+          !r.excludedCategories.contains(category)) ||
+      (category.isDiningSubcategory &&
+          r.category == RewardCategory.dining &&
           !r.excludedCategories.contains(category));
 
   // Build the prioritized candidate list (baseline excluded — it's the

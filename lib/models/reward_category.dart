@@ -212,6 +212,13 @@ enum RewardCategory {
   /// doesn't leak onto a movie ticket.
   bool get isEntertainmentSubcategory => this == RewardCategory.movieTheaters;
 
+  /// Dining superset: issuers define a "dining"/"restaurants" bonus to cover
+  /// coffee shops (Amex Canada's Cobalt terms name them outright), so a general
+  /// `dining` rule competes at a `coffee` lookup — mirroring `travel`/`gas`. A
+  /// card with a dedicated coffee rate ships its own `coffee` rule (richest
+  /// rate wins), and a rule may carve coffee out (`excludedCategories`).
+  bool get isDiningSubcategory => this == RewardCategory.coffee;
+
   /// Round-trips an enum name from SQLite. Falls back to `other` so any
   /// historically-stored string (or a future-added value the running
   /// build doesn't know about) doesn't crash.
