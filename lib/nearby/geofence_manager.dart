@@ -500,11 +500,6 @@ class GeofenceManager {
             ? bigBoxFootprintM
             : 0;
         footprint = math.max(footprint, storeFootprint);
-        // Authoritative curated place-type → category map (categories.json
-        // googlePlaceTypes); label/name heuristics are the fallback.
-        final category =
-            categoryForPlaceType(m.placeType) ??
-            (label == null ? RewardCategory.other : classifyLooseLabel(label));
         // Brand match first. The merchant name is resolved via the
         // canonical `BrandResolver` (token-level aliases out of the
         // `brands` table); we then look up the brand-best card by
@@ -513,6 +508,16 @@ class GeofenceManager {
         // Coffee" matching the Walmart brand.
         final brandId = brandResolver.resolve(m.name);
         final brandHit = brandId == null ? null : lookup.byBrand[brandId];
+        // Authoritative curated place-type → category map (categories.json
+        // googlePlaceTypes); label/name heuristics are the fallback. A known
+        // brand's own category wins (`storeCategory`): Walmart is not grocery.
+        final category = storeCategory(
+          categoryForPlaceType(m.placeType) ??
+              (label == null
+                  ? RewardCategory.other
+                  : classifyLooseLabel(label)),
+          brandId,
+        );
         // Travel sub-categories fall back to the best `travel` card (superset).
         final categoryBest =
             lookup.byCategory[category] ??

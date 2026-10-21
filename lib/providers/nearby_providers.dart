@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../api/brand_resolver.dart';
 import '../api/reward_category_mapper.dart';
-import '../models/insights.dart';
 import '../models/reward_category.dart';
 import '../nearby/category_label_resolver.dart';
 import '../nearby/google_places_provider.dart';
@@ -200,17 +198,25 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
       categoryId: m.placeType,
       categoryName: m.category,
     );
+    // The merchant name resolves to a canonical `brand_id` through the SAME
+    // BrandResolver the ranking sheet and the geofence notification use, so the
+    // badge, sheet and notification agree — e.g. "Costco Gasoline" resolves to
+    // `costco-gas` (5%), not the warehouse `costco` (2%).
+    final brandId = brandResolver.resolve(m.name);
     // Authoritative: the curated place-type → category map (categories.json
     // googlePlaceTypes). Fall back to the label/name heuristics for any
-    // primaryType not yet curated, so uncurated types behave as before.
-    final category =
-        categoryForPlaceType(m.placeType) ??
-        (label == null ? RewardCategory.other : classifyLooseLabel(label));
-    // Brand match wins over category. We test the merchant's display
-    // name against any brand-bonus the user has - "Whole Foods Market"
-    // (Google Places) → "whole foods" (in bonus_brand) lights up Prime
-    // Visa even though the resolver only tagged it "Grocery."
-    final brandHit = _findBrandHit(m.name, lookup.byBrand, brandResolver);
+    // primaryType not yet curated, so uncurated types behave as before. A
+    // known brand's own category wins (`storeCategory`): Google types many
+    // Walmart Supercenters as supermarkets, but Walmart is not grocery.
+    final category = storeCategory(
+      categoryForPlaceType(m.placeType) ??
+          (label == null ? RewardCategory.other : classifyLooseLabel(label)),
+      brandId,
+    );
+    // Brand match wins over category. "Whole Foods Market" (Google Places) →
+    // `whole-foods-market` lights up Prime Visa even though the place type
+    // only says "Grocery."
+    final brandHit = brandId == null ? null : lookup.byBrand[brandId];
     // Travel sub-categories (hotels/airlines/car rentals/transit) fall back to
     // the user's best `travel` card when no card bonuses the specific
     // sub-category — travel is the superset.
@@ -244,21 +250,3 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
     );
   }).toList();
 }, retry: _retryUnlessLocationOff);
-
-/// Resolves the merchant name to a canonical `brand_id` via [BrandResolver]
-/// (whole-token, longest-match) and returns the user's best card for that
-/// brand, if any. Uses the SAME resolver as the ranking sheet
-/// (`rewardRankingProvider`) and the geofence notification, so the badge,
-/// sheet, and notification always agree — e.g. "Costco Gasoline" resolves to
-/// `costco-gas` (5%), not the warehouse `costco` (2%). The previous
-/// bidirectional-substring match diverged from those (and matched "Walmart"
-/// inside "Mart Coffee").
-BestCardEntry? _findBrandHit(
-  String merchantName,
-  Map<String, BestCardEntry> byBrand,
-  BrandResolver resolver,
-) {
-  if (byBrand.isEmpty) return null;
-  final brandId = resolver.resolve(merchantName);
-  return brandId == null ? null : byBrand[brandId];
-}

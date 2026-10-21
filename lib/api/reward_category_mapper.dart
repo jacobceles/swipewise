@@ -187,6 +187,27 @@ String? brandDisplayNameFor(String brandId) =>
 RewardCategory brandDefaultCategory(String brandId) =>
     _allBrandsById[brandId]?.category ?? RewardCategory.other;
 
+/// The category to rank a nearby store under: a store the brand registry
+/// knows keeps its curated category over Google's place type.
+///
+/// Google types many Walmart Supercenters (and some Targets) as `supermarket`
+/// or `discount_store`, which map to grocery — but issuers code Walmart, Target
+/// and warehouse clubs as superstores / wholesale, and almost every grocery
+/// bonus excludes them in its terms (Amex, Discover, Capital One, Bank of
+/// America, US Bank, Citi, RBC). The registry already says Walmart is a
+/// department store and Costco is wholesale, so that wins.
+///
+/// A fuel place stays fuel: "Walmart Fuel Station" or "Kroger Fuel" resolve to
+/// the parent brand when no gas sub-brand exists, but the pump charges as gas.
+RewardCategory storeCategory(RewardCategory placeCategory, String? brandId) {
+  if (brandId == null) return placeCategory;
+  if (placeCategory == RewardCategory.gas || placeCategory.isGasSubcategory) {
+    return placeCategory;
+  }
+  final brandCategory = brandDefaultCategory(brandId);
+  return brandCategory == RewardCategory.other ? placeCategory : brandCategory;
+}
+
 /// The card networks a brand's stores take in [country] ('US' | 'CA'), or null
 /// when nothing is curated — which means "no restriction known", never "takes
 /// nothing". Costco US is `{visa}`; Loblaw banners in Canada leave out amex.

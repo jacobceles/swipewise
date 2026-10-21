@@ -30,6 +30,12 @@ void main() {
           'aliases': ['safeway'],
         },
         {
+          'brandId': 'walmart',
+          'displayName': 'Walmart',
+          'category': 'departmentStores',
+          'aliases': ['walmart'],
+        },
+        {
           'brandId': 'costco',
           'displayName': 'Costco',
           'category': 'wholesale',
@@ -237,6 +243,40 @@ void main() {
       expect(r.general.first.isBest, isTrue);
       expect(r.general.last.cardName, 'tdvisa'); // 2% Visa, still refused
       expect(r.general.last.notAcceptedReason, 'Costco takes Mastercard only');
+    });
+  });
+
+  group('storeCategory: a known store keeps its own category', () {
+    // Google types many Walmart Supercenters as supermarkets; issuers don't
+    // count Walmart as a grocery store, so a 6% grocery card must not win there.
+    test('a supermarket-typed Walmart ranks as a department store', () {
+      expect(
+        storeCategory(RewardCategory.grocery, 'walmart'),
+        RewardCategory.departmentStores,
+      );
+      expect(
+        storeCategory(RewardCategory.grocery, 'costco'),
+        RewardCategory.wholesale,
+      );
+    });
+
+    test('a fuel place stays fuel even under a store brand', () {
+      expect(storeCategory(RewardCategory.gas, 'walmart'), RewardCategory.gas);
+      expect(
+        storeCategory(RewardCategory.evCharging, 'walmart'),
+        RewardCategory.evCharging,
+      );
+    });
+
+    test('no brand, or an unregistered one, keeps the place type', () {
+      expect(
+        storeCategory(RewardCategory.grocery, null),
+        RewardCategory.grocery,
+      );
+      expect(
+        storeCategory(RewardCategory.grocery, 'not-registered'),
+        RewardCategory.grocery,
+      );
     });
   });
 
