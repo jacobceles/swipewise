@@ -1,6 +1,6 @@
 [
   {
     "language": "en-US",
-    "text": "• Store alerts are much more accurate: one per visit, naming the store you're in, even the shop next door\n• A short first-run setup that explains each permission\n• Travelling? Picks now account for foreign transaction fees\n• Miles get their own filter, and cash back shows as %, points as x\n• With backup on, your backup now stays up to date by itself\n• Faster start-up and many fixes"
+    "text": "• Store picks now rank every card by what it earns at that store, so a store bonus no longer hides a better card\n• Cards a store won't take (Costco is Visa only in the US, Mastercard only in Canada; Loblaws banners skip Amex) are shown last and never picked\n• Coffee shops now earn your cards' dining rate\n• Amex Cobalt now earns 5x on groceries, with its monthly cap"
   }
 ]
