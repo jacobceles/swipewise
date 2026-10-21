@@ -81318,7 +81318,7 @@
       "x": 3585,
       "y": 8652,
       "name": "Play Store listing",
-      "width": 5640,
+      "width": 6780,
       "height": 1920,
       "fill": "#00000000",
       "gap": 60,
@@ -82326,6 +82326,196 @@
                             {
                               "type": "icon",
                               "id": "Frj60",
+                              "name": "battery-full",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "battery-full",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vLNHd",
+          "name": "Listing 6 — Canada",
+          "clip": true,
+          "width": 1080,
+          "height": 1920,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#FFA51F",
+                "position": 0
+              },
+              {
+                "color": "#F8501F",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "gmzaJ",
+              "x": 30,
+              "y": 140,
+              "name": "Caption",
+              "width": 1020,
+              "layout": "vertical",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Ndjvf",
+                  "name": "Headline",
+                  "fill": "#1A0A00",
+                  "content": "Canadian cards too",
+                  "lineHeight": 1.05,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 72,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "JNPiX",
+                  "name": "Sub-line",
+                  "fill": "#1A0A00",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "RBC, TD, BMO, Scotiabank, CIBC and more",
+                  "lineHeight": 1.2,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "WOxBT",
+              "x": 140,
+              "y": 430,
+              "name": "Phone",
+              "width": 800,
+              "height": 1640,
+              "fill": "#111111",
+              "cornerRadius": 64,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000066",
+                "offset": {
+                  "x": 0,
+                  "y": 20
+                },
+                "blur": 60
+              },
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MSC9L",
+                  "x": 16,
+                  "y": 16,
+                  "name": "Screen",
+                  "clip": true,
+                  "width": 768,
+                  "height": 1608,
+                  "fill": "#111111",
+                  "cornerRadius": 50,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "DkrQE",
+                      "x": 0,
+                      "y": 56,
+                      "name": "Screenshot",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "play_store_listing/screenshots/raw/store-ranking-canada.png",
+                        "mode": "stretch"
+                      },
+                      "width": 768,
+                      "height": 1552
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Fg6KI",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Status strip",
+                      "width": 768,
+                      "height": 56,
+                      "fill": "#111111",
+                      "padding": [
+                        0,
+                        36
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LTs74",
+                          "name": "Time",
+                          "fill": "#FFFFFF",
+                          "content": "9:41",
+                          "fontFamily": "Inter",
+                          "fontSize": 26,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "b6aOD9",
+                          "name": "Glyphs",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "BAO8f",
+                              "name": "signal",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "signal",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "SWJb6",
+                              "name": "wifi",
+                              "width": 28,
+                              "height": 28,
+                              "icon": "wifi",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "aja0V",
                               "name": "battery-full",
                               "width": 28,
                               "height": 28,

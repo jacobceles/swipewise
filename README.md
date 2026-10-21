@@ -19,8 +19,7 @@
 Most rewards apps stop at the category: *"use this card for groceries."* SwipeWise goes one
 level deeper — to the **store and the brand**. Walk into Whole Foods and it tells you to tap
 your Prime Visa for **5%**, not just "a grocery card." That store-level, brand-aware moment
-— *right card, right here, right now* — is what SwipeWise is built around, and it's the one
-moment no other rewards app actually owns.
+— *right card, right here, right now* — is what SwipeWise is built around.
 
 ## 📲 Try it
 
@@ -45,11 +44,6 @@ Free, no account required — your wallet lives on your phone. Prefer to build i
 - 🔒 **Private by design.** Your wallet lives on your phone; backup is opt-in and your
   transactions never leave the device. (More below.)
 
-> **Pro (not yet on sale).** Bank linking via the FDX open-finance standard, real transaction
-> history and recurring-charge routing are built, and the service
-> that holds the aggregator credentials is live. What is missing is billing — entitlement is
-> granted by hand today. See [the tier model](docs/setup.md#tiers--one-binary-runtime-entitlement).
-
 ## 📱 Screens
 
 <div align="center">
@@ -60,13 +54,14 @@ Free, no account required — your wallet lives on your phone. Prefer to build i
     <td align="center"><img src="play_store_listing/screenshots/free/3-every-card-ranked.png" width="220"><br><sub><b>Every card, ranked</b></sub></td>
     <td align="center"><img src="play_store_listing/screenshots/free/4-best-card-per-category.png" width="220"><br><sub><b>Best card per category</b></sub></td>
     <td align="center"><img src="play_store_listing/screenshots/free/5-add-your-cards-in-seconds.png" width="220"><br><sub><b>Add your cards in seconds</b></sub></td>
+    <td align="center"><img src="play_store_listing/screenshots/free/6-canadian-cards-too.png" width="220"><br><sub><b>Canadian cards too</b></sub></td>
   </tr>
 </table>
 </div>
 
-## 🔒 Privacy first — by architecture, not promise
+## 🔒 Privacy
 
-This is a core value, not a marketing line:
+What leaves your phone, and what doesn't:
 
 - **Signing in is optional, and it is not the app.** Skip it and nothing changes — the app
   works exactly the same, keyed to an id minted on your phone that is never sent anywhere.
@@ -77,9 +72,6 @@ This is a core value, not a marketing line:
 - **Your transactions never leave the device.** Not in a backup, not ever. Spend history lives
   in a local SQLite database on your phone and stays there. There is a test asserting a backup
   payload cannot contain one, because a promise nobody checks is just a sentence.
-- **Bank credentials are not ours to hold.** Linking a bank goes through a service that signs
-  the request; the app carries no aggregator credentials at all, and the service forwards
-  without storing what comes back.
 - **No tracking, no ads.** Nothing records which cards you're shown, which notifications
   fire, or what you tap. Crash reports are the one exception, and carry no wallet, no
   location and no account.
@@ -92,9 +84,8 @@ Full details: [Privacy Policy](https://jacobcelestine.com/swipewise/privacy_poli
 Flutter (Material 3) · Riverpod · sqflite · Google Places API · native Android geofencing ·
 a Cloudflare Worker serving the rewards catalog. Android today; iOS later.
 
-The Pro path adds Firebase Auth and FDX-standard bank data through an aggregator. The app
-holds no aggregator credentials: a Cloudflare Worker over D1 checks who is asking, checks
-they are entitled, and signs on their behalf.
+The repo also carries a dormant Pro tier (bank linking through an aggregator) that is not on
+sale; see [the tier model](docs/setup.md#tiers--one-binary-runtime-entitlement).
 
 ## 🤝 Open source & contributing
 
@@ -120,9 +111,9 @@ Good first contributions: add brands you shop at, or expand card coverage. Start
 
 Requires the Dart SDK ≥ 3.12 (built with Flutter 3.47, stable channel).
 
-The app ships as **one binary for both tiers**. Pro is sold as an in-app subscription, so
-its features unlock at runtime rather than at compile time — the Pro code is present and
-dormant for everyone, and lights up when the entitlement says so. Which tier a *local* build
+The app ships as **one binary for both tiers**. Pro features unlock at runtime rather than at
+compile time — the Pro code is present and dormant for everyone, and lights up only when an
+entitlement says so. Which tier a *local* build
 behaves as is decided by the keys file you pass:
 
 ```bash
@@ -161,7 +152,7 @@ conditions.
 
 Worth knowing what you're getting: the app is the whole app, but the **recommendations are
 only as good as the data behind them** — the brand registry and the rewards catalog. Those
-are generated from a separate curation pipeline, and keeping ~414 cards accurate as issuers
+are generated from a separate curation pipeline, and keeping 400+ cards accurate as issuers
 reword their terms is the ongoing work. `assets/vocab/brands.json` is the file to send a PR
 against; card data goes through the pipeline rather than a direct edit
 (see [docs/reward-catalog.md](docs/reward-catalog.md)).

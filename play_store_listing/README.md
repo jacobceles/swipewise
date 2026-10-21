@@ -22,7 +22,7 @@ one, change all three.
 | App name | — | `SwipeWise` |
 | App icon | `icon_512.png` | 512×512, opaque |
 | Feature graphic | `cover.png` | 1024×500 |
-| Phone screenshots | `screenshots/free/*.png` — all 5 | ≤2:1, 320–3840 px/side |
+| Phone screenshots | `screenshots/free/*.png` — all 6 | ≤2:1, 320–3840 px/side |
 | Short description | *Which credit card to use at every store — for maximum cashback and points.* | ≤80 |
 | Full description | `full_description.txt` | ≤4000 |
 | Category / tag | — | Finance / Personal finance |
