@@ -117,6 +117,55 @@ class EngineRanker {
         isForeign: isForeign,
       );
 
+  /// The country whose store rules apply: the one most of the wallet's cards
+  /// are from (a product with no country is American). Costco takes Visa in
+  /// the US and Mastercard in Canada, and the wallet is the best signal we have
+  /// for which Costco the user walks into.
+  late final String _walletCountry = () {
+    var ca = 0;
+    for (final c in linkedCards) {
+      if (_ranked.products[c.cardProductId]?.country == 'CA') ca++;
+    }
+    return ca * 2 > linkedCards.length ? 'CA' : 'US';
+  }();
+
+  /// Why [brand]'s stores won't take card [c] ("Costco takes Visa only"), or
+  /// null when they will. An uncurated store or a card whose network is
+  /// unknown never rules a card out.
+  String? _notAcceptedReason(LinkedCard c, String? brand) {
+    if (brand == null) return null;
+    final accepted = brandAcceptedNetworks(brand, _walletCountry);
+    if (accepted == null || accepted.isEmpty) return null;
+    final network = normalizeCardNetwork(
+      _ranked.products[c.cardProductId]?.network,
+    );
+    if (network == null || accepted.contains(network)) return null;
+    final store = brandDisplayNameFor(brand) ?? brand;
+    return accepted.length == 1
+        ? '$store takes ${_networkLabel(accepted.single)} only'
+        : "$store doesn't take ${_networkLabel(network)}";
+  }
+
+  static String _networkLabel(String network) => switch (network) {
+    'visa' => 'Visa',
+    'mastercard' => 'Mastercard',
+    'amex' => 'Amex',
+    'discover' => 'Discover',
+    _ => network,
+  };
+
+  /// Whether [a] is a store's own rate (a brand rule, or a rotating rule pinned
+  /// to a brand) rather than the card's category rate.
+  bool _isBrandEarn(LinkedCard c, AppliedRate a) {
+    if (a.kind == RewardRuleKind.brand) return true;
+    if (a.kind != RewardRuleKind.rotating) return false;
+    for (final r
+        in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+      if (r.ruleId == a.ruleId) return r.brand != null;
+    }
+    return false;
+  }
+
   int _prefRank(String cardId) {
     final i = cardPreferenceOrder.indexOf(cardId);
     return i < 0 ? cardPreferenceOrder.length : i;
@@ -199,7 +248,10 @@ class EngineRanker {
     // nearby flow and Categories grid agree with per-transaction ranking.
     // Skip when nothing earns above baseline — no bonus means no tile, just
     // the catch-all.
-    for (final cat in const [RewardCategory.movieTheaters]) {
+    for (final cat in const [
+      RewardCategory.movieTheaters,
+      RewardCategory.coffee,
+    ]) {
       if (byCategory.containsKey(cat)) continue;
       final best = _pickBest((c) => _resolve(c, cat, null));
       if (best == null || best.applied.kind == RewardRuleKind.baseline) {
@@ -232,6 +284,32 @@ class EngineRanker {
         rate: best.applied.rate,
         category: entry.value,
         brand: brand,
+        currency: _currencyOf(best.applied.pointSystemId),
+      );
+    }
+
+    // A store that only takes some networks gets its best card from the ones
+    // it takes, so the Stores list and arrival notifications never name a card
+    // the till will refuse. Done for every curated store, not only ones with a
+    // brand bonus: the plain category winner may be the refused card.
+    for (final b in registeredBrands()) {
+      if (brandAcceptedNetworks(b.brandId, _walletCountry) == null) continue;
+      final best = _pickBest(
+        (c) => _resolve(c, b.category, b.brandId),
+        where: (c) => _notAcceptedReason(c, b.brandId) == null,
+      );
+      if (best == null) {
+        byBrand.remove(b.brandId);
+        continue;
+      }
+      byBrand[b.brandId] = BestCardEntry(
+        id: best.card.cardId,
+        name: best.card.cardName,
+        rate: best.applied.rate,
+        category: b.category,
+        // Only a real store bonus names the brand — the Stores list reads it
+        // as "· Costco bonus", which an everyday rate isn't.
+        brand: _isBrandEarn(best.card, best.applied) ? b.brandId : null,
         currency: _currencyOf(best.applied.pointSystemId),
       );
     }
@@ -287,7 +365,10 @@ class EngineRanker {
     final scored = <({BrandPick pick, double eff})>[];
     for (final brand in registeredBrands()) {
       final cat = brandDefaultCategory(brand.brandId);
-      final best = _pickBest((c) => _resolve(c, cat, brand.brandId));
+      final best = _pickBest(
+        (c) => _resolve(c, cat, brand.brandId),
+        where: (c) => _notAcceptedReason(c, brand.brandId) == null,
+      );
       if (best == null) continue;
       scored.add((
         pick: BrandPick(
@@ -378,10 +459,16 @@ class EngineRanker {
     RewardCategory category, {
     String? brandFilter,
   }) {
+    // At a store (brandFilter set) each card is resolved WITH the brand, so its
+    // row carries what it earns there: the store's own bonus when it has one,
+    // its category rate otherwise. One list, each card once — a separate
+    // brand-bonus section on top used to win "Best" even when a category rate
+    // below it paid more (Prime Visa 5% over Amex Gold 4x ≈ 8¢ at Whole Foods).
+    final storeBrand = brandFilter;
     // General: every linked card that earns *something* in this category.
     final scored = <_Scored>[
       for (final c in linkedCards)
-        if (_resolve(c, category, null) case final a when a.hasRule)
+        if (_resolve(c, category, storeBrand) case final a when a.hasRule)
           _Scored(c, a),
     ];
     // Nothing in the wallet has a rule here — a wallet of no-rewards cards
@@ -395,7 +482,20 @@ class EngineRanker {
         for (final c in linkedCards) _Scored(c, AppliedRate.none),
       ]);
     }
-    scored.sort(_compare);
+    // Cards the store refuses go last, after every card it takes.
+    final refused = <String, String>{
+      for (final s in scored)
+        s.card.cardId: ?_notAcceptedReason(s.card, storeBrand),
+    };
+    scored.sort((a, b) {
+      final ra = refused.containsKey(a.card.cardId);
+      final rb = refused.containsKey(b.card.cardId);
+      if (ra != rb) return ra ? 1 : -1;
+      return _compare(a, b);
+    });
+    final storeName = storeBrand == null
+        ? null
+        : brandDisplayNameFor(storeBrand);
     final general = <CategoryRewardRanking>[
       for (var i = 0; i < scored.length; i++)
         CategoryRewardRanking(
@@ -408,16 +508,29 @@ class EngineRanker {
           // The transactions-based "earned recently" badge has no engine
           // equivalent yet — it moves out of SQL in the cutover sub-task.
           earnedRecently: 0,
-          isBest: i == 0,
+          isBest: i == 0 && !refused.containsKey(scored[i].card.cardId),
           kind: RewardKind.of(scored[i].applied.pointSystemId),
           effectiveCentsPerDollar: scored[i].applied.effectiveCentsPerDollar,
           programName: _programNameOf(scored[i].applied.pointSystemId),
           issuerWording: _issuerWordingOf(scored[i].card, scored[i].applied),
+          bonusBrand:
+              storeName != null &&
+                  _isBrandEarn(scored[i].card, scored[i].applied)
+              ? storeName
+              : null,
+          notAcceptedReason: refused[scored[i].card.cardId],
         ),
     ];
 
-    // Brand bonuses: one row per (card, brand) matching this category or the
-    // active brand filter.
+    // At a store, other stores' bonuses don't belong on the sheet — they stay
+    // on the Brands tab and the category sheet, where browsing them is the
+    // point.
+    if (storeBrand != null) {
+      return RewardRankingResult(general: general, brandBonuses: const []);
+    }
+
+    // Brand bonuses (category sheet): one row per (card, brand) in this
+    // category.
     final brandRows = <BrandBonusRow>[];
     final seen = <String>{};
     for (final c in linkedCards) {
@@ -429,9 +542,7 @@ class EngineRanker {
             r.kind != RewardRuleKind.rotating) {
           continue;
         }
-        final matchesCategory = r.category == category;
-        final matchesFilter = brandFilter != null && brand == brandFilter;
-        if (!matchesCategory && !matchesFilter) continue;
+        if (r.category != category) continue;
 
         final key = '${c.cardId}|$brand';
         if (!seen.add(key)) continue;
@@ -447,7 +558,7 @@ class EngineRanker {
             brand: brandDisplayNameFor(brand) ?? brand,
             rate: applied.rate,
             currency: _currencyOf(applied.pointSystemId),
-            isMatchedBrand: matchesFilter,
+            isMatchedBrand: false,
             kind: RewardKind.of(applied.pointSystemId),
             effectiveCentsPerDollar: applied.effectiveCentsPerDollar,
             programName: _programNameOf(applied.pointSystemId),
@@ -457,21 +568,22 @@ class EngineRanker {
       }
     }
     // Effective value, not raw rate: 7x Hilton is worth less than 4x Amex.
-    brandRows.sort((a, b) {
-      if (a.isMatchedBrand != b.isMatchedBrand) {
-        return a.isMatchedBrand ? -1 : 1;
-      }
-      return b.effectiveCentsPerDollar.compareTo(a.effectiveCentsPerDollar);
-    });
+    brandRows.sort(
+      (a, b) => b.effectiveCentsPerDollar.compareTo(a.effectiveCentsPerDollar),
+    );
 
     return RewardRankingResult(general: general, brandBonuses: brandRows);
   }
 
   // ─────────────── helpers ───────────────
 
-  _Scored? _pickBest(AppliedRate Function(LinkedCard) resolveFor) {
+  _Scored? _pickBest(
+    AppliedRate Function(LinkedCard) resolveFor, {
+    bool Function(LinkedCard)? where,
+  }) {
     _Scored? best;
     for (final c in linkedCards) {
+      if (where != null && !where(c)) continue;
       final applied = resolveFor(c);
       if (!applied.hasRule) continue;
       final scored = _Scored(c, applied);

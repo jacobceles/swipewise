@@ -12,8 +12,11 @@ import '../theme/app_theme.dart';
 /// Where the user entered the sheet from. Determines which section
 /// renders on top:
 ///   - `brand`   - user is at a merchant (notification tap, Stores-tab
-///                 row tap, Merchant detail). Brand bonuses go first;
-///                 the matched-brand row is highlighted.
+///                 row tap, Merchant detail). When the merchant resolves
+///                 to a brand, the engine returns ONE list ranked by what
+///                 each card earns there (`EngineRanker.rewardRanking`) and
+///                 no brand-bonus section, so this mode renders like
+///                 `general`.
 ///   - `general` - user picked a category tile or a category-detail
 ///                 callout. General ranking goes first.
 enum RewardRankingPrimary { general, brand }
@@ -199,7 +202,10 @@ class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
     final topEntry = brandPrimary
         ? brand.first
         : (general.isEmpty ? null : general.first);
-    final best = topEntry?.kind == RewardKind.other ? null : topEntry;
+    final best =
+        topEntry?.kind == RewardKind.other || topEntry?.refusedReason != null
+        ? null
+        : topEntry;
 
     final filter = _filter;
     bool shown(_Entry e) => filter == null || e.tab == filter;
@@ -240,7 +246,11 @@ class _RewardRankingSheetState extends ConsumerState<_RewardRankingSheet> {
           ? [...visibleBrand, ...visibleGeneral]
           : [...visibleGeneral, ...visibleBrand];
       final topPillEntry = bestHidden
-          ? firstVisible.where((e) => e.kind != RewardKind.other).firstOrNull
+          ? firstVisible
+                .where(
+                  (e) => e.kind != RewardKind.other && e.refusedReason == null,
+                )
+                .firstOrNull
           : null;
       final showSectionHeaders = visibleBrand.isNotEmpty;
       final generalSection = visibleGeneral.isEmpty
@@ -319,6 +329,7 @@ class _Entry {
     this.wording,
     this.isMatchedBrand = false,
     this.miles = false,
+    this.refusedReason,
   });
 
   final String cardId;
@@ -340,6 +351,10 @@ class _Entry {
 
   /// A miles programme (United MileagePlus): a points kind, labelled "Miles".
   final bool miles;
+
+  /// The store doesn't take this card ("Costco takes Visa only"): the row is
+  /// dimmed and listed under "Not accepted here".
+  final String? refusedReason;
 
   _Tab get tab => miles
       ? _Tab.miles
@@ -378,6 +393,8 @@ _Entries _entriesOf(RewardRankingResult result) => (
         title: r.cardName ?? 'Card',
         detail: [
           if (r.lastFour != null) '•••• ${r.lastFour}',
+          ?r.notAcceptedReason,
+          if (r.bonusBrand != null) '${r.bonusBrand} bonus',
           // Always 0 from the engine today (engine_ranker), so it showed
           // "$0.00 earned recently" on every row.
           if (r.earnedRecently > 0)
@@ -391,6 +408,7 @@ _Entries _entriesOf(RewardRankingResult result) => (
         programName: r.programName,
         wording: r.issuerWording,
         miles: r.currency == 'MILES',
+        refusedReason: r.notAcceptedReason,
       ),
   ],
   brand: [
@@ -543,11 +561,15 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final valued = [
       for (final e in entries)
-        if (e.kind != RewardKind.other) e,
+        if (e.kind != RewardKind.other && e.refusedReason == null) e,
     ];
     final others = [
       for (final e in entries)
-        if (e.kind == RewardKind.other) e,
+        if (e.kind == RewardKind.other && e.refusedReason == null) e,
+    ];
+    final refused = [
+      for (final e in entries)
+        if (e.refusedReason != null) e,
     ];
     Widget row(_Entry e) => _RewardRow(
       entry: e,
@@ -565,6 +587,11 @@ class _Section extends StatelessWidget {
         if (others.isNotEmpty) ...[
           if (valued.isNotEmpty) const _OtherDivider(),
           for (final e in others) row(e),
+        ],
+        if (refused.isNotEmpty) ...[
+          if (valued.isNotEmpty || others.isNotEmpty)
+            const _OtherDivider(label: 'NOT ACCEPTED HERE'),
+          for (final e in refused) Opacity(opacity: 0.45, child: row(e)),
         ],
       ],
     );
@@ -592,7 +619,8 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _OtherDivider extends StatelessWidget {
-  const _OtherDivider();
+  const _OtherDivider({this.label = 'NO RELIABLE VALUE · LISTED LAST'});
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -601,10 +629,7 @@ class _OtherDivider extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
       child: Row(
         children: [
-          Text(
-            'NO RELIABLE VALUE · LISTED LAST',
-            style: AppText.labelSm(color: palette.muted),
-          ),
+          Text(label, style: AppText.labelSm(color: palette.muted)),
           const SizedBox(width: 10),
           Expanded(child: Divider(height: 1, color: palette.border)),
         ],

@@ -196,6 +196,14 @@ class CategoryRewardRanking {
   /// The issuer's verbatim wording (the rule's `notes`), for [RewardKind.other].
   final String? issuerWording;
 
+  /// The store's display name when this rate is that store's own bonus
+  /// ("Whole Foods Market"), so the sheet can say why it beats the category.
+  final String? bonusBrand;
+
+  /// Set when the store doesn't take this card's network ("Costco takes Visa
+  /// only"). Such a row ranks after every usable card and is never best.
+  final String? notAcceptedReason;
+
   const CategoryRewardRanking({
     required this.cardId,
     this.cardName,
@@ -209,6 +217,8 @@ class CategoryRewardRanking {
     required this.effectiveCentsPerDollar,
     this.programName,
     this.issuerWording,
+    this.bonusBrand,
+    this.notAcceptedReason,
   });
 }
 
