@@ -2371,7 +2371,13 @@
       "t&t",
       "t and t",
       "tnt supermarket"
-    ]
+    ],
+    "acceptedNetworks": {
+      "CA": [
+        "visa",
+        "mastercard"
+      ]
+    }
   },
   {
     "brandId": "lcbo",

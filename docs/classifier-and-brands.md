@@ -110,10 +110,12 @@ nearby path runs the same registry but splits the inputs — see
   |---|---|---|
   | `costco`, `costco-gas` | US Visa only · CA Mastercard only | [costco.com](https://customerservice.costco.com/app/answers/answer_view/a_id/719/), [costco.ca](https://customerservice.costco.ca/app/answers/answer_view/a_id/1017193/) |
   | Loblaw banners: `loblaws`, `no-frills`, `real-canadian-superstore`, `zehrs`, `fortinos`, `provigo`, `maxi`, `valumart`, `independent` | CA Visa + Mastercard (no Amex) | [loblaws.ca help](https://www.loblaws.ca/en/help/payments/why-dont-you-accept-american-express) |
+  | `t-and-t` (Loblaw-owned) | CA Visa + Mastercard (no Amex) | [T&T payment methods](https://b2b.tntsupermarket.com/eng/payment-method/), [Frugal Flyer 2026](https://frugalflyer.ca/blog/american-express-acceptance-in-canada/) (verified 2026-10-21) |
 
-  Deliberately **not** curated: Shoppers Drug Mart (sources disagree on Amex) and T&T
-  (unverified). Costco.com takes more networks than the warehouse; the rule is the warehouse's,
-  because the app answers "which card at the till".
+  **Shoppers Drug Mart takes Amex** — the one Loblaw banner that does (Frugal Flyer and
+  creditcardGenius, 2026; older lists lump it in with the rest of Loblaw), so it carries no rule.
+  Costco.com takes more networks than the warehouse; the rule is the warehouse's, because the app
+  answers "which card at the till".
 
 It's loaded once at boot by **`initBrandRegistry()`** (called from
 [main.dart](../lib/main.dart) before the first sync): it reads the local R2 cache from the
