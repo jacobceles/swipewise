@@ -252,6 +252,12 @@ class GeofenceManager {
         await _trace('trigger=$trigger no location permission -> skipped');
         return true;
       }
+      if (e is LocationServiceDisabled) {
+        // The user switched location off: a setting, not a fault. Retry
+        // later in case they switch it back on, but don't report it.
+        await _trace('trigger=$trigger location services off -> retry later');
+        return false;
+      }
       if (e is PlatformException && e.code == _kGmsUnavailable) {
         // Play services missing/disabled: not a transient register failure —
         // the GeofencingClient can never register. Fire the existing degraded

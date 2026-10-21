@@ -133,11 +133,14 @@ class LocationService {
             : 'last_known_stale',
       );
       c.setCustomKey('location_fix_age_min', ageMin);
+      // A fresh fallback is the designed recovery, not a fault: recording it
+      // drowned the stale signature in hundreds of healthy events.
+      if (fresh) return;
       // ignore: unawaited_futures
       c.recordError(
         StateError('location_$label'),
         StackTrace.current,
-        reason: fresh ? 'location_fallback_fresh' : 'location_fallback_stale',
+        reason: 'location_fallback_stale',
         fatal: false,
       );
     } catch (_) {
