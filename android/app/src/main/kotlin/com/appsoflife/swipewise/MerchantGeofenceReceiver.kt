@@ -49,6 +49,7 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
                 for (g in triggered) {
                     DwellAlarms.cancel(context, g.requestId)
                 }
+                VisitLock.markLeft(context, triggered.map { it.requestId })
             }
         }
     }

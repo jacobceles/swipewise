@@ -28,6 +28,10 @@ data class MerchantOption(
     // "USD" (any cash back) | "POINTS" | "MILES"; null from older builds,
     // read as cash back.
     val bestCurrency: String? = null,
+    // The store's brand, and whether this pin is the brand's main store
+    // (Costco Wholesale) rather than a counter inside it (Costco Pharmacy).
+    val brandId: String? = null,
+    val mainStore: Boolean = false,
 )
 
 data class MerchantMeta(
@@ -127,6 +131,8 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     if (footprintM > 0) put("footprint_m", footprintM)
     if (plaza) put("plaza", true)
     if (bestCurrency != null) put("best_currency", bestCurrency)
+    if (brandId != null) put("brand_id", brandId)
+    if (mainStore) put("main_store", true)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -140,6 +146,8 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     footprintM = optDouble("footprint_m", 0.0),
     plaza = optBoolean("plaza", false),
     bestCurrency = nullableString("best_currency"),
+    brandId = nullableString("brand_id"),
+    mainStore = optBoolean("main_store", false),
 )
 
 private fun JSONObject.nullableString(key: String): String? {

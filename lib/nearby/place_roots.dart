@@ -31,8 +31,9 @@ class PlaceRoot {
 ///
 /// That bill is a **step function**: the API caps `includedTypes` at 50, so the app fans out into
 /// `ceil(types / 50)` billed Nearby requests per tile. The default set was **146 types = 3
-/// requests**; it is now **75 = 2**. A trim that doesn't cross a multiple of 50 saves exactly
-/// nothing, which is why this was measured rather than eyeballed.
+/// requests**; it is now **74 = 2** (`atm` dropped 2026-10-22: no card advice at an ATM). A
+/// trim that doesn't cross a multiple of 50 saves exactly nothing, which is why this was
+/// measured rather than eyeballed.
 ///
 /// Measured 2026-08-15, one query per type in two deliberately different markets (midtown
 /// Manhattan and suburban Plano TX), keeping a type only when some sampled place of that type
@@ -221,12 +222,11 @@ const kPlaceRoots = <PlaceRoot>[
   PlaceRoot(
     id: 'business',
     label: 'Financial',
-    description: 'Banks, ATMs & post offices',
+    description: 'Banks & post offices',
     icon: Icons.account_balance,
     defaultEnabled: true,
     includedTypes: [
       'bank',
-      'atm',
       'post_office',
     ],
   ),

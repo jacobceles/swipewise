@@ -193,6 +193,9 @@ class GeofenceManager {
       if (mutedIds.isNotEmpty) {
         merchants = merchants.where((m) => !mutedIds.contains(m.id)).toList();
       }
+      // No card advice at an ATM. Search no longer asks for them, but the
+      // tile cache keeps older results for 7 days.
+      merchants = merchants.where((m) => m.placeType != 'atm').toList();
       final clusters = _clusterMerchants(merchants, _haversineMeters);
       final cappedClusters = clusters.length > merchantCap
           ? clusters.sublist(0, merchantCap)
@@ -515,8 +518,9 @@ class GeofenceManager {
         // Authoritative curated place-type → category map (categories.json
         // googlePlaceTypes); label/name heuristics are the fallback. A known
         // brand's own category wins (`storeCategory`): Walmart is not grocery.
+        final placeCategory = categoryForPlaceType(m.placeType);
         final category = storeCategory(
-          categoryForPlaceType(m.placeType) ??
+          placeCategory ??
               (label == null
                   ? RewardCategory.other
                   : classifyLooseLabel(label)),
@@ -561,6 +565,12 @@ class GeofenceManager {
           'category': label,
           'category_enum': category.name,
           'matched_brand': brandHit?.brand,
+          // The brand's main store, not a counter inside it: Costco Wholesale
+          // (a warehouse store, like the Costco brand), not Costco Pharmacy.
+          // Lets the native alert name it when both give the same advice.
+          'brand_id': ?brandId,
+          if (brandId != null && placeCategory == brandDefaultCategory(brandId))
+            'main_store': true,
           'best_card_name': bestName,
           'best_rate': bestRate,
           // 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x points".

@@ -182,6 +182,42 @@ class WalkinTest {
     }
 
     @Test
+    fun `a counter sharing the main store's pin folds into the main store`() {
+        // ShopRite's pharmacy and supermarket share one pin and one card; list
+        // order used to name the pharmacy (2026-10-22).
+        fun shoprite(id: String, main: Boolean) =
+            MerchantOption(id, id, null, "Gold", 3.0, brandId = "shoprite", mainStore = main)
+        val picked = StoreResolver.resolve(
+            listOf(
+                StoreResolver.Candidate(shoprite("pharmacy", false), 14.0),
+                StoreResolver.Candidate(shoprite("supermarket", true), 14.0),
+            ),
+        )
+        assertEquals(listOf("supermarket"), picked.map { it.merchantId })
+        // Another brand's main store with the same card never takes the place
+        // of the nearer store.
+        val acme = MerchantOption("acme", "acme", null, "Gold", 3.0, brandId = "acme", mainStore = true)
+        val other = StoreResolver.resolve(
+            listOf(
+                StoreResolver.Candidate(shoprite("pharmacy", false), 10.0),
+                StoreResolver.Candidate(acme, 20.0),
+            ),
+        )
+        assertEquals(listOf("pharmacy"), other.map { it.merchantId })
+    }
+
+    @Test
+    fun `a visit lingers past its window until the user leaves its fence`() {
+        // Last held back at 15:32; the walk next door came at 15:56.
+        val visit = VisitLock.Visit(40.50, -74.85, 0L, "m_gym", listOf("gym"))
+        val at1556 = 24L * 60_000L
+        assertTrue(VisitLock.isActive(visit, at1556))
+        assertFalse(VisitLock.isActive(visit.copy(left = true), at1556))
+        assertFalse(VisitLock.isActive(visit.copy(fenceId = null), at1556))
+        assertFalse(VisitLock.isActive(visit, VisitLock.WINDOW_MS + VisitLock.LINGER_MS))
+    }
+
+    @Test
     fun `the last pick goes first, nothing is dropped, most recent wins`() {
         val opts = listOf(store("pharmacy"), store("patidar"))
         val (none, noneReordered) = StoreResolver.preferPicked(opts, emptyMap())

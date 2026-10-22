@@ -40,7 +40,8 @@ Privacy coarsening: lat/lng is rounded to 3 decimal places (~110 m) before sendi
 retail, travel, arts, sports, business, event, health, outdoors, community). Each group carries
 a list of Google `includedTypes`; all enabled groups' types are merged into one API call. The
 user toggles groups on/off in the nearby-categories screen; preference is stored under
-`nearby_place_type_ids` in the `settings` table.
+`nearby_place_type_ids` in the `settings` table. ATMs are not searched (no card advice at
+one), and fence registration also skips any `atm` place still in the 7-day tile cache.
 
 ## Category labels
 
@@ -197,7 +198,10 @@ loitering lazily on the OS's own location cadence and can fire minutes late. Ins
    (`not_at_store`; on 2026-10-17 a red light 93 m from a nail salon posted it). The
    closest store is named alone (after **folding** any store whose card advice equals a
    nearer one's: Costco's bakery, food court and kiosk fold into Costco Wholesale, while a
-   Starbucks inside a Target stays because coffee earns differently); only stores within 35 m of the closest become a "you may
+   Starbucks inside a Target stays because coffee earns differently. A folded group is named
+   by its brand's **main store**, the pin whose place type matches the brand's own category
+   (`main_store` in the fence payload), when the nearest is a counter inside it: ShopRite's
+   pharmacy shares the supermarket's pin and used to be named by list order); only stores within 35 m of the closest become a "you may
    be at one of these" list (max 4). Fix accuracy worse than 50 m, no fix, or no store
    within reach → the firing fence's own options, closest four.
 
@@ -218,6 +222,10 @@ let a 36-minute Costco trip post twice). Overlapping
 fences entered seconds apart used to each post, since neighbouring stores have different
 categories and the per-category cooldown never caught them. The 20 minutes must exceed
 the longest wait setting (15 min), since overlapping fences can have different waits.
+While the user hasn't left the fence the visit alerted from, the visit stays open up to 2 h
+past those 20 minutes (`VisitLock.LINGER_MS`; an EXIT of that fence ends it). A quiet stretch
+at a gym once closed the visit, and the walk to the store next door then had nothing to arm
+its check.
 
 **The shop next door is a new visit.** Its fence was usually entered on arrival (fences
 overlap) and its alert held back, so no new ENTER comes when the user walks over. Instead,

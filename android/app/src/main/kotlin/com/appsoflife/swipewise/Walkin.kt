@@ -136,9 +136,18 @@ object StoreResolver {
     /// Drops any store whose card advice equals a nearer one's: telling them
     /// apart changes nothing about which card to use. Costco's bakery, food
     /// court and kiosk fold into Costco; Starbucks inside a Target stays,
-    /// because coffee earns differently. Keeps order (nearest first).
+    /// because coffee earns differently. Keeps order (nearest first), but a
+    /// group is named by its brand's main store when the nearest is a counter
+    /// inside it: ShopRite's pharmacy shares the supermarket's pin, and only
+    /// list order picked between them (2026-10-22).
     fun foldSameAdvice(options: List<MerchantOption>): List<MerchantOption> =
-        options.distinctBy { it.merchantId }.distinctBy { it.bestCardName to it.bestRate }
+        options.distinctBy { it.merchantId }
+            .groupBy { it.bestCardName to it.bestRate }
+            .values
+            .map { same ->
+                val nearest = same.first()
+                same.firstOrNull { it.mainStore && nearest.brandId != null && it.brandId == nearest.brandId } ?: nearest
+            }
 
     /// [options] with the one the user last picked from a "one of these" list
     /// moved to the front ([picks]: merchant id -> when picked; most recent
@@ -175,8 +184,16 @@ object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
     const val RADIUS_M = 250.0
 
+    /// A visit also stays open this long past [WINDOW_MS] while the user hasn't
+    /// left its fence. A quiet 20 minutes at the gym closed the visit, and the
+    /// walk to the liquor store next door then had nothing to arm its check:
+    /// no visit, and no new ENTER from a fence the user never left (2026-10-22).
+    /// Capped, because a fence beside home may never see an EXIT.
+    const val LINGER_MS = 2L * 60L * 60L * 1000L
+
     /// [fenceId]: the fence the visit alerted from. [merchantIds] / [advice]:
     /// the store(s) it named and their "card|rate", when a sharp fix named them.
+    /// [left]: the user has exited [fenceId] since.
     data class Visit(
         val lat: Double,
         val lng: Double,
@@ -184,12 +201,16 @@ object VisitLock {
         val fenceId: String? = null,
         val merchantIds: List<String> = emptyList(),
         val advice: List<String> = emptyList(),
+        val left: Boolean = false,
     )
 
     fun adviceOf(o: MerchantOption): String = "${o.bestCardName}|${o.bestRate}"
 
-    fun isActive(last: Visit?, nowMillis: Long): Boolean =
-        last != null && nowMillis - last.atMillis < WINDOW_MS
+    fun isActive(last: Visit?, nowMillis: Long): Boolean {
+        if (last == null) return false
+        val age = nowMillis - last.atMillis
+        return age < WINDOW_MS || (last.fenceId != null && !last.left && age < WINDOW_MS + LINGER_MS)
+    }
 
     /// [resolved]: the stores a sharp fix put the user in, or null when the
     /// fix couldn't tell (no fix, coarse fix, fence options as a fallback).
@@ -220,7 +241,16 @@ object VisitLock {
             p.getString("fence", null),
             p.getString("ids", "")!!.split(',').filter { it.isNotEmpty() },
             p.getString("advice", "")!!.split('\n').filter { it.isNotEmpty() },
+            p.getBoolean("left", false),
         )
+    }
+
+    /// The user exited [fenceIds]; if the visit's fence is among them, the
+    /// visit no longer lingers past [WINDOW_MS].
+    fun markLeft(context: Context, fenceIds: List<String>) {
+        val visit = read(context) ?: return
+        if (visit.fenceId == null || visit.fenceId !in fenceIds || visit.left) return
+        write(context, visit.copy(left = true))
     }
 
     /// commit(), not apply(): two timers can fire back to back, and the second
@@ -233,6 +263,7 @@ object VisitLock {
             .putString("fence", visit.fenceId)
             .putString("ids", visit.merchantIds.joinToString(","))
             .putString("advice", visit.advice.joinToString("\n"))
+            .putBoolean("left", visit.left)
             .commit()
     }
 }
