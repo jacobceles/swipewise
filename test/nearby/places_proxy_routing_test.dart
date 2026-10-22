@@ -128,6 +128,32 @@ void main() {
     expect(center['longitude'], closeTo(-73.986, 0.01));
   });
 
+  test('a dropped connection is transient and leaves the breaker alone',
+      () async {
+    // IOClient surfaces a connection that dies mid-request as a plain
+    // ClientException. Treated as upstream-broken, it fed the breaker and
+    // locked out the retries meant to recover once signal returned.
+    if (!viaProxy && apiKey.isEmpty) return;
+    final repo = DataRepository();
+    final client = MockClient(
+      (req) async => throw http.ClientException(
+        'Software caused connection abort',
+        req.url,
+      ),
+    );
+    await expectLater(
+      GooglePlacesProvider(repo: repo, client: client).nearby(
+        lat: 40.748,
+        lng: -73.986,
+        radiusMi: 1,
+        categoryIds: const {},
+      ),
+      throwsA(isA<PlacesNetworkTransient>()),
+    );
+    final breaker = await repo.getCircuitBreaker('google_places');
+    expect(breaker.failureCount, 0);
+  });
+
   test('the field mask is never sent to the proxy', () async {
     // The Worker pins the mask because it determines the billing SKU, and a
     // client must not be able to widen it. Sending our own would either be

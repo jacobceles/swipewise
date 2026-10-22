@@ -345,6 +345,10 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       throw PlacesNetworkTransient('timeout');
     } on SocketException catch (e) {
       throw PlacesNetworkTransient('network: ${e.message}');
+    } on http.ClientException catch (e) {
+      // IOClient wraps a connection that dies mid-request ("Software caused
+      // connection abort") in a plain ClientException, not a SocketException.
+      throw PlacesNetworkTransient('network: ${e.message}');
     }
 
     if (resp.statusCode != 200) {

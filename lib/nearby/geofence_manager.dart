@@ -11,6 +11,7 @@ import '../models/reward_category.dart';
 import '../util/logger.dart';
 import 'category_label_resolver.dart';
 import 'geofence_channel.dart';
+import 'google_places_provider.dart' show PlacesNetworkTransient;
 import 'location_service.dart';
 import 'merchant.dart';
 import 'merchant_search_provider.dart';
@@ -280,13 +281,16 @@ class GeofenceManager {
       // `trigger` (app/sync/background) names which re-registration path
       // failed in the field — the A2-F1 blind spot we couldn't see before.
       FirebaseCrashlytics.instance.setCustomKey('geofence_trigger', trigger);
-      // ignore: unawaited_futures
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        st,
-        reason: 'geofence_register_failed',
-        fatal: false,
-      );
+      // A network blip is not a fault: the worker retries once it's back.
+      if (e is! PlacesNetworkTransient) {
+        // ignore: unawaited_futures
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'geofence_register_failed',
+          fatal: false,
+        );
+      }
       // RC2: this failure leaves the last-good fence set in place. If that set
       // is now stale + far, flag the silent-miss window (diagnosis only).
       await _maybeCoverageGapBeacon(userId, trigger);
