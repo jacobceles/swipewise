@@ -1,7 +1,7 @@
 # Setup
 
 Building and running SwipeWise locally. The essentials are in the
-[README](../README.md#run-it); this is the detail.
+[README](../README.md#get-started); this is the detail.
 
 ## Tiers — one binary, runtime entitlement
 

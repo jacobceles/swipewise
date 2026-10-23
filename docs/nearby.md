@@ -114,6 +114,8 @@ Each merchant gets a **100m ENTER/EXIT geofence**. A big-box store's (department
 warehouse, supermarket, hypermarket, home improvement, mall) is 80 m larger, and its
 options carry `footprint_m` = 80. Its Google pin can sit 150 m from where the user stands
 inside, so the native dwell check measures to the store's edge (distance − footprint).
+The 80 m is fixed on purpose: Places has no per-store size. `places.viewport` is a map-display
+box that Google says "should not be used as the physical boundary" (checked 2026-10-19).
 A cluster's dwell is the **shortest** wait among its stores. "Department Stores" and
 "Wholesale" use the **Big-box** wait setting, which before this mapping changed nothing.
 
