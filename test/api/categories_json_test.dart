@@ -239,6 +239,13 @@ void main() {
     expect(categoryForPlaceType('pet_store'), RewardCategory.pets);
   });
 
+  test('food shops whose type name says "shop" are dining', () {
+    // Saladworks is `salad_shop`: the loose label "Salad Shop" read as retail,
+    // so it got the 1% catch-all card next to a 5% dining one (2026-10-22).
+    expect(categoryForPlaceType('salad_shop'), RewardCategory.dining);
+    expect(categoryForPlaceType('noodle_shop'), RewardCategory.dining);
+  });
+
   test('warehouse / home-improvement / department / fitness map correctly', () {
     // Regression for the coverage fix: a warehouse club (Costco) is wholesale,
     // NOT grocery — issuers routinely exclude warehouse clubs from grocery.

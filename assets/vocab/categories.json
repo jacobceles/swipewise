@@ -8,7 +8,7 @@
     "id": "dining",
     "displayName": "Dining",
     "matcherKeywords": ["dining", "restaurant", "restaurants", "food and drink", "food drink", "pizza", "pizzeria", "takeout", "eligible delivery", "delivery services", "food delivery", "caviar"],
-    "googlePlaceTypes": ["restaurant", "fine_dining_restaurant", "fast_food_restaurant", "bar_and_grill", "lounge_bar", "pizza_restaurant", "sandwich_shop", "food_court", "bakery", "ice_cream_shop", "bar", "catering_service", "meal_takeaway", "meal_delivery", "deli", "diner", "bistro", "brunch_restaurant", "buffet_restaurant", "brewery", "brewpub", "winery", "wine_bar", "cocktail_bar", "pub", "beer_garden", "sports_bar", "gastropub", "night_club", "candy_store", "dessert_shop", "dessert_restaurant", "donut_shop", "bagel_shop", "pastry_shop", "snack_bar", "steak_house"]
+    "googlePlaceTypes": ["restaurant", "fine_dining_restaurant", "fast_food_restaurant", "bar_and_grill", "lounge_bar", "pizza_restaurant", "sandwich_shop", "food_court", "bakery", "ice_cream_shop", "bar", "catering_service", "meal_takeaway", "meal_delivery", "deli", "diner", "bistro", "brunch_restaurant", "buffet_restaurant", "brewery", "brewpub", "winery", "wine_bar", "cocktail_bar", "pub", "beer_garden", "sports_bar", "gastropub", "night_club", "candy_store", "dessert_shop", "dessert_restaurant", "donut_shop", "bagel_shop", "pastry_shop", "snack_bar", "steak_house", "salad_shop", "acai_shop", "kebab_shop", "noodle_shop", "cake_shop", "chocolate_shop", "hot_dog_stand"]
   },
   {
     "id": "coffee",

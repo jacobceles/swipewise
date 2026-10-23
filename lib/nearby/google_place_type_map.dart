@@ -62,6 +62,13 @@ const kGooglePlaceTypeToLabel = <String, String>{
   'pastry_shop': 'Dining',
   'snack_bar': 'Dining',
   'steak_house': 'Dining',
+  'salad_shop': 'Dining',
+  'acai_shop': 'Dining',
+  'kebab_shop': 'Dining',
+  'noodle_shop': 'Dining',
+  'cake_shop': 'Dining',
+  'chocolate_shop': 'Dining',
+  'hot_dog_stand': 'Dining',
 
   // Coffee (separate from Dining so classifier can distinguish)
   'cafe': 'Coffee',

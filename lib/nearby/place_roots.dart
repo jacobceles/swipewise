@@ -377,6 +377,16 @@ const kTypesReachedViaParentType = <String>{
   'train_station',
   'wine_bar',
   'yoga_studio',
+  // Food places whose type name doesn't say "restaurant", so the loose label fallback misses
+  // them. salad_shop came back from a live search (Saladworks, 2026-10-22); the rest are from
+  // Google's Food and Drink table and were not sampled.
+  'acai_shop',
+  'cake_shop',
+  'chocolate_shop',
+  'hot_dog_stand',
+  'kebab_shop',
+  'noodle_shop',
+  'salad_shop',
 };
 
 /// IDs of roots enabled by default — used when no user setting exists.
