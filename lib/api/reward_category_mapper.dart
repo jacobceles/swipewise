@@ -33,14 +33,10 @@ import 'remote_asset_service.dart';
     return (category: RewardCategory.other, brandId: null);
   }
 
-  // Brand pass: longest matcher wins. We iterate in declared order but the
-  // matchers themselves are sorted by descending length so "uber eats"
-  // beats "uber" without depending on table order.
-  for (final entry in _brandTable) {
-    for (final m in entry.tokenMatchers) {
-      if (_containsAllTokensContiguously(tokens, m)) {
-        return (category: entry.category, brandId: entry.brandId);
-      }
+  // Brand pass: matchers are sorted longest-first across all brands.
+  for (final (entry, matcher, _) in _brandMatchers) {
+    if (_containsAllTokensContiguously(tokens, matcher)) {
+      return (category: entry.category, brandId: entry.brandId);
     }
   }
 
@@ -161,6 +157,15 @@ bool applyBrandsJson(String raw) {
     }
     if (loaded.isEmpty) return false;
     _brandTable = loaded;
+    _brandMatchers =
+        [
+          for (final (index, entry) in loaded.indexed)
+            for (final matcher in entry.tokenMatchers) (entry, matcher, index),
+        ]..sort((a, b) {
+          final length = b.$2.length.compareTo(a.$2.length);
+          // Preserve registry precedence for genuinely identical aliases.
+          return length != 0 ? length : a.$3.compareTo(b.$3);
+        });
     _allBrandsById = _buildBrandsById(loaded);
     return true;
   } catch (_) {
@@ -173,6 +178,7 @@ bool applyBrandsJson(String raw) {
 @visibleForTesting
 void resetBrandRegistry() {
   _brandTable = <_BrandEntry>[];
+  _brandMatchers = [];
   _allBrandsById = <String, BrandRegistryEntry>{};
 }
 
@@ -305,6 +311,7 @@ class _CategoryMatcher {
 /// fills it (R2 cache → bundled asset). Boot loads it before the first
 /// classification, so production never sees the empty table.
 List<_BrandEntry> _brandTable = <_BrandEntry>[];
+List<(_BrandEntry, List<String>, int)> _brandMatchers = [];
 
 Map<String, BrandRegistryEntry> _buildBrandsById(List<_BrandEntry> table) => {
   for (final b in table)

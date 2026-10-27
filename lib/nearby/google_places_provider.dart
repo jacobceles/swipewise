@@ -50,11 +50,19 @@ class PlacesUpstreamError implements Exception {
 /// shared between isolates) so the foreground UI and the background geofence
 /// re-register isolate share state rather than diverging.
 class GooglePlacesProvider extends MerchantSearchProvider {
-  GooglePlacesProvider({DataRepository? repo, http.Client? client})
-    : _repo = repo ?? DataRepository(),
-      _client = client ?? http.Client();
+  GooglePlacesProvider({
+    DataRepository? repo,
+    http.Client? client,
+    String proxyUrl = _kProxyUrl,
+    String apiKey = _kApiKey,
+  }) : _repo = repo ?? DataRepository(),
+       _proxyUrl = proxyUrl, // ignore: prefer_initializing_formals
+       _apiKey = apiKey, // ignore: prefer_initializing_formals
+       _client = client ?? http.Client();
 
   final DataRepository _repo;
+  final String _proxyUrl;
+  final String _apiKey;
 
   /// Injectable so tests can assert *which* host is called and which headers go
   /// with it. That matters more than it looks: the security property of the
@@ -104,6 +112,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
     'GOOGLE_ANDROID_CERT',
     defaultValue: '05e29b39eb58a763a326c1ca43bc3727e5e73c8a',
   );
+
   /// When set, nearby search goes through the SwipeWise Worker instead of
   /// straight to Google, and the Places key never ships in the binary.
   ///
@@ -139,7 +148,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
     // route (`HANDOFF.md` §5.5) the key is deliberately absent from the build,
     // and demanding one here would break nearby search at exactly the moment
     // the security fix lands.
-    if (_kProxyUrl.isEmpty && _kApiKey.isEmpty) {
+    if (_proxyUrl.isEmpty && _apiKey.isEmpty) {
       throw Exception('neither GOOGLE_PLACES_KEY nor PLACES_PROXY_URL is set');
     }
     final breakerState = await _repo.getCircuitBreaker(_serviceName);
@@ -314,7 +323,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
     // Proxy when configured, Google directly otherwise. The Worker forwards the
     // body verbatim and pins the *same* field mask, so the response shape — and
     // everything below this point — is identical either way.
-    final viaProxy = _kProxyUrl.isNotEmpty;
+    final viaProxy = _proxyUrl.isNotEmpty;
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (viaProxy) {
       // Null is a normal outcome (no Play Services, unregistered emulator). Send
@@ -324,7 +333,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       final token = await AppCheckService.token();
       if (token != null) headers['X-Firebase-AppCheck'] = token;
     } else {
-      headers['X-Goog-Api-Key'] = _kApiKey;
+      headers['X-Goog-Api-Key'] = _apiKey;
       headers['X-Goog-FieldMask'] = _fieldMask;
       if (_kAndroidPackage.isNotEmpty) {
         headers['X-Android-Package'] = _kAndroidPackage;
@@ -336,7 +345,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
     try {
       resp = await _client
           .post(
-            Uri.parse(viaProxy ? _kProxyUrl : _endpoint),
+            Uri.parse(viaProxy ? _proxyUrl : _endpoint),
             headers: headers,
             body: body,
           )

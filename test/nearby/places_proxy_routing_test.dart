@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -7,79 +9,48 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/data_repository.dart';
 import 'package:swipewise/api/database_helper.dart';
 import 'package:swipewise/nearby/google_places_provider.dart';
+import 'package:swipewise/nearby/merchant_search_provider.dart';
 
-/// Guards the security property of the Places proxy rollout.
-///
-/// The Places key used to ship inside the APK, guarded by GCP's Android
-/// application restriction — a restriction measured on 2026-08-10 to be worth
-/// nothing, because forging `X-Android-Package` / `X-Android-Cert` from a laptop
-/// returns 200 with real data. The fix is to move the key into a Worker secret
-/// and have the app call the Worker instead.
-///
-/// During the rollout both paths exist, chosen by the compile-time
-/// `PLACES_PROXY_URL` dart-define. A const cannot be varied within one test
-/// process, so rather than skip whichever branch is not compiled in — a skipped
-/// test reads exactly like a passing one — these assert the invariant that must
-/// hold in **either** mode:
-///
-///   the destination host and the outgoing headers must always agree.
-///
-/// Direct → the key goes to Google and nowhere else.
-/// Proxied → the key is not sent at all, because it is not in the binary to send.
-///
-/// Run the other branch with:
-///   flutter test --dart-define=PLACES_PROXY_URL=https://example.invalid/places/nearby
-///
-/// With neither define set — a bare `flutter test` — there is no configured
-/// route at all, and the only correct behaviour is to refuse loudly. That is
-/// asserted too, so this file is meaningful in all three states rather than
-/// quietly vacuous in the default one.
+/// Both routing modes must run under a bare `flutter test`: credentials may
+/// go only to Google, never to the proxy (even if both are configured).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
-
-  const proxyUrl = String.fromEnvironment('PLACES_PROXY_URL');
-  const apiKey = String.fromEnvironment('GOOGLE_PLACES_KEY');
-  final viaProxy = proxyUrl.isNotEmpty;
-
   late Database db;
 
   setUp(() async {
     db = await databaseFactoryFfi.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 1,
-        onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+        onConfigure: DatabaseHelper.configureForTesting,
         onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
+        version: 1,
       ),
     );
     DatabaseHelper.setTestDatabaseFactory(() async => db);
   });
-
   tearDown(() async {
     await db.close();
     DatabaseHelper.setTestDatabaseFactory(null);
   });
 
-  /// Captures the single outbound request `nearby()` makes.
-  Future<http.Request> captureRequest() async {
+  Future<http.Request> captureRequest(String proxyUrl, String apiKey) async {
     late http.Request seen;
-    final client = MockClient((req) async {
-      seen = req;
-      return http.Response(jsonEncode({'places': []}), 200);
-    });
     await GooglePlacesProvider(
       repo: DataRepository(),
-      client: client,
+      proxyUrl: proxyUrl,
+      apiKey: apiKey,
+      client: MockClient((req) async {
+        seen = req;
+        return http.Response(jsonEncode({'places': []}), 200);
+      }),
     ).nearby(lat: 40.748, lng: -73.986, radiusMi: 1, categoryIds: const {});
     return seen;
   }
 
-  test('an unconfigured build refuses loudly instead of failing at the network',
-      () async {
-    if (viaProxy || apiKey.isNotEmpty) return;
+  test('an unconfigured build refuses loudly without a network call', () async {
     await expectLater(
-      captureRequest(),
+      captureRequest('', ''),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -90,80 +61,168 @@ void main() {
     );
   });
 
-  test('the destination host and the credential headers always agree', () async {
-    if (!viaProxy && apiKey.isEmpty) return;
-    final req = await captureRequest();
-    final sentToProxy = req.url.toString() == proxyUrl;
+  for (final proxyUrl in ['', 'https://example.invalid/places/nearby']) {
+    final viaProxy = proxyUrl.isNotEmpty;
+    group(viaProxy ? 'proxy' : 'direct', () {
+      test('destination and credential headers agree', () async {
+        final req = await captureRequest(proxyUrl, 'test-key');
+        expect(
+          req.url.toString(),
+          viaProxy
+              ? proxyUrl
+              : 'https://places.googleapis.com/v1/places:searchNearby',
+        );
+        if (viaProxy) {
+          expect(req.headers, isNot(contains('X-Goog-Api-Key')));
+          expect(req.headers, isNot(contains('X-Android-Package')));
+          expect(req.headers, isNot(contains('X-Android-Cert')));
+        } else {
+          expect(req.headers['X-Goog-Api-Key'], 'test-key');
+        }
+      });
 
-    expect(
-      sentToProxy,
-      viaProxy,
-      reason: 'PLACES_PROXY_URL decides the destination; it was '
-          '"${req.url}" with proxy configured = $viaProxy',
-    );
+      test('request body is Google-shaped', () async {
+        final body =
+            jsonDecode((await captureRequest(proxyUrl, 'test-key')).body)
+                as Map;
+        final circle = (body['locationRestriction'] as Map)['circle'] as Map;
+        final center = circle['center'] as Map;
+        expect(body, contains('includedTypes'));
+        expect(center['latitude'], closeTo(40.748, 0.01));
+        expect(center['longitude'], closeTo(-73.986, 0.01));
+      });
 
-    if (sentToProxy) {
-      // The whole point of the proxy: the key is not in the binary, so it
-      // cannot be sent. If this ever fails, the key is shipping again.
-      expect(req.headers.containsKey('X-Goog-Api-Key'), isFalse);
-      expect(req.headers.containsKey('X-Android-Package'), isFalse);
-      expect(req.headers.containsKey('X-Android-Cert'), isFalse);
-    } else {
-      expect(req.headers['X-Goog-Api-Key'], apiKey);
-    }
-  });
+      test(
+        'a dropped connection is transient and leaves the breaker alone',
+        () async {
+          final repo = DataRepository();
+          final client = MockClient(
+            (req) async => throw http.ClientException(
+              'Software caused connection abort',
+              req.url,
+            ),
+          );
+          await expectLater(
+            GooglePlacesProvider(
+              repo: repo,
+              client: client,
+              proxyUrl: proxyUrl,
+              apiKey: 'test-key',
+            ).nearby(
+              lat: 40.748,
+              lng: -73.986,
+              radiusMi: 1,
+              categoryIds: const {},
+            ),
+            throwsA(isA<PlacesNetworkTransient>()),
+          );
+          expect(
+            (await repo.getCircuitBreaker('google_places')).failureCount,
+            0,
+          );
+        },
+      );
 
-  test('the request body is Google-shaped in both modes', () async {
-    // The Worker forwards the body verbatim and pins its own field mask, so the
-    // app must speak Google's schema either way. If this diverges, the proxy
-    // silently returns results for the wrong location.
-    if (!viaProxy && apiKey.isEmpty) return;
-    final body = jsonDecode((await captureRequest()).body) as Map;
-    final circle =
-        (body['locationRestriction'] as Map)['circle'] as Map;
-    final center = circle['center'] as Map;
+      test('only Google receives the field mask', () async {
+        final req = await captureRequest(proxyUrl, 'test-key');
+        if (viaProxy) {
+          expect(req.headers, isNot(contains('X-Goog-FieldMask')));
+        } else {
+          expect(req.headers['X-Goog-FieldMask'], contains('places.id'));
+        }
+      });
+    });
+  }
 
-    expect(body.containsKey('includedTypes'), isTrue);
-    expect(center['latitude'], closeTo(40.748, 0.01));
-    expect(center['longitude'], closeTo(-73.986, 0.01));
-  });
-
-  test('a dropped connection is transient and leaves the breaker alone',
+  for (final (status, body) in [
+    (400, 'bad request'),
+    (500, 'upstream failed'),
+    (200, 'not JSON'),
+    (200, '[]'),
+  ]) {
+    test(
+      '$status / $body feeds the breaker, which prevents a fourth request',
       () async {
-    // IOClient surfaces a connection that dies mid-request as a plain
-    // ClientException. Treated as upstream-broken, it fed the breaker and
-    // locked out the retries meant to recover once signal returned.
-    if (!viaProxy && apiKey.isEmpty) return;
-    final repo = DataRepository();
-    final client = MockClient(
-      (req) async => throw http.ClientException(
-        'Software caused connection abort',
-        req.url,
-      ),
+        final repo = DataRepository();
+        var calls = 0;
+        final provider = GooglePlacesProvider(
+          repo: repo,
+          proxyUrl: '',
+          apiKey: 'test-key',
+          client: MockClient((_) async {
+            calls++;
+            return http.Response(body, status);
+          }),
+        );
+        for (var attempt = 1; attempt <= 3; attempt++) {
+          await expectLater(
+            provider.nearby(
+              lat: 1,
+              lng: 2,
+              radiusMi: 1,
+              categoryIds: const {'grocery'},
+            ),
+            throwsA(isA<PlacesUpstreamError>()),
+          );
+          expect(
+            (await repo.getCircuitBreaker('google_places')).failureCount,
+            attempt,
+          );
+        }
+        await expectLater(
+          provider.nearby(
+            lat: 1,
+            lng: 2,
+            radiusMi: 1,
+            categoryIds: const {'grocery'},
+          ),
+          throwsA(isA<MerchantSearchUnavailable>()),
+        );
+        expect(calls, 3);
+      },
     );
-    await expectLater(
-      GooglePlacesProvider(repo: repo, client: client).nearby(
-        lat: 40.748,
-        lng: -73.986,
-        radiusMi: 1,
-        categoryIds: const {},
-      ),
-      throwsA(isA<PlacesNetworkTransient>()),
-    );
-    final breaker = await repo.getCircuitBreaker('google_places');
-    expect(breaker.failureCount, 0);
-  });
+  }
 
-  test('the field mask is never sent to the proxy', () async {
-    // The Worker pins the mask because it determines the billing SKU, and a
-    // client must not be able to widen it. Sending our own would either be
-    // ignored (confusing) or, if the Worker ever forwarded it, billable.
-    if (!viaProxy && apiKey.isEmpty) return;
-    final req = await captureRequest();
-    if (viaProxy) {
-      expect(req.headers.containsKey('X-Goog-FieldMask'), isFalse);
-    } else {
-      expect(req.headers['X-Goog-FieldMask'], contains('places.id'));
-    }
-  });
+  for (final error in [
+    TimeoutException('timeout'),
+    const SocketException('offline'),
+  ]) {
+    test(
+      '$error remains off-breaker and the next request can recover',
+      () async {
+        final repo = DataRepository();
+        var calls = 0;
+        final provider = GooglePlacesProvider(
+          repo: repo,
+          proxyUrl: '',
+          apiKey: 'test-key',
+          client: MockClient((_) async {
+            if (++calls <= 3) throw error;
+            return http.Response('{"places":[]}', 200);
+          }),
+        );
+        for (var attempt = 0; attempt < 3; attempt++) {
+          await expectLater(
+            provider.nearby(
+              lat: 1,
+              lng: 2,
+              radiusMi: 1,
+              categoryIds: const {'grocery'},
+            ),
+            throwsA(isA<PlacesNetworkTransient>()),
+          );
+        }
+        final breaker = await repo.getCircuitBreaker('google_places');
+        expect(breaker.failureCount, 0);
+        expect(breaker.openedUntil, isNull);
+        await provider.nearby(
+          lat: 1,
+          lng: 2,
+          radiusMi: 1,
+          categoryIds: const {'grocery'},
+        );
+        expect(calls, 4);
+      },
+    );
+  }
 }

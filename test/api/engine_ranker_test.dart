@@ -554,8 +554,7 @@ void main() {
         isForeign: true,
       ).rewardRanking(RewardCategory.dining).general;
       final u = ranking.firstWhere((r) => r.cardId == 'cU');
-      final k = ranking.firstWhere((r) => r.cardId == 'cK');
-      expect(u.rate, k.rate);
+      expect(u.effectiveCentsPerDollar, 2.0);
     });
   });
 

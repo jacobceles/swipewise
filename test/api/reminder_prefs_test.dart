@@ -37,8 +37,8 @@ void main() {
 
   Future<Map<String, Object?>> overrideRow() async => (await db.query(
     'card_overrides',
-    where: 'card_id = ?',
-    whereArgs: ['c1'],
+    where: 'user_id = ? AND card_id = ?',
+    whereArgs: ['u1', 'c1'],
   )).single;
 
   test('an untouched card inherits — both columns stay null', () async {
@@ -108,4 +108,46 @@ void main() {
       reason: 'the merge must not drop them',
     );
   });
+
+  for (final lead in [0, 31, -1, 32]) {
+    test('lead time $lead respects inclusive 0–31 bounds', () async {
+      await repo.setReminderPrefs('u1', 'c1', enabled: true, leadDays: lead);
+      expect(
+        (await overrideRow())['reminder_lead_days'],
+        lead >= 0 && lead <= 31 ? lead : null,
+      );
+    });
+  }
+
+  test(
+    'reminder edits do not alter another owner override for the same card',
+    () async {
+      await db.insert('users', {'id': 'u2', 'identifier': 'Other'});
+      await db.insert('card_overrides', {
+        'user_id': 'u2',
+        'card_id': 'c1',
+        'custom_name': 'Foreign',
+        'due_day': 22,
+        'reminder_enabled': 0,
+        'reminder_lead_days': 31,
+      });
+      final before = await db.query(
+        'card_overrides',
+        where: 'user_id = ?',
+        whereArgs: ['u2'],
+      );
+      await repo.setDueDay('u1', 'c1', 15);
+      await repo.setReminderPrefs('u1', 'c1', enabled: true, leadDays: 7);
+      expect((await overrideRow())['reminder_lead_days'], 7);
+      expect((await overrideRow())['custom_name'], isNull);
+      expect(
+        await db.query(
+          'card_overrides',
+          where: 'user_id = ?',
+          whereArgs: ['u2'],
+        ),
+        before,
+      );
+    },
+  );
 }

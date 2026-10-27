@@ -27,6 +27,7 @@ void main() {
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
+          onConfigure: DatabaseHelper.configureForTesting,
           onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
         ),
       );
@@ -41,6 +42,7 @@ void main() {
 
   Future<void> insertTx(
     String id, {
+    String userId = 'u1',
     required String merchant,
     required String cardId,
     required String postedAt,
@@ -49,7 +51,7 @@ void main() {
     final db = await DatabaseHelper().database;
     await db.insert('transactions', {
       'id': id,
-      'user_id': 'u1',
+      'user_id': userId,
       'merchant': merchant,
       'card_id': cardId,
       'type': 'DEBIT',
@@ -94,6 +96,19 @@ void main() {
         cardId: 'cardB',
         postedAt: daysAgo(1),
       );
+      final db = await DatabaseHelper().database;
+      await db.insert('users', {'id': 'u2', 'identifier': 'Other'});
+      // Same merchant and cadence, but the other owner's more recent card
+      // must never become the card billed to u1. Dates stay relative to now.
+      for (final day in [60, 30, 0]) {
+        await insertTx(
+          'other-$day',
+          userId: 'u2',
+          merchant: 'Netflix',
+          cardId: 'foreign-card',
+          postedAt: daysAgo(day),
+        );
+      }
 
       final summary = await TransactionRepository(
         DatabaseHelper(),

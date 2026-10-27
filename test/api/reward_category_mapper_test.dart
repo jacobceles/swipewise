@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swipewise/api/brand_resolver.dart';
@@ -38,6 +39,51 @@ void main() {
   setUp(() {
     applyBrandsJson(fixture);
     applyCategoriesJson(_categoriesAsset);
+  });
+
+  test('longest brand matcher wins in either registry order', () {
+    final brands = jsonDecode(fixture) as List;
+    for (final ordered in [brands, brands.reversed.toList()]) {
+      applyBrandsJson(jsonEncode(ordered));
+      expect(classifyLabel('Uber Eats').brandId, 'uber-eats');
+      expect(classifyLabel('Amazon Fresh').brandId, 'amazon-fresh');
+      expect(classifyLabel('Costco Gas Stations').brandId, 'costco-gas');
+    }
+  });
+
+  test('every shipped alias resolves to its own brand', () {
+    final raw = File('assets/vocab/brands.json').readAsStringSync();
+    expect(applyBrandsJson(raw), isTrue);
+    final mismatches = <String>[];
+    for (final brand in jsonDecode(raw) as List) {
+      final id = brand['brandId'] as String?;
+      if (id == null) continue;
+      for (final alias in brand['aliases'] as List) {
+        final actual = classifyLabel(alias as String).brandId;
+        if (actual != id) mismatches.add('$id: $alias -> $actual');
+      }
+    }
+    // These aliases are identical after normalization in multiple brands.
+    // Longest-first cannot disambiguate them; retain declared precedence.
+    // Exact equality also makes removed/stale exceptions fail.
+    expect(
+      mismatches,
+      unorderedEquals([
+        'tim-hortons-us: tim hortons -> tim-hortons',
+        'tim-hortons-us: tim horton -> tim-hortons',
+        'tim-hortons-us: tim horton s -> tim-hortons',
+        'bojangles-famous-chicken: bojangles -> bojangles',
+        'murphy-express: murphy express -> murphy-usa',
+        'murphy-express: murphy usa -> murphy-usa',
+        'nordstrom-rack: nordstrom rack -> nordstrom',
+        'lumen: centurylink -> centurylink',
+        'metronorth: metro north -> mta',
+        'metronorth: metro-north -> mta',
+        'lirr: lirr -> mta',
+        'intercontinental: intercontinental -> ihg',
+        'fairmont-hotels: fairmont -> fairmont',
+      ]),
+    );
   });
 
   group('classifyLabel - brand pass', () {
@@ -98,8 +144,7 @@ void main() {
     test(
       'Costco Gas resolves to the gas-specific brand, not the warehouse',
       () {
-        // costco-gas is listed before costco so first-match-wins gives the
-        // specific brand for a gas label, while plain "Costco" stays warehouse.
+        // The longer alias picks gas, while plain "Costco" stays warehouse.
         final gas = classifyLabel('Costco Gas Stations');
         expect(gas.brandId, 'costco-gas');
         expect(gas.category, RewardCategory.gas);

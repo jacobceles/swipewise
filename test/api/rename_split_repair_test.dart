@@ -147,4 +147,52 @@ void main() {
       1,
     );
   });
+
+  test(
+    'repair cannot adopt another user orphan or delete their stale link',
+    () async {
+      await addCard(survivor, inst, '2501');
+      await addTx('owned', orphan);
+      await db.insert('users', {'id': 'u2', 'identifier': 'Other'});
+      await db.insert('transactions', {
+        'id': 'other',
+        'user_id': 'u2',
+        'card_id': orphan,
+        'amount': 2,
+      });
+      await db.insert('card_links', {
+        'user_id': 'u2',
+        'card_id': orphan,
+        'card_product_id': 'other-product',
+        'source': 'manual',
+      });
+      final txBefore = await db.query(
+        'transactions',
+        where: 'user_id = ?',
+        whereArgs: ['u2'],
+      );
+      final linksBefore = await db.query(
+        'card_links',
+        where: 'user_id = ?',
+        whereArgs: ['u2'],
+      );
+      await DatabaseHelper.runUpgrade(db, 11, 12);
+      expect(
+        (await db.query(
+          'transactions',
+          where: 'user_id = ?',
+          whereArgs: ['u1'],
+        )).single['card_id'],
+        survivor,
+      );
+      expect(
+        await db.query('transactions', where: 'user_id = ?', whereArgs: ['u2']),
+        txBefore,
+      );
+      expect(
+        await db.query('card_links', where: 'user_id = ?', whereArgs: ['u2']),
+        linksBefore,
+      );
+    },
+  );
 }

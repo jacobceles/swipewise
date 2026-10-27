@@ -411,12 +411,37 @@ class AuthNotifier extends Notifier<AuthState> {
       }
       // `reassignUserId` copies the row wholesale, so the Google-derived
       // fields ride along on the new id and have to be cleared by hand.
-      await db.update(
-        'users',
-        {'identifier': 'You', 'email': null, 'bank_customer_id': null},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await db.transaction((txn) async {
+        // Signed out, retain only bare-card data and ordinary preferences.
+        // Bank history and cloud-backup consent must not follow the next login.
+        for (final table in [
+          'transactions',
+          'financial_accounts',
+          'bank_connections',
+          'sync_state',
+          'sync_runs',
+        ]) {
+          await txn.delete(table, where: 'user_id = ?', whereArgs: [id]);
+        }
+        await txn.delete(
+          'settings',
+          where: 'user_id = ? AND key IN (?, ?, ?, ?, ?)',
+          whereArgs: [
+            id,
+            'pro_cached',
+            'backup_enabled',
+            'backup_fingerprint',
+            'last_backup_at',
+            'backup_held_cards',
+          ],
+        );
+        await txn.update(
+          'users',
+          {'identifier': 'You', 'email': null, 'bank_customer_id': null},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      });
     }
     // Reset before re-reading. `copyWith` reads null as "unchanged", so
     // `checkStatus` on its own would carry the signed-out email straight back

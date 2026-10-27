@@ -30,14 +30,13 @@ void main() {
     entries = all.where((e) => e is Map && e['id'] != null).toList();
     // The drift guard resolves place-type labels through the classifier, so
     // load the real matchers into the registry first.
-    applyCategoriesJson(raw);
+    expect(applyCategoriesJson(raw), isTrue);
   });
 
   tearDownAll(resetCategoryRegistry);
 
   test('is a non-empty list of objects', () {
     expect(entries, isNotEmpty);
-    expect(entries.every((e) => e is Map), isTrue);
   });
 
   test('carries a vocab document marker (vocabVersion + minApp)', () {
@@ -267,11 +266,6 @@ void main() {
     expect(categoryForPlaceType('grocery_store'), RewardCategory.grocery);
     // An uncurated type returns null so the caller falls back to heuristics.
     expect(categoryForPlaceType('school'), isNull);
-  });
-
-  test('the shipped asset loads cleanly via applyCategoriesJson', () {
-    final raw = File('assets/vocab/categories.json').readAsStringSync();
-    expect(applyCategoriesJson(raw), isTrue);
   });
 
   test('shopping_mall reward-maps to departmentStores, broadening its '

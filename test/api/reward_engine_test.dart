@@ -97,6 +97,62 @@ void main() {
     spend: spend,
   );
 
+  test('validTo includes the last calendar day, but not the next', () {
+    final s = snap([
+      rule('base', RewardRuleKind.baseline, rate: 1),
+      rule(
+        'promo',
+        RewardRuleKind.promo,
+        rate: 5,
+        validFrom: DateTime(2026, 3, 1),
+        validTo: DateTime(2026, 3, 31),
+      ),
+    ]);
+    for (final (date, expected) in [
+      (DateTime(2026, 2, 28, 23, 59), 'base'),
+      (DateTime(2026, 3, 31, 23, 59, 59), 'promo'),
+      (DateTime(2026, 4, 1), 'base'),
+    ]) {
+      expect(
+        resolve(
+          snapshot: s,
+          product: 'p',
+          category: RewardCategory.dining,
+          when: date,
+        ).ruleId,
+        expected,
+      );
+    }
+  });
+
+  test('a rotating rule stops at the quarter boundary in the same year', () {
+    final s = snap([
+      rule('base', RewardRuleKind.baseline, rate: 1),
+      rule(
+        'rot',
+        RewardRuleKind.rotating,
+        rate: 5,
+        category: RewardCategory.dining,
+        rotYear: 2026,
+        rotQuarter: 1,
+      ),
+    ]);
+    for (final (date, expected) in [
+      (DateTime(2026, 3, 31, 23, 59), 'rot'),
+      (DateTime(2026, 4, 1), 'base'),
+    ]) {
+      expect(
+        resolve(
+          snapshot: s,
+          product: 'p',
+          category: RewardCategory.dining,
+          when: date,
+        ).ruleId,
+        expected,
+      );
+    }
+  });
+
   group('multi-category brand (Costco gas 5% vs warehouse 2%)', () {
     // The Costco card carries two brand=costco rules: 5% on gas at Costco, 2% on other
     // Costco purchases. The engine must resolve each by the purchase category, not just

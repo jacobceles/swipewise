@@ -15,9 +15,13 @@ class _FakeGeolocator extends GeolocatorPlatform {
     required this.onGetCurrent,
     this.lastKnown,
     this.permission = LocationPermission.always,
+    this.servicesEnabled = true,
+    this.requestedPermission = LocationPermission.always,
   });
 
   final LocationPermission permission;
+  final bool servicesEnabled;
+  final LocationPermission requestedPermission;
   int requestCalls = 0;
 
   /// Called for every getCurrentPosition; branch on `accuracy` to distinguish
@@ -29,7 +33,7 @@ class _FakeGeolocator extends GeolocatorPlatform {
   final List<LocationAccuracy> requestedAccuracies = [];
 
   @override
-  Future<bool> isLocationServiceEnabled() async => true;
+  Future<bool> isLocationServiceEnabled() async => servicesEnabled;
 
   @override
   Future<LocationPermission> checkPermission() async => permission;
@@ -37,7 +41,7 @@ class _FakeGeolocator extends GeolocatorPlatform {
   @override
   Future<LocationPermission> requestPermission() async {
     requestCalls++;
-    return LocationPermission.always;
+    return requestedPermission;
   }
 
   @override
@@ -78,6 +82,50 @@ void main() {
 
   setUp(() => original = GeolocatorPlatform.instance);
   tearDown(() => GeolocatorPlatform.instance = original);
+
+  test('services off refuses before requesting permission or GPS', () async {
+    final fake = _FakeGeolocator(
+      servicesEnabled: false,
+      onGetCurrent: (_) async => _pos(timestamp: DateTime.now()),
+    );
+    GeolocatorPlatform.instance = fake;
+    await expectLater(
+      LocationService().getOneShot(),
+      throwsA(isA<LocationServiceDisabled>()),
+    );
+    expect(fake.requestCalls, 0);
+    expect(fake.currentCalls, 0);
+  });
+
+  for (final permanent in [true, false]) {
+    test(
+      permanent
+          ? 'deniedForever never asks again'
+          : 'user denial does not start GPS',
+      () async {
+        final fake = _FakeGeolocator(
+          permission: permanent
+              ? LocationPermission.deniedForever
+              : LocationPermission.denied,
+          requestedPermission: LocationPermission.denied,
+          onGetCurrent: (_) async => _pos(timestamp: DateTime.now()),
+        );
+        GeolocatorPlatform.instance = fake;
+        await expectLater(
+          LocationService().getOneShot(),
+          throwsA(
+            isA<LocationDenied>().having(
+              (e) => e.permanent,
+              'permanent',
+              permanent,
+            ),
+          ),
+        );
+        expect(fake.requestCalls, permanent ? 0 : 1);
+        expect(fake.currentCalls, 0);
+      },
+    );
+  }
 
   test('happy path returns the live fix, no fallback', () async {
     final live = _pos(lat: 1, lng: 2, timestamp: DateTime.now());

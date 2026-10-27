@@ -19,6 +19,7 @@ void main() {
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
+          onConfigure: DatabaseHelper.configureForTesting,
           onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
         ),
       );
@@ -39,6 +40,19 @@ void main() {
   final liveness = SyncStateRepository.syncLockLiveness;
   final ttl = SyncStateRepository.syncLockTtl;
   final t0 = DateTime.utc(2026, 1, 1, 12);
+
+  test('u1 holding the sync lock does not block u2', () async {
+    await seedUser('u1');
+    await seedUser('u2');
+    final repo = DataRepository();
+    final first = await repo.acquireSyncLock('u1', holder: 'u1', now: t0);
+    final second = await repo.acquireSyncLock('u2', holder: 'u2', now: t0);
+    expect(first, isNotNull);
+    expect(second, isNotNull);
+    await repo.releaseSyncLock('u1', acquiredAtToken: first!);
+    expect(await repo.readSyncLock('u1', now: t0), isNull);
+    expect((await repo.readSyncLock('u2', now: t0))!.holder, 'u2');
+  });
 
   test(
     'first acquire returns a token; a live second acquire returns null',

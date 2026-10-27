@@ -298,10 +298,10 @@ class DatabaseHelper {
     // cache is disposable, so a miss here just means the column arrives on the
     // next fresh install / cache rebuild.
     if (oldVersion < 9) {
-      final tableNames = (await db.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table'",
+      final cacheCols = (await db.rawQuery(
+        'PRAGMA table_info(merchant_tile_cache)',
       )).map((r) => r['name'] as String).toSet();
-      if (tableNames.contains('merchant_tile_cache')) {
+      if (cacheCols.isNotEmpty && !cacheCols.contains('business_status')) {
         await db.execute(
           'ALTER TABLE merchant_tile_cache ADD COLUMN business_status TEXT',
         );

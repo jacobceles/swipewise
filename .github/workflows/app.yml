@@ -89,6 +89,8 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+        env:
+          TZ: America/New_York
 
       # The bundled offline floor is what a FRESH INSTALL boots on before its first
       # fetch, so a stale one ships wrong rates to exactly the users with no cached
@@ -147,4 +149,3 @@ jobs:
 
       - name: Verify no credentials reached the APK
         run: python3 tool/verify_release_apk.py
-

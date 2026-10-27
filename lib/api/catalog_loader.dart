@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../util/logger.dart';
@@ -147,16 +147,16 @@ class CatalogLoader {
     }
 
     await _catalog.replaceCatalog(
-      pointSystems: _project(data['point_systems'], _pointSystemCols),
+      pointSystems: _project(data['point_systems'], pointSystemCols),
       cardProducts: _markUnknownFxFee(
-        _project(data['card_products'], _cardProductCols),
+        _project(data['card_products'], cardProductCols),
       ),
       rewardRules: _jsonEncodeColumn(
-        _project(data['reward_rules'], _rewardRuleCols),
+        _project(data['reward_rules'], rewardRuleCols),
         'excluded_categories',
       ),
-      exclusions: _project(data['reward_rule_exclusions'], _exclusionCols),
-      productPerks: _project(data['product_perks'], _productPerkCols),
+      exclusions: _project(data['reward_rule_exclusions'], exclusionCols),
+      productPerks: _project(data['product_perks'], productPerkCols),
       bonusSelectionGroups: _bonusSelectionGroups(data['bonus_selections']),
     );
     await _settings.setLoadedCatalogDataVersion(userId, dataVersion);
@@ -251,7 +251,8 @@ class CatalogLoader {
     return rows;
   }
 
-  static const _pointSystemCols = [
+  @visibleForTesting
+  static const pointSystemCols = [
     'point_system_id',
     'display_name',
     'baseline_cent_value',
@@ -260,7 +261,8 @@ class CatalogLoader {
     'currency',
     'unit',
   ];
-  static const _cardProductCols = [
+  @visibleForTesting
+  static const cardProductCols = [
     'card_product_id',
     'issuer',
     'display_name',
@@ -273,7 +275,8 @@ class CatalogLoader {
     'country',
     'currency',
   ];
-  static const _rewardRuleCols = [
+  @visibleForTesting
+  static const rewardRuleCols = [
     'rule_id',
     'card_product_id',
     'kind',
@@ -294,7 +297,8 @@ class CatalogLoader {
     'excluded_categories',
     'selection_group',
   ];
-  static const _exclusionCols = ['rule_id', 'brand'];
+  @visibleForTesting
+  static const exclusionCols = ['rule_id', 'brand'];
 
   /// Loads the bundled offline-floor catalog, or null if absent/unreadable (e.g.
   /// in a test harness that doesn't ship the asset).
@@ -325,7 +329,8 @@ class CatalogLoader {
   static Map<String, dynamic> _decode(String raw) =>
       jsonDecode(raw) as Map<String, dynamic>;
 
-  static const _productPerkCols = [
+  @visibleForTesting
+  static const productPerkCols = [
     'card_product_id',
     'perk_id',
     'kind',

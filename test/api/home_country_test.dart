@@ -1,16 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/data_repository.dart';
 import 'package:swipewise/api/database_helper.dart';
-import 'package:swipewise/api/travel.dart';
 
 /// Travel mode's home country without bank data: the wallet's cards decide
 /// before the phone's region does.
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
 
   setUp(() {
+    binding.platformDispatcher.localeTestValue = const Locale('en', 'GB');
     DatabaseHelper.setTestDatabaseFactory(
       () => databaseFactoryFfi.openDatabase(
         inMemoryDatabasePath,
@@ -23,6 +24,7 @@ void main() {
   });
 
   tearDown(() async {
+    binding.platformDispatcher.clearLocaleTestValue();
     await (await DatabaseHelper().database).close();
     DatabaseHelper.setTestDatabaseFactory(null);
   });
@@ -65,6 +67,23 @@ void main() {
 
   test('a mixed wallet falls back to the phone region', () async {
     await wallet({'td.cash': 'CA', 'chase.freedom': 'US'});
-    expect(await DataRepository().homeCountry('u1'), deviceLocaleCountry());
+    expect(await DataRepository().homeCountry('u1'), 'GB');
+  });
+
+  test('an empty wallet falls back to the phone region', () async {
+    await wallet({});
+    expect(await DataRepository().homeCountry('u1'), 'GB');
+  });
+
+  test('bank currency takes precedence over wallet and phone', () async {
+    await wallet({'chase.freedom': 'US'});
+    final db = await DatabaseHelper().database;
+    await db.insert('transactions', {
+      'id': 't1',
+      'user_id': 'u1',
+      'currency': 'CAD',
+      'amount': 10,
+    });
+    expect(await DataRepository().homeCountry('u1'), 'CA');
   });
 }
