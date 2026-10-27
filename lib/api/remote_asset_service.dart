@@ -16,7 +16,11 @@ import 'app_check_service.dart';
 ///   2. Call [fetchIfUpdated] in the background / after login — downloads only
 ///      when the server reports a new version (ETag mismatch → 200; same → 304).
 class RemoteAssetService {
+  // ignore: prefer_initializing_formals
+  RemoteAssetService({String baseUrl = _kR2BaseUrl}) : _baseUrl = baseUrl;
+
   static const _kR2BaseUrl = String.fromEnvironment('R2_BASE_URL');
+  final String _baseUrl;
 
   static String brandsUrl() => '$_kR2BaseUrl/brands.json';
   static String categoriesUrl() => '$_kR2BaseUrl/categories.json';
@@ -68,7 +72,7 @@ class RemoteAssetService {
   /// 304 and the corrupt body is re-parsed forever until the server changes the
   /// catalog. On parse failure we persist nothing, so the next fetch re-requests.
   Future<String?> fetchIfUpdated(String key, String url) async {
-    if (_kR2BaseUrl.isEmpty) return null;
+    if (_baseUrl.isEmpty) return null;
     try {
       final etag = await _readEtag(key);
       final headers = <String, String>{};

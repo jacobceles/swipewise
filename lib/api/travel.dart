@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/widgets.dart' show WidgetsBinding;
 
 import 'package:geocoding/geocoding.dart';
 
@@ -21,8 +21,12 @@ String? homeCountryForCurrency(String? currency) {
 
 /// The device's configured region — a home-country fallback for before the
 /// first sync tags any transaction with a currency.
-String? deviceLocaleCountry() =>
-    PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+String? deviceLocaleCountry() => WidgetsBinding
+    .instance
+    .platformDispatcher
+    .locale
+    .countryCode
+    ?.toUpperCase();
 
 /// True only when [home] and [current] are both known and differ. Unknown on
 /// either side → false: we never guess "abroad" (a false positive would steer

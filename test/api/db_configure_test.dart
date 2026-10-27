@@ -46,8 +46,10 @@ void main() {
   test('journal mode is WAL', () async {
     // In-memory DBs cannot do WAL, so this asserts against a file-backed one —
     // otherwise it would pass on 'memory' and prove nothing.
+    final directory = Directory.systemTemp.createTempSync('swipewise_cfg');
+    addTearDown(() => directory.delete(recursive: true));
     final file = await databaseFactoryFfi.openDatabase(
-      '${Directory.systemTemp.createTempSync('swipewise_cfg').path}/t.db',
+      '${directory.path}/t.db',
     );
     addTearDown(file.close);
     await DatabaseHelper.configureForTesting(file);

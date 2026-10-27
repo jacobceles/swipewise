@@ -392,7 +392,10 @@ AppliedRate resolve({
 
   bool dateValid(RewardRule r) =>
       (r.validFrom == null || !when.isBefore(r.validFrom!)) &&
-      (r.validTo == null || !when.isAfter(r.validTo!));
+      (r.validTo == null ||
+          !DateTime.utc(when.year, when.month, when.day).isAfter(
+            DateTime.utc(r.validTo!.year, r.validTo!.month, r.validTo!.day),
+          ));
 
   // The baseline rule — the floor, the overflow rate for capped rules, and
   // the final fallback.

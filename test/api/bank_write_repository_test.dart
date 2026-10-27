@@ -19,6 +19,7 @@ void main() {
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
+          onConfigure: DatabaseHelper.configureForTesting,
           onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
         ),
       );
@@ -258,6 +259,24 @@ void main() {
       );
     },
   );
+
+  test('dropMissingInstitutions keeps an unparseable created_at', () async {
+    await seedUser('u1');
+    final db = await DatabaseHelper().database;
+    await db.insert('bank_connections', {
+      'user_institution_id': 'mem1',
+      'user_id': 'u1',
+      'institution_id': 'inst1',
+      'created_at': 'not a date',
+    });
+    await BankWriteRepository(DatabaseHelper()).dropMissingInstitutions(
+      userId: 'u1',
+      keepInstitutionIds: {},
+      keepMemberIds: {},
+      now: DateTime.utc(2026, 1, 1),
+    );
+    expect(await db.query('bank_connections'), hasLength(1));
+  });
 
   test(
     'dropMissingInstitutions drops an aged-out connection absent server-side',

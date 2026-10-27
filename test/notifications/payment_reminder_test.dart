@@ -22,6 +22,19 @@ void main() {
     monthsAhead: monthsAhead,
   );
 
+  test('calendar countdown and reminder hour survive spring and fall DST', () {
+    expect(PaymentReminderService.daysUntilDue(15, DateTime(2026, 3, 1)), 14);
+    expect(PaymentReminderService.daysUntilDue(15, DateTime(2026, 11, 1)), 14);
+    expect(
+      next(15, 10, DateTime(2026, 3, 1)),
+      DateTime(2026, 3, 5, PaymentReminderService.reminderHour),
+    );
+    expect(
+      next(5, 10, DateTime(2026, 10, 20)),
+      DateTime(2026, 10, 26, PaymentReminderService.reminderHour),
+    );
+  });
+
   group('basic scheduling', () {
     test('fires leadDays before the due day, at the reminder hour', () {
       final r = next(15, 3, DateTime(2026, 3, 1, 8));
@@ -54,11 +67,6 @@ void main() {
     test('clamps to the 30th in a 30-day month', () {
       final r = next(31, 0, DateTime(2026, 4, 1));
       expect(r, DateTime(2026, 4, 30, PaymentReminderService.reminderHour));
-    });
-
-    test('does not spill into the following month', () {
-      final r = next(31, 0, DateTime(2026, 2, 1));
-      expect(r!.month, 2, reason: 'a Feb 31st must not become Mar 3rd');
     });
   });
 

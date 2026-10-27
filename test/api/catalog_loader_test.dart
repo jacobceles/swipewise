@@ -1,5 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
+// ignore: depend_on_referenced_packages
+import 'package:firebase_core_platform_interface/test.dart';
+// ignore: depend_on_referenced_packages
+import 'package:firebase_crashlytics_platform_interface/test.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -14,11 +19,21 @@ import 'package:swipewise/api/settings_repository.dart';
 /// `foreign_keys = ON`, runs the catalog JSON through `CatalogLoader`, and
 /// checks row counts, idempotency, and schema-too-new rejection.
 ///
-/// catalog.json is not bundled in the app (served from R2); tests read it
-/// directly from disk via [_DiskCatalogService].
+/// Tests read the bundled offline floor directly from disk via
+/// [_DiskCatalogService], without an HTTP request.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
+  final crashlytics = _CrashlyticsHost();
+  setUpAll(() async {
+    TestFirebaseCoreHostApi.setUp(_CoreHost());
+    TestFirebaseCrashlyticsHostApi.setUp(crashlytics);
+    await Firebase.initializeApp();
+    addTearDown(() {
+      TestFirebaseCrashlyticsHostApi.setUp(null);
+      TestFirebaseCoreHostApi.setUp(null);
+    });
+  });
 
   /// Returns the catalog JSON from the local assets/ directory. Used only
   /// in tests — at runtime the app fetches from R2 (RemoteAssetService).
@@ -35,6 +50,7 @@ void main() {
   }
 
   setUp(() {
+    crashlytics.errors.clear();
     DatabaseHelper.setTestDatabaseFactory(() async {
       return databaseFactoryFfi.openDatabase(
         inMemoryDatabasePath,
@@ -115,9 +131,56 @@ void main() {
 
   test('bundle with a newer schemaVersion is rejected, DB untouched', () async {
     await seedUser('u1');
-    // No real over-version asset to load; assert the guard constant instead so
-    // a future schema bump can't silently corrupt older installs.
-    expect(CatalogLoader.supportedSchemaVersion, 1);
+    await loader().hydrateIfNeeded('u1');
+    final catalog = CatalogRepository(DatabaseHelper());
+    final before = await catalog.catalogCounts();
+    final data =
+        jsonDecode(await File(CatalogLoader.defaultAssetPath).readAsString())
+            as Map<String, dynamic>;
+    data['schemaVersion'] = 2;
+    data['dataVersion'] = (data['dataVersion'] as num).toInt() + 1;
+    data['card_products'] = [];
+    final result = await CatalogLoader(
+      remote: _InlineCatalogService(jsonEncode(data)),
+    ).hydrateIfNeeded('u1');
+    expect(result, CatalogLoadResult.needsAppUpdate);
+    expect(await catalog.catalogCounts(), before);
+  });
+
+  for (final raw in ['', '{broken']) {
+    test(
+      'invalid cached catalog ${jsonEncode(raw)} reports error without replacing data',
+      () async {
+        await seedUser('u1');
+        await loader().hydrateIfNeeded('u1');
+        final before = await CatalogRepository(
+          DatabaseHelper(),
+        ).catalogCounts();
+        final result = await CatalogLoader(
+          remote: _InlineCatalogService(raw),
+        ).hydrateIfNeeded('u1');
+        expect(result, CatalogLoadResult.error);
+        expect(
+          await CatalogRepository(DatabaseHelper()).catalogCounts(),
+          before,
+        );
+        await pumpEventQueue();
+        expect(crashlytics.errors, hasLength(1));
+        expect(crashlytics.errors.single.reason, 'catalog_load_failed');
+      },
+    );
+  }
+
+  test('a cache miss falls back to the bundled offline floor', () async {
+    await seedUser('u1');
+    expect(
+      await CatalogLoader(
+        remote: _MissingCatalogService(),
+      ).hydrateIfNeeded('u1'),
+      CatalogLoadResult.loaded,
+    );
+    final counts = await CatalogRepository(DatabaseHelper()).catalogCounts();
+    expect(counts['card_products'], greaterThan(0));
   });
 
   group('unchanged catalog at launch', () {
@@ -210,8 +273,7 @@ void main() {
   });
 }
 
-/// Reads catalog.json directly from disk. Used in tests to bypass rootBundle
-/// (catalog.json is not a bundled app asset; it's served from R2 at runtime).
+/// Reads the bundled catalog directly from disk to bypass rootBundle.
 class _DiskCatalogService extends RemoteAssetService {
   int reads = 0;
   int? version;
@@ -240,4 +302,29 @@ class _InlineCatalogService extends RemoteAssetService {
 
   @override
   Future<String?> readCached(String key) async => key == 'catalog' ? raw : null;
+}
+
+class _MissingCatalogService extends RemoteAssetService {
+  @override
+  Future<String?> readCached(String key) async => null;
+}
+
+class _CoreHost extends MockFirebaseApp {
+  @override
+  Future<List<CoreInitializeResponse>> initializeCore() async {
+    final apps = await super.initializeCore();
+    apps.single.pluginConstants['plugins.flutter.io/firebase_crashlytics'] = {
+      'isCrashlyticsCollectionEnabled': false,
+    };
+    return apps;
+  }
+}
+
+class _CrashlyticsHost implements TestFirebaseCrashlyticsHostApi {
+  final errors = <RecordErrorRequest>[];
+  @override
+  Future<void> recordError(RecordErrorRequest request) async =>
+      errors.add(request);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

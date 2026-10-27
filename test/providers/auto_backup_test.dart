@@ -52,10 +52,12 @@ void main() {
     });
   }
 
-  ProviderContainer container() {
+  ProviderContainer container({bool signedIn = true, bool supported = true}) {
+    client.signedIn = signedIn;
     final c = ProviderContainer(
       overrides: [
-        authProvider.overrideWith(_SignedIn.new),
+        authProvider.overrideWith(signedIn ? _SignedIn.new : _SignedOut.new),
+        backupSupportedProvider.overrideWithValue(supported),
         walletBackupClientProvider.overrideWithValue(client),
       ],
     );
@@ -173,6 +175,127 @@ void main() {
     expect(later.fingerprint, a.fingerprint);
     expect(_snapshot(['y']).fingerprint, isNot(a.fingerprint));
   });
+
+  for (final failedPull in [true, false]) {
+    test(
+      'failed ${failedPull ? 'pull' : 'push'} does not record a new fingerprint',
+      () async {
+        await settings.setBackupEnabled(userId, true);
+        await addCard('a');
+        final c = container();
+        expect(await run(c), AutoBackupOutcome.uploaded);
+        final known = await settings.getBackupFingerprint(userId);
+        final uploadedAt = await settings.getLastBackupAt(userId);
+        await addCard('b');
+        if (failedPull) {
+          client.pullStatus = BackupStatus.failed;
+        } else {
+          client.pushStatus = BackupStatus.failed;
+        }
+        expect(await run(c), AutoBackupOutcome.failed);
+        expect(client.pushes, failedPull ? 1 : 2);
+        expect(await settings.getBackupFingerprint(userId), known);
+        expect(await settings.getLastBackupAt(userId), uploadedAt);
+        client.pullStatus = null;
+        client.pushStatus = BackupStatus.ok;
+        expect(
+          await run(c),
+          AutoBackupOutcome.uploaded,
+          reason: 'failure must remain retryable',
+        );
+      },
+    );
+  }
+
+  test(
+    'signed-out client cannot upload even with a stale enabled setting',
+    () async {
+      await settings.setBackupEnabled(userId, true);
+      await addCard('a');
+      expect(await run(container(signedIn: false)), AutoBackupOutcome.failed);
+      expect(client.pushes, 0);
+      expect(await settings.getBackupFingerprint(userId), isNull);
+    },
+  );
+
+  test(
+    'auto restore populates an empty wallet, enables backup, and records fingerprint',
+    () async {
+      await addCard('a');
+      await addCard('b');
+      client.stored = await WalletBackupRepository().capture(userId);
+      final db = await DatabaseHelper().database;
+      await db.delete('cards', where: 'user_id = ?', whereArgs: [userId]);
+      final c = container();
+      expect(
+        await c.read(walletBackupControllerProvider).maybeAutoRestore(),
+        RestoreOutcome.restored,
+      );
+      expect((await db.query('cards')).map((r) => r['id']), ['a', 'b']);
+      expect(await settings.getBackupEnabled(userId), isTrue);
+      expect(
+        await settings.getBackupFingerprint(userId),
+        client.stored!.fingerprint,
+      );
+      expect(await settings.getLastBackupAt(userId), isNull);
+      expect(client.pushes, 0);
+      expect(await run(c), AutoBackupOutcome.unchanged);
+      expect(
+        await c.read(walletBackupControllerProvider).maybeAutoRestore(),
+        RestoreOutcome.nothingToRestore,
+      );
+      expect(client.pulls, 1);
+    },
+  );
+
+  test('auto restore never overwrites a nonempty wallet', () async {
+    await addCard('local');
+    client.stored = _snapshot(['remote']);
+    final c = container();
+    expect(
+      await c.read(walletBackupControllerProvider).maybeAutoRestore(),
+      RestoreOutcome.nothingToRestore,
+    );
+    expect(client.pulls, 0);
+    expect(
+      (await (await DatabaseHelper().database).query('cards')).single['id'],
+      'local',
+    );
+  });
+
+  for (final signedIn in [false, true]) {
+    test(
+      'auto restore requires ${signedIn ? 'a configured service' : 'sign-in'}',
+      () async {
+        client.stored = _snapshot(['remote']);
+        final c = container(signedIn: signedIn, supported: !signedIn);
+        expect(
+          await c.read(walletBackupControllerProvider).maybeAutoRestore(),
+          RestoreOutcome.unavailable,
+        );
+        expect(client.pulls, 0);
+      },
+    );
+  }
+
+  for (final (status, outcome) in [
+    (BackupStatus.empty, RestoreOutcome.nothingToRestore),
+    (BackupStatus.failed, RestoreOutcome.failed),
+    (BackupStatus.unavailable, RestoreOutcome.unavailable),
+  ]) {
+    test('auto restore handles $status without changing local state', () async {
+      client.pullStatus = status;
+      final c = container();
+      expect(
+        await c.read(walletBackupControllerProvider).maybeAutoRestore(),
+        outcome,
+      );
+      expect(await (await DatabaseHelper().database).query('cards'), isEmpty);
+      expect(await settings.getBackupEnabled(userId), isFalse);
+      expect(await settings.getBackupFingerprint(userId), isNull);
+      expect(client.pushes, 0);
+    });
+  }
 }
 
 WalletSnapshot _snapshot(List<String> ids) => WalletSnapshot(
@@ -187,6 +310,9 @@ WalletSnapshot _snapshot(List<String> ids) => WalletSnapshot(
 );
 
 class _FakeClient extends WalletBackupClient {
+  bool signedIn = true;
+  BackupStatus? pullStatus;
+  BackupStatus pushStatus = BackupStatus.ok;
   WalletSnapshot? stored;
   int pulls = 0;
   int pushes = 0;
@@ -194,6 +320,8 @@ class _FakeClient extends WalletBackupClient {
   @override
   Future<BackupStatus> push(WalletSnapshot snapshot) async {
     pushes++;
+    if (!signedIn) return BackupStatus.unavailable;
+    if (pushStatus != BackupStatus.ok) return pushStatus;
     // What the service hands back later: the JSON it was sent.
     stored = WalletSnapshot.fromJson(
       jsonDecode(jsonEncode(snapshot.toJson())) as Map<String, Object?>,
@@ -204,6 +332,8 @@ class _FakeClient extends WalletBackupClient {
   @override
   Future<BackupResult> pull() async {
     pulls++;
+    if (!signedIn) return const BackupResult(BackupStatus.unavailable);
+    if (pullStatus != null) return BackupResult(pullStatus!);
     final s = stored;
     return s == null
         ? const BackupResult(BackupStatus.empty)
@@ -212,6 +342,12 @@ class _FakeClient extends WalletBackupClient {
 }
 
 class _SignedIn extends AuthNotifier {
+  @override
+  AuthState build() =>
+      AuthState(isLoggedIn: true, userId: 'u1', email: 'u1@example.com');
+}
+
+class _SignedOut extends AuthNotifier {
   @override
   AuthState build() => AuthState(isLoggedIn: true, userId: 'u1');
 }

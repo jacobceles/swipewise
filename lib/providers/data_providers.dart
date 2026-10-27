@@ -863,6 +863,7 @@ class PendingReconciliationNotifier extends Notifier<Set<String>> {
   }
 }
 
+// sync: opt-out — in-memory reconciliation queue, not database-derived.
 final pendingReconciliationProvider =
     NotifierProvider<PendingReconciliationNotifier, Set<String>>(
       PendingReconciliationNotifier.new,
@@ -883,6 +884,7 @@ final List<ProviderOrFamily> syncInvalidatedProviders = [
   cardPerksProvider,
   cardRewardsByCardProvider,
   cardForeignFeeProvider,
+  cardRotatingScheduleProvider,
   merchantSummaryProvider,
   categoryDrilldownProvider,
   rewardRankingProvider,

@@ -519,7 +519,7 @@ class BankWriteRepository {
         final createdRaw = r['created_at'] as String?;
         if (createdRaw == null) continue;
         final created = parseStoredUtc(createdRaw);
-        if (created != null && created.millisecondsSinceEpoch > cutoffMs) {
+        if (created == null || created.millisecondsSinceEpoch > cutoffMs) {
           continue;
         }
 
@@ -586,6 +586,21 @@ class BankWriteRepository {
         userId: userId,
         institutionId: institutionId,
       );
+      // A rename is only safe when the incoming snapshot is unambiguous too.
+      // Otherwise a newly-added card could overwrite the existing card's id.
+      final incomingLastFours = <String, int>{};
+      for (final account in accounts) {
+        if (account.accountType == null || account.accountId.isEmpty) continue;
+        final last = lastFourFromAccountNumber(account.accountNumberDisplay);
+        if (last != null) {
+          incomingLastFours.update(
+            last,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+      priorIdByLastFour.removeWhere((last, _) => incomingLastFours[last] != 1);
 
       // Wipe cards + accounts wholesale (replaced below), but NOT transactions:
       // those are deleted per-card and date-bounded inside the loop so the

@@ -2,18 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swipewise/api/catalog_loader.dart';
 
 /// Cross-impl schema-parity guard (B2-4, app half): APP-reads ⊆ BUNDLE.
 ///
 /// Asserts that every catalog column the *app* actually projects out of the
 /// published bundle exists on the bundle's records. The app parses the bundle
 /// in [CatalogLoader] (`lib/api/catalog_loader.dart`), projecting each of the
-/// five catalog tables down to a fixed column list before INSERT. Those
-/// (private) column constants — `_pointSystemCols`, `_cardProductCols`,
-/// `_rewardRuleCols`, `_exclusionCols`, `_productPerkCols` — ARE the app's read
-/// contract, so they are mirrored verbatim below. If CatalogLoader's projection
-/// columns change, update [_appColumns] to match (they can't be imported: they
-/// are private to the class).
+/// catalog tables down to a fixed column list before INSERT. Those
+/// column constants ARE the app's read contract, so this test imports them
+/// directly instead of maintaining a second copy that can drift.
 ///
 /// This is the app-side complement to `swipewise-api/test/schema.test.ts`,
 /// which validates the bundle's INTERNAL shape + referential integrity. This
@@ -26,75 +24,16 @@ import 'package:flutter_test/flutter_test.dart';
 /// offline fallback, so parity against it is parity against what the app runs.
 void main() {
   // The app's read contract: table JSON key -> columns CatalogLoader projects.
-  // Mirrors the `_*Cols` constants in lib/api/catalog_loader.dart.
   const appColumns = <String, List<String>>{
-    'point_systems': [
-      'point_system_id',
-      'display_name',
-      'baseline_cent_value',
-      'valuation_source',
-      'valuation_updated_at',
-    ],
-    'card_products': [
-      'card_product_id',
-      'issuer',
-      'display_name',
-      'network',
-      'annual_fee_usd',
-      'foreign_tx_fee_pct',
-      'image_url',
-      'catalog_version',
-      'retired_at',
-    ],
-    'reward_rules': [
-      'rule_id',
-      'card_product_id',
-      'kind',
-      'category',
-      'brand',
-      'rate',
-      'point_system_id',
-      'valid_from',
-      'valid_to',
-      'rotation_year',
-      'rotation_quarter',
-      'requires_activation',
-      'cap_spend_amount_usd',
-      'cap_period',
-      'cap_group',
-      'notes',
-      'earn_constraint',
-      'excluded_categories',
-      // N17. Listed as of 2026-08-24: the offline floor was republished from a
-      // bundle that carries `bonus_selections`, which is the condition this
-      // exemption was waiting on. All 2025 rules now carry the key (94 with a
-      // non-null group).
-      'selection_group',
-    ],
-    'reward_rule_exclusions': ['rule_id', 'brand'],
+    'point_systems': CatalogLoader.pointSystemCols,
+    'card_products': CatalogLoader.cardProductCols,
+    'reward_rules': CatalogLoader.rewardRuleCols,
+    'reward_rule_exclusions': CatalogLoader.exclusionCols,
     // N17. `id` (not `group_id`) is the bundle's spelling — CatalogLoader
     // renames it on the way into `bonus_selection_groups`, because `id` alone
     // is too generic for the column `reward_rules.selection_group` joins to.
-    'bonus_selections': [
-      'id',
-      'card_product_id',
-      'choose',
-      'mode',
-      'period',
-    ],
-    'product_perks': [
-      'card_product_id',
-      'perk_id',
-      'kind',
-      'title',
-      'description',
-      'frequency',
-      'value_estimate',
-      'calendar_max_year_amount',
-      'how_to_earn',
-      'image_uri',
-      'redemption_url',
-    ],
+    'bonus_selections': ['id', 'card_product_id', 'choose', 'mode', 'period'],
+    'product_perks': CatalogLoader.productPerkCols,
   };
 
   group('catalog schema parity: app reads ⊆ published bundle', () {
@@ -109,7 +48,7 @@ void main() {
 
     test('bundle carries the top-level fields the app reads', () {
       // CatalogLoader reads data['schemaVersion'] and data['dataVersion'] to gate
-      // the app-update prompt and the "already loaded" no-op, plus the five arrays.
+      // the app-update prompt and the "already loaded" no-op, plus the arrays.
       expect(
         bundle['schemaVersion'],
         isA<num>(),

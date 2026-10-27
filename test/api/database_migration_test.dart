@@ -2,16 +2,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
 
-/// Pins the v1→v2 migration (B1): a tester on the pre-catalog schema must
-/// gain the six RewardEngine tables, in valid FK order, with `foreign_keys`
-/// enforced — without touching their existing data.
+Future<Database> _openDatabase(
+  String path, {
+  OpenDatabaseOptions? options,
+}) async {
+  final handle = await databaseFactoryFfi.openDatabase(path, options: options);
+  addTearDown(() async {
+    // Some tests close early before opening an independent fresh database.
+    if (handle.isOpen) {
+      await handle.close();
+    }
+  });
+  return handle;
+}
+
+/// Pins catalog/schema migrations, foreign-key behavior, and repeat-upgrade
+/// guards. The v3 migration intentionally clears user-scoped data.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
 
-  test('onUpgrade(1→2) creates the catalog tables on a v1 DB', () async {
+  for (var version = 1; version < 21; version++) {
+    test('upgrade from $version tolerates an already current schema', () async {
+      final db = await _openDatabase(inMemoryDatabasePath);
+      await DatabaseHelper.bootstrapSchema(db);
+      await DatabaseHelper.runUpgrade(db, version, 21);
+      final cols = await db.rawQuery('PRAGMA table_info(merchant_tile_cache)');
+      expect(cols.where((c) => c['name'] == 'business_status'), hasLength(1));
+    });
+  }
+
+  test('onUpgrade(1→3) creates the catalog tables on a v1 DB', () async {
     // A minimal "v1" schema: just the `users` table the new FKs reference.
-    final db = await databaseFactoryFfi.openDatabase(
+    final db = await _openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -22,7 +45,7 @@ void main() {
     );
     await db.insert('users', {'id': 'u1', 'identifier': 'u1@test'});
 
-    // Run to current version (3). v3 clears the users table so it can be
+    // Run through v3, which clears the users table so it can be
     // repopulated by Google Sign-In on next launch.
     await DatabaseHelper.runUpgrade(db, 1, 3);
     // Re-insert user to exercise the FK path (mirrors a post-login state).
@@ -61,7 +84,7 @@ void main() {
     () async {
       // A DB physically created at v2/v3 (old _createCatalogTables, no column) — the only
       // state lacking earn_constraint. v4 must ALTER it in.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -79,11 +102,11 @@ void main() {
       cols = (await db.rawQuery(
         'PRAGMA table_info(reward_rules)',
       )).map((r) => r['name'] as String).toSet();
-      expect(cols.contains('earn_constraint'), isTrue);
+      expect(cols, contains('earn_constraint'));
       await db.close();
 
       // Fresh install lands the column directly via _onCreate.
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -93,7 +116,7 @@ void main() {
       final freshCols = (await fresh.rawQuery(
         'PRAGMA table_info(reward_rules)',
       )).map((r) => r['name'] as String).toSet();
-      expect(freshCols.contains('earn_constraint'), isTrue);
+      expect(freshCols, contains('earn_constraint'));
       await fresh.close();
     },
   );
@@ -102,7 +125,7 @@ void main() {
     'onUpgrade(4→5) adds reward_rules.excluded_categories; fresh install has it',
     () async {
       // A DB at v4 (has earn_constraint, lacks excluded_categories). v5 must ALTER it in.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -120,11 +143,11 @@ void main() {
       cols = (await db.rawQuery(
         'PRAGMA table_info(reward_rules)',
       )).map((r) => r['name'] as String).toSet();
-      expect(cols.contains('excluded_categories'), isTrue);
+      expect(cols, contains('excluded_categories'));
       await db.close();
 
       // Fresh install lands the column directly via _onCreate.
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -134,7 +157,7 @@ void main() {
       final freshCols = (await fresh.rawQuery(
         'PRAGMA table_info(reward_rules)',
       )).map((r) => r['name'] as String).toSet();
-      expect(freshCols.contains('excluded_categories'), isTrue);
+      expect(freshCols, contains('excluded_categories'));
       await fresh.close();
     },
   );
@@ -144,7 +167,7 @@ void main() {
     () async {
       // v1→v5 creates reward_rules WITH earn_constraint AND excluded_categories in the v2
       // block (via the current _createCatalogTables), so the later ALTERs must skip — not crash.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -161,14 +184,14 @@ void main() {
       final cols = (await db.rawQuery(
         'PRAGMA table_info(reward_rules)',
       )).map((r) => r['name'] as String).toSet();
-      expect(cols.contains('earn_constraint'), isTrue);
-      expect(cols.contains('excluded_categories'), isTrue);
+      expect(cols, contains('earn_constraint'));
+      expect(cols, contains('excluded_categories'));
       await db.close();
     },
   );
 
   test('_onCreate also lands the catalog tables for fresh installs', () async {
-    final db = await databaseFactoryFfi.openDatabase(
+    final db = await _openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         version: 1,
@@ -190,7 +213,7 @@ void main() {
   test(
     'upgrade preserves institutions_cache but clears user-scoped rows (intentional)',
     () async {
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -261,7 +284,7 @@ void main() {
       Future<Set<String>> cols(Database d) async => (await d.rawQuery(
         'PRAGMA table_info(point_systems)',
       )).map((r) => r['name'] as String).toSet();
-      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      final db = await _openDatabase(inMemoryDatabasePath);
       await db.execute('''
       CREATE TABLE point_systems (
         point_system_id TEXT PRIMARY KEY,
@@ -274,7 +297,7 @@ void main() {
       expect(await cols(db), contains('unit'));
       await DatabaseHelper.runUpgrade(db, 19, 20); // re-runnable
       await db.close();
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -290,13 +313,13 @@ void main() {
     Future<bool> has(Database d) async => (await d.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='store_picks'",
     )).isNotEmpty;
-    final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    final db = await _openDatabase(inMemoryDatabasePath);
     expect(await has(db), isFalse);
     await DatabaseHelper.runUpgrade(db, 18, 19);
     expect(await has(db), isTrue);
     await DatabaseHelper.runUpgrade(db, 18, 19); // re-runnable
     await db.close();
-    final fresh = await databaseFactoryFfi.openDatabase(
+    final fresh = await _openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         version: 1,
@@ -310,7 +333,7 @@ void main() {
   test(
     'onUpgrade(17→18) adds tile-cache coverage columns; fresh install has them',
     () async {
-      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      final db = await _openDatabase(inMemoryDatabasePath);
       await db.execute('''
       CREATE TABLE merchant_tile_cache (
         cell_id TEXT NOT NULL,
@@ -334,7 +357,7 @@ void main() {
       await DatabaseHelper.runUpgrade(db, 17, 18);
       await db.close();
 
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -351,7 +374,7 @@ void main() {
     () async {
       // Pre-v9 cache shape (no business_status) — v9 must ALTER the column in so a
       // cached tile can carry the "Temporarily closed" status (N15).
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -380,11 +403,11 @@ void main() {
       cols = (await db.rawQuery(
         'PRAGMA table_info(merchant_tile_cache)',
       )).map((r) => r['name'] as String).toSet();
-      expect(cols.contains('business_status'), isTrue);
+      expect(cols, contains('business_status'));
       await db.close();
 
       // Fresh install lands the column directly via _onCreate.
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -394,7 +417,7 @@ void main() {
       final freshCols = (await fresh.rawQuery(
         'PRAGMA table_info(merchant_tile_cache)',
       )).map((r) => r['name'] as String).toSet();
-      expect(freshCols.contains('business_status'), isTrue);
+      expect(freshCols, contains('business_status'));
       await fresh.close();
     },
   );
@@ -402,7 +425,7 @@ void main() {
   test('onUpgrade(8→9) is guarded when merchant_tile_cache is absent', () async {
     // A migration test with only a subset of tables must not crash on the ALTER —
     // the cache is disposable, so a missing table just skips.
-    final db = await databaseFactoryFfi.openDatabase(
+    final db = await _openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -416,7 +439,7 @@ void main() {
     'onUpgrade(10→11) adds cards.originated_manual; fresh install has it',
     () async {
       // Pre-v11 `cards` shape (no originated_manual). v11 must ALTER it in.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -439,11 +462,11 @@ void main() {
       cols = (await db.rawQuery(
         'PRAGMA table_info(cards)',
       )).map((r) => r['name'] as String).toSet();
-      expect(cols.contains('originated_manual'), isTrue);
+      expect(cols, contains('originated_manual'));
       await db.close();
 
       // Fresh install lands the column directly via _onCreate.
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -453,13 +476,13 @@ void main() {
       final freshCols = (await fresh.rawQuery(
         'PRAGMA table_info(cards)',
       )).map((r) => r['name'] as String).toSet();
-      expect(freshCols.contains('originated_manual'), isTrue);
+      expect(freshCols, contains('originated_manual'));
       await fresh.close();
     },
   );
 
   test('onUpgrade(10→11) is guarded when cards is absent', () async {
-    final db = await databaseFactoryFfi.openDatabase(
+    final db = await _openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -476,7 +499,7 @@ void main() {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='dwell_outcomes'",
       )).isNotEmpty;
 
-      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      final db = await _openDatabase(inMemoryDatabasePath);
       await db.execute(
         'CREATE TABLE dwell_outcomes (id INTEGER PRIMARY KEY, outcome TEXT)',
       );
@@ -485,7 +508,7 @@ void main() {
       await DatabaseHelper.runUpgrade(db, 20, 21); // re-runnable
       await db.close();
 
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -503,7 +526,7 @@ void main() {
       // Existing rows hold 0.0 for every fee the crawl never captured, which reads
       // as "charges nothing". Nothing rewrites them until the catalog's dataVersion
       // moves, so the migration drops the marker to force one re-import.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -538,7 +561,7 @@ void main() {
     () async {
       // A DB physically created at v16: catalog tables from the era before
       // `selection_group`, plus the settings row the migration has to clear.
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
@@ -620,7 +643,7 @@ void main() {
       await db.close();
 
       // Fresh install lands the same end state via _onCreate.
-      final fresh = await databaseFactoryFfi.openDatabase(
+      final fresh = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
@@ -648,7 +671,7 @@ void main() {
   test(
     'onUpgrade(1→17) is guarded when reward_rules already has the column',
     () async {
-      final db = await databaseFactoryFfi.openDatabase(
+      final db = await _openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),

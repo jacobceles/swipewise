@@ -80,6 +80,72 @@ void main() {
     expect(snapshot.cards.single.containsKey('user_id'), isFalse);
   });
 
+  test(
+    'a payload cannot write rows into its claimed foreign user_id',
+    () async {
+      final db = await DatabaseHelper().database;
+      await db.insert('users', {'id': 'foreign', 'identifier': 'Other'});
+      await db.insert('cards', {
+        'id': 'other-card',
+        'user_id': 'foreign',
+        'source': 'manual',
+        'name': 'Untouched',
+      });
+      final before = await db.query(
+        'cards',
+        where: 'user_id = ?',
+        whereArgs: ['foreign'],
+      );
+      final snapshot = WalletSnapshot.fromJson({
+        'schemaVersion': 1,
+        'cards': [
+          {
+            'id': 'same',
+            'user_id': 'foreign',
+            'source': 'manual',
+            'name': 'Incoming',
+          },
+        ],
+        'cardOverrides': [
+          {'user_id': 'foreign', 'card_id': 'same', 'custom_name': 'Incoming'},
+        ],
+        'cardLinks': [
+          {
+            'user_id': 'foreign',
+            'card_id': 'same',
+            'card_product_id': 'p',
+            'source': 'manual',
+          },
+        ],
+        'settings': {'default_screen': 'cards'},
+      });
+      await WalletBackupRepository().apply(snapshot, userId: userId);
+      expect(
+        await db.query('cards', where: 'user_id = ?', whereArgs: ['foreign']),
+        before,
+      );
+      for (final table in [
+        'cards',
+        'card_links',
+        'card_overrides',
+        'settings',
+      ]) {
+        expect(
+          await db.query(table, where: 'user_id = ?', whereArgs: [userId]),
+          hasLength(1),
+          reason: table,
+        );
+      }
+      for (final table in ['card_links', 'card_overrides', 'settings']) {
+        expect(
+          await db.query(table, where: 'user_id = ?', whereArgs: ['foreign']),
+          isEmpty,
+          reason: table,
+        );
+      }
+    },
+  );
+
   test('capture carries only allowlisted settings', () async {
     final db = await DatabaseHelper().database;
     for (final entry in {
@@ -264,34 +330,37 @@ void main() {
     expect(restored['name'], 'Starbucks on Main');
   });
 
-  test('restoring replaces this device mute list rather than merging', () async {
-    final repo = WalletBackupRepository();
-    final db = await DatabaseHelper().database;
-    await db.insert('muted_merchants', {
-      'merchant_id': 'stale-local',
-      'name': 'Somewhere else',
-      'muted_at': 1,
-    });
+  test(
+    'restoring replaces this device mute list rather than merging',
+    () async {
+      final repo = WalletBackupRepository();
+      final db = await DatabaseHelper().database;
+      await db.insert('muted_merchants', {
+        'merchant_id': 'stale-local',
+        'name': 'Somewhere else',
+        'muted_at': 1,
+      });
 
-    await repo.apply(
-      WalletSnapshot(
-        schemaVersion: WalletSnapshot.currentSchemaVersion,
-        capturedAt: DateTime.utc(2026),
-        cards: const [],
-        cardOverrides: const [],
-        cardLinks: const [],
-        settings: const {},
-        mutedMerchants: const [
-          {'merchant_id': 'place-123', 'name': 'Starbucks', 'muted_at': 2},
-        ],
-      ),
-      userId: userId,
-    );
+      await repo.apply(
+        WalletSnapshot(
+          schemaVersion: WalletSnapshot.currentSchemaVersion,
+          capturedAt: DateTime.utc(2026),
+          cards: const [],
+          cardOverrides: const [],
+          cardLinks: const [],
+          settings: const {},
+          mutedMerchants: const [
+            {'merchant_id': 'place-123', 'name': 'Starbucks', 'muted_at': 2},
+          ],
+        ),
+        userId: userId,
+      );
 
-    final rows = await db.query('muted_merchants');
-    expect(rows, hasLength(1));
-    expect(rows.single['merchant_id'], 'place-123');
-  });
+      final rows = await db.query('muted_merchants');
+      expect(rows, hasLength(1));
+      expect(rows.single['merchant_id'], 'place-123');
+    },
+  );
 
   test('a backup written before muted stores existed still restores', () async {
     // Older payload: no `mutedMerchants` key at all. Additive change, so this

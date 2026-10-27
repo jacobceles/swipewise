@@ -1,6 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_core/firebase_core.dart';
+// ignore: depend_on_referenced_packages
+import 'package:firebase_core_platform_interface/test.dart';
+// ignore: depend_on_referenced_packages
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
+import 'package:swipewise/providers/auth_provider.dart';
 
 /// Pins [DatabaseHelper.reassignUserId] — the free → Pro upgrade path.
 ///
@@ -13,6 +20,13 @@ import 'package:swipewise/api/database_helper.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+    final original = FirebaseAuthPlatform.instance;
+    FirebaseAuthPlatform.instance = _SignOutAuth();
+    addTearDown(() => FirebaseAuthPlatform.instance = original);
+  });
 
   setUp(() async {
     DatabaseHelper.setTestDatabaseFactory(
@@ -75,8 +89,28 @@ void main() {
       for (final table in kUserScopedTables) {
         await db.insert(table, await _minimalRow(db, table, 'local:aaaa'));
       }
+      await db.insert('users', {'id': 'u2', 'identifier': 'Bystander'});
+      final bystander = <String, List<Map<String, Object?>>>{};
+      for (final table in kUserScopedTables) {
+        final row = await _minimalRow(db, table, 'u2');
+        if (row['id'] is String) row['id'] = '${row['id']}-u2';
+        if (table == 'sync_runs') row['run_id'] = '${row['run_id']}-u2';
+        await db.insert(table, row);
+        bystander[table] = await db.query(
+          table,
+          where: 'user_id = ?',
+          whereArgs: ['u2'],
+        );
+      }
 
       await DatabaseHelper().reassignUserId(from: 'local:aaaa', to: 'uid-bbbb');
+      for (final table in kUserScopedTables) {
+        expect(
+          await db.query(table, where: 'user_id = ?', whereArgs: ['u2']),
+          bystander[table],
+          reason: table,
+        );
+      }
 
       for (final table in kUserScopedTables) {
         expect(
@@ -91,7 +125,11 @@ void main() {
         );
       }
 
-      final users = await db.query('users');
+      final users = await db.query(
+        'users',
+        where: 'id != ?',
+        whereArgs: ['u2'],
+      );
       expect(users, hasLength(1), reason: 'the old identity must be retired');
       expect(users.single['id'], 'uid-bbbb');
       expect(
@@ -122,7 +160,7 @@ void main() {
     expect(await db.query('users'), hasLength(1));
   });
 
-  test('a colliding destination rolls the whole re-key back', () async {
+  test('an existing destination is refused before re-keying', () async {
     final db = await DatabaseHelper().database;
     await db.insert('users', {'id': 'local:aaaa', 'identifier': 'You'});
     await db.insert('users', {'id': 'uid-bbbb', 'identifier': 'Pro'});
@@ -133,6 +171,7 @@ void main() {
       'key': 'default_screen',
       'value': '1',
     });
+
     await db.insert('settings', {
       'user_id': 'uid-bbbb',
       'key': 'default_screen',
@@ -149,6 +188,39 @@ void main() {
       reason: 'the transaction must roll back rather than half-migrate',
     );
   });
+
+  test(
+    'a failure after cards move rolls back every table and identity',
+    () async {
+      final db = await DatabaseHelper().database;
+      await db.insert('users', {'id': 'local:aaaa', 'identifier': 'You'});
+      for (final table in kUserScopedTables) {
+        await db.insert(table, await _minimalRow(db, table, 'local:aaaa'));
+      }
+      await db.execute('''
+CREATE TRIGGER fail_settings_move BEFORE UPDATE OF user_id ON settings
+WHEN NEW.user_id = 'uid-bbbb'
+BEGIN
+  SELECT RAISE(ABORT, 'injected re-key failure');
+END
+''');
+      await expectLater(
+        DatabaseHelper().reassignUserId(from: 'local:aaaa', to: 'uid-bbbb'),
+        throwsA(
+          isA<DatabaseException>().having(
+            (e) => e.toString(),
+            'message',
+            contains('injected re-key failure'),
+          ),
+        ),
+      );
+      expect((await db.query('users')).map((r) => r['id']), ['local:aaaa']);
+      for (final table in kUserScopedTables) {
+        expect(await _countFor(db, table, 'local:aaaa'), 1, reason: table);
+        expect(await _countFor(db, table, 'uid-bbbb'), 0, reason: table);
+      }
+    },
+  );
 
   // Not testing our code — pinning the SQLite behaviour that dictates it.
   // `AuthNotifier.signInWithGoogle` deliberately does update-then-insert on
@@ -173,71 +245,123 @@ void main() {
     );
   });
 
-  // Sign-out runs the same re-key backwards, and this is the assertion that
-  // matters most in the whole file. `logout()` used to be
-  // `db.delete('users')`, which cascades through every table above: one tap
-  // on the sign-out icon and the entire wallet was gone. Signing in is
-  // optional and reversible now, so signing out must destroy nothing — a user
-  // changing phones has not asked us to throw their data away.
-  test('sign-out re-keys back to a local id and loses nothing', () async {
-    final db = await DatabaseHelper().database;
-    await db.insert('users', {
-      'id': 'uid-bbbb',
-      'identifier': 'Jacob',
-      'email': 'someone@example.com',
-      'bank_customer_id': 'derived-customer-id',
-      'auth_time': 1700000000,
-    });
-    for (final table in kUserScopedTables) {
-      await db.insert(table, await _minimalRow(db, table, 'uid-bbbb'));
-    }
-    await db.insert('settings', {
-      'user_id': 'uid-bbbb',
-      'key': 'onboarding_seen',
-      'value': 'true',
-    });
+  test(
+    'sign-out keeps bare cards, not bank data or account-scoped settings',
+    () async {
+      final db = await DatabaseHelper().database;
+      await db.insert('users', {
+        'id': 'uid-bbbb',
+        'identifier': 'Jacob',
+        'email': 'someone@example.com',
+        'bank_customer_id': 'derived-customer-id',
+        'auth_time': 1700000000,
+      });
+      for (final table in kUserScopedTables) {
+        await db.insert(table, await _minimalRow(db, table, 'uid-bbbb'));
+      }
+      await db.insert('settings', {
+        'user_id': 'uid-bbbb',
+        'key': 'onboarding_seen',
+        'value': 'true',
+      });
+      const privateKeys = [
+        'pro_cached',
+        'backup_enabled',
+        'backup_fingerprint',
+        'last_backup_at',
+        'backup_held_cards',
+      ];
+      for (final key in privateKeys) {
+        await db.insert('settings', {
+          'user_id': 'uid-bbbb',
+          'key': key,
+          'value': 'true',
+        });
+      }
 
-    // Exactly what AuthNotifier.logout does.
-    await DatabaseHelper().reassignUserId(from: 'uid-bbbb', to: 'local:cccc');
-    await db.update(
-      'users',
-      {'identifier': 'You', 'email': null, 'bank_customer_id': null},
-      where: 'id = ?',
-      whereArgs: ['local:cccc'],
-    );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final auth = container.read(authProvider.notifier);
+      await auth.checkStatus();
+      await pumpEventQueue();
+      await auth.logout();
+      final localId = container.read(authProvider).userId!;
+      expect(localId, startsWith(kLocalUserIdPrefix));
 
-    for (final table in kUserScopedTables) {
-      expect(
-        await _countFor(db, table, 'local:cccc'),
-        greaterThanOrEqualTo(1),
-        reason: '$table was destroyed by signing out',
+      const removed = {
+        'transactions',
+        'financial_accounts',
+        'bank_connections',
+        'sync_state',
+        'sync_runs',
+      };
+      for (final table in kUserScopedTables) {
+        expect(
+          await _countFor(db, table, localId),
+          removed.contains(table) ? 0 : greaterThanOrEqualTo(1),
+          reason: '$table must follow the bare-card sign-out contract',
+        );
+      }
+      final settings = await db.query(
+        'settings',
+        where: 'user_id = ?',
+        whereArgs: [localId],
       );
-    }
+      expect(
+        settings.map((r) => r['key']),
+        isNot(anyElement(isIn(privateKeys))),
+      );
 
-    final onboarding = await db.query(
-      'settings',
-      where: 'user_id = ? AND key = ?',
-      whereArgs: ['local:cccc', 'onboarding_seen'],
-    );
-    expect(
-      onboarding.single['value'],
-      'true',
-      reason: 'signing out must not drop the user back into first-run',
-    );
+      final onboarding = await db.query(
+        'settings',
+        where: 'user_id = ? AND key = ?',
+        whereArgs: [localId, 'onboarding_seen'],
+      );
+      expect(
+        onboarding.single['value'],
+        'true',
+        reason: 'signing out must not drop the user back into first-run',
+      );
 
-    final user = (await db.query('users')).single;
-    expect(user['id'], 'local:cccc');
-    expect(
-      user['email'],
-      isNull,
-      reason: 'the Google identity is the one thing sign-out does drop',
-    );
-    expect(
-      user['bank_customer_id'],
-      isNull,
-      reason: 'the derived Customer id is meaningless without the email',
-    );
-  });
+      final user = (await db.query('users')).single;
+      expect(user['id'], localId);
+      expect(
+        user['email'],
+        isNull,
+        reason: 'sign-out must clear the Google identity',
+      );
+      expect(
+        user['bank_customer_id'],
+        isNull,
+        reason: 'the derived Customer id is meaningless without the email',
+      );
+      // B signing in inherits only the deliberately retained bare-card wallet.
+      await DatabaseHelper().reassignUserId(from: localId, to: 'uid-other');
+      expect(await _countFor(db, 'transactions', 'uid-other'), 0);
+      expect(
+        await db.query(
+          'settings',
+          where: 'user_id = ? AND key IN (?, ?, ?, ?, ?)',
+          whereArgs: ['uid-other', ...privateKeys],
+        ),
+        isEmpty,
+      );
+    },
+  );
+}
+
+class _SignOutAuth extends FirebaseAuthPlatform {
+  @override
+  FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
+
+  @override
+  FirebaseAuthPlatform setInitialValues({
+    dynamic currentUser,
+    String? languageCode,
+  }) => this;
+
+  @override
+  Future<void> signOut() async {}
 }
 
 Future<int> _countFor(Database db, String table, String userId) async {

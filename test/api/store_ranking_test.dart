@@ -158,10 +158,10 @@ void main() {
         'gold',
         'prime',
       ]).rewardRanking(RewardCategory.grocery);
-      expect(r.brandBonuses.map((b) => b.brand).toSet(), {
+      expect(r.brandBonuses.map((b) => b.brand), [
         'Whole Foods Market',
         'Safeway',
-      });
+      ]);
       expect(r.general.every((e) => e.bonusBrand == null), isTrue);
     });
   });
@@ -203,8 +203,7 @@ void main() {
       ]).rewardRanking(RewardCategory.wholesale, brandFilter: 'costco');
       final names = r.general.map((e) => e.cardName).toList();
       // The Visa and the unknown-network card first; Mastercard and Amex last.
-      expect(names.take(2).toSet(), {'costcovisa', 'mystery'});
-      expect(names.skip(2).toSet(), {'dc', 'gold'});
+      expect(names, ['costcovisa', 'mystery', 'gold', 'dc']);
       expect(r.general.first.isBest, isTrue);
       final dc = r.general.firstWhere((e) => e.cardName == 'dc');
       expect(dc.notAcceptedReason, 'Costco takes Visa only');

@@ -90,9 +90,9 @@ class PaymentReminderService {
       final fireAt = DateTime(
         due.year,
         due.month,
-        due.day,
+        due.day - leadDays,
         reminderHour,
-      ).subtract(Duration(days: leadDays));
+      );
       // Only roll forward on the first pass: if the reminder for this month has
       // already passed, the user wants next month's.
       if (fireAt.isAfter(now) || attempt == 1) {
@@ -111,7 +111,7 @@ class PaymentReminderService {
   /// itself. Shares this class's month-length clamping so the on-card countdown
   /// and the scheduled reminder can never disagree about when a payment falls.
   static int daysUntilDue(int dueDay, DateTime now) {
-    final today = DateTime(now.year, now.month, now.day);
+    final today = DateTime.utc(now.year, now.month, now.day);
     for (var monthOffset = 0; monthOffset <= 1; monthOffset++) {
       var year = now.year;
       var month = now.month + monthOffset;
@@ -120,7 +120,7 @@ class PaymentReminderService {
         year += 1;
       }
       final lastDay = DateTime(year, month + 1, 0).day;
-      final due = DateTime(year, month, dueDay.clamp(1, lastDay));
+      final due = DateTime.utc(year, month, dueDay.clamp(1, lastDay));
       final diff = due.difference(today).inDays;
       if (diff >= 0) return diff;
     }

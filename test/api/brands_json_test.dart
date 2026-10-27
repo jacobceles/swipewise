@@ -11,6 +11,7 @@ import 'package:swipewise/models/reward_category.dart';
 /// can't ship a malformed file, a duplicate slug, or a category that isn't
 /// a real [RewardCategory] (which would silently classify as `other`).
 void main() {
+  tearDown(resetBrandRegistry);
   group('assets/vocab/brands.json integrity', () {
     late List<dynamic> entries;
 
@@ -21,7 +22,7 @@ void main() {
 
     test('is a non-empty list of objects', () {
       expect(entries, isNotEmpty);
-      expect(entries.every((e) => e is Map), isTrue);
+      expect(entries, everyElement(isA<Map>()));
     });
 
     test('every entry has brandId, displayName, and non-empty aliases', () {
@@ -29,12 +30,12 @@ void main() {
         final m = e as Map;
         final id = m['brandId'];
         expect(id, isA<String>(), reason: 'brandId missing in $m');
-        expect((id as String).isNotEmpty, isTrue);
+        expect(id as String, isNotEmpty);
         expect(m['displayName'], isA<String>(), reason: 'displayName for $id');
         expect(m['aliases'], isA<List>(), reason: 'aliases for $id');
         expect(
-          (m['aliases'] as List).isNotEmpty,
-          isTrue,
+          m['aliases'] as List,
+          isNotEmpty,
           reason: 'empty aliases for $id',
         );
       }
@@ -105,7 +106,6 @@ void main() {
     test('the shipped asset loads cleanly via applyBrandsJson', () {
       final raw = File('assets/vocab/brands.json').readAsStringSync();
       expect(applyBrandsJson(raw), isTrue);
-      resetBrandRegistry();
     });
   });
 }

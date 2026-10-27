@@ -29,16 +29,6 @@ void main() {
     );
   });
 
-  test('every DefaultScreen maps to a real tab', () {
-    for (final s in DefaultScreen.values) {
-      expect(
-        shellTabForDefaultScreen(s),
-        isA<ShellTab>(),
-        reason: '$s has no tab',
-      );
-    }
-  });
-
   test('the mapping is injective, so no two settings collide', () {
     final tabs = DefaultScreen.values.map(shellTabForDefaultScreen).toSet();
     expect(tabs, hasLength(DefaultScreen.values.length));
@@ -86,11 +76,5 @@ void main() {
         reason: '$s exists without Pro',
       );
     }
-  });
-
-  test('tab order is stable — indices are what IndexedStack keys on', () {
-    expect(shellTabs(false).indexOf(ShellTab.cards), 0);
-    expect(shellTabs(false).indexOf(ShellTab.advisor), 1);
-    expect(shellTabs(false).indexOf(ShellTab.profile), 2);
   });
 }

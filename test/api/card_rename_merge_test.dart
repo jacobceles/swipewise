@@ -26,6 +26,7 @@ void main() {
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
+          onConfigure: DatabaseHelper.configureForTesting,
           onCreate: (db, _) => DatabaseHelper.bootstrapSchema(db),
         ),
       );
@@ -140,6 +141,51 @@ void main() {
           'history stranded under the old id is exactly what rebuilds the phantom card',
     );
   });
+
+  for (final reverse in [false, true]) {
+    test(
+      'existing and new card sharing last four stay separate (reverse=$reverse)',
+      () async {
+        await seedUser('u1');
+        final repo = BankWriteRepository(DatabaseHelper());
+        final db = await DatabaseHelper().database;
+        final first = acct('a1', last4: '2501', name: 'Card One');
+        final second = acct('a2', last4: '2501', name: 'Card Two');
+        await sync(
+          repo,
+          accounts: [first],
+          txs: {
+            'a1': [tx('old', DateTime(2026, 1, 1))],
+          },
+        );
+        final firstId = (await db.query('cards')).single['id'];
+        await sync(
+          repo,
+          accounts: reverse ? [second, first] : [first, second],
+          txs: {
+            'a1': [tx('one', DateTime(2026, 6, 1))],
+            'a2': [tx('two', DateTime(2026, 6, 1))],
+          },
+        );
+        final cards = await db.query('cards');
+        expect(cards, hasLength(2));
+        final transactions = await db.query('transactions');
+        expect(transactions, hasLength(3));
+        expect(
+          transactions
+              .where((r) => (r['name'] as String).toLowerCase() != 'two')
+              .map((r) => r['card_id']),
+          everyElement(firstId),
+        );
+        expect(
+          transactions.singleWhere(
+            (r) => (r['name'] as String).toLowerCase() == 'two',
+          )['card_id'],
+          isNot(firstId),
+        );
+      },
+    );
+  }
 
   test('two real cards sharing a last four are NOT merged', () async {
     await seedUser('u1');

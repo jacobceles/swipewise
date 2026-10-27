@@ -25,12 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final file = File('lib/providers/data_providers.dart');
   if (!file.existsSync()) {
-    // Test harness may run from a different cwd in CI. Resolve relative
-    // to this file's location instead.
-    final fallback = File('lib/providers/data_providers.dart').absolute;
-    if (!fallback.existsSync()) {
-      fail('data_providers.dart not found at ${file.absolute.path}');
-    }
+    fail('data_providers.dart not found at ${file.absolute.path}');
   }
 
   final source = file.readAsStringSync();
@@ -39,28 +34,37 @@ void main() {
   // Pull the registry contents.
   final registry = _extractRegistry(source);
 
-  // Find every `final <name> = (FutureProvider|AsyncNotifierProvider) ...`
-  // declaration. Single-line and multi-line variants both end with a
-  // `>(` or `<...>((` token; we just need the symbol name.
-  //
-  // The provider-declaration regex matches the first opening of:
-  //   `final <name> = FutureProvider...`
-  //   `final <name> = AsyncNotifierProvider...`
-  //   `final <name> = NotifierProvider...` (read-only mostly, but
-  //   `cardPreferenceOrderProvider` is one of these and gates ranker
-  //   output, so the test treats them the same way)
-  final declRegex = RegExp(
-    r'^final\s+(\w+Provider)\s*=\s*(FutureProvider|AsyncNotifierProvider|NotifierProvider)',
-  );
+  final candidates = _candidates(source);
 
-  final candidates = <_Candidate>[];
-  for (var i = 0; i < lines.length; i++) {
-    final match = declRegex.firstMatch(lines[i]);
-    if (match == null) continue;
-    final name = match.group(1)!;
-    final optOut = _hasOptOutAbove(lines, i);
-    candidates.add(_Candidate(name: name, line: i + 1, optOut: optOut));
-  }
+  test('parser includes multiline declarations and their opt-out markers', () {
+    final parsed = _candidates('''
+final singleProvider = FutureProvider<int>((ref) async => 1);
+// sync: opt-out — fixture
+final splitProvider =
+    NotifierProvider<Queue, Set<String>>(Queue.new);
+final untrackedProvider =
+    AsyncNotifierProvider<Loader, int>(Loader.new);
+''');
+    expect(parsed.map((c) => c.name), [
+      'singleProvider',
+      'splitProvider',
+      'untrackedProvider',
+    ]);
+    expect(parsed.map((c) => c.optOut), [false, true, false]);
+    expect(parsed.map((c) => c.line), [1, 3, 5]);
+  });
+
+  test(
+    'rotating schedule is invalidated and reconciliation explicitly opts out',
+    () {
+      expect(registry, contains('cardRotatingScheduleProvider'));
+      final line = lines.indexWhere(
+        (l) => l.startsWith('final pendingReconciliationProvider'),
+      );
+      expect(line, greaterThanOrEqualTo(0));
+      expect(_hasOptOutAbove(lines, line), isTrue);
+    },
+  );
 
   test('every sync-derived provider in data_providers.dart is either in '
       'syncInvalidatedProviders or has a `// sync: opt-out` marker', () {
@@ -104,6 +108,25 @@ class _Candidate {
   final String name;
   final int line;
   final bool optOut;
+}
+
+List<_Candidate> _candidates(String source) {
+  final lines = source.split('\n');
+  final declarations = RegExp(
+    r'^final\s+(\w+Provider)\s*=\s*(FutureProvider|AsyncNotifierProvider|NotifierProvider)',
+    multiLine: true,
+  );
+  return [
+    for (final match in declarations.allMatches(source))
+      _Candidate(
+        name: match.group(1)!,
+        line: '\n'.allMatches(source.substring(0, match.start)).length + 1,
+        optOut: _hasOptOutAbove(
+          lines,
+          '\n'.allMatches(source.substring(0, match.start)).length,
+        ),
+      ),
+  ];
 }
 
 bool _hasOptOutAbove(List<String> lines, int declLine) {
