@@ -33,6 +33,11 @@ object WalkinLog {
     private var staleFileDeleted = false
 
     @Synchronized
+    fun clear(context: Context) {
+        try { File(context.applicationContext.filesDir, FILE).delete() } catch (_: Exception) {}
+    }
+
+    @Synchronized
     fun w(context: Context, message: String) {
         Log.w(TAG, message)
         // Diagnostics must never cost a notification: every failure is swallowed.
@@ -94,7 +99,7 @@ object StoreResolver {
     /// stands inside, while the coffee shop out front is 90 m away.
     fun candidates(options: List<MerchantOption>, lat: Double, lng: Double, reachM: Double): List<Candidate> =
         options.mapNotNull { o ->
-            if (o.lat == null || o.lng == null) {
+            if (!o.walkinEligible || o.lat == null || o.lng == null) {
                 null
             } else {
                 Candidate(o, maxOf(0.0, distanceM(lat, lng, o.lat, o.lng) - o.footprintM))
@@ -104,7 +109,8 @@ object StoreResolver {
     /// The fallback list when nothing could be resolved: at most [MAX_OPTIONS],
     /// closest to ([lat], [lng]) first; stores without a position go last.
     fun capped(all: List<MerchantOption>, lat: Double?, lng: Double?): List<MerchantOption> {
-        val options = all.filterNot { it.plaza }.ifEmpty { all }
+        val eligible = all.filter { it.walkinEligible }
+        val options = eligible.filterNot { it.plaza }.ifEmpty { eligible }
         if (lat == null || lng == null) return foldSameAdvice(options).take(MAX_OPTIONS)
         return foldSameAdvice(
             options.sortedBy { o ->
@@ -122,8 +128,9 @@ object StoreResolver {
     /// the list ahead of the store the user was in (2026-10-19: "JPA Plaza ·
     /// Desi Halal Meat & Fish"). It stays only when it is all there is.
     fun resolve(all: List<Candidate>): List<MerchantOption> {
-        if (all.isEmpty()) return emptyList()
-        val candidates = all.filterNot { it.option.plaza }.ifEmpty { all }
+        val eligible = all.filter { it.option.walkinEligible }
+        if (eligible.isEmpty()) return emptyList()
+        val candidates = eligible.filterNot { it.option.plaza }.ifEmpty { eligible }
         val sorted = candidates.sortedBy { it.distanceM }
         val nearest = sorted.first().distanceM
         return foldSameAdvice(
@@ -140,7 +147,8 @@ object StoreResolver {
     fun resolveAtStore(all: List<Candidate>, accuracyM: Double): List<MerchantOption>? {
         val picked = resolve(all)
         if (picked.isEmpty()) return emptyList()
-        val nearest = all.filterNot { it.option.plaza }.ifEmpty { all }.minOf { it.distanceM }
+        val eligible = all.filter { it.option.walkinEligible }
+        val nearest = eligible.filterNot { it.option.plaza }.ifEmpty { eligible }.minOf { it.distanceM }
         return if (atStore(nearest, accuracyM)) picked else null
     }
 

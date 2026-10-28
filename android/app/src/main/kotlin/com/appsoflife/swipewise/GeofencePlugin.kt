@@ -61,8 +61,21 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "registerSet" -> registerSet(call, result)
-            "unregisterAll" -> unregisterAll(result)
+            "unregisterAll" -> unregisterAll(result, call.arguments as? Map<*, *>)
+            "clearAccountState" -> {
+                accountEpoch++
+                store.clear()
+                DwellAlarms.cancelAll(context)
+                PendingMerchantStore.consume()
+                WalkinLog.clear(context)
+                for (name in listOf("swipewise_visit_lock", "swipewise_resident", "swipewise_reregister")) {
+                    context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply()
+                }
+                (context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancelAll()
+                unregisterAll(result)
+            }
             "getRegisteredCount" -> result.success(store.count())
+            "accountEpoch" -> result.success(accountEpoch)
             "consumePendingMerchant" -> result.success(PendingMerchantStore.consume())
             "fireTestNotification" -> fireTestNotification(call, result)
             "walkinLog" -> {
@@ -102,6 +115,16 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
 
         @Suppress("UNCHECKED_CAST")
         val args = call.arguments as Map<String, Any?>
+        // A background isolate may finish a Places request after logout. Check
+        // the owner inside the native registration queue, not just in Dart.
+        val currentOwner = if ((args["account_epoch"] as? Number)?.toLong() != accountEpoch) false
+            else isCurrentUser(args["user_id"] as? String)
+        if (currentOwner != true) {
+            result.error(if (currentOwner == null) "ACCOUNT_CHECK_FAILED" else "STALE_ACCOUNT",
+                "Could not validate registration owner", null)
+            done()
+            return
+        }
         @Suppress("UNCHECKED_CAST")
         val zones = (args["zones"] as List<Map<String, Any?>>?) ?: emptyList()
         @Suppress("UNCHECKED_CAST")
@@ -121,7 +144,8 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             @Suppress("UNCHECKED_CAST")
             val rawOptions = (z["options"] as List<Map<String, Any?>>?) ?: emptyList()
             if (rawOptions.isEmpty()) continue
-            val options = rawOptions.map(MerchantOption::fromChannelMap)
+            val options = rawOptions.map(MerchantOption::fromChannelMap).filter { it.walkinEligible }
+            if (options.isEmpty()) continue
 
             val lat = (z["lat"] as Number).toDouble()
             val lng = (z["lng"] as Number).toDouble()
@@ -254,18 +278,48 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun unregisterAll(result: MethodChannel.Result) {
+    private fun unregisterAll(result: MethodChannel.Result, owner: Map<*, *>? = null) {
         runSerialized { done ->
-            Tasks.whenAllComplete(
-                client.removeGeofences(merchantPendingIntent),
-                client.removeGeofences(boundaryPendingIntent),
-            ).addOnCompleteListener {
-                lastRegisteredHash = null
-                store.clear()
-                result.success(null)
+            if (owner != null) {
+                val currentOwner = if ((owner["account_epoch"] as? Number)?.toLong() != accountEpoch) false
+                    else isCurrentUser(owner["user_id"] as? String)
+                if (currentOwner != true) {
+                    if (currentOwner == null) result.error("ACCOUNT_CHECK_FAILED", "Could not validate fence owner", null)
+                    else result.success(null)
+                    done()
+                    return@runSerialized
+                }
+            }
+            lastRegisteredHash = null
+            store.clear()
+            try {
+                Tasks.whenAllComplete(
+                    client.removeGeofences(merchantPendingIntent),
+                    client.removeGeofences(boundaryPendingIntent),
+                ).addOnCompleteListener { completed ->
+                    val failed = completed.result.firstOrNull { !it.isSuccessful }
+                    if (failed == null) result.success(null)
+                    else result.error("REMOVE_FAILED", failed.exception?.message, null)
+                    done()
+                }
+            } catch (e: SecurityException) {
+                result.error("PERMISSION_DENIED", e.message, null)
                 done()
             }
         }
+    }
+
+    // null means the check could not run: retry, never report a stale no-op.
+    private fun isCurrentUser(userId: String?): Boolean? {
+        if (userId == null) return false
+        return try {
+            android.database.sqlite.SQLiteDatabase.openDatabase(
+                context.getDatabasePath("swipewise.db").absolutePath, null,
+                android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
+            ).use { db ->
+                db.rawQuery("SELECT 1 FROM users WHERE id = ?", arrayOf(userId)).use { it.moveToFirst() }
+            }
+        } catch (_: Exception) { null }
     }
 
     private fun fireTestNotification(call: MethodCall, result: MethodChannel.Result) {
@@ -298,6 +352,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     }
 
     companion object {
+        @Volatile var accountEpoch: Long = 0
         const val CHANNEL = "com.appsoflife/geofence"
         private const val REQ_MERCHANT = 1001
         private const val REQ_BOUNDARY = 1002

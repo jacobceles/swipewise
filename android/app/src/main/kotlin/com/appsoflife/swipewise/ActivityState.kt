@@ -53,6 +53,12 @@ object ActivityState {
         return type == DetectedActivity.WALKING &&
             System.currentTimeMillis() - at < 30L * 60L * 1000L
     }
+
+    fun diagnostic(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val at = prefs.getLong(KEY_AT, 0L)
+        return "activity=${prefs.getInt(KEY_TYPE, DetectedActivity.UNKNOWN)} activity_age_ms=${if (at == 0L) null else System.currentTimeMillis() - at}"
+    }
 }
 
 /// Subscribes to ActivityRecognition transitions for IN_VEHICLE / STILL /
@@ -67,6 +73,7 @@ object ActivitySubscriber {
         if (ContextCompat.checkSelfPermission(context, perm) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
+            WalkinLog.w(context, "activity subscription: permission denied")
             return
         }
         val transitions = listOf(
@@ -80,7 +87,13 @@ object ActivitySubscriber {
         try {
             ActivityRecognition.getClient(context)
                 .requestActivityTransitionUpdates(request, pi)
+                .addOnSuccessListener { WalkinLog.w(context, "activity subscription: active") }
+                .addOnFailureListener {
+                    val status = (it as? com.google.android.gms.common.api.ApiException)?.statusCode
+                    WalkinLog.w(context, "activity subscription: failed ${it.javaClass.simpleName} status=$status")
+                }
         } catch (_: SecurityException) {
+            WalkinLog.w(context, "activity subscription: permission revoked")
             // permission was revoked between the check and the call; skip
         }
     }

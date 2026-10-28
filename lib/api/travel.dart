@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart' show WidgetsBinding;
 
 import 'package:geocoding/geocoding.dart';
+import 'offline_country.dart';
 
 /// Foreign-travel mode (N7) — deciding whether the user is abroad so the reward
 /// engine can rank FX-fee-aware. The pieces are kept as small pure functions
@@ -36,11 +37,16 @@ bool isForeignTravel({String? home, String? current}) {
   return home.toUpperCase() != current.toUpperCase();
 }
 
-/// Reverse-geocodes a coordinate to its ISO alpha-2 country via the OS geocoder
-/// (free, no Places key). Best-effort and bounded: any failure or a slow lookup
-/// → null (→ treated as "not abroad"), so it can never stall or mis-flag the
-/// ranker. Runtime-only — exercised on a device, not in unit tests.
+/// Offline US/CA polygon interiors first, then the OS geocoder (free, no
+/// Places key) for uncertain points. Background fence registration may await
+/// this; UI rankings use the non-blocking provider instead.
 Future<String?> countryForCoordinate(double lat, double lng) async {
+  final offline = await OfflineCountry.countryAt(lat, lng);
+  if (offline != null) return offline;
+  return geocodedCountryForCoordinate(lat, lng);
+}
+
+Future<String?> geocodedCountryForCoordinate(double lat, double lng) async {
   try {
     final placemarks = await Geocoding()
         .placemarkFromCoordinates(lat, lng)

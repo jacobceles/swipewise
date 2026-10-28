@@ -64,6 +64,7 @@ object DwellAlarms {
         } else {
             true
         }
+        WalkinLog.w(context, "dwell arm $geofenceId: delay_s=$dwellSeconds exact=$exact recheck=$recheck next_door=$nextDoor")
         try {
             if (exact) {
                 am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pi)
@@ -72,6 +73,7 @@ object DwellAlarms {
             }
         } catch (e: SecurityException) {
             // Exact-alarm grant revoked between check and call; degrade.
+            WalkinLog.w(context, "dwell arm $geofenceId: exact permission revoked -> inexact")
             am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pi)
         }
     }
@@ -89,6 +91,10 @@ object DwellAlarms {
     /// A reboot drops every alarm.
     fun clearAll(context: Context) {
         prefs(context).edit().clear().apply()
+    }
+
+    fun cancelAll(context: Context) {
+        prefs(context).all.keys.toList().forEach { cancel(context, it) }
     }
 
     fun geofenceIdFromIntent(intent: Intent): String? =

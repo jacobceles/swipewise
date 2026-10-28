@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 // ignore: depend_on_referenced_packages
@@ -8,6 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
 import 'package:swipewise/providers/auth_provider.dart';
+import 'package:swipewise/providers/backup_provider.dart';
+import 'package:swipewise/providers/bank_sync_provider.dart';
+import 'package:swipewise/sync/wallet_backup_client.dart';
 
 /// Pins [DatabaseHelper.reassignUserId] — the free → Pro upgrade path.
 ///
@@ -21,6 +28,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   setUpAll(() async {
+    AndroidFlutterLocalNotificationsPlugin.registerWith();
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
     final original = FirebaseAuthPlatform.instance;
@@ -29,6 +37,12 @@ void main() {
   });
 
   setUp(() async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dexterous.com/flutter/local_notifications'),
+          (_) async => true,
+        );
     DatabaseHelper.setTestDatabaseFactory(
       () => databaseFactoryFfi.openDatabase(
         inMemoryDatabasePath,
@@ -42,6 +56,7 @@ void main() {
   });
 
   tearDown(() async {
+    debugDefaultTargetPlatformOverride = null;
     final db = await DatabaseHelper().database;
     await db.close();
     DatabaseHelper.setTestDatabaseFactory(null);
@@ -246,7 +261,7 @@ END
   });
 
   test(
-    'sign-out keeps bare cards, not bank data or account-scoped settings',
+    'sign-out wipes the wallet and creates an empty guest for the next account',
     () async {
       final db = await DatabaseHelper().database;
       await db.insert('users', {
@@ -259,6 +274,34 @@ END
       for (final table in kUserScopedTables) {
         await db.insert(table, await _minimalRow(db, table, 'uid-bbbb'));
       }
+      const globalWalletTables = [
+        'muted_merchants',
+        'store_picks',
+        'user_bonus_selections',
+        'active_geofences',
+        'boundary_geofence',
+        'merchant_notification_cooldown',
+        'category_notification_cooldown',
+      ];
+      for (final table in globalWalletTables) {
+        await db.insert(table, await _minimalRow(db, table, null));
+      }
+      final nativeCalls = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('com.appsoflife/geofence'),
+            (call) async {
+              nativeCalls.add(call.method);
+              return null;
+            },
+          );
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              const MethodChannel('com.appsoflife/geofence'),
+              null,
+            ),
+      );
       await db.insert('settings', {
         'user_id': 'uid-bbbb',
         'key': 'onboarding_seen',
@@ -285,22 +328,36 @@ END
       await auth.checkStatus();
       await pumpEventQueue();
       await auth.logout();
+      expect(nativeCalls, contains('clearAccountState'));
+      for (final table in globalWalletTables) {
+        expect(await db.query(table), isEmpty, reason: table);
+      }
       final localId = container.read(authProvider).userId!;
       expect(localId, startsWith(kLocalUserIdPrefix));
+      // An old foreground/background sync cannot write against a retired owner.
+      await expectLater(
+        db.insert('cards', {
+          'id': 'late-sync',
+          'user_id': 'uid-bbbb',
+          'name': 'Old account',
+          'source': 'manual',
+        }),
+        throwsA(
+          isA<DatabaseException>().having(
+            (e) => e.toString(),
+            'error',
+            contains('FOREIGN KEY'),
+          ),
+        ),
+      );
 
-      const removed = {
-        'transactions',
-        'financial_accounts',
-        'bank_connections',
-        'sync_state',
-        'sync_runs',
-      };
       for (final table in kUserScopedTables) {
         expect(
           await _countFor(db, table, localId),
-          removed.contains(table) ? 0 : greaterThanOrEqualTo(1),
-          reason: '$table must follow the bare-card sign-out contract',
+          0,
+          reason: '$table must not follow sign-out into the guest wallet',
         );
+        expect(await _countFor(db, table, 'uid-bbbb'), 0, reason: table);
       }
       final settings = await db.query(
         'settings',
@@ -317,11 +374,7 @@ END
         where: 'user_id = ? AND key = ?',
         whereArgs: [localId, 'onboarding_seen'],
       );
-      expect(
-        onboarding.single['value'],
-        'true',
-        reason: 'signing out must not drop the user back into first-run',
-      );
+      expect(onboarding, isEmpty);
 
       final user = (await db.query('users')).single;
       expect(user['id'], localId);
@@ -335,9 +388,11 @@ END
         isNull,
         reason: 'the derived Customer id is meaningless without the email',
       );
-      // B signing in inherits only the deliberately retained bare-card wallet.
+      // B signing in must not inherit ANY of A's wallet.
       await DatabaseHelper().reassignUserId(from: localId, to: 'uid-other');
-      expect(await _countFor(db, 'transactions', 'uid-other'), 0);
+      for (final table in kUserScopedTables) {
+        expect(await _countFor(db, table, 'uid-other'), 0, reason: table);
+      }
       expect(
         await db.query(
           'settings',
@@ -348,6 +403,89 @@ END
       );
     },
   );
+
+  test(
+    'logout waits for a pending restore and discards its old response',
+    () async {
+      final db = await DatabaseHelper().database;
+      await db.insert('users', {'id': 'uid-bbbb', 'identifier': 'Account'});
+      final client = _PendingBackup();
+      final container = ProviderContainer(
+        overrides: [walletBackupClientProvider.overrideWithValue(client)],
+      );
+      addTearDown(container.dispose);
+      final auth = container.read(authProvider.notifier);
+      await auth.checkStatus();
+      await pumpEventQueue();
+      final controller = container.read(walletBackupControllerProvider);
+      final restoring = controller.restoreNow();
+      await client.started.future;
+      var finished = false;
+      final logout = auth.logout().then((_) => finished = true);
+      await pumpEventQueue();
+      expect(finished, isFalse);
+      expect(container.read(authProvider).userId, isNull);
+      client.response.complete(const BackupResult(BackupStatus.empty));
+      expect(await restoring, RestoreOutcome.unavailable);
+      await logout;
+      expect(
+        container.read(authProvider).userId,
+        startsWith(kLocalUserIdPrefix),
+      );
+      expect(await db.query('cards'), isEmpty);
+    },
+  );
+
+  test('logout drains active bank sync before retiring its owner', () async {
+    final db = await DatabaseHelper().database;
+    await db.insert('users', {'id': 'uid-bbbb', 'identifier': 'Account'});
+    final sync = _PendingSync();
+    final container = ProviderContainer(
+      overrides: [bankSyncProvider.overrideWith(() => sync)],
+    );
+    addTearDown(container.dispose);
+    final auth = container.read(authProvider.notifier);
+    await auth.checkStatus();
+    await pumpEventQueue();
+    final logout = auth.logout();
+    await sync.started.future;
+    expect(container.read(authProvider).userId, isNull);
+    expect((await db.query('users')).single['id'], 'uid-bbbb');
+    // A write from the existing run finishes before the cascade, never after
+    // a same-Firebase-UID re-login can make that owner valid again.
+    await db.insert('cards', {
+      'id': 'last-sync',
+      'user_id': 'uid-bbbb',
+      'name': 'Old',
+      'source': 'manual',
+    });
+    sync.finished.complete();
+    await logout;
+    expect(await db.query('cards'), isEmpty);
+    expect(container.read(authProvider).userId, startsWith(kLocalUserIdPrefix));
+  });
+}
+
+class _PendingSync extends BankSyncNotifier {
+  final started = Completer<void>();
+  final finished = Completer<void>();
+  @override
+  AsyncValue<BankSyncState> build() => const AsyncData(BankSyncState());
+  @override
+  Future<void> clearForLogout() {
+    started.complete();
+    return finished.future;
+  }
+}
+
+class _PendingBackup extends WalletBackupClient {
+  final started = Completer<void>();
+  final response = Completer<BackupResult>();
+  @override
+  Future<BackupResult> pull() {
+    started.complete();
+    return response.future;
+  }
 }
 
 class _SignOutAuth extends FirebaseAuthPlatform {
@@ -378,10 +516,10 @@ Future<int> _countFor(Database db, String table, String userId) async {
 Future<Map<String, Object?>> _minimalRow(
   Database db,
   String table,
-  String userId,
+  String? userId,
 ) async {
   final columns = await db.rawQuery('PRAGMA table_info($table)');
-  final row = <String, Object?>{'user_id': userId};
+  final row = <String, Object?>{'user_id': ?userId};
   for (final column in columns) {
     final name = column['name'] as String;
     if (name == 'user_id') continue;

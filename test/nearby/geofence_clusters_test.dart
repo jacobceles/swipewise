@@ -28,6 +28,32 @@ NearbyMerchant _m(String id, double lat, double lng, double distanceMi) =>
     );
 
 void main() {
+  test('transit pins stay searchable but are not walk-in candidates', () {
+    for (final type in ['atm', 'bus_stop', 'bus_station', 'transit_station']) {
+      final merchant = NearbyMerchant(
+        id: type,
+        name: type,
+        placeType: type,
+        lat: 40,
+        lng: -74,
+        distanceMi: 0,
+      );
+      expect(merchant.name, type);
+      expect(merchant.walkinEligible, isFalse);
+    }
+    expect(_m('shop', 40, -74, 0).walkinEligible, isTrue);
+    expect(
+      const NearbyMerchant(
+        id: 'train',
+        name: 'Train',
+        placeType: 'train_station',
+        lat: 40,
+        lng: -74,
+        distanceMi: 0,
+      ).walkinEligible,
+      isTrue,
+    );
+  });
   // A strip mall: three storefronts within 50 m, plus a pad site ~150 m away.
   const lat = 40.5014, lng = -74.8549;
   List<NearbyMerchant> stripMall({required bool userAtSouthEnd}) => [

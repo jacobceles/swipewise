@@ -150,13 +150,14 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       context,
       title: 'Sign out?',
       body:
-          'Your wallet stays on this phone. Backups stop until you sign in '
-          'again.',
+          'This clears your wallet and account data from this phone. '
+          'Your existing cloud backup is kept, but cards not backed up will '
+          'be lost. Backups stop until you sign in again.',
       action: 'Sign out',
     );
     if (!confirmed || !mounted) return;
     Navigator.of(context).pop();
-    // Re-keys the wallet onto a local id — nothing is deleted.
+    // Starts a new empty guest; no wallet follows the next account.
     await ref.read(authProvider.notifier).logout();
   }
 
@@ -340,7 +341,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             SettingsRow(
               icon: LucideIcons.logOut,
               title: 'Sign out',
-              subtitle: 'Your wallet stays on this phone',
+              subtitle: 'Clears this phone; keeps your cloud backup',
               chevron: true,
               onTap: _signOut,
             ),

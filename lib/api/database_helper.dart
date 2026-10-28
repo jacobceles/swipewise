@@ -1115,8 +1115,8 @@ class DatabaseHelper {
   ///
   /// Not user-scoped (no `user_id`, so it stays out of [kUserScopedTables]):
   /// the pick is a property of the physical card in the wallet, so it must
-  /// survive a sign-in re-key and a sign-out the same way `muted_merchants`
-  /// does. One row per chosen category — `choose: 2` writes two rows.
+  /// survive a sign-in re-key. Logout explicitly clears this device-global
+  /// table along with `muted_merchants`. One row per chosen category.
   static const String _createUserBonusSelectionsSql = '''
     CREATE TABLE IF NOT EXISTS user_bonus_selections (
       group_id TEXT NOT NULL,

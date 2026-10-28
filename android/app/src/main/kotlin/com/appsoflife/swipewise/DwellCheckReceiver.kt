@@ -62,6 +62,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         // blends GPS with wifi: a few seconds of GPS, a handful of times a day,
         // to tell stores 25 m apart.
         val pending = goAsync()
+        val accountEpoch = GeofencePlugin.accountEpoch
         val cts = CancellationTokenSource()
         val handler = Handler(Looper.getMainLooper())
         var finished = false
@@ -69,7 +70,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
             if (finished) return
             finished = true
             try {
-                block()
+                if (accountEpoch == GeofencePlugin.accountEpoch) block()
             } finally {
                 pending.finish()
             }
@@ -117,6 +118,8 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val allowed = meta.radiusM!! + fix.accuracy + SLACK_M
         val measured = DwellFix(dist[0], fix.accuracy, allowed)
         val now = System.currentTimeMillis()
+        WalkinLog.w(context, "dwell motion recheck=$recheck speed_mps=${if (fix.hasSpeed()) fix.speed else null} " +
+            "fix_age_ms=${now - fix.time} ${ActivityState.diagnostic(context)}")
         if (!recheck && !nextDoor &&
             !VisitLock.isActive(context, now, fix.latitude, fix.longitude) &&
             ResidentGuard.check(context, meta.geofenceId, now)
@@ -210,6 +213,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
     }
 
     private fun verdictWithoutFix(context: Context, meta: MerchantMeta) {
+        WalkinLog.w(context, "dwell no fix ${ActivityState.diagnostic(context)}")
         // Fail-open EXCEPT while driving: a missed fix + IN_VEHICLE is almost
         // always a red-light / drive-by false ENTER, so skip (fail-closed)
         // there. Known edge: activity recognition can lag the actual park by up

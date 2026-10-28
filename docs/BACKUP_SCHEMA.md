@@ -101,8 +101,9 @@ delete on the phone that made the backup are not a conflict; the backup just fol
 Nothing here is deleted as a side effect of anything else. Two actions look like they might
 delete a backup and deliberately do not:
 
-- **Signing out** leaves your data on the phone and your backup on the server. Changing phones
-  is not a request to throw your data away.
+- **Signing out** clears the local wallet/account data and starts an empty guest, but keeps
+  your backup on the server. Cards not backed up are lost from the device; the confirmation
+  warns before clearing them. Signing into another account does not transfer the old wallet.
 - **Turning backup off** stops further uploads. The copy already stored is kept, so you can
   still restore it later or onto a new phone — it pauses backup rather than discarding it.
 

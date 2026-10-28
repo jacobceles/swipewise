@@ -3,12 +3,20 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sqflite/sqflite.dart';
 import '../api/account_delete_client.dart';
 import '../api/database_helper.dart';
 import '../util/logger.dart';
 import '../api/sophtron_auth_service.dart';
+import '../nearby/geofence_channel.dart';
+import 'backup_provider.dart';
+import 'bank_sync_provider.dart';
+import 'sync_provider.dart';
+import 'payment_reminder_provider.dart';
+import 'activation_reminder_provider.dart';
 
 class AuthState {
   final bool isLoggedIn;
@@ -308,20 +316,6 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  /// Signs out without deleting anything.
-  ///
-  /// Signing in is optional and reversible, so signing out has to be too. The
-  /// Firebase UID is re-keyed back onto a fresh device-local id — the exact
-  /// reverse of the re-key in [signInWithGoogle] — carrying the wallet, the
-  /// settings and the onboarding flag across intact. Only the Google identity
-  /// is dropped.
-  ///
-  /// This used to be `db.delete('users')`. With `PRAGMA foreign_keys = ON`
-  /// every table in [kUserScopedTables] cascades on that delete, so a single
-  /// tap erased the whole wallet. Nothing is destroyed here, on the device or
-  /// off it: someone changing phones has not asked us to throw their data
-  /// away, and deletion belongs behind an explicit request, not behind the
-  /// sign-out button.
   /// Deletes the account and everything belonging to it, everywhere.
   ///
   /// ⚠️ **The order is the whole design, and it cannot be rearranged.**
@@ -344,9 +338,8 @@ class AuthNotifier extends Notifier<AuthState> {
   /// 3. **Then local**, which is the only step that cannot fail and the only
   ///    one the user can redo by uninstalling.
   ///
-  /// This is also the one place `db.delete('users')` is correct. Everywhere
-  /// else it is the bug that cascades through ten tables and wipes a wallet
-  /// nobody asked to lose; here the cascade *is* the feature.
+  /// Like logout's device-only wipe, deleting `users` intentionally cascades
+  /// through the user-scoped tables. Sign-in must never do this.
   Future<DeleteFailure?> deleteAccount() async {
     state = state.copyWith(isLoading: true, clearError: true);
     final client = AccountDeleteClient();
@@ -422,8 +415,19 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Clears this device's wallet/account and creates a new empty guest.
+  /// The remote account and its existing backup are not deleted.
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true);
+    // Stop new account work immediately. Existing backup requests finish under
+    // the old Firebase identity, never the next account's credentials.
+    state = AuthState(isLoading: true);
+    await ref.read(walletBackupControllerProvider).waitUntilIdle();
+    // BankSyncEngine runs only through this notifier. Drain it before deleting
+    // its owner, including same-account re-login (a Firebase UID is reusable).
+    await ref.read(bankSyncProvider.notifier).clearForLogout();
+    ref.read(syncProvider.notifier).clearForLogout();
+    await ref.read(paymentReminderControllerProvider).waitUntilIdle();
+    await ref.read(activationReminderControllerProvider).waitUntilIdle();
     await FirebaseAuth.instance.signOut();
     try {
       await _ensureGoogleInitialized();
@@ -436,47 +440,37 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     final db = await _dbHelper.database;
-    final rows = await db.query('users', columns: ['id'], limit: 1);
-    if (rows.isNotEmpty) {
-      var id = rows.first['id'] as String;
-      if (!id.startsWith(kLocalUserIdPrefix)) {
-        final localId = '$kLocalUserIdPrefix${_uuidV4()}';
-        await _dbHelper.reassignUserId(from: id, to: localId);
-        id = localId;
+    await db.transaction((txn) async {
+      // Foreign-key cascades also fence out late bank-sync writes: the old
+      // owner no longer exists. Never re-key its wallet onto the guest.
+      await txn.delete('users');
+      for (final table in [
+        'muted_merchants',
+        'store_picks',
+        'user_bonus_selections',
+        'active_geofences',
+        'boundary_geofence',
+        'merchant_notification_cooldown',
+        'category_notification_cooldown',
+      ]) {
+        await txn.delete(table);
       }
-      // `reassignUserId` copies the row wholesale, so the Google-derived
-      // fields ride along on the new id and have to be cleared by hand.
-      await db.transaction((txn) async {
-        // Signed out, retain only bare-card data and ordinary preferences.
-        // Bank history and cloud-backup consent must not follow the next login.
-        for (final table in [
-          'transactions',
-          'financial_accounts',
-          'bank_connections',
-          'sync_state',
-          'sync_runs',
-        ]) {
-          await txn.delete(table, where: 'user_id = ?', whereArgs: [id]);
-        }
-        await txn.delete(
-          'settings',
-          where: 'user_id = ? AND key IN (?, ?, ?, ?, ?)',
-          whereArgs: [
-            id,
-            'pro_cached',
-            'backup_enabled',
-            'backup_fingerprint',
-            'last_backup_at',
-            'backup_held_cards',
-          ],
-        );
-        await txn.update(
-          'users',
-          {'identifier': 'You', 'email': null, 'bank_customer_id': null},
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-      });
+    });
+    try {
+      await GeofenceChannel.clearAccountState();
+    } on MissingPluginException {
+      // Platforms without the Android walk-in plugin have no native state.
+    } on PlatformException catch (e) {
+      // The local metadata was cleared before OS removal. Don't strand the
+      // signed-out user if Play services cannot remove its now-inert fences.
+      Log.w('auth', 'Native account cleanup failed: ${e.code}');
+    }
+    try {
+      await FlutterLocalNotificationsPlugin().cancelAll();
+    } on MissingPluginException {
+      // No notification plugin on this platform.
+    } on PlatformException catch (e) {
+      Log.w('auth', 'Scheduled notification cleanup failed: ${e.code}');
     }
     // Reset before re-reading. `copyWith` reads null as "unchanged", so
     // `checkStatus` on its own would carry the signed-out email straight back

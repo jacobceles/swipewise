@@ -263,6 +263,26 @@ void main() {
     );
   });
 
+  test(
+    'a retired owner cannot restore cards or replace the guest mute list',
+    () async {
+      final db = await DatabaseHelper().database;
+      await db.delete('users');
+      await db.insert('users', {'id': 'local:guest', 'identifier': 'You'});
+      await db.insert('muted_merchants', {
+        'merchant_id': 'guest-mute',
+        'name': 'Guest store',
+        'muted_at': DateTime.now().millisecondsSinceEpoch,
+      });
+      await WalletBackupRepository().apply(_snapshot(['old']), userId: userId);
+      expect(await db.query('cards'), isEmpty);
+      expect(
+        (await db.query('muted_merchants')).single['merchant_id'],
+        'guest-mute',
+      );
+    },
+  );
+
   for (final signedIn in [false, true]) {
     test(
       'auto restore requires ${signedIn ? 'a configured service' : 'sign-in'}',

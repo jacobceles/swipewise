@@ -16,6 +16,8 @@ import '../api/reward_category_mapper.dart';
 import '../api/reward_engine.dart';
 import '../api/settings_repository.dart';
 import '../api/types.dart';
+import '../api/travel.dart';
+import '../api/offline_country.dart';
 import '../nearby/location_service.dart';
 
 final dataRepositoryProvider = Provider((ref) => DataRepository());
@@ -567,33 +569,41 @@ final cardLinksProvider = FutureProvider<List<LinkedCard>>((ref) async {
 /// rank). Built from the snapshot, links, activations, and preference order.
 /// Whether the user is currently abroad (country ≠ home) — flips the engine's
 /// FX-fee-aware ranking (N7). Home = [DataRepository.homeCountry]; current =
-/// the reverse-geocoded last-known fix. Rechecked on app resume (HomeScreen).
-/// Any unknown → false, so we never wrongly assume "abroad". Best-effort and
-/// bounded (the geocode is timed out); never throws.
+/// a recent last-known fix. Rechecked on app resume (HomeScreen). Polygon
+/// interiors are offline; uncertain points refresh via the OS in the background.
+/// Any unknown → false. Never holds local recommendations behind a geocoder.
 final travelIsForeignProvider = FutureProvider<bool>((ref) async {
   final auth = ref.watch(sessionProvider);
   if (!auth.isLoggedIn) return false;
-  return travelIsForeignNow(ref.watch(dataRepositoryProvider), auth.userId!);
-});
-
-/// The answer [travelIsForeignProvider] caches, computed fresh — also used on
-/// app resume, so crossing a border with the app open is noticed.
-Future<bool> travelIsForeignNow(DataRepository repo, String userId) async {
-  // Everything below is best-effort, and the catch is load-bearing rather
-  // than defensive. `Geolocator.getLastKnownPosition` THROWS when location
-  // permission is denied — and this gates `engineRankerProvider`, which
-  // produces every recommendation in the app. Without the catch, a user who
-  // declines location doesn't lose travel detection, they lose the whole
-  // Advisor tab: the error propagates and the screen sits on a spinner
-  // forever. Verified on-device 2026-08-09 by revoking the permission.
   try {
+    final repo = ref.watch(dataRepositoryProvider);
     final fix = await LocationService().lastKnown();
-    if (fix == null) return false;
-    return await repo.isAbroadAt(userId, fix.lat, fix.lng);
+    if (fix == null ||
+        fix.age > LocationService.maxLastKnownAge ||
+        !ref.mounted) {
+      return false;
+    }
+    final offline = await OfflineCountry.countryAt(fix.lat, fix.lng);
+    if (!ref.mounted) return false;
+    // Watching the value, not the future: local recommendations never wait
+    // for a network-backed OS geocoder. Its completion rebuilds the ranker.
+    final current =
+        offline ??
+        ref.watch(_geocodedCountryProvider((fix.lat, fix.lng))).asData?.value;
+    return isForeignTravel(
+      home: await repo.homeCountry(auth.userId!),
+      current: current,
+    );
   } catch (_) {
     return false;
   }
-}
+});
+
+// sync: opt-out — OS country lookup keyed by coordinate, not bank sync data.
+final _geocodedCountryProvider = FutureProvider.autoDispose
+    .family<String?, (double, double)>((ref, point) {
+      return geocodedCountryForCoordinate(point.$1, point.$2);
+    });
 
 /// The categories the user picked for each selectable-bonus group (N17),
 /// keyed by group id. Feeds [engineRankerProvider]: a "choose 1 of 9" bonus is

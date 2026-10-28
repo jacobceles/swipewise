@@ -37,6 +37,9 @@ class MainActivity : FlutterActivity() {
 
     private fun captureMerchantFromIntent(intent: Intent?) {
         val json = intent?.getStringExtra(NotificationHelper.EXTRA_OPTIONS_JSON)
+        // Don't replay account-specific advice on activity recreation after
+        // logout has cleared PendingMerchantStore and the notifications.
+        intent?.removeExtra(NotificationHelper.EXTRA_OPTIONS_JSON)
         PendingMerchantStore.set(json)
     }
 

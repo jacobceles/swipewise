@@ -36,7 +36,12 @@ data class MerchantOption(
     // the muted store when the user is standing at it (instead of naming an
     // unmuted neighbour), then DwellCheckReceiver suppresses at post time.
     val muted: Boolean = false,
+    val placeType: String? = null,
 ) {
+    // Old native metadata did not retain place type. Conservatively suppress
+    // legacy Transit options until the next registration supplies precise types.
+    val walkinEligible: Boolean get() = placeType !in setOf("atm", "bus_stop", "bus_station", "transit_station") &&
+        !(placeType == null && category in setOf("Transit", "Transportation", "ATMs"))
     companion object {
         fun fromChannelMap(opt: Map<String, Any?>): MerchantOption = MerchantOption(
             merchantId = opt["merchant_id"] as String,
@@ -52,6 +57,7 @@ data class MerchantOption(
             brandId = opt["brand_id"] as String?,
             mainStore = opt["main_store"] == true,
             muted = opt["muted"] == true,
+            placeType = opt["place_type"] as String?,
         )
     }
 }
@@ -135,7 +141,8 @@ class GeofenceMetadataStore(context: Context) {
             val out = mutableListOf<MerchantOption>()
             for (i in 0 until arr.length()) {
                 val item = arr.optJSONObject(i) ?: continue
-                out.add(item.toMerchantOption())
+                val option = item.toMerchantOption()
+                if (option.walkinEligible) out.add(option)
             }
             return out
         }
@@ -156,6 +163,7 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     if (brandId != null) put("brand_id", brandId)
     if (mainStore) put("main_store", true)
     if (muted) put("muted", true)
+    if (placeType != null) put("place_type", placeType)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -172,6 +180,7 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     brandId = nullableString("brand_id"),
     mainStore = optBoolean("main_store", false),
     muted = optBoolean("muted", false),
+    placeType = nullableString("place_type"),
 )
 
 private fun JSONObject.nullableString(key: String): String? {

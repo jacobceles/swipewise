@@ -31,6 +31,14 @@ class NearbyMerchant {
   });
 
   bool get isTemporarilyClosed => businessStatus == 'CLOSED_TEMPORARILY';
+
+  /// Still searchable, but never a walk-in fence or resolution candidate.
+  bool get walkinEligible => !const {
+    'atm',
+    'bus_stop',
+    'bus_station',
+    'transit_station',
+  }.contains(placeType);
 }
 
 /// Merchant enriched with the user's best card for that merchant's

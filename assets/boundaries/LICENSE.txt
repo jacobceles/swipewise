@@ -1,0 +1,17 @@
+Natural Earth v5.1.2, 1:110m Admin 0 Countries
+Source: https://github.com/nvkelso/natural-earth-vector/blob/v5.1.2/geojson/ne_110m_admin_0_countries.geojson
+License: public domain. https://www.naturalearthdata.com/about/terms-of-use/
+"All versions of Natural Earth raster + vector map data found on this website are in the public domain."
+
+us_ca.json contains exterior rings for the US mainland, Alaska mainland and
+Hawaii (Big Island), and Canada mainland, Vancouver Island and Newfoundland.
+Coordinates are [longitude, latitude], rounded to 0.01 degrees; consecutive
+duplicate vertices removed. Other islands/territories are intentionally not
+classified offline. The caller falls back to the OS geocoder for them.
+
+These generalized cartographic polygons are NOT precise international borders
+or coastline data. Classification requires a 40 km interior margin from every
+edge (including coastlines). This margin is a conservative uncertainty policy,
+not a positional accuracy guarantee. Near borders/coasts, on omitted islands,
+or outside these polygons, return unknown and use the OS geocoder. Never use
+these polygons to infer the country of a nearby coordinate from a cached fix.

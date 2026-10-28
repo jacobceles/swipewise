@@ -38,21 +38,29 @@ class BackupEnabledNotifier extends Notifier<bool> {
     final userId = auth.userId;
     if (userId != null) {
       Future.microtask(() async {
-        var loaded = await _settings.getBackupEnabledOrNull(userId);
-        if (loaded == null &&
-            auth.email != null &&
-            WalletBackupClient.isConfigured) {
-          // A failed lookup reads as "no backup" and leaves the switch unset,
-          // so the next launch asks again.
-          final remote = await ref
-              .read(walletBackupControllerProvider)
-              .remoteInfo();
-          if (remote.exists) {
-            await _settings.setBackupEnabled(userId, true);
-            loaded = true;
+        if (!ref.mounted || ref.read(authProvider).userId != userId) return;
+        await ref.read(walletBackupControllerProvider)._track(() async {
+          var loaded = await _settings.getBackupEnabledOrNull(userId);
+          if (loaded == null &&
+              auth.email != null &&
+              WalletBackupClient.isConfigured) {
+            // A failed lookup reads as "no backup" and leaves the switch unset,
+            // so the next launch asks again.
+            final remote = await ref
+                .read(walletBackupControllerProvider)
+                .remoteInfo();
+            if (!ref.mounted || ref.read(authProvider).userId != userId) return;
+            if (remote.exists) {
+              await _settings.setBackupEnabled(userId, true);
+              loaded = true;
+            }
           }
-        }
-        if (ref.mounted && state != (loaded ?? false)) state = loaded ?? false;
+          if (ref.mounted &&
+              ref.read(authProvider).userId == userId &&
+              state != (loaded ?? false)) {
+            state = loaded ?? false;
+          }
+        });
       });
     }
     return false;
@@ -62,12 +70,16 @@ class BackupEnabledNotifier extends Notifier<bool> {
   /// user about replacing an existing backup pass true; the UI passes false
   /// when it has not, because switching a toggle is consent to start backing
   /// up — not consent to destroy a backup made from another phone.
-  Future<void> setEnabled(bool enabled, {bool seedBackup = true}) async {
+  Future<void> setEnabled(bool enabled, {bool seedBackup = true}) => ref
+      .read(walletBackupControllerProvider)
+      ._track(() => _setEnabled(enabled, seedBackup: seedBackup));
+
+  Future<void> _setEnabled(bool enabled, {required bool seedBackup}) async {
     final userId = ref.read(authProvider).userId;
     if (userId == null) return;
     state = enabled;
     await _settings.setBackupEnabled(userId, enabled);
-    if (enabled && seedBackup) {
+    if (enabled && seedBackup && ref.read(authProvider).userId == userId) {
       await ref.read(walletBackupControllerProvider).backUpNow();
     }
   }
@@ -128,6 +140,24 @@ class RemoteBackupInfo {
 class WalletBackupController {
   WalletBackupController(this._ref);
   final Ref _ref;
+  final _pending = <Future<Object?>>{};
+
+  Future<T> _track<T>(Future<T> Function() operation) {
+    final future = operation();
+    _pending.add(future);
+    future.whenComplete(() => _pending.remove(future)).ignore();
+    return future;
+  }
+
+  Future<void> waitUntilIdle() async {
+    while (_pending.isNotEmpty) {
+      await Future.wait(
+        _pending.toList().map((f) => f.catchError((_) => null)),
+      );
+    }
+  }
+
+  bool _isCurrent(String userId) => _ref.mounted && _userId == userId;
 
   String? get _userId => _ref.read(authProvider).userId;
 
@@ -136,13 +166,16 @@ class WalletBackupController {
   /// Exists so the UI can say *what* it is about to overwrite. "Replace your
   /// backup?" is a question nobody can answer; "replace the backup from
   /// 9 Aug with 5 cards?" is.
-  Future<RemoteBackupInfo> remoteInfo() async {
+  Future<RemoteBackupInfo> remoteInfo() => _track(_remoteInfo);
+
+  Future<RemoteBackupInfo> _remoteInfo() async {
     final userId = _userId;
+    if (userId == null) return const RemoteBackupInfo(exists: false);
     final result = await _ref.read(walletBackupClientProvider).pull();
     final snapshot = result.snapshot;
     if (result.status != BackupStatus.ok ||
         snapshot == null ||
-        userId == null) {
+        !_isCurrent(userId)) {
       return const RemoteBackupInfo(exists: false);
     }
     final here = await _ref
@@ -158,14 +191,19 @@ class WalletBackupController {
   }
 
   /// Uploads the current wallet, replacing whatever the service holds.
-  Future<BackupStatus> backUpNow() async {
+  Future<BackupStatus> backUpNow() => _track(_backUpNow);
+
+  Future<BackupStatus> _backUpNow() async {
     final userId = _userId;
     if (userId == null) return BackupStatus.unavailable;
     final snapshot = await _ref
         .read(walletBackupRepositoryProvider)
         .capture(userId);
+    if (!_isCurrent(userId)) return BackupStatus.unavailable;
     final status = await _ref.read(walletBackupClientProvider).push(snapshot);
-    if (status == BackupStatus.ok) await _recordSynced(userId, snapshot);
+    if (status == BackupStatus.ok && _isCurrent(userId)) {
+      await _recordSynced(userId, snapshot);
+    }
     return status;
   }
 
@@ -179,7 +217,9 @@ class WalletBackupController {
   /// would lose those cards, and only the user can say which copy wins, so
   /// Profile says why it stopped. Cards deleted here are not a conflict:
   /// when the backup is still the one this phone uploaded, it is replaced.
-  Future<AutoBackupOutcome> maybeAutoBackup() async {
+  Future<AutoBackupOutcome> maybeAutoBackup() => _track(_maybeAutoBackup);
+
+  Future<AutoBackupOutcome> _maybeAutoBackup() async {
     final userId = _userId;
     if (userId == null || !await _settings.getBackupEnabled(userId)) {
       return AutoBackupOutcome.off;
@@ -192,6 +232,7 @@ class WalletBackupController {
 
     final client = _ref.read(walletBackupClientProvider);
     final remote = await client.pull();
+    if (!_isCurrent(userId)) return AutoBackupOutcome.off;
     if (remote.status == BackupStatus.failed ||
         remote.status == BackupStatus.unavailable) {
       return AutoBackupOutcome.failed;
@@ -209,7 +250,7 @@ class WalletBackupController {
     if (await client.push(snapshot) != BackupStatus.ok) {
       return AutoBackupOutcome.failed;
     }
-    await _recordSynced(userId, snapshot);
+    if (_isCurrent(userId)) await _recordSynced(userId, snapshot);
     return AutoBackupOutcome.uploaded;
   }
 
@@ -232,10 +273,13 @@ class WalletBackupController {
   ///
   /// Unconditionally destructive — every caller has either checked the wallet
   /// is empty or asked the user first.
-  Future<RestoreOutcome> restoreNow() async {
+  Future<RestoreOutcome> restoreNow() => _track(_restoreNow);
+
+  Future<RestoreOutcome> _restoreNow() async {
     final userId = _userId;
     if (userId == null) return RestoreOutcome.unavailable;
     final result = await _ref.read(walletBackupClientProvider).pull();
+    if (!_isCurrent(userId)) return RestoreOutcome.unavailable;
     switch (result.status) {
       case BackupStatus.unavailable:
         return RestoreOutcome.unavailable;
@@ -266,7 +310,9 @@ class WalletBackupController {
   /// elsewhere would destroy edits they never agreed to lose. That collision
   /// is what the two manual buttons in Profile are for, where the direction is
   /// stated and confirmed.
-  Future<RestoreOutcome> maybeAutoRestore() async {
+  Future<RestoreOutcome> maybeAutoRestore() => _track(_maybeAutoRestore);
+
+  Future<RestoreOutcome> _maybeAutoRestore() async {
     final userId = _userId;
     if (userId == null) return RestoreOutcome.unavailable;
     if (!_ref.read(backupAvailableProvider)) return RestoreOutcome.unavailable;
@@ -278,10 +324,11 @@ class WalletBackupController {
     final empty = await _ref
         .read(walletBackupRepositoryProvider)
         .isWalletEmpty(userId);
+    if (!_isCurrent(userId)) return RestoreOutcome.unavailable;
     if (!empty) return RestoreOutcome.nothingToRestore;
 
     final outcome = await restoreNow();
-    if (outcome == RestoreOutcome.restored) {
+    if (outcome == RestoreOutcome.restored && _isCurrent(userId)) {
       // A restore proves this account uses backup. Leaving the new phone with
       // the toggle off would quietly stop protecting it while the user
       // reasonably assumes otherwise — a silent trap, and the more dangerous

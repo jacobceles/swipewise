@@ -122,12 +122,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
-                          // Says what is true of *this* build. Backup shipped, so the
-                          // promise is now a description — but it is still off by
-                          // default, and that is the part worth stating up front.
                           Text(
-                            'Signing in only identifies you. Backup is opt-in — '
-                            'nothing is uploaded unless you turn it on.',
+                            'Signing in creates an account with your email and name. '
+                            'Backup is off unless you turn it on or your account '
+                            'already has a backup.',
                             style: AppText.bodySm(color: palette.muted),
                             textAlign: TextAlign.center,
                           ),

@@ -8,10 +8,14 @@ class GeofenceChannel {
   /// merchants we want to surface for that zone - usually one entry, but
   /// multiple when overlapping merchants were clustered together.
   static Future<int> registerSet({
+    required String userId,
+    required int accountEpoch,
     required List<Map<String, dynamic>> zones,
     Map<String, dynamic>? boundary,
   }) async {
     final count = await _channel.invokeMethod<int>('registerSet', {
+      'user_id': userId,
+      'account_epoch': accountEpoch,
       'zones': zones,
       'boundary': boundary,
     });
@@ -27,9 +31,21 @@ class GeofenceChannel {
     } catch (_) {}
   }
 
-  static Future<void> unregisterAll() async {
-    await _channel.invokeMethod('unregisterAll');
+  static Future<void> unregisterAll({
+    required String userId,
+    required int accountEpoch,
+  }) async {
+    await _channel.invokeMethod('unregisterAll', {
+      'user_id': userId,
+      'account_epoch': accountEpoch,
+    });
   }
+
+  static Future<void> clearAccountState() =>
+      _channel.invokeMethod('clearAccountState');
+
+  static Future<int> accountEpoch() async =>
+      await _channel.invokeMethod<int>('accountEpoch') ?? 0;
 
   static Future<int> getRegisteredCount() async {
     final c = await _channel.invokeMethod<int>('getRegisteredCount');

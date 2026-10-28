@@ -137,8 +137,14 @@ class GeofenceManager {
     required Set<String>? categoryIds,
     required String trigger,
   }) async {
+    // Capture before any slow search/ranking work. Logout advances the native
+    // epoch, so even a same-account re-login cannot accept this run's old advice.
+    final accountEpoch = await GeofenceChannel.accountEpoch();
     if (!enabled) {
-      await GeofenceChannel.unregisterAll();
+      await GeofenceChannel.unregisterAll(
+        userId: userId,
+        accountEpoch: accountEpoch,
+      );
       await _trace('trigger=$trigger disabled -> unregistered all');
       return true;
     }
@@ -147,7 +153,10 @@ class GeofenceManager {
     // no location is asked for on its behalf: the check runs before
     // getOneShot.
     if ((await repo.queryAllCards(userId)).isEmpty) {
-      await GeofenceChannel.unregisterAll();
+      await GeofenceChannel.unregisterAll(
+        userId: userId,
+        accountEpoch: accountEpoch,
+      );
       await _trace('trigger=$trigger no cards -> unregistered all');
       return true;
     }
@@ -201,7 +210,7 @@ class GeofenceManager {
       final mutedIds = await repo.queryMutedMerchantIds();
       // No card advice at an ATM. Search no longer asks for them, but the
       // tile cache keeps older results for 7 days.
-      merchants = merchants.where((m) => m.placeType != 'atm').toList();
+      merchants = merchants.where((m) => m.walkinEligible).toList();
       final clusters = _clusterMerchants(merchants, _haversineMeters);
       final cappedClusters = clusters.length > merchantCap
           ? clusters.sublist(0, merchantCap)
@@ -241,6 +250,8 @@ class GeofenceManager {
         capped: clusters.length > merchantCap ? cappedClusters : null,
       );
       final count = await GeofenceChannel.registerSet(
+        userId: userId,
+        accountEpoch: accountEpoch,
         zones: payload,
         boundary: boundary,
       );
@@ -257,6 +268,7 @@ class GeofenceManager {
       await _recordSuccessfulRegistration(userId, fix.lat, fix.lng);
       return searchError == null;
     } catch (e, st) {
+      if (e is PlatformException && e.code == 'STALE_ACCOUNT') return true;
       if (e is LocationDenied) {
         // Not a failure to retry: nothing can be fenced until the user allows
         // location (in setup, or from Stores / Profile).
@@ -565,6 +577,7 @@ class GeofenceManager {
           // A shopping plaza's own pin: never the store you pay at.
           if (m.placeType == 'shopping_mall') 'plaza': true,
           'category': label,
+          'place_type': m.placeType,
           'category_enum': category.name,
           'matched_brand': brandHit?.brand,
           // The brand's main store, not a counter inside it: Costco Wholesale

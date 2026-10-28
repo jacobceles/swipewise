@@ -43,6 +43,18 @@ user toggles groups on/off in the nearby-categories screen; preference is stored
 `nearby_place_type_ids` in the `settings` table. ATMs are not searched (no card advice at
 one), and fence registration also skips any `atm` place still in the 7-day tile cache.
 
+`bus_stop`, `bus_station` and `transit_station` remain searchable but cannot become walk-in
+fences or notification candidates. The filter also applies to cached merchants and native
+persisted options. Legacy native Transit options without a precise place type are suppressed
+until registration refreshes them. This reduces traffic false alerts; it does not prevent a
+nearby real shop from qualifying during a long traffic stop.
+
+Travel ranking uses bundled, public-domain US/Canada polygons for confident interiors, with
+a conservative 40 km boundary/coast uncertainty margin. This is not a spatial cache or a
+precise border map. Uncertain points use the OS geocoder; foreground recommendations use
+the available answer without awaiting that network lookup and refresh on completion.
+Nearby searches still need a location fix and, on cache misses, the Places service.
+
 ## Category labels
 
 [`google_place_type_map.dart`](../lib/nearby/google_place_type_map.dart) maps Google

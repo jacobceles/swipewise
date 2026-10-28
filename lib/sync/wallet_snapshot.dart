@@ -266,6 +266,16 @@ class WalletBackupRepository {
     final mutedCols = await columnsOf('muted_merchants', mutedMerchantColumns);
 
     await db.transaction((txn) async {
+      // Restore can finish after an account was removed in another isolate.
+      // In particular it must never replace the next guest's global mute list.
+      if ((await txn.query(
+        'users',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [userId],
+      )).isEmpty) {
+        return;
+      }
       for (final table in ['cards', 'card_overrides', 'card_links']) {
         await txn.delete(
           table,

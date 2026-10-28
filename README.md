@@ -64,16 +64,22 @@ Google Play remains the recommended installation and update channel. See
 
 What leaves your phone, and what doesn't:
 
+- **The free app has no bank connection.** It never asks for your bank login, credentials,
+  or financial transaction history.
 - **Signing in is optional.** Skip it and the app works the same, keyed to an id made on your
-  phone that is never sent anywhere. Sign in only if you want a backup.
-- **Backup is opt-in and off by default.** Nothing is uploaded unless you turn it on. When
-  you do, it carries your cards, your edits to them and your preferences,
-  [documented field by field](docs/BACKUP_SCHEMA.md).
+  phone that is never sent anywhere. Signing in creates an account with your email and name;
+  backup is separate.
+- **Backup is opt-in and off by default.** Unless your account already has an existing server
+  backup, nothing is uploaded unless you turn it on. When you do, it carries your cards, your edits
+  to them and your preferences, [documented field by field](docs/BACKUP_SCHEMA.md).
 - **No tracking, no ads.** Nothing records which cards you're shown, which notifications
-  fire, or what you tap. Crash reports are the one exception, and they carry no wallet, no
-  location and no account.
-- **Location stays yours.** Your precise GPS fix never leaves the phone. Only a location
-  rounded to about 110 m is sent to Google Places to find nearby stores.
+  fire, or what you tap. Crash and diagnostic reports via Firebase Crashlytics (anonymous
+  install ID, session starts); we don't attach wallet or location data.
+- **Location.** Foreign-travel checks use offline US/Canada country polygons where confident;
+  uncertain locations may send precise coordinates to the OS geocoder. Nearby-store searches
+  send a location rounded to about 110 m through our service to Google Places.
+- **Assets and fonts.** Card art may load from issuer CDNs or our catalog service and be cached; fonts (Inter and
+  JetBrains Mono) load via Google Fonts at runtime.
 
 Full details: [Privacy Policy](https://jacobcelestine.com/swipewise/privacy_policy.html).
 
@@ -109,8 +115,13 @@ flutter run --dart-define-from-file=keys.free.json
 
 `keys.free.json` is committed: it holds three public URLs and no credential. The Places key
 lives in a Cloudflare Worker, and the app talks to that rather than to Google directly.
-`tool/verify_release_apk.py` fails the build if a credential ever reaches the APK, and runs on
-every pull request.
+`tool/verify_release_apk.py` verifies that no Places or bank-aggregator credentials can reach the
+APK, and runs as an automated gate on every pull request.
+
+> **Local builds:** Live `/places/nearby` calls require Firebase App Check. Local debug builds
+> need a registered Firebase debug token; arbitrary sideloaded release builds may fail Play
+> Integrity attestation. See [docs/setup.md](docs/setup.md). Contributed brands in `brands.json`
+> reach installed apps after publication to R2.
 
 Full build, release and keys details: [docs/setup.md](docs/setup.md).
 

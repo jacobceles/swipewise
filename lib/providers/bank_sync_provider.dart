@@ -71,6 +71,13 @@ class BankSyncState {
 }
 
 class BankSyncNotifier extends Notifier<AsyncValue<BankSyncState>> {
+  Future<void>? _inFlight;
+
+  Future<void> clearForLogout() async {
+    await _inFlight?.catchError((_) {});
+    if (ref.mounted) state = const AsyncValue.data(BankSyncState());
+  }
+
   late final DataRepository _repo;
   // Catalog layer: hydrate the bundled catalog and (re)bind synced cards to
   // catalog products so each card gets its rewards/perks/recommendations.
@@ -98,7 +105,20 @@ class BankSyncNotifier extends Notifier<AsyncValue<BankSyncState>> {
   /// [forceRefresh] bypasses the engine's per-bank re-scrape throttle. True for
   /// user gestures (pull-to-refresh, retry, add-bank, debit toggle); the
   /// automatic sync on app open passes false.
-  Future<void> runSync({
+  Future<void> runSync({String? waitForMemberId, bool forceRefresh = true}) {
+    if (_inFlight != null) return _inFlight!;
+    final run = _runSync(
+      waitForMemberId: waitForMemberId,
+      forceRefresh: forceRefresh,
+    );
+    _inFlight = run;
+    run.whenComplete(() {
+      if (identical(_inFlight, run)) _inFlight = null;
+    }).ignore();
+    return run;
+  }
+
+  Future<void> _runSync({
     String? waitForMemberId,
     bool forceRefresh = true,
   }) async {

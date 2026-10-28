@@ -184,7 +184,9 @@ Within a tier the richest rate is tried first, and the engine handles:
 - **Point valuations & FX** — `effectiveCentsPerDollar` = `rate × point-system cent value`,
   minus the card's `foreign_tx_fee_pct` when the user is abroad (travel mode: home country =
   main bank-account currency, else the wallet's one card country, else the phone region;
-  current = the geocoded fix). The Advisor, Nearby, walk-in alerts and the catch-all card all
+   current = an offline US/Canada polygon classification, or OS geocoding for uncertain points).
+   Foreground recommendations do not wait for OS geocoding and refresh when it completes.
+   The Advisor, Nearby, walk-in alerts and the catch-all card all
   apply it; an unknown fee docks nothing. This single
   cross-currency-comparable number is the **only** key ranking compares, so a 5% cashback
   rule and a 5×-points rule sort correctly against each other.

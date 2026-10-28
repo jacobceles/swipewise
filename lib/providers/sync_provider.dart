@@ -10,6 +10,8 @@ class SyncNotifier extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() => const AsyncValue.data(null);
 
+  void clearForLogout() => state = const AsyncValue.data(null);
+
   Future<void> runSync({bool forceFull = false}) async {
     final auth = ref.read(authProvider);
     if (!auth.isLoggedIn || auth.userId == null) {

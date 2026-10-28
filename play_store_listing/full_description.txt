@@ -14,11 +14,12 @@ PRIVATE BY DESIGN
 
 Privacy isn't a promise. It's the architecture:
 
-• No account needed. No sign-up, no email, no password — open the app and use it. Signing in with Google is offered, never required, and only backs up your wallet if you ask it to.
-• No bank connection. SwipeWise never asks for your bank login, card numbers, or transactions because it doesn't need them to recommend the right card.
-• On-device only. Your wallet and rewards data are stored in a local database on your phone.
-• No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising and no usage analytics. The only thing sent off your device is a crash report when the app fails, so it can be fixed — a stack trace and your device model, with no wallet, no location and no account attached.
-• Your location stays yours. Your precise GPS fix never leaves the device. Only a location rounded to ~110 m is used to look up nearby stores through Google Places, nothing about where you have been is stored, and no location is ever attached to a crash report.
+• No account needed. No sign-up, no email, no password — open the app and use it. Signing in with Google is optional; it creates an account with your email and name, and backup is separate (off by default unless your account already has an existing backup).
+• No bank connection in the free app. SwipeWise never asks for your bank login, card numbers, or transactions to recommend the right card.
+• Local wallet. Your wallet and rewards data are stored on your phone; enabling backup uploads your wallet and preferences, not your transactions.
+• No tracking, no ads. SwipeWise doesn't track which cards you view, which notifications fire, or what you tap. There is no advertising. Diagnostic and crash reports via Firebase Crashlytics carry an anonymous install ID and session starts with stack traces and device model — no wallet or location data is ever attached.
+• Location. Nearby searches send a location rounded to ~110 m through our service to Google Places. Travel mode may send precise coordinates to the OS geocoder; updated builds first check offline US/Canada country polygons. Nearby caches and arrival diagnostics stay on your phone, not in crash reports.
+• Fonts and card art. Card art may load via issuer CDNs or our catalog service and be cached; fonts load via Google Fonts.
 
 OPEN SOURCE
 

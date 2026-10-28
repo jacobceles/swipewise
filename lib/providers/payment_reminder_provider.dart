@@ -14,10 +14,26 @@ import 'data_providers.dart';
 class PaymentReminderController {
   PaymentReminderController(this._ref);
   final Ref _ref;
+  Future<void>? _inFlight;
+
+  Future<void> waitUntilIdle() async => _inFlight?.catchError((_) {});
 
   /// Rebuilds every scheduled reminder from current state. Safe to call often —
   /// it cancels and re-adds, so it is idempotent.
-  Future<void> reschedule() async {
+  Future<void> reschedule() {
+    final previous = _inFlight;
+    final run = () async {
+      await previous?.catchError((_) {});
+      await _reschedule();
+    }();
+    _inFlight = run;
+    run.whenComplete(() {
+      if (identical(_inFlight, run)) _inFlight = null;
+    }).ignore();
+    return run;
+  }
+
+  Future<void> _reschedule() async {
     final userId = _ref.read(authProvider).userId;
     if (userId == null) return;
     final settings = SettingsRepository(_ref.read(dataRepositoryProvider));
