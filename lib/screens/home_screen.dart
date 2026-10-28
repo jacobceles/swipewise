@@ -189,9 +189,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       markGateDone();
       return;
     }
-    final pending = ref.read(setupPendingProvider);
-    ref.read(setupPendingProvider.notifier).set(false);
     final settings = SettingsRepository(ref.read(dataRepositoryProvider));
+    final pending =
+        ref.read(setupPendingProvider) ||
+        await settings.getSetupPending(userId);
     final asked = await settings.getPermissionsAsked(userId);
     final cards = await ref
         .read(cardsProvider.future)
@@ -205,6 +206,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         userId,
         cards.isEmpty ? FlowStep.cards : FlowStep.cardsAdded,
       );
+      if (mounted) {
+        await ref.read(setupPendingProvider.notifier).set(false);
+      } else {
+        await settings.setSetupPending(userId, false);
+      }
     } else if (!asked && cards.isNotEmpty) {
       await _runSetup(userId, FlowStep.notifications);
     }

@@ -28,6 +28,7 @@ class SettingsRepository {
   static const _kNearbyPlaceTypeIds = 'nearby_place_type_ids';
   static const _kPermissionsAsked = 'permissions_asked';
   static const _kOnboardingSeen = 'onboarding_seen';
+  static const _kSetupPending = 'setup_pending';
   static const _kCardPreferenceOrder = 'card_preference_order';
   static const _kDismissedRecurringTips = 'dismissed_recurring_tips';
   static const _kIncludeDebitAccounts = 'include_debit_accounts';
@@ -366,6 +367,15 @@ class SettingsRepository {
 
   Future<void> setOnboardingSeen(String userId) =>
       _repo.setSetting(userId, _kOnboardingSeen, 'true');
+
+  /// Whether the first-run setup flow (Add cards -> Store alerts) is still
+  /// owed after answering the welcome screen. Persisted so process death
+  /// before adding a card resumes setup on the next launch.
+  Future<bool> getSetupPending(String userId) async =>
+      await _repo.getSetting(userId, _kSetupPending) == 'true';
+
+  Future<void> setSetupPending(String userId, bool pending) =>
+      _repo.setSetting(userId, _kSetupPending, pending.toString());
 
   /// Whether this device backs the wallet up to the sync service.
   ///

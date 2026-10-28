@@ -389,4 +389,89 @@ void main() {
     await seedCard('card-1');
     expect(await repo.isWalletEmpty(userId), isFalse);
   });
+
+  test('capture exports only the documented allowlisted columns', () async {
+    final db = await DatabaseHelper().database;
+    await db.insert('cards', {
+      'id': 'card-1',
+      'user_id': userId,
+      'source': 'manual',
+      'provider': 'Chase',
+      'name': 'Sapphire Preferred',
+      'last_four': '4242',
+      'account_slug': 'internal-slug',
+      'institution_id': 'manual:chase',
+      'network': 'Visa',
+      'image_url': 'https://example.com/card.png',
+      'institution_logo': 'https://example.com/logo.png',
+      'account_type': 'Credit_Card',
+      'sub_type': 'internal-subtype',
+      'originated_manual': 1,
+      'created_at': '2026-01-01T00:00:00Z',
+    });
+    await db.insert('card_overrides', {
+      'card_id': 'card-1',
+      'user_id': userId,
+      'manual_credit_limit': 10000.0,
+      'custom_name': 'Travel',
+      'product_identification': 'chase-sapphire',
+      'identification_source': 'user',
+      'due_day': 15,
+      'reminder_enabled': 1,
+      'reminder_lead_days': 3,
+      'updated_at': '2026-01-01T00:00:00Z',
+    });
+    await db.insert('card_links', {
+      'user_id': userId,
+      'card_id': 'card-1',
+      'card_product_id': 'chase-sapphire',
+      'source': 'manual',
+      'confidence': 1.0,
+      'linked_at': '2026-01-01T00:00:00Z',
+    });
+    await db.insert('muted_merchants', {
+      'merchant_id': 'place-123',
+      'name': 'Starbucks',
+      'muted_at': 1700000000,
+    });
+
+    final snapshot = await WalletBackupRepository().capture(userId);
+
+    expect(
+      snapshot.cards.single.keys.toSet(),
+      {
+        'id',
+        'source',
+        'provider',
+        'name',
+        'last_four',
+        'network',
+        'image_url',
+        'institution_id',
+        'institution_logo',
+        'account_type',
+      },
+    );
+    expect(
+      snapshot.cardOverrides.single.keys.toSet(),
+      {
+        'card_id',
+        'manual_credit_limit',
+        'custom_name',
+        'product_identification',
+        'identification_source',
+        'due_day',
+        'reminder_enabled',
+        'reminder_lead_days',
+      },
+    );
+    expect(
+      snapshot.cardLinks.single.keys.toSet(),
+      {'card_id', 'card_product_id', 'source', 'confidence'},
+    );
+    expect(
+      snapshot.mutedMerchants.single.keys.toSet(),
+      {'merchant_id', 'name', 'muted_at'},
+    );
+  });
 }

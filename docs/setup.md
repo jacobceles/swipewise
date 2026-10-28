@@ -69,13 +69,16 @@ nothing to authenticate with, and a value that isn't in the binary can't be extr
   body plus a Firebase App Check token; the Worker verifies the token, adds the Places key it
   holds as a secret, and forwards.
 
-  ⚠️ **App Check is enforced, and how you test it differs per build type.** Attestation is
-  designed to fail for anything not distributed by Play, so a locally-signed APK never attests:
+  ⚠️ **App Check is enforced, and how you test it differs per build type.** A locally-signed
+  release is not equivalent to a Play-recognized, Play-signed release. Firebase supports
+  distribution through both Play and external channels; see [GitHub releases](github-releases.md)
+  for the settings and validation gates. Google's injected Play licensing is a separate control.
 
   | Build | Provider | To make it attest |
   |---|---|---|
   | debug (`.dev`) | debug provider | Register one token at Firebase Console → App Check → **Manage debug tokens**, put it in the git-ignored `keys.debug.json` (`{"APP_CHECK_DEBUG_TOKEN": "<uuid>"}`) and build with `--dart-define-from-file=keys.free.json --dart-define-from-file=keys.debug.json`. Without the file the build mints a random per-install secret (logged once: `Enter this debug secret (…)`) |
-  | release, sideloaded | Play Integrity | **Cannot** — Play Integrity only recognises Play-distributed builds; `getToken` returns `403 App attestation failed` |
+  | release, locally signed | Play Integrity | Not a supported attestation path for our production app; use a Play-recognized artifact |
+  | release, Play-signed and sideloaded | Play Integrity | Supported by Firebase with the correct settings; fresh-install runtime testing is required, including Google's separate licensing protection |
   | release, testable | Play Integrity | Upload via Play **Internal App Sharing** (an install link, Play-signed, no release needed) or the internal-testing track |
 
   ⛔ **Never add a flag that lets a release build use the debug provider.** It would hand anyone a

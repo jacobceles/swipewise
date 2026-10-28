@@ -92,7 +92,8 @@ void main() {
         nearbyOn: true,
         checks: {..._allOk, AlertCheck.activity: false},
       );
-      expect(find.text('Alerts may be late'), findsOneWidget);
+      expect(find.text("All set — we'll nudge you in stores"), findsOneWidget);
+      expect(find.text('Alerts may be late'), findsNothing);
       expect(find.text('Physical activity'), findsOneWidget);
       expect(find.text('Tells walking in from driving past'), findsOneWidget);
       expect(find.text('Allow'), findsOneWidget);

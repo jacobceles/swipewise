@@ -633,6 +633,7 @@ final engineRankerProvider = FutureProvider<EngineRanker?>((ref) async {
   final prefOrder = await ref.watch(cardPreferenceOrderProvider.future);
   final isForeign = await ref.watch(travelIsForeignProvider.future);
   final bonusSelections = await ref.watch(bonusSelectionsProvider.future);
+  final homeCountry = await repo.homeCountry(auth.userId!);
   return EngineRanker(
     snapshot: snapshot,
     linkedCards: links,
@@ -641,6 +642,7 @@ final engineRankerProvider = FutureProvider<EngineRanker?>((ref) async {
     cardPreferenceOrder: prefOrder,
     isForeign: isForeign,
     selectedBonusCategories: bonusSelections,
+    homeCountry: homeCountry,
   );
 });
 
@@ -664,8 +666,10 @@ final noForeignFeeCardsProvider = FutureProvider<List<LinkedCard>>((ref) async {
 });
 
 /// A rotating-bonus card whose categories are live this quarter and require
-/// activation (Track B / B6). The engine already demotes an unactivated card
-/// to its baseline; this surfaces the set so the UI can offer the toggle.
+/// activation (Track B / B6). The engine assumes the current quarter's
+/// rotating bonus is activated during ranking (see `resolve` in
+/// `reward_engine.dart`); this surfaces the set for activation reminders and
+/// any future per-quarter toggle.
 class RotatingCardStatus {
   const RotatingCardStatus({
     required this.cardId,
@@ -831,7 +835,10 @@ final rewardRankingProvider =
           ((merchant != null && merchant.isNotEmpty)
               ? repo.loadBrandResolver().resolve(merchant)
               : null);
-      return ranker.rewardRanking(key.category, brandFilter: brandId);
+      final effectiveCategory = brandId != null
+          ? storeCategory(key.category, brandId)
+          : key.category;
+      return ranker.rewardRanking(effectiveCategory, brandFilter: brandId);
     });
 
 // sync: opt-out — debug diagnostic counts, manually refreshed via the

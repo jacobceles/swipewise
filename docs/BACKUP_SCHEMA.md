@@ -11,15 +11,18 @@ guarantees below are enforced by tests in
 
 ## What is uploaded
 
-| Table | What it is | Example fields |
-|---|---|---|
-| `cards` | The cards in your wallet | display name, last four digits, network, issuer, card art URL |
-| `card_overrides` | Your edits to those cards | nickname, manual credit limit, statement due day, per-card reminder settings |
-| `card_links` | Which catalog product each card maps to | product id, how it was matched, confidence |
-| `settings` | Your preferences — **allowlisted, see below** | default screen, search radius, preferred card order, reminder lead time |
-| `muted_merchants` | Stores you silenced for arrival alerts | the place id and name of each muted store |
+Every exported table and column is allowlisted in `WalletBackupRepository.capture()`. Columns not listed here (`user_id`, `account_slug`, `sub_type`, `originated_manual`, `created_at`, `updated_at`, `linked_at`) are never exported.
 
-Plus two pieces of bookkeeping: a schema version, and the timestamp the backup was taken.
+| Table | What it is | Exported columns (complete list) |
+|---|---|---|
+| `cards` | The cards in your wallet | `id`, `source`, `provider`, `name`, `last_four`, `network`, `image_url`, `institution_id`, `institution_logo`, `account_type` |
+| `card_overrides` | Your edits to those cards | `card_id`, `manual_credit_limit`, `custom_name`, `product_identification`, `identification_source`, `due_day`, `reminder_enabled`, `reminder_lead_days` |
+| `card_links` | Which catalog product each card maps to | `card_id`, `card_product_id`, `source`, `confidence` |
+| `settings` | Your preferences — **allowlisted, see below** | `key`, `value` (exported as a `{key: value}` map for the allowlisted keys below) |
+| `muted_merchants` | Stores you silenced for arrival alerts | `merchant_id` (Google Place ID), `name` (store display name), `muted_at` (mute timestamp) |
+| `rotating_activations` | Quarterly bonus activation records | *(not exported)* |
+
+Plus two pieces of bookkeeping on the root JSON object: `schemaVersion` and `capturedAt`.
 
 ## What is never uploaded
 
@@ -29,8 +32,10 @@ Plus two pieces of bookkeeping: a schema version, and the timestamp the backup w
   cannot follow a device; a restored phone re-links rather than pretending otherwise.
 - **Full card numbers.** The app never has them — only the last four digits, which is all the
   bank ever provides.
-- **Location, or anything derived from it.** Nearby-store lookups happen on the device and are
-  never part of a backup.
+- **GPS history or coordinates.** Nearby-store lookups happen on the device and raw GPS
+  coordinates or location history are never part of a backup. Note that `muted_merchants`
+  does include the Google Place ID (`merchant_id`) and store name (`name`) of stores you
+  explicitly muted for arrival alerts.
 
 > `muted_merchants` is the one table here with no user column — it is device-level, because
 > the Android geofence receivers read it without a user context. It is still backed up: from
@@ -40,15 +45,24 @@ Plus two pieces of bookkeeping: a schema version, and the timestamp the backup w
 
 ## Settings: an allowlist, not a blocklist
 
-Only settings that are genuinely *yours* travel. Everything else stays on the device that
+Only settings that are genuinely *yours* travel (`SettingsRepository.syncableSettingsKeys`). Everything else stays on the device that
 wrote it, and any setting added to the app in future is device-local until someone
 deliberately adds it to the list — the failure direction is "didn't sync" rather than
 "leaked".
 
-Travels: default screen, default advisor view, nearby enabled, search radius,
-dwell time per category, nearby place types, preferred card order, dismissed recurring tips,
-include debit accounts, payment reminders enabled, payment reminder lead days, activation
-reminders enabled.
+Travels (`syncableSettingsKeys`):
+- `default_screen` (default screen on launch)
+- `default_advisor_view` (default Advisor tab)
+- `nearby_enabled` (arrival alerts master switch)
+- `nearby_radius_mi` (nearby search radius)
+- `nearby_dwell_by_category` (dwell time per category)
+- `nearby_place_type_ids` (enabled nearby place types)
+- `card_preference_order` (preferred card tie-break order)
+- `dismissed_recurring_tips` (dismissed recurring-payment tips)
+- `include_debit_accounts` (include debit accounts toggle)
+- `payment_reminders_enabled` (payment reminders master toggle)
+- `payment_reminder_lead_days` (default reminder lead days)
+- `activation_reminders_enabled` (quarterly activation reminders toggle)
 
 An old backup may still carry `catalog_country` (the Profile "Card Country" setting, removed
 for an on-screen filter in Add a Card); restore drops it because it is no longer listed.

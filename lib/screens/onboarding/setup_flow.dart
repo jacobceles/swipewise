@@ -37,6 +37,7 @@ class Perms {
     this.notificationsBlocked = false,
     this.location = false,
     this.locationBlocked = false,
+    this.preciseLocation = true,
     this.always = false,
     this.activity = false,
     this.alarms = false,
@@ -47,25 +48,40 @@ class Perms {
   final bool notificationsBlocked;
   final bool location;
   final bool locationBlocked;
+  final bool preciseLocation;
   final bool always;
   final bool activity;
   final bool alarms;
   final bool battery;
 
-  /// A store alert can reach the user only with both.
-  bool get alertsOn => notifications && always;
+  /// A store alert can reach the user only with notifications, precise
+  /// location, and background ("all the time") access.
+  bool get alertsOn => notifications && preciseLocation && always;
 
   static Future<Perms> read() async {
     final n = await Permission.notification.status;
     final loc = await Geolocator.checkPermission();
+    final hasLoc =
+        loc == LocationPermission.whileInUse ||
+        loc == LocationPermission.always;
+    var precise = true;
+    if (hasLoc) {
+      try {
+        precise =
+            await Geolocator.getLocationAccuracy() !=
+            LocationAccuracyStatus.reduced;
+      } catch (_) {
+        precise = true;
+      }
+    }
     return Perms(
       notifications: n.isGranted,
       notificationsBlocked: n.isPermanentlyDenied,
-      location:
-          loc == LocationPermission.whileInUse ||
-          loc == LocationPermission.always,
-      locationBlocked: loc == LocationPermission.deniedForever,
-      always: (await Permission.locationAlways.status).isGranted,
+      location: hasLoc && precise,
+      locationBlocked:
+          loc == LocationPermission.deniedForever || (hasLoc && !precise),
+      preciseLocation: precise,
+      always: (await Permission.locationAlways.status).isGranted && precise,
       activity: (await Permission.activityRecognition.status).isGranted,
       alarms: (await Permission.scheduleExactAlarm.status).isGranted,
       battery: (await Permission.ignoreBatteryOptimizations.status).isGranted,
@@ -189,7 +205,7 @@ class _SetupFlowState extends ConsumerState<SetupFlow>
   }
 
   static bool _isAlertStep(FlowStep s) =>
-      s != FlowStep.cards && s != FlowStep.cardsAdded && s != FlowStep.noCards;
+      s != FlowStep.cards && s != FlowStep.noCards;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -553,14 +569,19 @@ class _SetupFlowState extends ConsumerState<SetupFlow>
           tracker: tracker,
           busy: _busy,
           hero: const _BlockedMapHero(),
-          content: const [
+          content: [
             ObHeading(
-              title: 'Turn on location in Settings',
-              body:
-                  "You chose “Don't allow” before, so Android won't ask "
-                  'again.',
+              title: _perms.preciseLocation
+                  ? 'Turn on location in Settings'
+                  : 'Precise location needed',
+              body: _perms.preciseLocation
+                  ? "You chose “Don't allow” before, so Android won't ask "
+                        'again.'
+                  : 'Approximate location only sees your neighbourhood, not '
+                        'which store you walked into. Turn on “Use precise '
+                        'location” in Settings.',
             ),
-            DisclosureBox(
+            const DisclosureBox(
               color: Ob.teal,
               title: NearbyPermissionGate.disclosureTitle,
               paragraphs: [
@@ -568,7 +589,7 @@ class _SetupFlowState extends ConsumerState<SetupFlow>
                 NearbyPermissionGate.disclosureUse,
               ],
             ),
-            _SettingsPath(
+            const _SettingsPath(
               color: Ob.teal,
               ink: Ob.inkTeal,
               crumbs: ['Permissions', 'Location'],

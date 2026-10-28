@@ -42,6 +42,9 @@ class NearbyMerchantWithReward {
   final double? bestRate;
   final String? bestCardImage;
 
+  /// 'USD' (any cash back) | 'POINTS' | 'MILES' — drives "% vs x" formatting.
+  final String? bestCurrency;
+
   /// The free-form label the resolver tagged this merchant with
   /// ("Grocery", "Dining"). Kept around for display in the row.
   final String? resolvedLabel;
@@ -58,6 +61,7 @@ class NearbyMerchantWithReward {
     this.bestCardName,
     this.bestRate,
     this.bestCardImage,
+    this.bestCurrency,
     this.resolvedLabel,
     this.resolvedCategory,
     this.matchedBrand,

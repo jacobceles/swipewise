@@ -147,6 +147,23 @@ void main() {
     expect(await catalog.catalogCounts(), before);
   });
 
+  test(
+    'fresh install with newer cached schemaVersion falls back to bundled catalog so DB is not empty',
+    () async {
+      await seedUser('u1');
+      final data =
+          jsonDecode(await File(CatalogLoader.defaultAssetPath).readAsString())
+              as Map<String, dynamic>;
+      data['schemaVersion'] = 2;
+      final result = await CatalogLoader(
+        remote: _InlineCatalogService(jsonEncode(data)),
+      ).hydrateIfNeeded('u1');
+      expect(result, CatalogLoadResult.needsAppUpdate);
+      final counts = await CatalogRepository(DatabaseHelper()).catalogCounts();
+      expect(counts['card_products'], greaterThan(0));
+    },
+  );
+
   for (final raw in ['', '{broken']) {
     test(
       'invalid cached catalog ${jsonEncode(raw)} reports error without replacing data',
@@ -271,6 +288,63 @@ void main() {
     expect(perks, isNotEmpty);
     expect(perks.first.title, isNotNull);
   });
+
+  test(
+    'unknown category strings in reward_rules are dropped instead of turning into RewardCategory.other (§6)',
+    () async {
+      await seedUser('u1');
+      final catalog = CatalogRepository(DatabaseHelper());
+      await catalog.replaceCatalog(
+        pointSystems: const [
+          {
+            'point_system_id': 'usd',
+            'display_name': 'USD',
+            'baseline_cent_value': 1.0,
+          },
+        ],
+        cardProducts: const [
+          {
+            'card_product_id': 'p1',
+            'issuer': 'Chase',
+            'display_name': 'Test Card',
+            'catalog_version': '1',
+          },
+        ],
+        rewardRules: const [
+          {
+            'rule_id': 'p1#base',
+            'card_product_id': 'p1',
+            'kind': 'baseline',
+            'rate': 1.0,
+            'point_system_id': 'usd',
+          },
+          {
+            'rule_id': 'p1#other',
+            'card_product_id': 'p1',
+            'kind': 'category',
+            'category': 'other',
+            'rate': 2.0,
+            'point_system_id': 'usd',
+          },
+          {
+            'rule_id': 'p1#future',
+            'card_product_id': 'p1',
+            'kind': 'category',
+            'category': 'futureSpaceTravel',
+            'rate': 10.0,
+            'point_system_id': 'usd',
+          },
+        ],
+        exclusions: const [],
+      );
+
+      final snap = await catalog.loadSnapshot();
+      final ruleIds =
+          snap.rulesByProduct['p1']!.map((r) => r.ruleId).toList();
+      expect(ruleIds, containsAll(['p1#base', 'p1#other']));
+      expect(ruleIds, isNot(contains('p1#future')));
+    },
+  );
 }
 
 /// Reads the bundled catalog directly from disk to bypass rootBundle.

@@ -4,7 +4,11 @@
     flutter clean
     flutter build apk --release --dart-define-from-file=keys.free.json \
         --obfuscate --split-debug-info=build/symbols
-    python3 tool/verify_release_apk.py [keys-file]
+    python3 tool/verify_release_apk.py [keys-file] [--apk path/to/app.apk]
+
+For an externally downloaded APK, the input check validates the local config,
+not which defines built that APK. The binary checks still inspect the supplied
+artifact; source/build provenance must be established separately.
 
 ## What this claims
 
@@ -56,16 +60,15 @@ is why a digest is pinned rather than the values.
 Exits non-zero on any failure.
 """
 
+import argparse
 import hashlib
 import json
 import os
 import re
-import shutil
 import sys
 import zipfile
 
 APK = "build/app/outputs/flutter-apk/app-release.apk"
-EXTRACT_TO = "/tmp/swipewise-release-apk-scan"
 
 # Any key whose presence in a release build's keys file is disqualifying.
 #
@@ -79,6 +82,7 @@ CREDENTIAL_KEYS = (
     "SOPHTRON_ACCESS_KEY",
     "SOPHTRON_CUSTOMER_SALT",
     "GOOGLE_PLACES_KEY",
+    "APP_CHECK_DEBUG_TOKEN",
 )
 
 # Config the release cannot work without. Absence here is not a leak, but it
@@ -110,15 +114,8 @@ MUST_BE_PRESENT = {
 
 
 def load_blobs(apk: str) -> list[bytes]:
-    shutil.rmtree(EXTRACT_TO, ignore_errors=True)
     with zipfile.ZipFile(apk) as z:
-        z.extractall(EXTRACT_TO)
-    blobs = []
-    for root, _, files in os.walk(EXTRACT_TO):
-        for name in files:
-            with open(os.path.join(root, name), "rb") as fh:
-                blobs.append(fh.read())
-    return blobs
+        return [z.read(entry) for entry in z.infolist() if not entry.is_dir()]
 
 
 def google_services_keys() -> set[str]:
@@ -138,15 +135,20 @@ def occurrences(blobs: list[bytes], needle: str) -> int:
 
 
 def main() -> int:
-    args = [a for a in sys.argv[1:] if a != "--input-only"]
-    input_only = "--input-only" in sys.argv
-    keys_path = args[0] if args else "keys.free.json"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("keys_file", nargs="?", default="keys.free.json")
+    parser.add_argument("--input-only", action="store_true")
+    parser.add_argument("--apk", default=APK)
+    args = parser.parse_args()
+    input_only = args.input_only
+    keys_path = args.keys_file
     failures = 0
 
     # ── 1. The build input. This is the check that catches the real mistake.
     print(f"build input — {keys_path}:")
     try:
-        keys = json.load(open(keys_path))
+        with open(keys_path) as file:
+            keys = json.load(file)
     except (OSError, json.JSONDecodeError) as exc:
         print(f"  FAIL  unreadable ({exc}) — cannot verify what the build used")
         return 1
@@ -158,6 +160,10 @@ def main() -> int:
         failures += 1
     else:
         print(f"  ok    no disqualifying credentials in {keys_path}")
+
+    if keys.get("SWIPEWISE_PRO") not in (None, False, "false"):
+        print("  FAIL  SWIPEWISE_PRO must not force the development Pro UI")
+        failures += 1
 
     missing = [k for k in REQUIRED_KEYS if not keys.get(k)]
     if missing:
@@ -195,10 +201,11 @@ def main() -> int:
         print(f"\n{'ALL CLEAR (input only)' if not failures else f'{failures} FAILURE(S)'}")
         return 1 if failures else 0
 
-    if not os.path.exists(APK):
-        print(f"\nNo APK at {APK} — build it first (see this file's docstring).")
+    if not os.path.exists(args.apk):
+        print(f"\nNo APK at {args.apk} — build or download it first.")
         return 2
-    blobs = load_blobs(APK)
+    print(f"\nscanning APK — {args.apk}")
+    blobs = load_blobs(args.apk)
 
     # ── 2. Derived material that would betray credentials used at build time.
     print("\nabsent in the APK:")

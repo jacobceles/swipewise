@@ -56,144 +56,169 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        LucideIcons.creditCard,
-                        size: 38,
-                        color: AppColors.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('SwipeWise', style: AppText.displayLg()),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Know which card to use, wherever you pay',
-                      style: AppText.bodyMd(color: palette.muted),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 34),
-              decoration: const BoxDecoration(
-                color: AppColors.sheet,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Sign in, or skip for now',
-                    style: AppText.titleMd(),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  // Says what is true of *this* build. Backup shipped, so the
-                  // promise is now a description — but it is still off by
-                  // default, and that is the part worth stating up front.
-                  Text(
-                    'Signing in only identifies you. Backup is opt-in — '
-                    'nothing is uploaded unless you turn it on.',
-                    style: AppText.bodySm(color: palette.muted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 18),
-                  const _BenefitRow(
-                    icon: LucideIcons.smartphone,
-                    label: 'Restore your wallet on a new phone',
-                  ),
-                  // "Carry Pro across your devices — Soon" lived here. Removed
-                  // rather than left pending: Pro is not being sold, so the
-                  // first screen should not advertise it. Restore the row (with
-                  // `soon: true`) when billing ships.
-
-                  if (error != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.redBg,
-                        borderRadius: BorderRadius.circular(kRadiusS),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            LucideIcons.circleAlert,
-                            size: 16,
-                            color: palette.red,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 88,
+                                height: 88,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  LucideIcons.creditCard,
+                                  size: 38,
+                                  color: AppColors.onPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'SwipeWise',
+                                style: AppText.displayLg(),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Know which card to use, wherever you pay',
+                                style: AppText.bodyMd(color: palette.muted),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              error,
-                              style: AppText.bodySm(color: palette.red),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 34),
+                      decoration: const BoxDecoration(
+                        color: AppColors.sheet,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Sign in, or skip for now',
+                            style: AppText.titleMd(),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          // Says what is true of *this* build. Backup shipped, so the
+                          // promise is now a description — but it is still off by
+                          // default, and that is the part worth stating up front.
+                          Text(
+                            'Signing in only identifies you. Backup is opt-in — '
+                            'nothing is uploaded unless you turn it on.',
+                            style: AppText.bodySm(color: palette.muted),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 18),
+                          const _BenefitRow(
+                            icon: LucideIcons.smartphone,
+                            label: 'Restore your wallet on a new phone',
+                          ),
+                          // "Carry Pro across your devices — Soon" lived here. Removed
+                          // rather than left pending: Pro is not being sold, so the
+                          // first screen should not advertise it. Restore the row (with
+                          // `soon: true`) when billing ships.
+
+                          if (error != null) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.redBg,
+                                borderRadius: BorderRadius.circular(kRadiusS),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    LucideIcons.circleAlert,
+                                    size: 16,
+                                    color: palette.red,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      error,
+                                      style: AppText.bodySm(color: palette.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                          ],
+                          const SizedBox(height: 20),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 52),
+                            child: ElevatedButton(
+                              onPressed: busy ? null : _signIn,
+                              child: busy
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: AppColors.onPrimary,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.login, size: 20),
+                                        SizedBox(width: 10),
+                                        Flexible(
+                                          child: Text('Continue with Google'),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 52),
+                            child: OutlinedButton(
+                              onPressed: busy ? null : _skip,
+                              child: const Text('Skip for now'),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'You can sign in any time from Profile.',
+                            style: AppText.labelSm(color: palette.muted),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: busy ? null : _signIn,
-                      child: busy
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: AppColors.onPrimary,
-                              ),
-                            )
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.login, size: 20),
-                                SizedBox(width: 10),
-                                Text('Continue with Google'),
-                              ],
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: busy ? null : _skip,
-                      child: const Text('Skip for now'),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'You can sign in any time from Profile.',
-                    style: AppText.labelSm(color: palette.muted),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

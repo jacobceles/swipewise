@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../api/brand_resolver.dart';
 import '../api/reward_category_mapper.dart';
 import '../models/insights.dart';
 import '../models/reward_category.dart';
@@ -52,9 +53,14 @@ Future<void> showRewardRankingSheetForLabel(
   String? merchantName,
   String? brandId,
 }) {
+  final resolvedBrand =
+      brandId ??
+      ((merchantName != null && merchantName.isNotEmpty)
+          ? BrandResolver.fromDefaultRegistry().resolve(merchantName)
+          : null);
   return showRewardRankingSheet(
     context,
-    category: classifyLooseLabel(label),
+    category: storeCategory(classifyLooseLabel(label), resolvedBrand),
     primary: primary,
     merchantName: merchantName,
     brandId: brandId,

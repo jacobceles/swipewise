@@ -590,4 +590,134 @@ void main() {
     final cashOnly = ranker(s, [link('c2', 'cad-cash', 'Cash')]);
     expect(cashOnly.bestCatchAllCard()?.currency, 'USD');
   });
+
+  group('floating-point near-ties and exclusions in bestCardByCategory (R3, R6)', () {
+    test(
+      'floating-point near-ties within 1e-6 fall through to preference order (R6)',
+      () {
+        // 1 * 1.8 = 1.8 vs 3 * 0.6 = 1.7999999999999998 in IEEE-754 double.
+        final nearTie = snap(
+          [
+            rule('a', 'a#b', RewardRuleKind.baseline, rate: 1, ps: 'p18'),
+            rule('b', 'b#b', RewardRuleKind.baseline, rate: 3, ps: 'p06'),
+          ],
+          ps: const {'p18': 1.8, 'p06': 0.6},
+        );
+        final lookup = ranker(
+          nearTie,
+          [link('c1', 'a', 'Card A'), link('c2', 'b', 'Card B')],
+          pref: const ['c2', 'c1'],
+        ).bestCardByCategory();
+        expect(lookup.byCategory[RewardCategory.other]?.id, 'c2');
+      },
+    );
+
+    test(
+      'bestCardByCategory populates travel/gas subcategories while respecting excludedCategories (R3)',
+      () {
+        final s = snap([
+          RewardRule(
+            ruleId: 'costco#travel',
+            productId: 'costco',
+            kind: RewardRuleKind.category,
+            category: RewardCategory.travel,
+            rate: 3,
+            pointSystemId: 'usd',
+            excludedCategories: const [RewardCategory.transit],
+          ),
+          RewardRule(
+            ruleId: 'costco#gas',
+            productId: 'costco',
+            kind: RewardRuleKind.category,
+            category: RewardCategory.gas,
+            rate: 4,
+            pointSystemId: 'usd',
+            excludedCategories: const [RewardCategory.evCharging],
+          ),
+          rule('costco', 'costco#base', RewardRuleKind.baseline, rate: 1),
+          rule('dc', 'dc#base', RewardRuleKind.baseline, rate: 2),
+        ]);
+        final lookup = ranker(s, [
+          link('c1', 'costco', 'Costco Visa'),
+          link('c2', 'dc', 'Double Cash'),
+        ]).bestCardByCategory();
+
+        // Non-excluded travel subcategories get the 3% travel bonus.
+        expect(lookup.byCategory[RewardCategory.hotels]?.id, 'c1');
+        expect(lookup.byCategory[RewardCategory.hotels]?.rate, 3);
+        expect(lookup.byCategory[RewardCategory.airlines]?.id, 'c1');
+        expect(lookup.byCategory[RewardCategory.carRentals]?.id, 'c1');
+
+        // Excluded transit and evCharging do NOT get the excluded bonus in
+        // byCategory (so callers fall back to catchAll = Double Cash 2%).
+        expect(lookup.byCategory[RewardCategory.transit], isNull);
+        expect(lookup.byCategory[RewardCategory.evCharging], isNull);
+      },
+    );
+
+    test(
+      'brands in snapshot.exclusionsByRule are evaluated in byBrand (R3)',
+      () {
+        applyBrandsJson('''
+        [
+          {"brandId":"kroger-gas","displayName":"Kroger Fuel","category":"gas","aliases":["kroger fuel"]}
+        ]
+        ''');
+        addTearDown(resetBrandRegistry);
+
+        final s = CatalogSnapshot(
+          products: {
+            'costco': const CardProduct(
+              id: 'costco',
+              issuer: 'citi',
+              displayName: 'Costco Visa',
+              catalogVersion: 't',
+            ),
+            'dc': const CardProduct(
+              id: 'dc',
+              issuer: 'citi',
+              displayName: 'Double Cash',
+              catalogVersion: 't',
+            ),
+          },
+          rulesByProduct: {
+            'costco': [
+              rule(
+                'costco',
+                'costco#gas',
+                RewardRuleKind.category,
+                category: RewardCategory.gas,
+                rate: 4,
+              ),
+              rule('costco', 'costco#base', RewardRuleKind.baseline, rate: 1),
+            ],
+            'dc': [rule('dc', 'dc#base', RewardRuleKind.baseline, rate: 2)],
+          },
+          exclusionsByRule: const {
+            'costco#gas': {'kroger-gas'},
+          },
+          pointSystems: const {
+            'usd': PointSystem(
+              id: 'usd',
+              displayName: 'usd',
+              baselineCentValue: 1.0,
+            ),
+          },
+        );
+
+        final lookup = ranker(s, [
+          link('c1', 'costco', 'Costco Visa'),
+          link('c2', 'dc', 'Double Cash'),
+        ]).bestCardByCategory();
+
+        // General gas winner is Costco Visa 4%, but at Kroger Fuel (excluded on
+        // costco#gas) byBrand['kroger-gas'] resolves to Double Cash 2% with
+        // brand: null (not a brand bonus).
+        expect(lookup.byCategory[RewardCategory.gas]?.id, 'c1');
+        expect(lookup.byBrand['kroger-gas']?.id, 'c2');
+        expect(lookup.byBrand['kroger-gas']?.rate, 2);
+        expect(lookup.byBrand['kroger-gas']?.brand, isNull);
+      },
+    );
+  });
 }

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../api/account_delete_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/backup_provider.dart';
+import '../../providers/entitlement_provider.dart';
 import '../../sync/wallet_backup_client.dart';
 import '../../theme/app_theme.dart';
 import 'profile_ui.dart';
@@ -119,13 +120,15 @@ class _AccountPageState extends ConsumerState<AccountPage> {
 
   Future<void> _restore() async {
     final last = ref.read(lastBackupAtProvider).value;
+    final isPro = ref.read(proEntitlementProvider);
     final confirmed = await confirmAction(
       context,
       title: 'Restore from backup?',
       body:
           'Replaces the cards, nicknames and settings on this phone with your '
           'backup${last == null ? '' : ' from ${backupWhen(last)}'}. Anything '
-          'added here since then is lost. Your transactions are not affected.',
+          'added here since then is lost.'
+          '${isPro ? ' Your transactions are not affected.' : ''}',
       action: 'Restore',
     );
     if (!confirmed) return;
@@ -189,6 +192,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final auth = ref.watch(authProvider);
+    final isPro = ref.watch(proEntitlementProvider);
     final supported = ref.watch(backupSupportedProvider);
     final available = ref.watch(backupAvailableProvider);
     final enabled = ref.watch(backupEnabledProvider) && available;
@@ -328,7 +332,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               ),
             ],
           ),
-          const GroupCaption('Transactions never leave this phone.'),
+          if (isPro) const GroupCaption('Transactions never leave this phone.'),
           const SizedBox(height: kGroupGap),
         ],
         SettingsGroup(
@@ -404,12 +408,13 @@ Future<bool> confirmAction(
 }
 
 /// Wireframe `c9CWNc`: one plain confirmation.
-class _DeleteDialog extends StatelessWidget {
+class _DeleteDialog extends ConsumerWidget {
   const _DeleteDialog();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
+    final isPro = ref.watch(proEntitlementProvider);
     return Dialog(
       backgroundColor: AppColors.sheet,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -439,9 +444,13 @@ class _DeleteDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your account, its backup, any linked bank and everything on '
-              "this phone, including transactions, are erased for good. You'll "
-              "sign in again first to confirm it's you. This can't be undone.",
+              isPro
+                  ? 'Your account, its backup, any linked bank and everything on '
+                        "this phone, including transactions, are erased for good. You'll "
+                        "sign in again first to confirm it's you. This can't be undone."
+                  : 'Your account, its backup and everything on this phone are '
+                        "erased for good. You'll sign in again first to confirm "
+                        "it's you. This can't be undone.",
               style: rowSubtitleStyle(palette),
             ),
             const SizedBox(height: 20),

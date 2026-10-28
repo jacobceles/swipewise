@@ -133,6 +133,17 @@ object StoreResolver {
         ).take(MAX_OPTIONS)
     }
 
+    /// Resolves [all] and verifies the closest non-plaza candidate is within
+    /// [atStore] distance for [accuracyM]. Returns `emptyList()` when [all] is
+    /// empty (caller falls back to fence options), `null` when the nearest
+    /// non-plaza store is too far (`not_at_store`), or the resolved list.
+    fun resolveAtStore(all: List<Candidate>, accuracyM: Double): List<MerchantOption>? {
+        val picked = resolve(all)
+        if (picked.isEmpty()) return emptyList()
+        val nearest = all.filterNot { it.option.plaza }.ifEmpty { all }.minOf { it.distanceM }
+        return if (atStore(nearest, accuracyM)) picked else null
+    }
+
     /// Drops any store whose card advice equals a nearer one's: telling them
     /// apart changes nothing about which card to use. Costco's bakery, food
     /// court and kiosk fold into Costco; Starbucks inside a Target stays,
@@ -193,7 +204,10 @@ object VisitLock {
 
     /// [fenceId]: the fence the visit alerted from. [merchantIds] / [advice]:
     /// the store(s) it named and their "card|rate", when a sharp fix named them.
-    /// [left]: the user has exited [fenceId] since.
+    /// [left]: the user has exited [fenceId] since. [nextDoorCandidateId]: the
+    /// different-advice store named by the previous check, awaiting a second
+    /// consecutive check before breaking the visit lock (guards against a
+    /// single indoor-drift fix).
     data class Visit(
         val lat: Double,
         val lng: Double,
@@ -202,6 +216,7 @@ object VisitLock {
         val merchantIds: List<String> = emptyList(),
         val advice: List<String> = emptyList(),
         val left: Boolean = false,
+        val nextDoorCandidateId: String? = null,
     )
 
     fun adviceOf(o: MerchantOption): String = "${o.bestCardName}|${o.bestRate}"
@@ -212,8 +227,26 @@ object VisitLock {
         return age < WINDOW_MS || (last.fenceId != null && !last.left && age < WINDOW_MS + LINGER_MS)
     }
 
+    fun isActive(last: Visit?, nowMillis: Long, lat: Double, lng: Double): Boolean =
+        isActive(last, nowMillis) && distanceM(last!!.lat, last.lng, lat, lng) < RADIUS_M
+
+    fun isActive(context: Context, nowMillis: Long, lat: Double, lng: Double): Boolean =
+        isActive(read(context), nowMillis, lat, lng)
+
+    /// Returns the merchantId of the new different-advice store if [resolved]
+    /// names a store not yet alerted for in [last], or null otherwise.
+    fun nextDoorCandidate(last: Visit, resolved: List<MerchantOption>?): String? {
+        if (resolved.isNullOrEmpty() || last.merchantIds.isEmpty()) return null
+        if (resolved.any { it.merchantId in last.merchantIds }) return null
+        val first = resolved.first()
+        if (adviceOf(first) in last.advice) return null
+        return first.merchantId
+    }
+
     /// [resolved]: the stores a sharp fix put the user in, or null when the
     /// fix couldn't tell (no fix, coarse fix, fence options as a fallback).
+    /// Requires two consecutive checks naming the same new different-advice
+    /// store before treating it as a next-door move.
     fun isSameVisit(
         last: Visit?,
         lat: Double,
@@ -223,11 +256,25 @@ object VisitLock {
     ): Boolean {
         if (last == null || !isActive(last, nowMillis)) return false
         if (distanceM(last.lat, last.lng, lat, lng) >= RADIUS_M) return false
-        val movedNextDoor = !resolved.isNullOrEmpty() && last.merchantIds.isNotEmpty() &&
-            resolved.none { it.merchantId in last.merchantIds } &&
-            adviceOf(resolved.first()) !in last.advice
+        val candidate = nextDoorCandidate(last, resolved)
+        val movedNextDoor = candidate != null && candidate == last.nextDoorCandidateId
         return !movedNextDoor
     }
+
+    /// Updates [last] when a check is held back as the same visit: slides the
+    /// window, anchors [fenceId], clears [left] (we just verified the user is
+    /// still here), and records any first-seen [nextDoorCandidate].
+    fun refresh(
+        last: Visit,
+        nowMillis: Long,
+        resolved: List<MerchantOption>? = null,
+        fenceId: String? = last.fenceId,
+    ): Visit = last.copy(
+        atMillis = nowMillis,
+        fenceId = fenceId ?: last.fenceId,
+        left = false,
+        nextDoorCandidateId = nextDoorCandidate(last, resolved),
+    )
 
     private const val PREFS = "swipewise_visit_lock"
 
@@ -242,6 +289,7 @@ object VisitLock {
             p.getString("ids", "")!!.split(',').filter { it.isNotEmpty() },
             p.getString("advice", "")!!.split('\n').filter { it.isNotEmpty() },
             p.getBoolean("left", false),
+            p.getString("candidate", null),
         )
     }
 
@@ -252,6 +300,16 @@ object VisitLock {
         if (visit.fenceId == null || visit.fenceId !in fenceIds || visit.left) return
         write(context, visit.copy(left = true))
     }
+
+    /// The user re-entered [fenceIds]; if the visit's fence is among them, an
+    /// earlier indoor-drift EXIT was a flap and the visit can linger again.
+    fun clearLeft(context: Context, fenceIds: List<String>) {
+        val visit = read(context) ?: return
+        if (visit.fenceId == null || visit.fenceId !in fenceIds || !visit.left) return
+        write(context, visit.copy(left = false))
+    }
+
+    fun clearLeft(context: Context, fenceId: String) = clearLeft(context, listOf(fenceId))
 
     /// commit(), not apply(): two timers can fire back to back, and the second
     /// must see the first one's visit.
@@ -264,26 +322,37 @@ object VisitLock {
             .putString("ids", visit.merchantIds.joinToString(","))
             .putString("advice", visit.advice.joinToString("\n"))
             .putBoolean("left", visit.left)
+            .putString("candidate", visit.nextDoorCandidateId)
             .commit()
     }
 }
 
 /// A fence the user is living next to, not visiting: a store pinned at (or
 /// beside) home or work wakes its dwell timer over and over as indoor fixes
-/// drift across the fence edge. [THRESHOLD] checks within [WINDOW_MS] marks the
-/// fence resident for [SUPPRESS_MS]; while resident its timers post nothing and
-/// take no fix. A real visit is one check (two when the first one was taken
-/// while still moving), so it never trips this.
+/// drift across the fence edge, or posts on arrival after arrival. [THRESHOLD]
+/// checks within [WINDOW_MS] — or [POST_THRESHOLD] actual posts within
+/// [POST_WINDOW_MS] — marks the fence resident for [SUPPRESS_MS]; while
+/// resident its timers post nothing and take no fix. A real visit is one check
+/// (two when the first one was taken while still moving), so it never trips this.
 object ResidentGuard {
     const val THRESHOLD = 3
     const val WINDOW_MS = 60L * 60L * 1000L
     const val SUPPRESS_MS = 7L * 24L * 60L * 60L * 1000L
+    const val POST_THRESHOLD = 3
+    const val POST_WINDOW_MS = 7L * 24L * 60L * 60L * 1000L
 
     /// [recent] are earlier check times for one fence (any order).
-    fun tripped(recent: List<Long>, nowMillis: Long): Boolean =
-        recent.count { nowMillis - it < WINDOW_MS } + 1 >= THRESHOLD
+    fun tripped(recent: List<Long>, nowMillis: Long, windowMs: Long = WINDOW_MS): Boolean =
+        recent.count { nowMillis - it < windowMs } + 1 >= THRESHOLD
+
+    fun postsTripped(recentPosts: List<Long>, nowMillis: Long): Boolean =
+        recentPosts.count { nowMillis - it < POST_WINDOW_MS } + 1 >= POST_THRESHOLD
 
     private const val PREFS = "swipewise_resident"
+
+    fun isResident(context: Context, geofenceId: String, nowMillis: Long): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getLong("$geofenceId.until", 0L) > nowMillis
 
     /// Records this check and says whether the fence is (now) resident.
     fun check(context: Context, geofenceId: String, nowMillis: Long): Boolean {
@@ -298,6 +367,24 @@ object ResidentGuard {
             edit.putLong("$geofenceId.until", nowMillis + SUPPRESS_MS).remove("$geofenceId.checks")
         } else {
             edit.putString("$geofenceId.checks", (recent + nowMillis).joinToString(","))
+        }
+        edit.commit()
+        return tripped
+    }
+
+    /// Records an actual notification post and silences the fence for
+    /// [SUPPRESS_MS] once it reaches [POST_THRESHOLD] posts within [POST_WINDOW_MS].
+    fun recordPost(context: Context, geofenceId: String, nowMillis: Long): Boolean {
+        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val recent = p.getString("$geofenceId.posts", "")!!
+            .split(',').mapNotNull { it.toLongOrNull() }
+            .filter { nowMillis - it < POST_WINDOW_MS }
+        val edit = p.edit()
+        val tripped = postsTripped(recent, nowMillis)
+        if (tripped) {
+            edit.putLong("$geofenceId.until", nowMillis + SUPPRESS_MS).remove("$geofenceId.posts")
+        } else {
+            edit.putString("$geofenceId.posts", (recent + nowMillis).joinToString(","))
         }
         edit.commit()
         return tripped

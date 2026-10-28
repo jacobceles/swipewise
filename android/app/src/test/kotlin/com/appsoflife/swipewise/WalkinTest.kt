@@ -2,6 +2,8 @@ package com.appsoflife.swipewise
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -57,14 +59,22 @@ class WalkinTest {
     }
 
     @Test
-    fun `walking next door, a sharp fix naming a new store is a new visit`() {
+    fun `walking next door, two consecutive sharp fixes naming a new store are a new visit`() {
         val last = VisitLock.Visit(
             40.5014, -74.8549, 1_000_000L, "m_a",
             listOf("a"), listOf(VisitLock.adviceOf(store("a"))),
         )
         val later = 1_000_000L + 300_000L
-        // ~40 m on, in the shop next door, with its own card advice.
-        assertFalse(VisitLock.isSameVisit(last, 40.50176, -74.8549, later, listOf(store("b"))))
+        // First check naming store b is held back in case it's a single indoor-drift fix.
+        assertTrue(VisitLock.isSameVisit(last, 40.50176, -74.8549, later, listOf(store("b"))))
+        val afterFirst = VisitLock.refresh(last, later, listOf(store("b")), "m_b")
+        assertEquals("b", afterFirst.nextDoorCandidateId)
+        // Second consecutive check naming store b confirms the move next door.
+        assertFalse(VisitLock.isSameVisit(afterFirst, 40.50176, -74.8549, later + 60_000L, listOf(store("b"))))
+        // If the second check drifts back to store a, the candidate resets.
+        val driftedBack = VisitLock.refresh(afterFirst, later + 60_000L, listOf(store("a")), "m_a")
+        assertNull(driftedBack.nextDoorCandidateId)
+        assertTrue(VisitLock.isSameVisit(driftedBack, 40.50176, -74.8549, later + 120_000L, listOf(store("b"))))
         // Still in store a, or a fix too close to tell a from b: same visit.
         assertTrue(VisitLock.isSameVisit(last, 40.5014, -74.8549, later, listOf(store("a"))))
         assertTrue(VisitLock.isSameVisit(last, 40.5014, -74.8549, later, listOf(store("b"), store("a"))))
@@ -234,5 +244,82 @@ class WalkinTest {
     fun `distance is roughly right`() {
         val d = distanceM(40.5014, -74.8549, 40.5262, -74.8543)
         assertTrue("got $d", d in 2700.0..2800.0)
+    }
+
+    @Test
+    fun `fromChannelMap preserves brand_id and main_store for foldSameAdvice`() {
+        val pharmacy = MerchantOption.fromChannelMap(
+            mapOf(
+                "merchant_id" to "sr-pharm",
+                "name" to "ShopRite Pharmacy",
+                "best_card_name" to "Amex Gold",
+                "best_rate" to 4.0,
+                "brand_id" to "shoprite",
+                "main_store" to false,
+            ),
+        )
+        val main = MerchantOption.fromChannelMap(
+            mapOf(
+                "merchant_id" to "sr-main",
+                "name" to "ShopRite",
+                "best_card_name" to "Amex Gold",
+                "best_rate" to 4.0,
+                "brand_id" to "shoprite",
+                "main_store" to true,
+            ),
+        )
+        val folded = StoreResolver.foldSameAdvice(listOf(pharmacy, main))
+        assertEquals(listOf("sr-main"), folded.map { it.merchantId })
+    }
+
+    @Test
+    fun `plaza pin at 0 m cannot pass atStore when real store is 120 m away`() {
+        val plaza = store("plaza").copy(plaza = true, footprintM = 80.0)
+        val storeA = store("a")
+        val resolved = StoreResolver.resolveAtStore(
+            listOf(
+                StoreResolver.Candidate(plaza, 0.0),
+                StoreResolver.Candidate(storeA, 120.0),
+            ),
+            accuracyM = 10.0,
+        )
+        assertNull(resolved)
+    }
+
+    @Test
+    fun `visit lock active within 250 m and refresh clears left`() {
+        val visit = VisitLock.Visit(40.5014, -74.8549, 1_000_000L, "m_a", left = true)
+        val refreshed = VisitLock.refresh(visit, 1_060_000L, fenceId = "m_b")
+        assertFalse(refreshed.left)
+        assertEquals("m_b", refreshed.fenceId)
+        assertTrue(VisitLock.isActive(refreshed, 1_100_000L, 40.5015, -74.8549))
+        assertFalse(VisitLock.isActive(refreshed, 1_100_000L, 40.5200, -74.8549))
+    }
+
+    @Test
+    fun `three actual posts in 7 days trip ResidentGuard`() {
+        val now = 100_000_000L
+        val day = 24L * 60L * 60L * 1000L
+        assertFalse(ResidentGuard.postsTripped(listOf(now - day), now))
+        assertTrue(ResidentGuard.postsTripped(listOf(now - day, now - 3 * day), now))
+        assertFalse(ResidentGuard.postsTripped(listOf(now - day, now - 8 * day), now))
+    }
+
+    @Test
+    fun `registrationHash is stable for identical geometry and changes on edits`() {
+        val zone = mapOf(
+            "geofence_id" to "m_1",
+            "lat" to 40.5,
+            "lng" to -74.8,
+            "radius_m" to 100,
+            "dwell_seconds" to 60,
+            "options" to listOf(mapOf("merchant_id" to "1", "name" to "Store")),
+        )
+        val boundary = mapOf("geofence_id" to "boundary", "lat" to 40.5, "lng" to -74.8, "radius_m" to 300)
+        val h1 = GeofencePlugin.registrationHash(listOf(zone), boundary, 60_000)
+        val h2 = GeofencePlugin.registrationHash(listOf(zone), boundary, 60_000)
+        val h3 = GeofencePlugin.registrationHash(listOf(zone + ("dwell_seconds" to 120)), boundary, 60_000)
+        assertEquals(h1, h2)
+        assertNotEquals(h1, h3)
     }
 }

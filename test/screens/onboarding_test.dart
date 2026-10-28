@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:swipewise/models/card.dart';
 import 'package:swipewise/models/reward_category.dart';
+import 'package:swipewise/providers/auth_provider.dart';
 import 'package:swipewise/providers/data_providers.dart';
 import 'package:swipewise/screens/onboarding/intro_screen.dart';
 import 'package:swipewise/screens/onboarding/onboarding_ui.dart';
 import 'package:swipewise/screens/onboarding/setup_flow.dart';
+import 'package:swipewise/screens/welcome_screen.dart';
 import 'package:swipewise/theme/app_theme.dart';
 
 /// The first-run setup (design "Onboarding v4 — hybrid"): which step comes
@@ -328,7 +330,52 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Welcome to SwipeWise'), findsOneWidget);
+    expect(find.text('3x'), findsOneWidget);
     await tester.tap(find.text('Start setup'));
     expect(started, isTrue);
   });
+
+  testWidgets('approximate location surfaces Precise location needed', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      FlowStep.locationBlocked,
+      perms: const Perms(
+        notifications: true,
+        locationBlocked: true,
+        preciseLocation: false,
+      ),
+    );
+    expect(find.text('Precise location needed'), findsOneWidget);
+  });
+
+  testWidgets('WelcomeScreen does not overflow in landscape at 2x text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(640, 320);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith(_FixedAuth.new),
+        ],
+        child: MaterialApp(
+          theme: darkTheme(),
+          home: const WelcomeScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _FixedAuth extends AuthNotifier {
+  @override
+  AuthState build() => AuthState(isLoggedIn: true, userId: 'local:test');
 }

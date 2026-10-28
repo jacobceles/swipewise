@@ -1,11 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swipewise/api/catalog_repository.dart';
 import 'package:swipewise/api/engine_ranker.dart';
 import 'package:swipewise/api/reward_category_mapper.dart';
 import 'package:swipewise/api/reward_engine.dart';
 import 'package:swipewise/models/reward_category.dart';
+import 'package:swipewise/providers/auth_provider.dart';
+import 'package:swipewise/providers/data_providers.dart';
 
 /// The store sheet (a ranking opened for one store / brand) and the card
 /// networks a store takes. Both were wrong on the emulator 2026-10-20: at Whole
@@ -34,6 +37,18 @@ void main() {
           'displayName': 'Walmart',
           'category': 'departmentStores',
           'aliases': ['walmart'],
+        },
+        {
+          'brandId': 'target',
+          'displayName': 'Target',
+          'category': 'departmentStores',
+          'aliases': ['target'],
+        },
+        {
+          'brandId': 'home-depot',
+          'displayName': 'The Home Depot',
+          'category': 'homeImprovement',
+          'aliases': ['home depot'],
         },
         {
           'brandId': 'costco',
@@ -243,6 +258,147 @@ void main() {
       expect(r.general.last.cardName, 'tdvisa'); // 2% Visa, still refused
       expect(r.general.last.notAcceptedReason, 'Costco takes Mastercard only');
     });
+
+    test(
+      'an even US/CA wallet breaks the tie using homeCountry (R5)',
+      () {
+        final caRanker = EngineRanker(
+          snapshot: s,
+          linkedCards: [
+            const LinkedCard(
+              cardId: 'c-cibc',
+              cardProductId: 'cibc',
+              cardName: 'cibc',
+            ),
+            const LinkedCard(
+              cardId: 'c-costcovisa',
+              cardProductId: 'costcovisa',
+              cardName: 'costcovisa',
+            ),
+          ],
+          when: when,
+          homeCountry: 'CA',
+        );
+        final caResult = caRanker.rewardRanking(
+          RewardCategory.wholesale,
+          brandFilter: 'costco',
+        );
+        expect(caResult.general.first.cardName, 'cibc');
+        expect(caResult.general.first.isBest, isTrue);
+        expect(
+          caResult.general.last.notAcceptedReason,
+          'Costco takes Mastercard only',
+        );
+
+        final usRanker = EngineRanker(
+          snapshot: s,
+          linkedCards: [
+            const LinkedCard(
+              cardId: 'c-cibc',
+              cardProductId: 'cibc',
+              cardName: 'cibc',
+            ),
+            const LinkedCard(
+              cardId: 'c-costcovisa',
+              cardProductId: 'costcovisa',
+              cardName: 'costcovisa',
+            ),
+          ],
+          when: when,
+          homeCountry: 'US',
+        );
+        final usResult = usRanker.rewardRanking(
+          RewardCategory.wholesale,
+          brandFilter: 'costco',
+        );
+        expect(usResult.general.first.cardName, 'costcovisa');
+        expect(usResult.general.first.isBest, isTrue);
+        expect(
+          usResult.general.last.notAcceptedReason,
+          'Costco takes Visa only',
+        );
+      },
+    );
+  });
+
+  group('rewardRankingProvider applies storeCategory (R1)', () {
+    test(
+      'Walmart, Target, and Home Depot use their brand storeCategory over a grocery/other caller category',
+      () async {
+        final s = snap(
+          [
+            rule(
+              'bcp',
+              'bcp#g',
+              RewardRuleKind.category,
+              category: RewardCategory.grocery,
+              rate: 6,
+            ),
+            rule('bcp', 'bcp#b', RewardRuleKind.baseline, rate: 1),
+            rule('dc', 'dc#b', RewardRuleKind.baseline, rate: 2),
+            rule(
+              'hd',
+              'hd#hi',
+              RewardRuleKind.category,
+              category: RewardCategory.homeImprovement,
+              rate: 4,
+            ),
+            rule('hd', 'hd#b', RewardRuleKind.baseline, rate: 1),
+          ],
+          {
+            'bcp': ('American Express', 'US'),
+            'dc': ('Mastercard', 'US'),
+            'hd': ('Visa', 'US'),
+          },
+        );
+        final r = ranker(s, ['bcp', 'dc', 'hd']);
+        final container = ProviderContainer(
+          overrides: [
+            sessionProvider.overrideWithValue(
+              Session.from(AuthState(isLoggedIn: true, userId: 'u1')),
+            ),
+            engineRankerProvider.overrideWith((ref) async => r),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        // Even when the caller passes grocery (e.g. Google typed Walmart/Target
+        // as a supermarket), rewardRankingProvider applies storeCategory ->
+        // departmentStores, so Double Cash 2% beats Blue Cash Preferred's 1%
+        // baseline (rather than falsely awarding 6% grocery).
+        final walmartRanking = await container.read(
+          rewardRankingProvider((
+            category: RewardCategory.grocery,
+            merchantName: 'Walmart Supercenter',
+            brandId: null,
+          )).future,
+        );
+        expect(walmartRanking.general.first.cardName, 'dc');
+        expect(walmartRanking.general.first.rate, 2);
+
+        final targetRanking = await container.read(
+          rewardRankingProvider((
+            category: RewardCategory.grocery,
+            merchantName: 'Target',
+            brandId: null,
+          )).future,
+        );
+        expect(targetRanking.general.first.cardName, 'dc');
+        expect(targetRanking.general.first.rate, 2);
+
+        // Home Depot with a loose 'other' caller category resolves to
+        // homeImprovement via storeCategory, matching the 4% homeImprovement card.
+        final hdRanking = await container.read(
+          rewardRankingProvider((
+            category: RewardCategory.other,
+            merchantName: 'The Home Depot',
+            brandId: null,
+          )).future,
+        );
+        expect(hdRanking.general.first.cardName, 'hd');
+        expect(hdRanking.general.first.rate, 4);
+      },
+    );
   });
 
   group('storeCategory: a known store keeps its own category', () {

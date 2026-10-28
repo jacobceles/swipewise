@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:swipewise/api/database_helper.dart';
 import 'package:swipewise/providers/entitlement_provider.dart';
 import 'package:swipewise/providers/auth_provider.dart';
+import 'package:swipewise/providers/settings_provider.dart';
 
 /// The free tier has no accounts: identity is a UUID minted on the device at
 /// first launch. Everything the user owns hangs off it via
@@ -131,5 +133,30 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('AuthState.copyWith clears error when clearError is true and friendlyAuthError maps FirebaseAuthException', () {
+    final withErr = AuthState(error: 'previous error');
+    expect(withErr.copyWith(isLoading: true).error, 'previous error');
+    expect(withErr.copyWith(isLoading: true, clearError: true).error, isNull);
+    expect(
+      friendlyAuthError(FirebaseAuthException(code: 'network-request-failed')),
+      contains('No internet connection'),
+    );
+    expect(
+      friendlyAuthError(FirebaseAuthException(code: 'internal-error')),
+      "Sign-in didn't finish. Please try again.",
+    );
+  });
+
+  test('setupPendingProvider persists across container relaunch', () async {
+    final first = await launch();
+    await first.read(setupPendingProvider.notifier).set(true);
+    expect(first.read(setupPendingProvider), isTrue);
+
+    final second = await launch();
+    second.read(setupPendingProvider);
+    await pumpEventQueue();
+    expect(second.read(setupPendingProvider), isTrue);
   });
 }

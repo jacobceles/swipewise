@@ -94,13 +94,40 @@ final reliabilityGrantsProvider = FutureProvider<bool>((ref) async {
 /// from the car: it tells driving past from walking in.
 enum AlertCheck { notifications, location, activity, battery, alarms }
 
+/// True when location permission is granted only at approximate ("reduced")
+/// accuracy, which cannot trigger ~100 m store geofences.
+final locationReducedAccuracyProvider = FutureProvider<bool>((ref) async {
+  try {
+    final perm = await Geolocator.checkPermission();
+    if (perm != LocationPermission.whileInUse &&
+        perm != LocationPermission.always) {
+      return false;
+    }
+    return await Geolocator.getLocationAccuracy() ==
+        LocationAccuracyStatus.reduced;
+  } catch (_) {
+    return false;
+  }
+});
+
 /// Granted state of each [AlertCheck]. Re-fetched on demand (Profile
 /// invalidates it when the app resumes from system settings).
 final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
+  final always = (await Permission.locationAlways.status).isGranted;
+  var precise = true;
+  if (always) {
+    try {
+      precise =
+          await Geolocator.getLocationAccuracy() !=
+          LocationAccuracyStatus.reduced;
+    } catch (_) {
+      precise = true;
+    }
+  }
   return {
     AlertCheck.notifications: (await Permission.notification.status).isGranted,
-    // "All the time": geofence transitions only reach the app with it.
-    AlertCheck.location: (await Permission.locationAlways.status).isGranted,
+    // "All the time" + precise: geofence transitions only reach the app with both.
+    AlertCheck.location: always && precise,
     AlertCheck.activity:
         (await Permission.activityRecognition.status).isGranted,
     AlertCheck.battery:
@@ -114,8 +141,12 @@ final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
 /// No automatic retry while location is off or not allowed: it can't fix
 /// itself, and each retry re-reads permission every few seconds behind a
 /// spinner. The Stores view shows its "Allow location" card instead.
+/// Capped at 2 retries so network/search failures surface promptly with a
+/// Retry button instead of spinning through 10 backoff attempts.
 Duration? _retryUnlessLocationOff(int count, Object error) =>
-    error is LocationDenied || error is LocationServiceDisabled
+    count >= 2 ||
+        error is LocationDenied ||
+        error is LocationServiceDisabled
     ? null
     : ProviderContainer.defaultRetry(count, error);
 
@@ -217,33 +248,32 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
     // `whole-foods-market` lights up Prime Visa even though the place type
     // only says "Grocery."
     final brandHit = brandId == null ? null : lookup.byBrand[brandId];
-    // Travel sub-categories (hotels/airlines/car rentals/transit) fall back to
-    // the user's best `travel` card when no card bonuses the specific
-    // sub-category — travel is the superset.
-    final categoryBest =
-        lookup.byCategory[category] ??
-        (category.isTravelSubcategory
-            ? lookup.byCategory[RewardCategory.travel]
-            : null);
+    final categoryBest = lookup.byCategory[category];
     final String? bestName;
     final double? bestRate;
+    final String? bestCurrency;
     if (brandHit != null) {
       bestName = brandHit.name;
       bestRate = brandHit.rate;
+      bestCurrency = brandHit.currency;
     } else if (categoryBest != null) {
       bestName = categoryBest.name;
       bestRate = categoryBest.rate;
+      bestCurrency = categoryBest.currency;
     } else if (catchAll != null) {
       bestName = catchAll.name;
       bestRate = catchAll.rate;
+      bestCurrency = catchAll.currency;
     } else {
       bestName = null;
       bestRate = null;
+      bestCurrency = null;
     }
     return NearbyMerchantWithReward(
       merchant: m,
       bestCardName: bestName,
       bestRate: bestRate,
+      bestCurrency: bestCurrency,
       resolvedLabel: label,
       resolvedCategory: category,
       matchedBrand: brandHit?.brand,

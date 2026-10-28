@@ -263,6 +263,84 @@ void main() {
     test('returns none when no rule and no baseline', () {
       expect(run(snap([cat]), category: RewardCategory.gas).hasRule, isFalse);
     });
+
+    test(
+      'a narrower tier never returns less value than an applicable broader tier on the same card (R4)',
+      () {
+        // Brand rule worth 1.2¢ (3x @ 0.4¢) vs 2¢ baseline (1x @ 2.0¢):
+        // baseline wins on effective value.
+        final brandBelowBaseline = snap(
+          [
+            rule('base', RewardRuleKind.baseline, rate: 1, ps: 'avion'),
+            rule(
+              'ct',
+              RewardRuleKind.brand,
+              brand: 'canadian-tire',
+              rate: 3,
+              ps: 'ctm',
+            ),
+          ],
+          pointSystems: const {'avion': 2.0, 'ctm': 0.4},
+        );
+        final r1 = run(
+          brandBelowBaseline,
+          category: RewardCategory.departmentStores,
+          brand: 'canadian-tire',
+        );
+        expect(r1.ruleId, 'base');
+        expect(r1.effectiveCentsPerDollar, closeTo(2.0, 1e-9));
+
+        // Brand rule worth 1.5¢ (3x @ 0.5¢) vs 3¢ dining category rule (6x @ 0.5¢):
+        // category rule wins.
+        final brandBelowCategory = snap(
+          [
+            rule('base', RewardRuleKind.baseline, rate: 1, ps: 'td'),
+            rule(
+              'dining',
+              RewardRuleKind.category,
+              category: RewardCategory.dining,
+              rate: 6,
+              ps: 'td',
+            ),
+            rule(
+              'sbux',
+              RewardRuleKind.brand,
+              category: RewardCategory.coffee,
+              brand: 'starbucks',
+              rate: 3,
+              ps: 'td',
+            ),
+          ],
+          pointSystems: const {'td': 0.5},
+        );
+        final r2 = run(
+          brandBelowCategory,
+          category: RewardCategory.coffee,
+          brand: 'starbucks',
+        );
+        expect(r2.ruleId, 'dining');
+        expect(r2.effectiveCentsPerDollar, closeTo(3.0, 1e-9));
+
+        // Equal effectiveCentsPerDollar keeps the more specific tier (brand > category > baseline).
+        final tiedTiers = snap([
+          rule('base', RewardRuleKind.baseline, rate: 3),
+          rule(
+            'cat',
+            RewardRuleKind.category,
+            category: RewardCategory.dining,
+            rate: 3,
+          ),
+          rule(
+            'brand',
+            RewardRuleKind.brand,
+            category: RewardCategory.dining,
+            brand: 'chipotle',
+            rate: 3,
+          ),
+        ]);
+        expect(run(tiedTiers, brand: 'chipotle').ruleId, 'brand');
+      },
+    );
   });
 
   test('0-rate promo (intro APR) is skipped, not a winner', () {

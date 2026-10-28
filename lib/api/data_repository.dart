@@ -299,6 +299,7 @@ class DataRepository {
       cardPreferenceOrder: cardPreferenceOrder,
       isForeign: isForeign,
       selectedBonusCategories: await catalog.bonusSelections(),
+      homeCountry: await homeCountry(userId),
     );
   }
 

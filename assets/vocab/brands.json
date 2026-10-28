@@ -3713,7 +3713,7 @@
   {
     "brandId": "home-depot",
     "displayName": "The Home Depot",
-    "category": "departmentStores",
+    "category": "homeImprovement",
     "aliases": [
       "home depot",
       "the home depot"
@@ -3722,7 +3722,7 @@
   {
     "brandId": "lowes",
     "displayName": "Lowe's",
-    "category": "departmentStores",
+    "category": "homeImprovement",
     "aliases": [
       "lowes",
       "lowe s"
@@ -3731,7 +3731,7 @@
   {
     "brandId": "best-buy",
     "displayName": "Best Buy",
-    "category": "departmentStores",
+    "category": "electronics",
     "aliases": [
       "best buy"
     ]
@@ -4678,7 +4678,7 @@
   {
     "brandId": "menards",
     "displayName": "Menards",
-    "category": "wholesale",
+    "category": "homeImprovement",
     "aliases": [
       "menards"
     ]
@@ -4849,7 +4849,7 @@
   {
     "brandId": "gap",
     "displayName": "Gap",
-    "category": "departmentStores",
+    "category": "apparel",
     "aliases": [
       "gap",
       "the gap"
@@ -5004,7 +5004,7 @@
   {
     "brandId": "dick-s-sporting-goods",
     "displayName": "Dick's Sporting Goods",
-    "category": "departmentStores",
+    "category": "sportingGoods",
     "aliases": [
       "dicks sporting goods",
       "dick s sporting goods",
@@ -5059,7 +5059,7 @@
   {
     "brandId": "petco",
     "displayName": "Petco",
-    "category": "departmentStores",
+    "category": "pets",
     "aliases": [
       "petco"
     ]
@@ -5067,7 +5067,7 @@
   {
     "brandId": "petsmart",
     "displayName": "PetSmart",
-    "category": "departmentStores",
+    "category": "pets",
     "aliases": [
       "petsmart"
     ]
@@ -5109,7 +5109,7 @@
   {
     "brandId": "ace-hardware",
     "displayName": "Ace Hardware",
-    "category": "departmentStores",
+    "category": "homeImprovement",
     "aliases": [
       "ace hardware"
     ]
@@ -5117,7 +5117,7 @@
   {
     "brandId": "true-value",
     "displayName": "True Value",
-    "category": "departmentStores",
+    "category": "homeImprovement",
     "aliases": [
       "true value"
     ]

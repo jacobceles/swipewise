@@ -289,6 +289,7 @@ class CatalogRepository {
     final rulesByProduct = <String, List<RewardRule>>{};
     for (final r in ruleRows) {
       final rule = _rule(r);
+      if (rule == null) continue;
       (rulesByProduct[rule.productId] ??= <RewardRule>[]).add(rule);
     }
 
@@ -623,6 +624,7 @@ class CatalogRepository {
     final out = <WalletRewardRow>[];
     for (final r in rows) {
       final rule = _rule(r);
+      if (rule == null) continue;
       if (rule.kind == RewardRuleKind.promo && rule.rate == 0) continue;
       if (rule.kind == RewardRuleKind.partnerPortal) continue;
       if (rule.kind == RewardRuleKind.rotating &&
@@ -672,7 +674,8 @@ class CatalogRepository {
       [userId, cardId],
     );
     if (rows.isEmpty) return null;
-    final rules = rows.map(_rule).toList();
+    final rules = rows.map(_rule).whereType<RewardRule>().toList();
+    if (rules.isEmpty) return null;
     final labels = _currencyLabels(rows);
 
     RotatingQuarter? quarterAt(int year, int quarter) {
@@ -799,13 +802,21 @@ class CatalogRepository {
     currency: r['currency'] as String?,
   );
 
-  RewardRule _rule(Map<String, Object?> r) {
+  RewardRule? _rule(Map<String, Object?> r) {
     final cat = r['category'] as String?;
+    RewardCategory? parsedCat;
+    if (cat != null) {
+      parsedCat = RewardCategory.fromName(cat);
+      if (parsedCat == RewardCategory.other &&
+          cat != RewardCategory.other.name) {
+        return null;
+      }
+    }
     return RewardRule(
       ruleId: r['rule_id'] as String,
       productId: r['card_product_id'] as String,
       kind: RewardRuleKind.fromName(r['kind'] as String?),
-      category: cat != null ? RewardCategory.fromName(cat) : null,
+      category: parsedCat,
       brand: r['brand'] as String?,
       rate: (r['rate'] as num).toDouble(),
       pointSystemId: r['point_system_id'] as String,

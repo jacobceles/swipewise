@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 
 class BoundaryGeofenceReceiver : BroadcastReceiver() {
@@ -11,15 +12,14 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val event = GeofencingEvent.fromIntent(intent) ?: return
         if (event.hasError()) {
+            WalkinLog.w(context, "boundary: error code=${event.errorCode}")
+            if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
+                PendingReregister.set(context, true)
+                ReregisterScheduler.enqueue(context)
+            }
             return
         }
         if (event.geofenceTransition != Geofence.GEOFENCE_TRANSITION_EXIT) return
-
-        // Smart cooldown re-arm: crossing the boundary means the user left
-        // the mapped area, so a later return to any of these merchants is a
-        // new trip — clear per-merchant cooldowns so it re-notifies. If the
-        // user never leaves the area, the normal 6h window applies.
-        CooldownStore(context).clearMerchantCooldowns()
 
         // Don't re-register mid-drive — you'd cross each new boundary again and
         // again on a long trip. Instead defer: remember a re-registration is

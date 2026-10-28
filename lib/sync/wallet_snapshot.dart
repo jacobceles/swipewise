@@ -125,6 +125,47 @@ class WalletBackupRepository {
   /// is not welded to the id it was taken under.
   static const _ownerColumn = 'user_id';
 
+  /// Explicit per-table column allowlists. Only the columns that belong to a
+  /// portable manual wallet backup travel — internal/bank-sync/bookkeeping
+  /// columns (`account_slug`, `sub_type`, `originated_manual`, `created_at`,
+  /// `updated_at`, `linked_at`) are never exported or written on restore.
+  static const List<String> cardColumns = [
+    'id',
+    'source',
+    'provider',
+    'name',
+    'last_four',
+    'network',
+    'image_url',
+    'institution_id',
+    'institution_logo',
+    'account_type',
+  ];
+
+  static const List<String> cardOverrideColumns = [
+    'card_id',
+    'manual_credit_limit',
+    'custom_name',
+    'product_identification',
+    'identification_source',
+    'due_day',
+    'reminder_enabled',
+    'reminder_lead_days',
+  ];
+
+  static const List<String> cardLinkColumns = [
+    'card_id',
+    'card_product_id',
+    'source',
+    'confidence',
+  ];
+
+  static const List<String> mutedMerchantColumns = [
+    'merchant_id',
+    'name',
+    'muted_at',
+  ];
+
   /// Whether there is anything on this device worth protecting.
   ///
   /// Drives the one automatic decision this feature makes: a backup is pulled
@@ -156,15 +197,17 @@ class WalletBackupRepository {
   Future<WalletSnapshot> capture(String userId) async {
     final db = await _dbHelper.database;
 
-    Future<List<Map<String, Object?>>> table(String name) async {
+    Future<List<Map<String, Object?>>> table(
+      String name,
+      List<String> columns,
+    ) async {
       final rows = await db.query(
         name,
+        columns: columns,
         where: '$_ownerColumn = ?',
         whereArgs: [userId],
       );
-      return rows
-          .map((r) => {...r}..remove(_ownerColumn))
-          .toList(growable: false);
+      return rows.map((r) => {...r}).toList(growable: false);
     }
 
     final settingRows = await db.query(
@@ -176,14 +219,17 @@ class WalletBackupRepository {
 
     // No `user_id` to filter on — the table is device-global by design, so the
     // whole thing is the user's mute list.
-    final muted = await db.query('muted_merchants');
+    final muted = await db.query(
+      'muted_merchants',
+      columns: mutedMerchantColumns,
+    );
 
     return WalletSnapshot(
       schemaVersion: WalletSnapshot.currentSchemaVersion,
       capturedAt: DateTime.now().toUtc(),
-      cards: await table('cards'),
-      cardOverrides: await table('card_overrides'),
-      cardLinks: await table('card_links'),
+      cards: await table('cards', cardColumns),
+      cardOverrides: await table('card_overrides', cardOverrideColumns),
+      cardLinks: await table('card_links', cardLinkColumns),
       mutedMerchants: muted.map((r) => {...r}).toList(growable: false),
       settings: {
         for (final row in settingRows)
@@ -204,19 +250,20 @@ class WalletBackupRepository {
   Future<void> apply(WalletSnapshot snapshot, {required String userId}) async {
     final db = await _dbHelper.database;
 
-    // Columns the *local* schema actually has. A backup written by a newer
-    // build can carry a column this one has never heard of, and an unfiltered
-    // insert would throw on it — so drift degrades to a dropped field rather
-    // than a failed restore.
-    Future<Set<String>> columnsOf(String table) async {
+    // Intersect the allowlist with the columns the *local* schema actually has.
+    // A backup written by a newer build can carry a column this one has never
+    // heard of, and an unfiltered insert would throw on it — so drift degrades
+    // to a dropped field rather than a failed restore.
+    Future<Set<String>> columnsOf(String table, List<String> allowed) async {
       final info = await db.rawQuery('PRAGMA table_info($table)');
-      return info.map((c) => c['name'] as String).toSet();
+      final present = info.map((c) => c['name'] as String).toSet();
+      return allowed.where(present.contains).toSet();
     }
 
-    final cardCols = await columnsOf('cards');
-    final overrideCols = await columnsOf('card_overrides');
-    final linkCols = await columnsOf('card_links');
-    final mutedCols = await columnsOf('muted_merchants');
+    final cardCols = await columnsOf('cards', cardColumns);
+    final overrideCols = await columnsOf('card_overrides', cardOverrideColumns);
+    final linkCols = await columnsOf('card_links', cardLinkColumns);
+    final mutedCols = await columnsOf('muted_merchants', mutedMerchantColumns);
 
     await db.transaction((txn) async {
       for (final table in ['cards', 'card_overrides', 'card_links']) {

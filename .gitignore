@@ -36,6 +36,8 @@ keys*.json
 !keys.free.json
 .env
 *.log
+__pycache__/
+*.pyc
 
 # Workspaces
 # Separate repositories, checked out here only so one editor window covers

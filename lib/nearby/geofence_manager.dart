@@ -155,15 +155,24 @@ class GeofenceManager {
       final fix = await location.getOneShot(ask: false);
       var area = await cache.read(lat: fix.lat, lng: fix.lng);
       var source = 'cache';
+      Object? searchError;
       if (area == null) {
         source = 'search';
-        area = await search.nearbyCovered(
-          lat: fix.lat,
-          lng: fix.lng,
-          radiusMi: radiusMi,
-          categoryIds: categoryIds,
-        );
-        await cache.write(lat: fix.lat, lng: fix.lng, result: area);
+        try {
+          area = await search.nearbyCovered(
+            lat: fix.lat,
+            lng: fix.lng,
+            radiusMi: radiusMi,
+            categoryIds: categoryIds,
+          );
+          await cache.write(lat: fix.lat, lng: fix.lng, result: area);
+        } catch (e) {
+          final fallback = await cache.readFallback(lat: fix.lat, lng: fix.lng);
+          if (fallback == null) rethrow;
+          area = fallback;
+          source = 'stale_cache';
+          searchError = e;
+        }
       }
       var merchants = area.merchants;
       if (merchants.isEmpty) {
@@ -185,14 +194,11 @@ class GeofenceManager {
         );
         return true;
       }
-      // Drop muted stores so no fence (and thus no dwell notification) is
-      // registered for them. They still appear in the Nearby Stores list UI —
-      // only fences are suppressed. An empty result here is safe: the boundary
-      // tripwire is still registered below (`_buildBoundary` handles it).
+      // Keep muted stores in the option list (marked `muted: true`) so
+      // StoreResolver still resolves to the muted store when the user is
+      // standing at it, and DwellCheckReceiver suppresses at post time
+      // instead of alerting for an unmuted neighbour.
       final mutedIds = await repo.queryMutedMerchantIds();
-      if (mutedIds.isNotEmpty) {
-        merchants = merchants.where((m) => !mutedIds.contains(m.id)).toList();
-      }
       // No card advice at an ATM. Search no longer asks for them, but the
       // tile cache keeps older results for 7 days.
       merchants = merchants.where((m) => m.placeType != 'atm').toList();
@@ -220,6 +226,7 @@ class GeofenceManager {
         catchAll,
         dwellByCategory,
         brandResolver,
+        mutedIds: mutedIds,
       );
       final boundary = _buildBoundary(
         centerLat: fix.lat,
@@ -248,7 +255,7 @@ class GeofenceManager {
       );
       await _beacon(trigger, count, countMeaningful: true);
       await _recordSuccessfulRegistration(userId, fix.lat, fix.lng);
-      return true;
+      return searchError == null;
     } catch (e, st) {
       if (e is LocationDenied) {
         // Not a failure to retry: nothing can be fenced until the user allows
@@ -390,10 +397,9 @@ class GeofenceManager {
       final c = FirebaseCrashlytics.instance;
       c.setCustomKey('geofence_trigger', trigger);
       c.setCustomKey('geofence_gap_age_min', ageMin);
-      c.setCustomKey('geofence_gap_dist_km', distStr);
       // ignore: unawaited_futures
       c.recordError(
-        StateError('coverage_gap age=${ageMin}m dist=${distStr}km'),
+        StateError('coverage_gap age=${ageMin}m'),
         StackTrace.current,
         reason: 'geofence_coverage_gap',
         fatal: false,
@@ -483,8 +489,9 @@ class GeofenceManager {
     BestCardLookup lookup,
     CardPick? catchAll,
     Map<String, int> dwellByCategory,
-    BrandResolver brandResolver,
-  ) {
+    BrandResolver brandResolver, {
+    Set<String> mutedIds = const {},
+  }) {
     final out = <Map<String, dynamic>>[];
     for (final c in clusters) {
       final primary = c.primary;
@@ -526,12 +533,7 @@ class GeofenceManager {
                   : classifyLooseLabel(label)),
           brandId,
         );
-        // Travel sub-categories fall back to the best `travel` card (superset).
-        final categoryBest =
-            lookup.byCategory[category] ??
-            (category.isTravelSubcategory
-                ? lookup.byCategory[RewardCategory.travel]
-                : null);
+        final categoryBest = lookup.byCategory[category];
         final String? bestName;
         final double? bestRate;
         final String? bestCurrency;
@@ -571,6 +573,7 @@ class GeofenceManager {
           'brand_id': ?brandId,
           if (brandId != null && placeCategory == brandDefaultCategory(brandId))
             'main_store': true,
+          if (mutedIds.contains(m.id)) 'muted': true,
           'best_card_name': bestName,
           'best_rate': bestRate,
           // 'USD' (any cash back) | 'POINTS' | 'MILES': "5%" vs "5x points".

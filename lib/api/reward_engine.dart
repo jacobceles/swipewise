@@ -432,10 +432,28 @@ AppliedRate resolve({
           r.category == RewardCategory.dining &&
           !r.excludedCategories.contains(category));
 
-  // Build the prioritized candidate list (baseline excluded — it's the
-  // floor). Within a tier, try the richest rate first.
-  final candidates = <RewardRule>[];
-  void collectTier(bool Function(RewardRule) pred) {
+  // Build the prioritized candidate tiers. Within a tier, try the richest rate
+  // first. A narrow tier (promo, rotating, brand, category) never returns a
+  // lower effectiveCentsPerDollar than an applicable broader tier (category or
+  // baseline) on the same card; ties keep the more specific tier.
+  AppliedRate? firstInTier(List<RewardRule> tier) {
+    for (final r in tier) {
+      final applied = _tryApply(
+        rule: r,
+        baseline: baseline,
+        snapshot: snapshot,
+        brand: brand,
+        amount: amount,
+        spend: spend,
+        ftfCents: ftfCents,
+        quarter: quarter,
+      );
+      if (applied != null) return applied;
+    }
+    return null;
+  }
+
+  List<RewardRule> sortedTier(bool Function(RewardRule) pred) {
     final tier = [
       for (final r in rules)
         if (pred(r)) r,
@@ -445,36 +463,41 @@ AppliedRate resolve({
         a.rate * centValueOf(a.pointSystemId),
       ),
     );
-    candidates.addAll(tier);
+    return tier;
   }
 
   // 1. promo — date-bounded; 0-rate intro-APR offers are not earn rules.
-  collectTier(
-    (r) =>
-        r.kind == RewardRuleKind.promo &&
-        r.rate > 0 &&
-        dateValid(r) &&
-        _promoMatches(r, category, brand),
+  final promoBest = firstInTier(
+    sortedTier(
+      (r) =>
+          r.kind == RewardRuleKind.promo &&
+          r.rate > 0 &&
+          dateValid(r) &&
+          _promoMatches(r, category, brand),
+    ),
   );
   // 2. rotating — current rotation window. We ASSUME the user has activated the
   // current quarter's bonus: there is no activation toggle in the app, so gating on
   // `activations` would permanently suppress every activation-required rotating rule
   // (the whole Freedom Flex / Discover it 5% program). The `activations` plumbing is
   // retained for a future opt-in toggle, but is intentionally not consulted here.
-  collectTier(
-    (r) =>
-        r.kind == RewardRuleKind.rotating &&
-        dateValid(r) &&
-        r.rotationYear == when.year &&
-        (r.rotationQuarter == null || r.rotationQuarter == quarter) &&
-        categoryMatches(r) &&
-        (r.brand == null || r.brand == brand),
+  final rotatingBest = firstInTier(
+    sortedTier(
+      (r) =>
+          r.kind == RewardRuleKind.rotating &&
+          dateValid(r) &&
+          r.rotationYear == when.year &&
+          (r.rotationQuarter == null || r.rotationQuarter == quarter) &&
+          categoryMatches(r) &&
+          (r.brand == null || r.brand == brand),
+    ),
   );
   // 3. brand — exact brand_id. A brand can carry rules in several categories (the
   // Costco card earns 5% on *gas* at Costco but only 2% on other Costco purchases).
   // Prefer the rule whose category matches THIS purchase, then fall back to the brand's
   // highest rate — so a single-category brand, and any brand earn that isn't pinned to
   // this category, still surfaces instead of being dropped to baseline.
+  AppliedRate? brandBest;
   if (brand != null) {
     final brandTier = [
       for (final r in rules)
@@ -489,41 +512,46 @@ AppliedRate resolve({
         a.rate * centValueOf(a.pointSystemId),
       );
     });
-    candidates.addAll(brandTier);
+    brandBest = firstInTier(brandTier);
   }
   // 4. category — permanent.
-  collectTier(
-    (r) =>
-        r.kind == RewardRuleKind.category && dateValid(r) && categoryMatches(r),
+  final categoryBest = firstInTier(
+    sortedTier(
+      (r) =>
+          r.kind == RewardRuleKind.category &&
+          dateValid(r) &&
+          categoryMatches(r),
+    ),
   );
 
-  for (final r in candidates) {
-    final applied = _tryApply(
-      rule: r,
-      baseline: baseline,
-      snapshot: snapshot,
-      brand: brand,
-      amount: amount,
-      spend: spend,
-      ftfCents: ftfCents,
-      quarter: quarter,
-    );
-    if (applied != null) return applied;
-  }
+  // 5. Floor: baseline always applies if present.
+  final baselineBest = baseline != null
+      ? AppliedRate(
+          rate: baseline.rate,
+          pointSystemId: baseline.pointSystemId,
+          effectiveCentsPerDollar:
+              baseline.rate * centValueOf(baseline.pointSystemId) - ftfCents,
+          ruleId: baseline.ruleId,
+          reason: 'baseline',
+          kind: RewardRuleKind.baseline,
+        )
+      : null;
 
-  // Floor: baseline always applies if present.
-  if (baseline != null) {
-    return AppliedRate(
-      rate: baseline.rate,
-      pointSystemId: baseline.pointSystemId,
-      effectiveCentsPerDollar:
-          baseline.rate * centValueOf(baseline.pointSystemId) - ftfCents,
-      ruleId: baseline.ruleId,
-      reason: 'baseline',
-      kind: RewardRuleKind.baseline,
-    );
+  AppliedRate? best;
+  for (final candidate in [
+    promoBest,
+    rotatingBest,
+    brandBest,
+    categoryBest,
+    baselineBest,
+  ]) {
+    if (candidate == null) continue;
+    if (best == null ||
+        candidate.effectiveCentsPerDollar > best.effectiveCentsPerDollar) {
+      best = candidate;
+    }
   }
-  return AppliedRate.none;
+  return best ?? AppliedRate.none;
 }
 
 bool _promoMatches(RewardRule r, RewardCategory category, String? brand) {

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/catalog_repository.dart';
 import '../api/settings_repository.dart';
@@ -9,6 +10,29 @@ import '../theme/app_theme.dart';
 import '../widgets/connect_bank_app_bar.dart';
 import '../widgets/country_filter.dart';
 import 'manual_card_flow_screen.dart';
+
+/// Lowercase card product names grouped by normalized issuer slug so typing a
+/// card name ("Sapphire", "Cobalt") on the issuer screen filters to the
+/// issuer(s) that offer it.
+final catalogProductNamesByIssuerProvider =
+    FutureProvider<Map<String, List<String>>>((ref) async {
+      await ref.watch(catalogIssuersProvider.future);
+      try {
+        final repo = ref.watch(dataRepositoryProvider);
+        final all = await repo.catalog.productsForIssuer(null);
+        final byIssuer = <String, List<String>>{};
+        for (final p in all) {
+          final key = p.issuer.toLowerCase().replaceAll(
+            RegExp(r'[^a-z0-9]'),
+            '',
+          );
+          (byIssuer[key] ??= <String>[]).add(p.displayName.toLowerCase());
+        }
+        return byIssuer;
+      } catch (_) {
+        return const {};
+      }
+    });
 
 /// Constant across every step of the flow — the app bar names the task, and
 /// per-step context lives in the header block instead. Wireframe `kjiHP` /
@@ -44,6 +68,11 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
   }
 
   void _openIssuer(CatalogIssuer issuer) {
+    final q = _query.trim();
+    final matchedIssuerName =
+        q.isEmpty ||
+        issuer.displayName.toLowerCase().contains(q.toLowerCase()) ||
+        issuer.id.toLowerCase().contains(q.toLowerCase());
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ManualCardFlowScreen(
@@ -54,6 +83,7 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
           addAnotherLabel: 'Add cards from another issuer',
           appBarTitle: kAddCardsTitle,
           country: _country,
+          initialQuery: matchedIssuerName ? '' : q,
         ),
       ),
     );
@@ -62,6 +92,8 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
   @override
   Widget build(BuildContext context) {
     final issuers = ref.watch(catalogIssuersProvider);
+    final productsByIssuer =
+        ref.watch(catalogProductNamesByIssuerProvider).value ?? const {};
     final counts = ref.watch(walletCountsByIssuerProvider).value ?? const {};
     final added = counts.values.fold(0, (sum, n) => sum + n);
 
@@ -78,7 +110,7 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
           child: switch (issuers) {
             AsyncError(:final error) => _LoadFailure(error: '$error'),
             AsyncData(:final value) => _IssuerList(
-              issuers: _visible(value),
+              issuers: _visible(value, productsByIssuer),
               counts: counts,
               added: added,
               searchCtrl: _searchCtrl,
@@ -94,20 +126,26 @@ class _AddCardsScreenState extends ConsumerState<AddCardsScreen> {
     );
   }
 
-  List<CatalogIssuer> _visible(List<CatalogIssuer> all) {
+  List<CatalogIssuer> _visible(
+    List<CatalogIssuer> all,
+    Map<String, List<String>> productsByIssuer,
+  ) {
     final q = _query.trim().toLowerCase();
-    // Match the raw catalog value too, so typing "amex" still finds American
-    // Express and "boa" is at least not worse than nothing.
-    return all
-        .where(
-          (i) =>
-              (_country == catalogCountryAll ||
-                  i.countries.contains(_country)) &&
-              (q.isEmpty ||
-                  i.displayName.toLowerCase().contains(q) ||
-                  i.id.toLowerCase().contains(q)),
-        )
-        .toList();
+    // Match the raw catalog value and card product names too, so typing "amex"
+    // finds American Express and typing "sapphire" shows Chase.
+    return all.where((i) {
+      if (_country != catalogCountryAll && !i.countries.contains(_country)) {
+        return false;
+      }
+      if (q.isEmpty ||
+          i.displayName.toLowerCase().contains(q) ||
+          i.id.toLowerCase().contains(q)) {
+        return true;
+      }
+      final key = i.id.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      final names = productsByIssuer[key] ?? const [];
+      return names.any((name) => name.contains(q));
+    }).toList();
   }
 }
 
@@ -170,7 +208,7 @@ class _IssuerList extends StatelessWidget {
         onChanged: onQueryChanged,
         style: AppText.bodyMd(),
         decoration: InputDecoration(
-          hintText: 'Search issuers…',
+          hintText: 'Search issuers or cards…',
           prefixIcon: Icon(
             LucideIcons.search,
             size: 18,
@@ -311,12 +349,29 @@ class _IssuerTile extends StatelessWidget {
 class _NoIssuers extends StatelessWidget {
   const _NoIssuers();
 
+  static final _missingCardUri = Uri.parse(
+    'https://github.com/jacobceles/swipewise/issues/new?title=Missing+card:+',
+  );
+
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(
-      'No issuers match that search.',
-      textAlign: TextAlign.center,
-      style: AppText.bodyMd(color: AppColors.mutedFg),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'No issuers match that search.',
+          textAlign: TextAlign.center,
+          style: AppText.bodyMd(color: AppColors.mutedFg),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => launchUrl(
+            _missingCardUri,
+            mode: LaunchMode.externalApplication,
+          ),
+          child: const Text('Card missing? Tell us'),
+        ),
+      ],
     ),
   );
 }

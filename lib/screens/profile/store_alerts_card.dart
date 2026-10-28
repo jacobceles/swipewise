@@ -49,6 +49,7 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
   void _refresh() {
     ref.invalidate(alertChecksProvider);
     ref.invalidate(locationPermissionProvider);
+    ref.invalidate(locationReducedAccuracyProvider);
     ref.invalidate(reliabilityGrantsProvider);
   }
 
@@ -62,6 +63,8 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
     final palette = AppPalette.of(context);
     final enabled = ref.watch(nearbyEnabledProvider);
     final checks = ref.watch(alertChecksProvider).value;
+    final reducedAccuracy =
+        ref.watch(locationReducedAccuracyProvider).value ?? false;
     final missing = !enabled || checks == null
         ? const <AlertCheck>[]
         : [
@@ -75,6 +78,12 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
     final paused =
         missing.contains(AlertCheck.notifications) ||
         missing.contains(AlertCheck.location);
+    final lateChecks = [
+      for (final c in missing)
+        if (c == AlertCheck.battery || c == AlertCheck.alarms) c,
+    ];
+    final late = !paused && lateChecks.isNotEmpty;
+    final headerMissingCount = paused ? missing.length : lateChecks.length;
 
     final (title, subtitle, icon, tint, tintBg) = !enabled
         ? (
@@ -84,7 +93,7 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
             AppColors.foreground,
             palette.secondary,
           )
-        : missing.isEmpty
+        : !paused && !late
         ? (
             'Store alerts',
             "All set — we'll nudge you in stores",
@@ -94,8 +103,8 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
           )
         : (
             paused ? 'Store alerts are paused' : 'Alerts may be late',
-            '${countOf(missing.length, 'phone setting')} '
-                '${missing.length == 1 ? 'needs' : 'need'} a quick fix',
+            '${countOf(headerMissingCount, 'phone setting')} '
+                '${headerMissingCount == 1 ? 'needs' : 'need'} a quick fix',
             paused ? LucideIcons.bellOff : LucideIcons.bellRing,
             paused ? palette.red : palette.amber,
             paused ? palette.redBg : palette.amberBg,
@@ -126,7 +135,7 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
                   ),
                 SettingsRow(
                   title: checkLabel(c),
-                  subtitle: _hint(c),
+                  subtitle: _hint(c, reducedAccuracy: reducedAccuracy),
                   trailing: ActionPill(
                     label: _allows(c) ? 'Allow' : 'Fix',
                     onTap: () => _fix(c),
@@ -175,13 +184,18 @@ class _StoreAlertsCardState extends ConsumerState<StoreAlertsCard>
       c == AlertCheck.activity ||
       c == AlertCheck.alarms;
 
-  static String _hint(AlertCheck c) => switch (c) {
-    AlertCheck.notifications => 'Needed to show an alert',
-    AlertCheck.location => '“Allow all the time”, so alerts work when the app is closed',
-    AlertCheck.activity => 'Tells walking in from driving past',
-    AlertCheck.battery => '“Unrestricted”, so Android doesn’t pause alerts',
-    AlertCheck.alarms => 'Times the alert for about a minute after you walk in',
-  };
+  static String _hint(AlertCheck c, {bool reducedAccuracy = false}) =>
+      switch (c) {
+        AlertCheck.notifications => 'Needed to show an alert',
+        AlertCheck.location =>
+          reducedAccuracy
+              ? 'Precise location needed — turn on “Use precise location”'
+              : '“Allow all the time”, so alerts work when the app is closed',
+        AlertCheck.activity => 'Tells walking in from driving past',
+        AlertCheck.battery => '“Unrestricted”, so Android doesn’t pause alerts',
+        AlertCheck.alarms =>
+          'Times the alert for about a minute after you walk in',
+      };
 }
 
 String checkLabel(AlertCheck c) => switch (c) {
@@ -227,6 +241,13 @@ Future<void> fixAlertCheck(BuildContext context, AlertCheck check) async {
         await openAppSettings();
         return;
       }
+      try {
+        if (await Geolocator.getLocationAccuracy() ==
+            LocationAccuracyStatus.reduced) {
+          await openAppSettings();
+          return;
+        }
+      } catch (_) {}
       if (context.mounted) {
         await NearbyPermissionGate.requestBackgroundLocation(context);
       }

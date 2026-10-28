@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../nearby/location_service.dart';
 import '../../nearby/merchant.dart';
@@ -144,12 +146,14 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
     }
     if (merchants != null) {
       if (merchants.isEmpty && ref.read(cardsProvider).value?.isEmpty == true) {
-        return const _StateCard(
+        return _StateCard(
           icon: LucideIcons.walletCards,
           title: 'Add a card to see stores',
           subtitle:
               'Stores near you are ranked by the cards you own. Add one from '
               'the Cards tab.',
+          action: 'Add cards',
+          onAction: () => context.push('/add-cards'),
         );
       }
       if (merchants.isEmpty) {
@@ -180,10 +184,23 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
         subtitle: _subtitleForError(e),
         // The list never asks on its own (setup does, with an explanation);
         // here the user asks for it.
-        action: e is LocationDenied
-            ? (e.permanent ? 'Open settings' : 'Allow location')
-            : null,
-        onAction: e is LocationDenied ? () => _allowLocation(e) : null,
+        action: switch (e) {
+          LocationDenied(:final permanent) =>
+            permanent ? 'Open settings' : 'Allow location',
+          LocationServiceDisabled() => 'Open settings',
+          _ => 'Retry',
+        },
+        onAction: switch (e) {
+          final LocationDenied d => () => _allowLocation(d),
+          LocationServiceDisabled() => () async {
+            await Geolocator.openLocationSettings();
+            if (mounted) {
+              ref.invalidate(locationPermissionProvider);
+              ref.invalidate(nearbyMerchantsProvider);
+            }
+          },
+          _ => () => ref.invalidate(nearbyMerchantsProvider),
+        },
       );
     }
     return const Padding(
@@ -238,7 +255,7 @@ class _NearbyStoresViewState extends ConsumerState<NearbyStoresView>
     if (e is LocationServiceDisabled) {
       return 'Turn on location services to see stores near you.';
     }
-    return '';
+    return 'Check your connection and try again.';
   }
 }
 
@@ -421,12 +438,19 @@ class _StoreRow extends ConsumerWidget {
           borderRadius: BorderRadius.circular(kRadiusM),
           onTap: label == null || label.isEmpty
               ? null
-              : () => showRewardRankingSheetForLabel(
-                  context,
-                  label: label,
-                  primary: RewardRankingPrimary.brand,
-                  merchantName: merchant.name,
-                ),
+              : () => merchant.resolvedCategory != null
+                    ? showRewardRankingSheet(
+                        context,
+                        category: merchant.resolvedCategory!,
+                        primary: RewardRankingPrimary.brand,
+                        merchantName: merchant.name,
+                      )
+                    : showRewardRankingSheetForLabel(
+                        context,
+                        label: label,
+                        primary: RewardRankingPrimary.brand,
+                        merchantName: merchant.name,
+                      ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -541,9 +565,10 @@ class _StoreRow extends ConsumerWidget {
     final r = rate == null
         ? null
         : (rate % 1 == 0 ? rate.toInt().toString() : rate.toStringAsFixed(1));
+    final unit = m.bestCurrency == null || m.bestCurrency == 'USD' ? '%' : 'x';
     final base = r == null
         ? 'Best: ${m.bestCardName}'
-        : 'Best: ${m.bestCardName} · $r%';
+        : 'Best: ${m.bestCardName} · $r$unit';
     if (m.matchedBrand != null && m.matchedBrand!.isNotEmpty) {
       return '$base · ${m.matchedBrand} bonus';
     }

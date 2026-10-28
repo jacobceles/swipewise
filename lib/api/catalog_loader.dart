@@ -71,10 +71,38 @@ class CatalogLoader {
   final RemoteAssetService? _remote;
 
   Future<CatalogLoadResult> hydrateIfNeeded(String userId) async {
-    // Try R2 first (ETag-gated — free if catalog hasn't changed).
-    final Map<String, dynamic>? remoteData = await _fetchRemote();
-    final Map<String, dynamic> data;
+    final loaded = await _settings.getLoadedCatalogDataVersion(userId);
+    // On a fresh install, check the local cache first without blocking up to
+    // 25s on a remote fetch; if there is no cached copy yet, hydrate from the
+    // bundled floor immediately and refresh from R2 in the background.
     String? cached;
+    Map<String, dynamic>? remoteData;
+    if (loaded == 0) {
+      cached = await _remote?.readCached('catalog');
+      if (cached == null) {
+        final bundledRaw = await _loadBundledCatalog();
+        if (bundledRaw != null) {
+          try {
+            final bundledData = await compute(_decode, bundledRaw);
+            await _applyCatalog(userId, bundledData);
+            // ignore: unawaited_futures
+            _refreshRemoteInBackground(userId);
+            return CatalogLoadResult.loaded;
+          } catch (e) {
+            Log.w(
+              'catalog',
+              'failed to hydrate bundled catalog on fresh install',
+              e,
+            );
+          }
+        }
+      }
+    } else {
+      // Try R2 first (ETag-gated — free if catalog hasn't changed).
+      remoteData = await _fetchRemote();
+    }
+
+    final Map<String, dynamic> data;
     if (remoteData != null) {
       data = remoteData;
     } else {
@@ -82,17 +110,18 @@ class CatalogLoader {
       // without reading and decoding a multi-MB file on every launch. A
       // migration that forces a re-hydrate resets the loaded version to 0, so
       // it still reloads.
-      final cachedVersion = await _remote?.cachedDataVersion('catalog');
-      if (cachedVersion != null &&
-          cachedVersion != 0 &&
-          cachedVersion ==
-              await _settings.getLoadedCatalogDataVersion(userId)) {
-        return CatalogLoadResult.upToDate;
+      if (loaded != 0) {
+        final cachedVersion = await _remote?.cachedDataVersion('catalog');
+        if (cachedVersion != null &&
+            cachedVersion != 0 &&
+            cachedVersion == loaded) {
+          return CatalogLoadResult.upToDate;
+        }
+        cached = await _remote?.readCached('catalog');
       }
       // Fall back to the local R2 cache (written on a previous launch), then the
       // bundled asset — the offline floor shipped with the app, so a first launch
       // with no network still gets a working rewards engine instead of empty tables.
-      cached = await _remote?.readCached('catalog');
       final raw = cached ?? await _loadBundledCatalog();
       if (raw == null) {
         Log.w(
@@ -132,6 +161,21 @@ class CatalogLoader {
         'bundled schemaVersion=$schemaVersion exceeds supported '
             '$supportedSchemaVersion — app update required; leaving DB as-is',
       );
+      if (loaded == 0) {
+        final fallbackRaw = await _loadBundledCatalog();
+        if (fallbackRaw != null) {
+          try {
+            final fallbackData = await compute(_decode, fallbackRaw);
+            final fallbackSchema =
+                (fallbackData['schemaVersion'] as num?)?.toInt() ?? 1;
+            if (fallbackSchema <= supportedSchemaVersion) {
+              await _applyCatalog(userId, fallbackData);
+            }
+          } catch (e) {
+            Log.w('catalog', 'failed to fall back to bundled catalog', e);
+          }
+        }
+      }
       return CatalogLoadResult.needsAppUpdate;
     }
 
@@ -141,11 +185,30 @@ class CatalogLoader {
     if (cached != null) {
       await _remote?.saveCachedDataVersion('catalog', dataVersion);
     }
-    final loaded = await _settings.getLoadedCatalogDataVersion(userId);
     if (loaded == dataVersion && dataVersion != 0) {
       return CatalogLoadResult.upToDate;
     }
 
+    await _applyCatalog(userId, data);
+    return CatalogLoadResult.loaded;
+  }
+
+  Future<void> _refreshRemoteInBackground(String userId) async {
+    final remoteData = await _fetchRemote();
+    if (remoteData == null) return;
+    final schemaVersion = (remoteData['schemaVersion'] as num?)?.toInt() ?? 1;
+    if (schemaVersion > supportedSchemaVersion) return;
+    final dataVersion = (remoteData['dataVersion'] as num?)?.toInt() ?? 0;
+    final loaded = await _settings.getLoadedCatalogDataVersion(userId);
+    if (loaded == dataVersion && dataVersion != 0) return;
+    await _applyCatalog(userId, remoteData);
+  }
+
+  Future<void> _applyCatalog(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    final dataVersion = (data['dataVersion'] as num?)?.toInt() ?? 0;
     await _catalog.replaceCatalog(
       pointSystems: _project(data['point_systems'], pointSystemCols),
       cardProducts: _markUnknownFxFee(
@@ -163,7 +226,6 @@ class CatalogLoader {
 
     final counts = await _catalog.catalogCounts();
     Log.i('catalog', 'hydrated catalog dataVersion=$dataVersion $counts');
-    return CatalogLoadResult.loaded;
   }
 
   /// Projects each JSON object down to exactly the table's columns, so a

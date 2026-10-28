@@ -74,6 +74,16 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun registerSet(call: MethodCall, result: MethodChannel.Result) {
+        runSerialized { done ->
+            registerSetLocked(call, result, done)
+        }
+    }
+
+    private fun registerSetLocked(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        done: () -> Unit,
+    ) {
         // Without Google Play services the GeofencingClient silently no-ops:
         // addGeofences never fires and no error surfaces. Fail loudly with a
         // dedicated error code so the Dart side records the geofence_degraded
@@ -86,6 +96,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                 "Google Play services unavailable (status=$gmsStatus)",
                 gmsStatus,
             )
+            done()
             return
         }
 
@@ -96,27 +107,21 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         @Suppress("UNCHECKED_CAST")
         val boundary = args["boundary"] as Map<String, Any?>?
 
-        store.clear()
+        val hash = registrationHash(zones, boundary, RESPONSIVENESS_MS)
+        val unchanged = hash == lastRegisteredHash &&
+            !PendingReregister.isPending(context) &&
+            store.count() > 0
+
+        if (!unchanged) {
+            store.clear()
+        }
         val merchantGeofences = mutableListOf<Geofence>()
         for (z in zones) {
             val gid = z["geofence_id"] as String
             @Suppress("UNCHECKED_CAST")
             val rawOptions = (z["options"] as List<Map<String, Any?>>?) ?: emptyList()
             if (rawOptions.isEmpty()) continue
-            val options = rawOptions.map { opt ->
-                MerchantOption(
-                    merchantId = opt["merchant_id"] as String,
-                    name = opt["name"] as String,
-                    category = opt["category"] as String?,
-                    bestCardName = opt["best_card_name"] as String?,
-                    bestRate = (opt["best_rate"] as? Number)?.toDouble(),
-                    lat = (opt["lat"] as? Number)?.toDouble(),
-                    lng = (opt["lng"] as? Number)?.toDouble(),
-                    footprintM = (opt["footprint_m"] as? Number)?.toDouble() ?: 0.0,
-                    plaza = opt["plaza"] == true,
-                    bestCurrency = opt["best_currency"] as String?,
-                )
-            }
+            val options = rawOptions.map(MerchantOption::fromChannelMap)
 
             val lat = (z["lat"] as Number).toDouble()
             val lng = (z["lng"] as Number).toDouble()
@@ -143,13 +148,23 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     .setRequestId(gid)
                     .setCircularRegion(lat, lng, radius)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setNotificationResponsiveness(60_000)
+                    .setNotificationResponsiveness(RESPONSIVENESS_MS)
                     .setTransitionTypes(
                         Geofence.GEOFENCE_TRANSITION_ENTER or
                             Geofence.GEOFENCE_TRANSITION_EXIT,
                     )
                     .build(),
             )
+        }
+
+        if (unchanged) {
+            WalkinLog.w(
+                context,
+                "registerSet unchanged zones=${merchantGeofences.size} -> kept OS fences",
+            )
+            result.success(merchantGeofences.size)
+            done()
+            return
         }
 
         WalkinLog.w(
@@ -189,7 +204,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                         .setCircularRegion(blat, blng, brad)
                         .setExpirationDuration(Geofence.NEVER_EXPIRE)
                         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
-                        .setNotificationResponsiveness(60_000)
+                        .setNotificationResponsiveness(RESPONSIVENESS_MS)
                         .build()
                     val bReq = GeofencingRequest.Builder()
                         .setInitialTrigger(0)
@@ -198,14 +213,21 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     adds.add(client.addGeofences(bReq, boundaryPendingIntent))
                 }
             } catch (e: SecurityException) {
+                lastRegisteredHash = null
                 result.error("PERMISSION_DENIED", e.message, null)
+                done()
                 return@addOnCompleteListener
             } catch (e: Exception) {
+                lastRegisteredHash = null
                 result.error("ADD_FAILED", e.message, null)
+                done()
                 return@addOnCompleteListener
             }
             if (adds.isEmpty()) {
+                lastRegisteredHash = hash
+                PendingReregister.set(context, false)
                 result.success(0)
+                done()
                 return@addOnCompleteListener
             }
             // addGeofences() is asynchronous: returning normally only means the
@@ -217,24 +239,32 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             // and never retry, leaving the device with no fences and no signal:
             // the same silent-miss class the Play-services check above exists to
             // prevent, one branch later. Await the tasks and report what happened.
-            Tasks.whenAllComplete(adds).addOnCompleteListener { done ->
-                val failed = done.result.firstOrNull { !it.isSuccessful }
+            Tasks.whenAllComplete(adds).addOnCompleteListener { completed ->
+                val failed = completed.result.firstOrNull { !it.isSuccessful }
                 if (failed == null) {
+                    lastRegisteredHash = hash
+                    PendingReregister.set(context, false)
                     result.success(merchantGeofences.size)
                 } else {
+                    lastRegisteredHash = null
                     result.error("ADD_FAILED", failed.exception?.message, null)
                 }
+                done()
             }
         }
     }
 
     private fun unregisterAll(result: MethodChannel.Result) {
-        Tasks.whenAllComplete(
-            client.removeGeofences(merchantPendingIntent),
-            client.removeGeofences(boundaryPendingIntent),
-        ).addOnCompleteListener {
-            store.clear()
-            result.success(null)
+        runSerialized { done ->
+            Tasks.whenAllComplete(
+                client.removeGeofences(merchantPendingIntent),
+                client.removeGeofences(boundaryPendingIntent),
+            ).addOnCompleteListener {
+                lastRegisteredHash = null
+                store.clear()
+                result.success(null)
+                done()
+            }
         }
     }
 
@@ -254,18 +284,12 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     bestCardName = args["best_card_name"] as? String
                         ?: "Chase Sapphire Preferred",
                     bestRate = (args["best_rate"] as? Number)?.toDouble() ?: 3.0,
+                    brandId = args["brand_id"] as? String,
+                    mainStore = args["main_store"] == true,
                 ),
             )
         } else {
-            rawOptions.map { opt ->
-                MerchantOption(
-                    merchantId = opt["merchant_id"] as String,
-                    name = opt["name"] as String,
-                    category = opt["category"] as String?,
-                    bestCardName = opt["best_card_name"] as String?,
-                    bestRate = (opt["best_rate"] as? Number)?.toDouble(),
-                )
-            }
+            rawOptions.map(MerchantOption::fromChannelMap)
         }
         NotificationHelper(context).postDwell(
             MerchantMeta(geofenceId = "test", options = options),
@@ -277,5 +301,65 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         const val CHANNEL = "com.appsoflife/geofence"
         private const val REQ_MERCHANT = 1001
         private const val REQ_BOUNDARY = 1002
+        private const val RESPONSIVENESS_MS = 60_000
+
+        private val registerLock = Any()
+        private var registerInFlight = false
+        private val registerQueue = ArrayDeque<() -> Unit>()
+
+        @Volatile
+        private var lastRegisteredHash: Int? = null
+
+        private fun runSerialized(action: (done: () -> Unit) -> Unit) {
+            synchronized(registerLock) {
+                if (!registerInFlight) {
+                    registerInFlight = true
+                } else {
+                    registerQueue.addLast { action(::advanceQueue) }
+                    return
+                }
+            }
+            action(::advanceQueue)
+        }
+
+        private fun advanceQueue() {
+            val next = synchronized(registerLock) {
+                if (registerQueue.isEmpty()) {
+                    registerInFlight = false
+                    null
+                } else {
+                    registerQueue.removeFirst()
+                }
+            }
+            next?.invoke()
+        }
+
+        fun registrationHash(
+            zones: List<Map<String, Any?>>,
+            boundary: Map<String, Any?>?,
+            responsivenessMs: Int = RESPONSIVENESS_MS,
+        ): Int {
+            val zoneSig = zones.mapNotNull { z ->
+                @Suppress("UNCHECKED_CAST")
+                val rawOptions = (z["options"] as List<Map<String, Any?>>?) ?: emptyList()
+                if (rawOptions.isEmpty()) return@mapNotNull null
+                val gid = z["geofence_id"] as String
+                val lat = (z["lat"] as Number).toDouble()
+                val lng = (z["lng"] as Number).toDouble()
+                val radius = (z["radius_m"] as Number).toFloat()
+                val dwell = (z["dwell_seconds"] as Number).toInt()
+                "$gid:$lat:$lng:$radius:$dwell"
+            }.sorted().joinToString("|")
+            val boundarySig = if (boundary == null) {
+                ""
+            } else {
+                val bgid = boundary["geofence_id"] as String
+                val blat = (boundary["lat"] as Number).toDouble()
+                val blng = (boundary["lng"] as Number).toDouble()
+                val brad = (boundary["radius_m"] as Number).toFloat()
+                "$bgid:$blat:$blng:$brad"
+            }
+            return "$responsivenessMs#$zoneSig#$boundarySig".hashCode()
+        }
     }
 }

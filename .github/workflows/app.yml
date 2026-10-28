@@ -59,8 +59,10 @@ on:
       - 'assets/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'keys*.json'
       - 'keys.free.json'
       - '.github/workflows/app.yml'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - 'lib/**'
@@ -73,8 +75,10 @@ on:
       - 'assets/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'keys*.json'
       - 'keys.free.json'
       - '.github/workflows/app.yml'
+      - '.github/workflows/**'
   workflow_dispatch: {}
 
 concurrency:
@@ -94,7 +98,7 @@ jobs:
       - run: flutter test
         env:
           TZ: America/New_York
-      - name: Test CI guards without network access
+      - name: Test CI guards and release tools (offline)
         run: python3 -m unittest discover -s tool -p 'test_*.py'
 
       # The bundled offline floor is what a FRESH INSTALL boots on before its first

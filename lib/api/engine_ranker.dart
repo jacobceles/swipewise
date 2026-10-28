@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import '../models/insights.dart';
 import '../models/reward_category.dart';
 import 'catalog_repository.dart';
@@ -23,6 +25,7 @@ class EngineRanker {
     this.cardPreferenceOrder = const [],
     this.isForeign = false,
     this.selectedBonusCategories = const {},
+    this.homeCountry,
   });
 
   final CatalogSnapshot snapshot;
@@ -39,6 +42,10 @@ class EngineRanker {
   /// When true (the user is abroad — see `travelIsForeignProvider`), each card's
   /// value is docked its foreign-transaction fee, so no-FX-fee cards win. N7.
   final bool isForeign;
+
+  /// The user's home country ('US' | 'CA') from `DataRepository.homeCountry`,
+  /// used to break an even split between US and CA cards in the wallet.
+  final String? homeCountry;
 
   /// The snapshot every ranking method resolves against: [snapshot] with the
   /// selectable-bonus rules the wallet can't actually earn today removed.
@@ -120,13 +127,21 @@ class EngineRanker {
   /// The country whose store rules apply: the one most of the wallet's cards
   /// are from (a product with no country is American). Costco takes Visa in
   /// the US and Mastercard in Canada, and the wallet is the best signal we have
-  /// for which Costco the user walks into.
+  /// for which Costco the user walks into. An even split breaks on [homeCountry]
+  /// (falling back to the device locale's country code).
   late final String _walletCountry = () {
     var ca = 0;
     for (final c in linkedCards) {
       if (_ranked.products[c.cardProductId]?.country == 'CA') ca++;
     }
-    return ca * 2 > linkedCards.length ? 'CA' : 'US';
+    if (ca * 2 > linkedCards.length) return 'CA';
+    if (ca > 0 && ca * 2 == linkedCards.length) {
+      final home =
+          (homeCountry ?? PlatformDispatcher.instance.locale.countryCode)
+              ?.toUpperCase();
+      if (home == 'CA') return 'CA';
+    }
+    return 'US';
   }();
 
   /// Why [brand]'s stores won't take card [c] ("Costco takes Visa only"), or
@@ -179,13 +194,12 @@ class EngineRanker {
   bool _fxFeeKnown(String cardId) =>
       _ranked.products[cardId]?.foreignTxFeePct != null;
 
-  /// Tie-break: effective desc → **known FX fee (abroad only)** → preference
-  /// asc → name desc → id asc.
+  /// Tie-break: effective desc (within 1e-6 is a tie) → **known FX fee (abroad
+  /// only)** → preference asc → name desc → id asc.
   int _compare(_Scored a, _Scored b) {
-    final byEff = b.applied.effectiveCentsPerDollar.compareTo(
-      a.applied.effectiveCentsPerDollar,
-    );
-    if (byEff != 0) return byEff;
+    final diff =
+        b.applied.effectiveCentsPerDollar - a.applied.effectiveCentsPerDollar;
+    if (diff.abs() > 1e-6) return diff > 0 ? 1 : -1;
     // Abroad, prefer the card we know charges nothing over one we simply never
     // captured. A tie-break, not a penalty: we never invent a fee, we just stop
     // an unevidenced card outranking an evidenced one on a coin flip.
@@ -251,6 +265,11 @@ class EngineRanker {
     for (final cat in const [
       RewardCategory.movieTheaters,
       RewardCategory.coffee,
+      RewardCategory.evCharging,
+      RewardCategory.transit,
+      RewardCategory.hotels,
+      RewardCategory.airlines,
+      RewardCategory.carRentals,
     ]) {
       if (byCategory.containsKey(cat)) continue;
       final best = _pickBest((c) => _resolve(c, cat, null));
@@ -288,14 +307,36 @@ class EngineRanker {
       );
     }
 
-    // A store that only takes some networks gets its best card from the ones
-    // it takes, so the Stores list and arrival notifications never name a card
-    // the till will refuse. Done for every curated store, not only ones with a
-    // brand bonus: the plain category winner may be the refused card.
+    // A store that only takes some networks — or that a rule in the wallet
+    // explicitly excludes — gets its best card resolved for that store, so the
+    // Stores list and arrival notifications never name a card the till will
+    // refuse or a category bonus whose terms exclude the merchant.
+    final excludedBrands = <String, RewardCategory>{};
+    for (final c in linkedCards) {
+      for (final r
+          in _ranked.rulesByProduct[c.cardProductId] ?? const <RewardRule>[]) {
+        for (final brandId
+            in _ranked.exclusionsByRule[r.ruleId] ?? const <String>{}) {
+          excludedBrands.putIfAbsent(
+            brandId,
+            () => storeCategory(
+              r.category ?? brandDefaultCategory(brandId),
+              brandId,
+            ),
+          );
+        }
+      }
+    }
+    final handledBrands = <String>{};
     for (final b in registeredBrands()) {
-      if (brandAcceptedNetworks(b.brandId, _walletCountry) == null) continue;
+      if (brandAcceptedNetworks(b.brandId, _walletCountry) == null &&
+          !excludedBrands.containsKey(b.brandId)) {
+        continue;
+      }
+      handledBrands.add(b.brandId);
+      final cat = storeCategory(b.category, b.brandId);
       final best = _pickBest(
-        (c) => _resolve(c, b.category, b.brandId),
+        (c) => _resolve(c, cat, b.brandId),
         where: (c) => _notAcceptedReason(c, b.brandId) == null,
       );
       if (best == null) {
@@ -306,10 +347,29 @@ class EngineRanker {
         id: best.card.cardId,
         name: best.card.cardName,
         rate: best.applied.rate,
-        category: b.category,
+        category: cat,
         // Only a real store bonus names the brand — the Stores list reads it
         // as "· Costco bonus", which an everyday rate isn't.
         brand: _isBrandEarn(best.card, best.applied) ? b.brandId : null,
+        currency: _currencyOf(best.applied.pointSystemId),
+      );
+    }
+    for (final entry in excludedBrands.entries) {
+      if (handledBrands.contains(entry.key)) continue;
+      final best = _pickBest(
+        (c) => _resolve(c, entry.value, entry.key),
+        where: (c) => _notAcceptedReason(c, entry.key) == null,
+      );
+      if (best == null) {
+        byBrand.remove(entry.key);
+        continue;
+      }
+      byBrand[entry.key] = BestCardEntry(
+        id: best.card.cardId,
+        name: best.card.cardName,
+        rate: best.applied.rate,
+        category: entry.value,
+        brand: _isBrandEarn(best.card, best.applied) ? entry.key : null,
         currency: _currencyOf(best.applied.pointSystemId),
       );
     }

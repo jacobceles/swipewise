@@ -32,7 +32,29 @@ data class MerchantOption(
     // (Costco Wholesale) rather than a counter inside it (Costco Pharmacy).
     val brandId: String? = null,
     val mainStore: Boolean = false,
-)
+    // Muted stores stay in the option list so StoreResolver still resolves to
+    // the muted store when the user is standing at it (instead of naming an
+    // unmuted neighbour), then DwellCheckReceiver suppresses at post time.
+    val muted: Boolean = false,
+) {
+    companion object {
+        fun fromChannelMap(opt: Map<String, Any?>): MerchantOption = MerchantOption(
+            merchantId = opt["merchant_id"] as String,
+            name = opt["name"] as String,
+            category = opt["category"] as String?,
+            bestCardName = opt["best_card_name"] as String?,
+            bestRate = (opt["best_rate"] as? Number)?.toDouble(),
+            lat = (opt["lat"] as? Number)?.toDouble(),
+            lng = (opt["lng"] as? Number)?.toDouble(),
+            footprintM = (opt["footprint_m"] as? Number)?.toDouble() ?: 0.0,
+            plaza = opt["plaza"] == true,
+            bestCurrency = opt["best_currency"] as String?,
+            brandId = opt["brand_id"] as String?,
+            mainStore = opt["main_store"] == true,
+            muted = opt["muted"] == true,
+        )
+    }
+}
 
 data class MerchantMeta(
     val geofenceId: String,
@@ -133,6 +155,7 @@ fun MerchantOption.toJson(): JSONObject = JSONObject().apply {
     if (bestCurrency != null) put("best_currency", bestCurrency)
     if (brandId != null) put("brand_id", brandId)
     if (mainStore) put("main_store", true)
+    if (muted) put("muted", true)
 }
 
 fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
@@ -148,6 +171,7 @@ fun JSONObject.toMerchantOption(): MerchantOption = MerchantOption(
     bestCurrency = nullableString("best_currency"),
     brandId = nullableString("brand_id"),
     mainStore = optBoolean("main_store", false),
+    muted = optBoolean("muted", false),
 )
 
 private fun JSONObject.nullableString(key: String): String? {

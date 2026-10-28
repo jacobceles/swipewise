@@ -37,11 +37,11 @@ final _settings = SettingsRepository(DataRepository());
 class DefaultScreenNotifier extends Notifier<DefaultScreen> {
   @override
   DefaultScreen build() {
-    final auth = ref.watch(authProvider);
-    if (auth.userId != null) {
+    final userId = ref.watch(authProvider.select((s) => s.userId));
+    if (userId != null) {
       Future.microtask(() async {
-        final loaded = await _settings.getDefaultScreen(auth.userId!);
-        if (state != loaded) state = loaded;
+        final loaded = await _settings.getDefaultScreen(userId);
+        if (ref.mounted && state != loaded) state = loaded;
       });
     }
     return DefaultScreen.transactions;
@@ -57,11 +57,11 @@ class DefaultScreenNotifier extends Notifier<DefaultScreen> {
 class AdvisorViewNotifier extends Notifier<AdvisorView> {
   @override
   AdvisorView build() {
-    final auth = ref.watch(authProvider);
-    if (auth.userId != null) {
+    final userId = ref.watch(authProvider.select((s) => s.userId));
+    if (userId != null) {
       Future.microtask(() async {
-        final loaded = await _settings.getDefaultAdvisorView(auth.userId!);
-        if (state != loaded) state = loaded;
+        final loaded = await _settings.getDefaultAdvisorView(userId);
+        if (ref.mounted && state != loaded) state = loaded;
       });
     }
     return AdvisorView.stores;
@@ -259,13 +259,26 @@ final permissionGateCompleteProvider =
     );
 
 /// Set by the welcome screen when a new user answers it: Home then opens the
-/// setup flow at "Add your cards". In memory only. If the app dies mid-setup,
-/// the next launch has no pending flag; Home then asks for alert permissions
-/// once there is a card, which is where the flow would have gone anyway.
+/// setup flow at "Add your cards". Persisted in SQLite settings so if the app
+/// dies before a card is added, the next launch resumes setup.
 class SetupPendingNotifier extends Notifier<bool> {
   @override
-  bool build() => false;
-  void set(bool value) => state = value;
+  bool build() {
+    final userId = ref.watch(authProvider.select((s) => s.userId));
+    if (userId != null) {
+      Future.microtask(() async {
+        final loaded = await _settings.getSetupPending(userId);
+        if (ref.mounted && state != loaded) state = loaded;
+      });
+    }
+    return false;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    final userId = ref.read(authProvider).userId;
+    if (userId != null) await _settings.setSetupPending(userId, value);
+  }
 }
 
 final setupPendingProvider = NotifierProvider<SetupPendingNotifier, bool>(

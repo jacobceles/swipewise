@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -55,7 +56,7 @@ class _IntroScreenState extends State<IntroScreen>
             Text('10:42', style: AppText.monoLg(color: AppColors.foreground)),
             const SizedBox(height: 4),
             Text(
-              'Saturday, October 18',
+              DateFormat('EEEE, MMMM d').format(DateTime.now()),
               style: AppText.bodySm(color: Ob.muted),
             ),
             const SizedBox(height: 18),
@@ -66,7 +67,7 @@ class _IntroScreenState extends State<IntroScreen>
                   begin: const Offset(0, -0.4),
                   end: Offset.zero,
                 ).animate(curve),
-                child: const AlertMock(cardName: 'Freedom Flex', rate: '3%'),
+                child: const AlertMock(cardName: 'Freedom Flex', rate: '3x'),
               ),
             ),
           ],

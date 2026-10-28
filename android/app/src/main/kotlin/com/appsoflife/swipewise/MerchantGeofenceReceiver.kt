@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 
 /// Handles merchant-fence ENTER/EXIT. The dwell decision itself is app-side:
@@ -22,6 +23,10 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
         }
         if (event.hasError()) {
             WalkinLog.w(context, "fence: error code=${event.errorCode}")
+            if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
+                PendingReregister.set(context, true)
+                ReregisterScheduler.enqueue(context)
+            }
             return
         }
         val transition = event.geofenceTransition
@@ -37,6 +42,7 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
 
         when (transition) {
             Geofence.GEOFENCE_TRANSITION_ENTER -> {
+                VisitLock.clearLeft(context, triggered.map { it.requestId })
                 for (g in triggered) {
                     val meta = store.read(g.requestId)
                     if (meta == null || DwellAlarms.isArmed(context, g.requestId)) {

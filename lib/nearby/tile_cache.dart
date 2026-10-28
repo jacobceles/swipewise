@@ -147,6 +147,54 @@ class TileCache {
     await db.delete('merchant_tile_cache');
   }
 
+  /// Fallback when a live search fails (e.g. after reboot while offline or
+  /// before App Check is ready): returns any cached merchants within
+  /// [maxDistanceM] (default 1 km) of ([lat], [lng]), even if expired.
+  Future<NearbySearchResult?> readFallback({
+    required double lat,
+    required double lng,
+    double maxDistanceM = 1000,
+  }) async {
+    final db = await DatabaseHelper().database;
+    final cells = neighborhoodCellIds(lat, lng);
+    final placeholders = List.filled(cells.length, '?').join(',');
+    final rows = await db.rawQuery(
+      'SELECT * FROM merchant_tile_cache WHERE cell_id IN ($placeholders)',
+      cells,
+    );
+    if (rows.isEmpty) return null;
+    final maxMi = maxDistanceM / 1609.34;
+    final byId = <String, NearbyMerchant>{};
+    for (final r in rows) {
+      final id = r['merchant_id'] as String;
+      if (byId.containsKey(id)) continue;
+      final mlat = (r['lat'] as num).toDouble();
+      final mlng = (r['lng'] as num).toDouble();
+      final distMi = _distanceMi(lat, lng, mlat, mlng);
+      if (distMi > maxMi) continue;
+      byId[id] = NearbyMerchant(
+        id: id,
+        name: r['name'] as String,
+        category: r['category'] as String?,
+        placeType: r['foursquare_category_id'] as String?,
+        businessStatus: r['business_status'] as String?,
+        lat: mlat,
+        lng: mlng,
+        distanceMi: distMi,
+      );
+    }
+    if (byId.isEmpty) return null;
+    final merchants = byId.values.toList()
+      ..sort((a, b) => a.distanceMi.compareTo(b.distanceMi));
+    final farthestM = math.max(300.0, merchants.last.distanceMi * 1609.34);
+    return NearbySearchResult(
+      merchants: merchants,
+      centerLat: lat,
+      centerLng: lng,
+      coveredM: math.min(maxDistanceM, farthestM),
+    );
+  }
+
   /// Stores [result] under the cell of ([lat], [lng]), the user's fix.
   Future<void> write({
     required double lat,

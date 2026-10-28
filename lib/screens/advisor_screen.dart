@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../models/insights.dart';
 import '../models/reward_category.dart';
@@ -395,6 +396,13 @@ class _CategoryGrid extends ConsumerWidget {
                   ).copyWith(fontSize: 16),
                 ),
               ),
+              if (!hasCards) ...[
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.push('/add-cards'),
+                  child: const Text('Add cards'),
+                ),
+              ],
             ],
           ),
         ),
@@ -1032,6 +1040,13 @@ class _BrandsEmpty extends StatelessWidget {
                 ).copyWith(fontSize: 16),
               ),
             ),
+            if (!hasCards) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.push('/add-cards'),
+                child: const Text('Add cards'),
+              ),
+            ],
           ],
         ),
       ),

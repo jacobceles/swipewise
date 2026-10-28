@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/card_repository.dart';
 import '../api/catalog_repository.dart';
@@ -36,6 +37,7 @@ class ManualCardFlowScreen extends ConsumerStatefulWidget {
     this.appBarTitle,
     this.logoUrl,
     this.country = catalogCountryAll,
+    this.initialQuery = '',
   });
 
   /// Matched against `card_products.issuer` with punctuation and case
@@ -64,6 +66,10 @@ class ManualCardFlowScreen extends ConsumerStatefulWidget {
   /// switch to change it.
   final String country;
 
+  /// Initial search text carried over when the user searched for a card name
+  /// on the issuer picker.
+  final String initialQuery;
+
   @override
   ConsumerState<ManualCardFlowScreen> createState() =>
       _ManualCardFlowScreenState();
@@ -78,6 +84,7 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
   final Map<String, _CardDetails> _details = {};
   List<_AddOutcome> _outcomes = const [];
   late String _country = widget.country;
+  bool _adding = false;
 
   @override
   void initState() {
@@ -118,33 +125,39 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
   }
 
   Future<void> _addCards(List<CardProduct> products) async {
+    if (_adding) return;
     final userId = ref.read(authProvider).userId;
     if (userId == null) return;
-    final outcomes = <_AddOutcome>[];
-    for (final product in products.where((p) => _selected.contains(p.id))) {
-      final detail = _details[product.id]!;
-      final result = await ref
-          .read(dataRepositoryProvider)
-          .addManualCard(
-            userId: userId,
-            productId: product.id,
-            issuer: product.issuer,
-            name: product.displayName,
-            network: product.network,
-            imageUrl: product.imageUrl,
-            lastFour: detail.lastFour,
-            creditLimit: detail.creditLimit,
-            dueDay: detail.dueDay,
-            institutionLogo: widget.logoUrl,
-          );
-      outcomes.add(_AddOutcome(product, result));
-    }
-    ref.invalidate(cardsProvider);
-    if (mounted) {
-      setState(() {
-        _outcomes = outcomes;
-        _step = _ManualStep.result;
-      });
+    setState(() => _adding = true);
+    try {
+      final outcomes = <_AddOutcome>[];
+      for (final product in products.where((p) => _selected.contains(p.id))) {
+        final detail = _details[product.id]!;
+        final result = await ref
+            .read(dataRepositoryProvider)
+            .addManualCard(
+              userId: userId,
+              productId: product.id,
+              issuer: product.issuer,
+              name: product.displayName,
+              network: product.network,
+              imageUrl: product.imageUrl,
+              lastFour: detail.lastFour,
+              creditLimit: detail.creditLimit,
+              dueDay: detail.dueDay,
+              institutionLogo: widget.logoUrl,
+            );
+        outcomes.add(_AddOutcome(product, result));
+      }
+      ref.invalidate(cardsProvider);
+      if (mounted) {
+        setState(() {
+          _outcomes = outcomes;
+          _step = _ManualStep.result;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _adding = false);
     }
   }
 
@@ -196,6 +209,7 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
                 onCountryChanged: (v) => setState(() => _country = v),
                 owned: owned,
                 selected: _selected,
+                initialQuery: widget.initialQuery,
                 onChanged: (id, selected) => setState(() {
                   selected ? _selected.add(id) : _selected.remove(id);
                 }),
@@ -208,6 +222,7 @@ class _ManualCardFlowScreenState extends ConsumerState<ManualCardFlowScreen> {
                     .where((p) => _selected.contains(p.id))
                     .toList(),
                 details: _details,
+                busy: _adding,
                 onAdd: () => _addCards(products),
               ),
               _ManualStep.result => _ResultView(
@@ -242,6 +257,7 @@ class _SelectCards extends StatefulWidget {
     required this.selected,
     required this.onChanged,
     required this.onContinue,
+    this.initialQuery = '',
   });
   final String issuerName;
   final String? logoUrl;
@@ -255,14 +271,15 @@ class _SelectCards extends StatefulWidget {
   final Set<String> selected;
   final void Function(String, bool) onChanged;
   final VoidCallback onContinue;
+  final String initialQuery;
 
   @override
   State<_SelectCards> createState() => _SelectCardsState();
 }
 
 class _SelectCardsState extends State<_SelectCards> {
-  final _searchCtrl = TextEditingController();
-  String _query = '';
+  late final _searchCtrl = TextEditingController(text: widget.initialQuery);
+  late String _query = widget.initialQuery;
 
   @override
   void dispose() {
@@ -360,7 +377,7 @@ class _SelectCardsState extends State<_SelectCards> {
           ),
           Expanded(
             child: visible.isEmpty
-                ? const _EmptyProducts()
+                ? _EmptyProducts(hasQuery: q.isNotEmpty)
                 : ListView.separated(
                     itemCount: visible.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
@@ -402,12 +419,14 @@ class _CardDetailsForm extends StatelessWidget {
     required this.products,
     required this.details,
     required this.onAdd,
+    this.busy = false,
   });
   final String issuerName;
   final String? logoUrl;
   final List<CardProduct> products;
   final Map<String, _CardDetails> details;
   final VoidCallback onAdd;
+  final bool busy;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -443,7 +462,7 @@ class _CardDetailsForm extends StatelessWidget {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: onAdd,
+            onPressed: busy ? null : onAdd,
             child: Text(
               'Add ${products.length} card${products.length == 1 ? '' : 's'}',
             ),
@@ -451,7 +470,7 @@ class _CardDetailsForm extends StatelessWidget {
         ),
         Center(
           child: TextButton(
-            onPressed: onAdd,
+            onPressed: busy ? null : onAdd,
             child: const Text('Skip for now — add without these details'),
           ),
         ),
@@ -806,13 +825,34 @@ class _ProductTile extends StatelessWidget {
 }
 
 class _EmptyProducts extends StatelessWidget {
-  const _EmptyProducts();
+  const _EmptyProducts({this.hasQuery = false});
+  final bool hasQuery;
+
+  static final _missingCardUri = Uri.parse(
+    'https://github.com/jacobceles/swipewise/issues/new?title=Missing+card:+',
+  );
+
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(
-      "We don't have any cards for this issuer yet.",
-      textAlign: TextAlign.center,
-      style: AppText.bodyMd(color: AppColors.mutedFg),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          hasQuery
+              ? 'No cards match that search.'
+              : "We don't have any cards for this issuer yet.",
+          textAlign: TextAlign.center,
+          style: AppText.bodyMd(color: AppColors.mutedFg),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => launchUrl(
+            _missingCardUri,
+            mode: LaunchMode.externalApplication,
+          ),
+          child: const Text('Card missing? Tell us'),
+        ),
+      ],
     ),
   );
 }

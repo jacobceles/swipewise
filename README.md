@@ -29,6 +29,10 @@ SwipeWise is free on Google Play:
 No account needed, and your wallet lives on your phone. Prefer to build it yourself?
 See [Get started](#get-started).
 
+Official GitHub APK downloads are being prepared, but are not available yet.
+Google Play remains the recommended installation and update channel. See
+[GitHub release preparation](docs/github-releases.md) for the verification gates.
+
 ## What you get
 
 - **Best card at every store.** Store and brand level, not just categories. Whole Foods:

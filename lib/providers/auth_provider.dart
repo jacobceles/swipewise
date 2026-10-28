@@ -48,6 +48,7 @@ class AuthState {
     int? authTime,
     bool? isLoading,
     String? error,
+    bool clearError = false,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
@@ -57,9 +58,25 @@ class AuthState {
       bankCustomerId: bankCustomerId ?? this.bankCustomerId,
       authTime: authTime ?? this.authTime,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
+}
+
+/// Maps a raw sign-in error (e.g. [FirebaseAuthException]) to a friendly
+/// user-facing message so internal error codes never surface on screen.
+String friendlyAuthError(Object error) {
+  if (error is FirebaseAuthException) {
+    return switch (error.code) {
+      'network-request-failed' =>
+        'No internet connection. Check your connection and try again.',
+      'user-disabled' => 'This account has been disabled.',
+      'too-many-requests' =>
+        'Too many attempts. Please wait a moment and try again.',
+      _ => "Sign-in didn't finish. Please try again.",
+    };
+  }
+  return "Sign-in didn't finish. Please try again.";
 }
 
 /// Prefix on a device-local identity, so a glance at `users.id` (or a log
@@ -173,7 +190,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> signInWithGoogle() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       await _ensureGoogleInitialized();
       final GoogleSignInAccount googleUser;
@@ -268,8 +285,26 @@ class AuthNotifier extends Notifier<AuthState> {
         isLoading: false,
         error: "Google sign-in didn't finish. Please try again.",
       );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+    } on FirebaseAuthException catch (e, st) {
+      Log.w('auth', 'Firebase sign-in failed: ${e.code} ${e.message}');
+      // ignore: unawaited_futures
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'firebase_sign_in_failed',
+        fatal: false,
+      );
+      state = state.copyWith(isLoading: false, error: friendlyAuthError(e));
+    } catch (e, st) {
+      Log.w('auth', 'Sign-in failed: $e');
+      // ignore: unawaited_futures
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'sign_in_failed',
+        fatal: false,
+      );
+      state = state.copyWith(isLoading: false, error: friendlyAuthError(e));
     }
   }
 
@@ -313,7 +348,7 @@ class AuthNotifier extends Notifier<AuthState> {
   /// else it is the bug that cascades through ten tables and wipes a wallet
   /// nobody asked to lose; here the cascade *is* the feature.
   Future<DeleteFailure?> deleteAccount() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     final client = AccountDeleteClient();
 
     final reauthFailure = await _reauthenticate();
