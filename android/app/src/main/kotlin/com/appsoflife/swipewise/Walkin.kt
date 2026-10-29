@@ -186,9 +186,8 @@ object StoreResolver {
 /// user is still inside. The per-category cooldown never caught these because
 /// neighbouring stores have different categories.
 ///
-/// The window slides: every alert it holds back restarts it, so it lasts as
-/// long as the user stays. A fixed 20 minutes let a 36-minute Costco trip post
-/// twice (2026-10-17).
+/// Only a verified same-store observation extends a visit. A confirmed stay
+/// does not become a new arrival merely because time passed.
 ///
 /// Walking to the shop next door is a new visit: when a sharp fix names the
 /// store(s) the user is in ([resolved]) and none of them is a store this
@@ -203,12 +202,8 @@ object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
     const val RADIUS_M = 250.0
 
-    /// A visit also stays open this long past [WINDOW_MS] while the user hasn't
-    /// left its fence. A quiet 20 minutes at the gym closed the visit, and the
-    /// walk to the liquor store next door then had nothing to arm its check:
-    /// no visit, and no new ENTER from a fence the user never left (2026-10-22).
-    /// Capped, because a fence beside home may never see an EXIT.
-    const val LINGER_MS = 2L * 60L * 60L * 1000L
+    const val PROVISIONAL_MS = 5L * 60L * 1000L
+    private const val CONFIRMATION_WINDOW_NANOS = 150_000_000_000L
 
     /// [fenceId]: the fence the visit alerted from. [merchantIds] / [advice]:
     /// the store(s) it named and their "card|rate", when a sharp fix named them.
@@ -225,14 +220,19 @@ object VisitLock {
         val advice: List<String> = emptyList(),
         val left: Boolean = false,
         val nextDoorCandidateId: String? = null,
+        val createdAtMillis: Long = atMillis,
+        val confirmed: Boolean = merchantIds.isNotEmpty(),
+        val candidateSampleNanos: Long = 0L,
+        val departed: Boolean = false,
     )
 
     fun adviceOf(o: MerchantOption): String = "${o.bestCardName}|${o.bestRate}"
 
     fun isActive(last: Visit?, nowMillis: Long): Boolean {
-        if (last == null) return false
+        if (last == null || last.departed || nowMillis < last.createdAtMillis) return false
         val age = nowMillis - last.atMillis
-        return age < WINDOW_MS || (last.fenceId != null && !last.left && age < WINDOW_MS + LINGER_MS)
+        if (!last.confirmed || last.merchantIds.isEmpty()) return nowMillis - last.createdAtMillis < PROVISIONAL_MS
+        return age < WINDOW_MS || (last.fenceId != null && !last.left)
     }
 
     fun isActive(last: Visit?, nowMillis: Long, lat: Double, lng: Double): Boolean =
@@ -261,11 +261,20 @@ object VisitLock {
         lng: Double,
         nowMillis: Long,
         resolved: List<MerchantOption>? = null,
+        sampleNanos: Long = 0L,
     ): Boolean {
-        if (last == null || !isActive(last, nowMillis)) return false
+        if (last == null || last.departed) return false
         if (distanceM(last.lat, last.lng, lat, lng) >= RADIUS_M) return false
+        if (!last.confirmed || last.merchantIds.isEmpty()) return isActive(last, nowMillis)
+        if (!resolved.isNullOrEmpty() &&
+            (resolved.any { it.merchantId in last.merchantIds } || adviceOf(resolved.first()) in last.advice)
+        ) return true
+        if (!isActive(last, nowMillis)) return false
         val candidate = nextDoorCandidate(last, resolved)
-        val movedNextDoor = candidate != null && candidate == last.nextDoorCandidateId
+        val interval = sampleNanos - last.candidateSampleNanos
+        val movedNextDoor = candidate != null && candidate == last.nextDoorCandidateId &&
+            last.candidateSampleNanos > 0L &&
+            interval in ArrivalPolicy.MIN_INDEPENDENT_INTERVAL_NANOS..CONFIRMATION_WINDOW_NANOS
         return !movedNextDoor
     }
 
@@ -277,12 +286,29 @@ object VisitLock {
         nowMillis: Long,
         resolved: List<MerchantOption>? = null,
         fenceId: String? = last.fenceId,
-    ): Visit = last.copy(
-        atMillis = nowMillis,
-        fenceId = fenceId ?: last.fenceId,
-        left = false,
-        nextDoorCandidateId = nextDoorCandidate(last, resolved),
-    )
+        sampleNanos: Long = 0L,
+        lat: Double = last.lat,
+        lng: Double = last.lng,
+    ): Visit {
+        if (resolved.isNullOrEmpty()) return last
+        if (!last.confirmed || last.merchantIds.isEmpty()) {
+            return if (isActive(last, nowMillis)) last.copy(
+                lat = lat, lng = lng, atMillis = nowMillis,
+                fenceId = fenceId, merchantIds = resolved.map { it.merchantId },
+                advice = resolved.map(::adviceOf), confirmed = true, left = false,
+                nextDoorCandidateId = null, candidateSampleNanos = 0L,
+            ) else last
+        }
+        val candidate = nextDoorCandidate(last, resolved)
+        if (candidate != null) {
+            if (candidate == last.nextDoorCandidateId && sampleNanos - last.candidateSampleNanos in 0..CONFIRMATION_WINDOW_NANOS) return last
+            return last.copy(nextDoorCandidateId = candidate, candidateSampleNanos = sampleNanos)
+        }
+        return last.copy(
+            atMillis = nowMillis, fenceId = fenceId ?: last.fenceId, left = false,
+            nextDoorCandidateId = null, candidateSampleNanos = 0L,
+        )
+    }
 
     private const val PREFS = "swipewise_visit_lock"
 
@@ -298,6 +324,10 @@ object VisitLock {
             p.getString("advice", "")!!.split('\n').filter { it.isNotEmpty() },
             p.getBoolean("left", false),
             p.getString("candidate", null),
+            p.getLong("created", p.getLong("at", 0L)),
+            p.getInt("schema", 0) == 1 && p.getBoolean("confirmed", false),
+            p.getLong("candidate_sample", 0L),
+            p.getBoolean("departed", false),
         )
     }
 
@@ -319,6 +349,18 @@ object VisitLock {
 
     fun clearLeft(context: Context, fenceId: String) = clearLeft(context, listOf(fenceId))
 
+    /// Raw EXIT can be indoor drift. Only a fresh fix well outside the visit
+    /// confirms departure; it is also used by the boundary receiver.
+    fun observeDeparture(context: Context, fix: android.location.Location?) {
+        if (fix == null || !fix.hasAccuracy() || fix.accuracy > StoreResolver.MAX_ACCURACY_M) return
+        val age = android.os.SystemClock.elapsedRealtimeNanos() - fix.elapsedRealtimeNanos
+        if (age !in 0..ArrivalPolicy.MAX_FIX_AGE_NANOS) return
+        val visit = read(context) ?: return
+        if (distanceM(visit.lat, visit.lng, fix.latitude, fix.longitude) > RADIUS_M + fix.accuracy) {
+            write(context, visit.copy(departed = true, left = true, nextDoorCandidateId = null, candidateSampleNanos = 0L))
+        }
+    }
+
     /// commit(), not apply(): two timers can fire back to back, and the second
     /// must see the first one's visit.
     fun write(context: Context, visit: Visit) {
@@ -331,71 +373,26 @@ object VisitLock {
             .putString("advice", visit.advice.joinToString("\n"))
             .putBoolean("left", visit.left)
             .putString("candidate", visit.nextDoorCandidateId)
+            .putInt("schema", 1)
+            .putLong("created", visit.createdAtMillis)
+            .putBoolean("confirmed", visit.confirmed)
+            .putLong("candidate_sample", visit.candidateSampleNanos)
+            .putBoolean("departed", visit.departed)
             .commit()
     }
 }
 
-/// A fence the user is living next to, not visiting: a store pinned at (or
-/// beside) home or work wakes its dwell timer over and over as indoor fixes
-/// drift across the fence edge, or posts on arrival after arrival. [THRESHOLD]
-/// checks within [WINDOW_MS] — or [POST_THRESHOLD] actual posts within
-/// [POST_WINDOW_MS] — marks the fence resident for [SUPPRESS_MS]; while
-/// resident its timers post nothing and take no fix. A real visit is one check
-/// (two when the first one was taken while still moving), so it never trips this.
-object ResidentGuard {
-    const val THRESHOLD = 3
-    const val WINDOW_MS = 60L * 60L * 1000L
-    const val SUPPRESS_MS = 7L * 24L * 60L * 60L * 1000L
-    const val POST_THRESHOLD = 3
-    const val POST_WINDOW_MS = 7L * 24L * 60L * 60L * 1000L
-
-    /// [recent] are earlier check times for one fence (any order).
-    fun tripped(recent: List<Long>, nowMillis: Long, windowMs: Long = WINDOW_MS): Boolean =
-        recent.count { nowMillis - it < windowMs } + 1 >= THRESHOLD
-
-    fun postsTripped(recentPosts: List<Long>, nowMillis: Long): Boolean =
-        recentPosts.count { nowMillis - it < POST_WINDOW_MS } + 1 >= POST_THRESHOLD
-
-    private const val PREFS = "swipewise_resident"
-
-    fun isResident(context: Context, geofenceId: String, nowMillis: Long): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getLong("$geofenceId.until", 0L) > nowMillis
-
-    /// Records this check and says whether the fence is (now) resident.
-    fun check(context: Context, geofenceId: String, nowMillis: Long): Boolean {
-        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (p.getLong("$geofenceId.until", 0L) > nowMillis) return true
-        val recent = p.getString("$geofenceId.checks", "")!!
-            .split(',').mapNotNull { it.toLongOrNull() }
-            .filter { nowMillis - it < WINDOW_MS }
-        val edit = p.edit()
-        val tripped = tripped(recent, nowMillis)
-        if (tripped) {
-            edit.putLong("$geofenceId.until", nowMillis + SUPPRESS_MS).remove("$geofenceId.checks")
-        } else {
-            edit.putString("$geofenceId.checks", (recent + nowMillis).joinToString(","))
+/// One-time retirement of frequency-based bans; user mutes and picks are untouched.
+object WalkinState {
+    fun migrate(context: Context, nowMillis: Long = System.currentTimeMillis()) {
+        val p = context.getSharedPreferences("swipewise_walkin_state", Context.MODE_PRIVATE)
+        if (p.getInt("version", 0) >= 1) return
+        context.getSharedPreferences("swipewise_resident", Context.MODE_PRIVATE).edit().clear().commit()
+        val visit = VisitLock.read(context)
+        if (visit != null && !visit.confirmed && !VisitLock.isActive(visit, nowMillis)) {
+            context.getSharedPreferences("swipewise_visit_lock", Context.MODE_PRIVATE).edit().clear().commit()
         }
-        edit.commit()
-        return tripped
-    }
-
-    /// Records an actual notification post and silences the fence for
-    /// [SUPPRESS_MS] once it reaches [POST_THRESHOLD] posts within [POST_WINDOW_MS].
-    fun recordPost(context: Context, geofenceId: String, nowMillis: Long): Boolean {
-        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val recent = p.getString("$geofenceId.posts", "")!!
-            .split(',').mapNotNull { it.toLongOrNull() }
-            .filter { nowMillis - it < POST_WINDOW_MS }
-        val edit = p.edit()
-        val tripped = postsTripped(recent, nowMillis)
-        if (tripped) {
-            edit.putLong("$geofenceId.until", nowMillis + SUPPRESS_MS).remove("$geofenceId.posts")
-        } else {
-            edit.putString("$geofenceId.posts", (recent + nowMillis).joinToString(","))
-        }
-        edit.commit()
-        return tripped
+        p.edit().putInt("version", 1).commit()
     }
 }
 

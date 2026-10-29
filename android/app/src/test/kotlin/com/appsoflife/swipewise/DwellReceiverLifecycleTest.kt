@@ -193,6 +193,28 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
+    fun `migration clears legacy bans and stale guessed visit without touching user choices`() {
+        val legacy = context.getSharedPreferences("swipewise_visit_lock", Context.MODE_PRIVATE)
+        legacy.edit().putLong("at", System.currentTimeMillis() - 2 * 3600_000L)
+            .putLong("lat", testLat.toRawBits()).putLong("lng", testLng.toRawBits())
+            .putString("fence", testGid).commit()
+        context.getSharedPreferences("swipewise_resident", Context.MODE_PRIVATE).edit()
+            .putLong("$testGid.until", System.currentTimeMillis() + 7 * 86400_000L).commit()
+        context.getSharedPreferences("swipewise_walkin_state", Context.MODE_PRIVATE).edit().clear().commit()
+        SQLiteDatabase.openDatabase(context.getDatabasePath("swipewise.db").path, null, 0).use { db ->
+            db.execSQL("CREATE TABLE IF NOT EXISTS muted_merchants (merchant_id TEXT PRIMARY KEY)")
+            db.execSQL("INSERT OR REPLACE INTO muted_merchants VALUES ('user-mute')")
+            WalkinState.migrate(context)
+            assertNull(VisitLock.read(context))
+            assertTrue(context.getSharedPreferences("swipewise_resident", Context.MODE_PRIVATE).all.isEmpty())
+            db.rawQuery("SELECT COUNT(*) FROM muted_merchants", null).use { c ->
+                c.moveToFirst()
+                assertEquals(1, c.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun `unavailable boot identity cannot validate saved activity`() {
         ActivityState.set(
             context,

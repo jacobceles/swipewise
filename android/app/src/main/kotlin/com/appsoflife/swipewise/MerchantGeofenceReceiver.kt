@@ -44,6 +44,7 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
         triggeredGeofenceIds: List<String>,
         triggeringLocation: Location?,
     ) {
+        WalkinState.migrate(context)
         val store = GeofenceMetadataStore(context)
         WalkinLog.w(
             context,
@@ -70,6 +71,7 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
                 }
             }
             Geofence.GEOFENCE_TRANSITION_EXIT -> {
+                VisitLock.observeDeparture(context, triggeringLocation)
                 for (gid in triggeredGeofenceIds) {
                     DwellAlarms.cancel(context, gid)
                 }

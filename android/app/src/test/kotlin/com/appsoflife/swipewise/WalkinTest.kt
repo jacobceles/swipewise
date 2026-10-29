@@ -84,10 +84,14 @@ class WalkinTest {
         val later = 1_000_000L + 300_000L
         // First check naming store b is held back in case it's a single indoor-drift fix.
         assertTrue(VisitLock.isSameVisit(last, 40.50176, -74.8549, later, listOf(store("b"))))
-        val afterFirst = VisitLock.refresh(last, later, listOf(store("b")), "m_b")
+        val sample = 1_000_000_000_000L
+        val afterFirst = VisitLock.refresh(last, later, listOf(store("b")), "m_b", sample)
         assertEquals("b", afterFirst.nextDoorCandidateId)
         // Second consecutive check naming store b confirms the move next door.
-        assertFalse(VisitLock.isSameVisit(afterFirst, 40.50176, -74.8549, later + 60_000L, listOf(store("b"))))
+        assertTrue(VisitLock.isSameVisit(afterFirst, 40.50176, -74.8549, later, listOf(store("b")), sample))
+        assertEquals(last.atMillis, afterFirst.atMillis)
+        assertEquals(last.fenceId, afterFirst.fenceId)
+        assertFalse(VisitLock.isSameVisit(afterFirst, 40.50176, -74.8549, later + 60_000L, listOf(store("b")), sample + 60_000_000_000L))
         // If the second check drifts back to store a, the candidate resets.
         val driftedBack = VisitLock.refresh(afterFirst, later + 60_000L, listOf(store("a")), "m_a")
         assertNull(driftedBack.nextDoorCandidateId)
@@ -165,13 +169,14 @@ class WalkinTest {
     }
 
     @Test
-    fun `a fence firing three times in an hour is resident, a visit is not`() {
-        val now = 10_000_000L
-        assertFalse(ResidentGuard.tripped(emptyList(), now))
-        assertFalse(ResidentGuard.tripped(listOf(now - 60_000L), now))
-        assertTrue(ResidentGuard.tripped(listOf(now - 60_000L, now - 1_200_000L), now))
-        // Checks older than the window don't count.
-        assertFalse(ResidentGuard.tripped(listOf(now - 60_000L, now - ResidentGuard.WINDOW_MS), now))
+    fun `an uncertain morning visit cannot suppress a sharp lunch arrival`() {
+        val morning = VisitLock.Visit(40.50, -74.85, 1_000_000L, "m_guess")
+        val fallback = VisitLock.refresh(morning, 1_000_000L + 120_000L)
+        assertEquals(morning, fallback)
+        assertFalse(VisitLock.isSameVisit(fallback, 40.50, -74.85, 1_000_000L + 2L * 3600_000L, listOf(store("lunch"))))
+        val corrected = VisitLock.refresh(morning, 1_200_000L, listOf(store("actual")), "m_actual")
+        assertEquals(listOf("actual"), corrected.merchantIds)
+        assertTrue(corrected.confirmed)
     }
 
     @Test
@@ -185,10 +190,10 @@ class WalkinTest {
     @Test
     fun `a stay that keeps being held back keeps the lock`() {
         // Alert at 17:08, held back at 17:25 (lock restarted), next check 17:33.
-        val start = VisitLock.Visit(40.362, -74.303, 0L)
+        val start = VisitLock.Visit(40.362, -74.303, 0L, "m_a", listOf("a"))
         val refreshed = start.copy(atMillis = 17L * 60_000L)
         val at1733 = 25L * 60_000L
-        assertFalse(VisitLock.isSameVisit(start, 40.362, -74.303, at1733))
+        assertTrue(VisitLock.isSameVisit(start, 40.362, -74.303, at1733))
         assertTrue(VisitLock.isSameVisit(refreshed, 40.362, -74.303, at1733))
     }
 
@@ -241,7 +246,8 @@ class WalkinTest {
         assertTrue(VisitLock.isActive(visit, at1556))
         assertFalse(VisitLock.isActive(visit.copy(left = true), at1556))
         assertFalse(VisitLock.isActive(visit.copy(fenceId = null), at1556))
-        assertFalse(VisitLock.isActive(visit, VisitLock.WINDOW_MS + VisitLock.LINGER_MS))
+        assertTrue(VisitLock.isActive(visit, 8L * 3600_000L))
+        assertFalse(VisitLock.isActive(visit.copy(departed = true), at1556))
     }
 
     @Test
@@ -305,8 +311,9 @@ class WalkinTest {
 
     @Test
     fun `visit lock active within 250 m and refresh clears left`() {
-        val visit = VisitLock.Visit(40.5014, -74.8549, 1_000_000L, "m_a", left = true)
-        val refreshed = VisitLock.refresh(visit, 1_060_000L, fenceId = "m_b")
+        val visit = VisitLock.Visit(40.5014, -74.8549, 1_000_000L, "m_a", listOf("a"), left = true)
+        assertEquals(visit, VisitLock.refresh(visit, 1_060_000L, fenceId = "m_b"))
+        val refreshed = VisitLock.refresh(visit, 1_060_000L, listOf(store("a")), "m_b")
         assertFalse(refreshed.left)
         assertEquals("m_b", refreshed.fenceId)
         assertTrue(VisitLock.isActive(refreshed, 1_100_000L, 40.5015, -74.8549))
@@ -314,12 +321,12 @@ class WalkinTest {
     }
 
     @Test
-    fun `three actual posts in 7 days trip ResidentGuard`() {
-        val now = 100_000_000L
+    fun `separate legitimate trips do not establish residency`() {
         val day = 24L * 60L * 60L * 1000L
-        assertFalse(ResidentGuard.postsTripped(listOf(now - day), now))
-        assertTrue(ResidentGuard.postsTripped(listOf(now - day, now - 3 * day), now))
-        assertFalse(ResidentGuard.postsTripped(listOf(now - day, now - 8 * day), now))
+        for (i in 1..3) {
+            val previous = VisitLock.Visit(40.50, -74.85, (i - 1) * day, "m_station", listOf("station"), departed = true)
+            assertFalse(VisitLock.isSameVisit(previous, 40.50, -74.85, i * day, listOf(store("station"))))
+        }
     }
 
     @Test

@@ -63,6 +63,7 @@ object DefaultNotificationPoster : NotificationPoster {
 class DwellCheckReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        WalkinState.migrate(context)
         val geofenceId = DwellAlarms.geofenceIdFromIntent(intent) ?: return
         val token = DwellAlarms.tokenFromIntent(intent)
         val attempt = DwellAlarms.validateAttempt(context, geofenceId, token)
@@ -100,12 +101,6 @@ class DwellCheckReceiver : BroadcastReceiver() {
             DwellAlarms.cancel(context, geofenceId, token)
             return
         }
-        if (ResidentGuard.isResident(context, geofenceId, System.currentTimeMillis())) {
-            done(context, meta, DwellOutcome.RESIDENT)
-            DwellAlarms.cancel(context, geofenceId, token)
-            return
-        }
-
         if (meta.lat == null || meta.lng == null || meta.radiusM == null) {
             WalkinLog.w(context, "dwell $geofenceId: missing geometry -> fail closed")
             done(context, meta, DwellOutcome.NO_META)
@@ -266,23 +261,11 @@ class DwellCheckReceiver : BroadcastReceiver() {
                     return
                 }
                 val (found, byFix) = resolved
-                val now = System.currentTimeMillis()
-
                 if (DwellAlarms.validateAttempt(context, meta.geofenceId, attempt.token) == null) {
                     return
                 }
-
-                // Resident learning only records on verified arrival
-                if (!attempt.isNextDoor &&
-                    !VisitLock.isActive(context, now, fix.latitude, fix.longitude) &&
-                    ResidentGuard.check(context, meta.geofenceId, now)
-                ) {
-                    DwellAlarms.cancel(context, meta.geofenceId, attempt.token)
-                    done(context, meta, DwellOutcome.RESIDENT, measured)
-                    return
-                }
-
-                maybePost(context, found, measured, fix.latitude, fix.longitude, byFix, attempt)
+                VisitLock.observeDeparture(context, fix)
+                maybePost(context, found, measured, fix.latitude, fix.longitude, byFix, attempt, fix.elapsedRealtimeNanos)
             }
         }
     }
@@ -338,6 +321,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         atLng: Double? = null,
         byFix: Boolean = false,
         attempt: DwellAttempt,
+        sampleNanos: Long,
     ) {
         val currentAttempt = DwellAlarms.validateAttempt(context, attempt.geofenceId, attempt.token)
         if (currentAttempt == null) {
@@ -367,9 +351,9 @@ class DwellCheckReceiver : BroadcastReceiver() {
         val resolved = if (byFix) meta.options else null
 
         if (visitLat != null && visitLng != null &&
-            VisitLock.isSameVisit(lastVisit, visitLat, visitLng, now, resolved)
+            VisitLock.isSameVisit(lastVisit, visitLat, visitLng, now, resolved, sampleNanos)
         ) {
-            val refreshed = VisitLock.refresh(lastVisit!!, now, resolved, meta.geofenceId)
+            val refreshed = VisitLock.refresh(lastVisit!!, now, resolved, meta.geofenceId, sampleNanos, visitLat, visitLng)
             VisitLock.write(context, refreshed)
             DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
             if (refreshed.nextDoorCandidateId != null && !DwellAlarms.isArmed(context, meta.geofenceId)) {
@@ -403,7 +387,6 @@ class DwellCheckReceiver : BroadcastReceiver() {
             )
         }
         cooldown.markNotified(primary, now)
-        ResidentGuard.recordPost(context, meta.geofenceId, now)
         DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
         done(context, meta, DwellOutcome.POSTED, fix)
     }

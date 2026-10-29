@@ -21,6 +21,7 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
         rawEvents: List<ActivityTransitionEvent>,
         nowElapsedNanos: Long = SystemClock.elapsedRealtimeNanos(),
     ) {
+        WalkinState.migrate(context)
         if (rawEvents.isEmpty()) return
 
         // Filter future-invalid events BEFORE updating lastEvent
