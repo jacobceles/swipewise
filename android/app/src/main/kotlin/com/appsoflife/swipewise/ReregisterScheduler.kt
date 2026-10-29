@@ -21,6 +21,7 @@ import androidx.work.WorkManager
 /// silently degrades to a normal one instead of being dropped.
 object ReregisterScheduler {
     const val UNIQUE_WORK = "swipewise.geofence.reregister"
+    @Volatile var enqueueOverride: ((Context) -> Unit)? = null
 
     /// Every reregister path needs the Places API to find nearby merchants, so
     /// gate the work on connectivity: WorkManager defers it until a network is
@@ -31,18 +32,16 @@ object ReregisterScheduler {
         .build()
 
     fun enqueue(context: Context) {
+        enqueueOverride?.let { it(context); return }
         val request = OneTimeWorkRequestBuilder<ReregisterWorker>()
             .setConstraints(networkConstraints)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
-        // APPEND_OR_REPLACE, not REPLACE: replacing a running worker only
-        // interrupts its latch, while its Flutter engine carries on — two
-        // registerSet calls then interleave and the fence set and its metadata
-        // can come from different runs (`no_meta`). Appending runs this one
-        // after the current one finishes.
+        // Never interrupt a running engine or accumulate headless engines.
+        // Persisted generation/deadline state keeps later recovery owed.
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_WORK,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.KEEP,
             request,
         )
     }
@@ -58,27 +57,66 @@ object FootReregister {
     private const val KEY_AT = "foot_at"
 
     fun tooSoon(context: Context, nowMillis: Long): Boolean =
-        nowMillis - prefs(context).getLong(KEY_AT, 0L) < COOLDOWN_MS
+        remaining(context, nowMillis) > 0L
+
+    fun remaining(context: Context, nowMillis: Long = android.os.SystemClock.elapsedRealtime()): Long {
+        val p = prefs(context)
+        if (p.getInt("foot_boot", -1) != BootIdentity.getBootCount(context)) return 0L
+        return (p.getLong(KEY_AT, -COOLDOWN_MS) + COOLDOWN_MS - nowMillis).coerceIn(0L, COOLDOWN_MS)
+    }
 
     fun mark(context: Context, nowMillis: Long) {
-        prefs(context).edit().putLong(KEY_AT, nowMillis).apply()
+        prefs(context).edit().putLong(KEY_AT, nowMillis)
+            .putInt("foot_boot", BootIdentity.getBootCount(context)).apply()
     }
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }
 
-/// One-bit persisted flag: "the user crossed the boundary while driving, so a
-/// re-registration is owed once they settle." Set by the boundary receiver
-/// when it defers, consumed by the activity receiver on the next STILL/WALKING
-/// transition. This is what makes geofences follow the user to a destination
-/// without re-registering repeatedly during the drive itself.
+/// Recovery stays owed until a registration for its generation succeeds.
 object PendingReregister {
     private const val PREFS = "swipewise_reregister"
     private const val KEY_PENDING = "pending"
 
     fun set(context: Context, pending: Boolean) {
-        prefs(context).edit().putBoolean(KEY_PENDING, pending).apply()
+        if (pending) request(context, FootReregister.COOLDOWN_MS, "recovery")
+        else complete(context, generation(context))
+    }
+
+    fun generation(context: Context): Long = prefs(context).getLong("generation", 0L)
+
+    fun forceRecovery(context: Context): Boolean = prefs(context).getBoolean("force", false)
+
+    fun due(context: Context, now: Long = android.os.SystemClock.elapsedRealtime()): Long {
+        val p = prefs(context)
+        return if (p.getInt("boot", -1) == BootIdentity.getBootCount(context)) p.getLong("due", now) else now
+    }
+
+    fun request(context: Context, delayMs: Long, reason: String, force: Boolean = false,
+        now: Long = android.os.SystemClock.elapsedRealtime()): Long {
+        val p = prefs(context)
+        val next = generation(context) + 1L
+        val deadline = if (isPending(context)) minOf(due(context, now), now + delayMs) else now + delayMs
+        p.edit().putBoolean(KEY_PENDING, true).putLong("generation", next)
+            .putLong("due", deadline).putString("reason", reason)
+            .putInt("boot", BootIdentity.getBootCount(context))
+            .putBoolean("force", force || forceRecovery(context)).commit()
+        ReregisterFallbackReceiver.arm(context)
+        return next
+    }
+
+    fun defer(context: Context, delayMs: Long, now: Long = android.os.SystemClock.elapsedRealtime()) {
+        prefs(context).edit().putLong("due", now + delayMs)
+            .putInt("boot", BootIdentity.getBootCount(context)).commit()
+        ReregisterFallbackReceiver.arm(context)
+    }
+
+    fun complete(context: Context, expectedGeneration: Long): Boolean {
+        if (generation(context) != expectedGeneration) return false
+        prefs(context).edit().putBoolean(KEY_PENDING, false).remove("due").remove("force").remove("reason").commit()
+        ReregisterFallbackReceiver.cancel(context)
+        return true
     }
 
     fun isPending(context: Context): Boolean =

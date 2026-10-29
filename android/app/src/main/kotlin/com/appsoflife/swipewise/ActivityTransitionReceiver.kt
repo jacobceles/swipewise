@@ -80,8 +80,11 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
         }
 
         if (pendingReregisterNeeded) {
-            PendingReregister.set(context, false)
-            ReregisterScheduler.enqueue(context)
+            if (currentActivity != DetectedActivity.IN_VEHICLE && FootReregister.remaining(context) == 0L) {
+                FootReregister.mark(context, SystemClock.elapsedRealtime())
+                PendingReregister.defer(context, FootReregister.COOLDOWN_MS)
+                ReregisterScheduler.enqueue(context)
+            }
         }
         if (sawWalkingToStill && currentActivity == DetectedActivity.STILL) {
             armNextDoorCheck(context)

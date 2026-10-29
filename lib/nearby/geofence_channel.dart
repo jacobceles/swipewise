@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import '../util/logger.dart';
 
 class GeofenceChannel {
   static const _channel = MethodChannel('com.appsoflife/geofence');
@@ -12,12 +13,14 @@ class GeofenceChannel {
     required int accountEpoch,
     required List<Map<String, dynamic>> zones,
     Map<String, dynamic>? boundary,
+    int recoveryGeneration = 0,
   }) async {
     final count = await _channel.invokeMethod<int>('registerSet', {
       'user_id': userId,
       'account_epoch': accountEpoch,
       'zones': zones,
       'boundary': boundary,
+      'recovery_generation': recoveryGeneration,
     });
     return count ?? 0;
   }
@@ -47,10 +50,23 @@ class GeofenceChannel {
   static Future<int> accountEpoch() async =>
       await _channel.invokeMethod<int>('accountEpoch') ?? 0;
 
+  static Future<int> recoveryGeneration() async =>
+      await _channel.invokeMethod<int>('recoveryGeneration') ?? 0;
+
+  static Future<void> requestRefresh({
+    required String userId,
+    required int accountEpoch,
+  }) => _channel.invokeMethod('requestRefresh', {
+    'user_id': userId,
+    'account_epoch': accountEpoch,
+  });
+
   static Future<void> startActivityUpdates() async {
     try {
       await _channel.invokeMethod('startActivityUpdates');
-    } catch (_) {}
+    } catch (e) {
+      Log.w('geofence', 'Activity subscription dispatch failed', e);
+    }
   }
 
   static Future<int> getRegisteredCount() async {

@@ -14,12 +14,13 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
         if (event.hasError()) {
             WalkinLog.w(context, "boundary: error code=${event.errorCode}")
             if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
-                PendingReregister.set(context, true)
+                PendingReregister.request(context, 0L, "os_recovery", force = true)
                 ReregisterScheduler.enqueue(context)
             }
             return
         }
         if (event.geofenceTransition != Geofence.GEOFENCE_TRANSITION_EXIT) return
+        VisitLock.observeDeparture(context, event.triggeringLocation)
 
         // Don't re-register mid-drive — you'd cross each new boundary again and
         // again on a long trip. Instead defer: remember a re-registration is
@@ -29,7 +30,7 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
         val driving = ActivityState.isLikelyDriving(context)
         WalkinLog.w(context, "boundary EXIT driving=$driving${if (driving) " -> defer" else ""}")
         if (driving) {
-            PendingReregister.set(context, true)
+            PendingReregister.request(context, FootReregister.COOLDOWN_MS, "driving")
             // Safety net: if activity recognition never delivers the settle
             // event, this alarm consumes the pending flag on its own.
             ReregisterFallbackReceiver.arm(context)
@@ -38,15 +39,14 @@ class BoundaryGeofenceReceiver : BroadcastReceiver() {
 
         // On foot: at most one search per FootReregister.COOLDOWN_MS. A later
         // crossing leaves it owed; the fallback alarm runs it.
-        val now = System.currentTimeMillis()
+        val now = android.os.SystemClock.elapsedRealtime()
         if (FootReregister.tooSoon(context, now)) {
             WalkinLog.w(context, "boundary EXIT on foot within 5 min of last search -> defer")
-            PendingReregister.set(context, true)
-            ReregisterFallbackReceiver.arm(context)
+            PendingReregister.request(context, FootReregister.remaining(context, now), "boundary")
             return
         }
         FootReregister.mark(context, now)
-        PendingReregister.set(context, false)
+        PendingReregister.request(context, FootReregister.COOLDOWN_MS, "boundary")
         ReregisterScheduler.enqueue(context)
     }
 

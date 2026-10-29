@@ -140,6 +140,7 @@ class GeofenceManager {
     // Capture before any slow search/ranking work. Logout advances the native
     // epoch, so even a same-account re-login cannot accept this run's old advice.
     final accountEpoch = await GeofenceChannel.accountEpoch();
+    final recoveryGeneration = await GeofenceChannel.recoveryGeneration();
     if (!enabled) {
       await GeofenceChannel.unregisterAll(
         userId: userId,
@@ -199,7 +200,7 @@ class GeofenceManager {
         }
       }
       var merchants = area.merchants;
-      if (merchants.isEmpty) {
+      if (merchants.isEmpty && area.partial) {
         // Don't wipe the last-good geofence set (including the boundary
         // tripwire) on an empty result. An empty return can be a transient
         // Google miss or a partial-batch failure, not a real "nothing here" —
@@ -216,7 +217,11 @@ class GeofenceManager {
           await GeofenceChannel.getRegisteredCount(),
           countMeaningful: false,
         );
-        return true;
+        await GeofenceChannel.requestRefresh(
+          userId: userId,
+          accountEpoch: accountEpoch,
+        );
+        return true; // Explicitly scheduled recovery, not healthy coverage.
       }
       // Keep muted stores in the option list (marked `muted: true`) so
       // StoreResolver still resolves to the muted store when the user is
@@ -269,7 +274,40 @@ class GeofenceManager {
         accountEpoch: accountEpoch,
         zones: payload,
         boundary: boundary,
+        recoveryGeneration: recoveryGeneration,
       );
+      final coveredAtBoundary = TileCache.coverageLeftM(
+        centerLat: area.centerLat,
+        centerLng: area.centerLng,
+        coveredM: area.coveredM,
+        lat: boundary['lat'] as double,
+        lng: boundary['lng'] as double,
+      );
+      final capCoverage = clusters.length > merchantCap
+          ? _haversineMeters(
+                  fix.lat,
+                  fix.lng,
+                  cappedClusters.last.primary.lat,
+                  cappedClusters.last.primary.lng,
+                ) -
+                _haversineMeters(
+                  fix.lat,
+                  fix.lng,
+                  boundary['lat'] as double,
+                  boundary['lng'] as double,
+                )
+          : double.infinity;
+      final needsRefresh =
+          area.partial ||
+          searchError != null ||
+          math.min(coveredAtBoundary, capCoverage) <
+              (boundary['radius_m'] as num);
+      if (needsRefresh) {
+        await GeofenceChannel.requestRefresh(
+          userId: userId,
+          accountEpoch: accountEpoch,
+        );
+      }
       // One line that says where fences came from and how they sit, for
       // diagnosing walk-ins after the fact.
       await _trace(
@@ -277,11 +315,11 @@ class GeofenceManager {
         'merchants=${merchants.length} clusters=${clusters.length} '
         'covered=${area.coveredM.round()}m '
         'overlapping=${_overlappingPairs(cappedClusters)} '
-        'boundary=${boundary['radius_m']}m',
+        'boundary=${boundary['radius_m']}m needs_refresh=$needsRefresh',
       );
-      await _beacon(trigger, count, countMeaningful: true);
+      await _beacon(trigger, count, countMeaningful: merchants.isNotEmpty);
       await _recordSuccessfulRegistration(userId, fix.lat, fix.lng);
-      return searchError == null;
+      return true; // Failures are retried; degraded coverage has its own deadline.
     } catch (e, st) {
       if (e is PlatformException && e.code == 'STALE_ACCOUNT') return true;
       if (e is LocationDenied) {
@@ -476,7 +514,13 @@ class GeofenceManager {
       final last = capped.last.primary;
       radiusM = math.min(
         radiusM,
-        _haversineMeters(centerLat, centerLng, last.lat, last.lng),
+        _haversineMeters(centerLat, centerLng, last.lat, last.lng) -
+            _haversineMeters(
+              centerLat,
+              centerLng,
+              double.parse(centerLat.toStringAsFixed(3)),
+              double.parse(centerLng.toStringAsFixed(3)),
+            ),
       );
     }
     final radius = radiusM

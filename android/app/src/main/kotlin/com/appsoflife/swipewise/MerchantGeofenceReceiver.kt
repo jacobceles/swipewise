@@ -25,7 +25,7 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
         if (event.hasError()) {
             WalkinLog.w(context, "fence: error code=${event.errorCode}")
             if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
-                PendingReregister.set(context, true)
+                PendingReregister.request(context, 0L, "os_recovery", force = true)
                 ReregisterScheduler.enqueue(context)
             }
             return

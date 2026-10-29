@@ -141,8 +141,10 @@ object ActivityState {
 /// transitions, not continuous polling.
 object ActivitySubscriber {
     private const val UNIQUE_REQ = 2001
+    @Volatile var requestUpdates: (Context, ActivityTransitionRequest, PendingIntent) -> com.google.android.gms.tasks.Task<Void> =
+        { context, request, pi -> ActivityRecognition.getClient(context).requestActivityTransitionUpdates(request, pi) }
 
-    fun start(context: Context) {
+    fun start(context: Context, retries: Int = 1) {
         val perm = "android.permission.ACTIVITY_RECOGNITION"
         if (ContextCompat.checkSelfPermission(context, perm) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -159,12 +161,16 @@ object ActivitySubscriber {
         val request = ActivityTransitionRequest(transitions)
         val pi = pendingIntent(context)
         try {
-            ActivityRecognition.getClient(context)
-                .requestActivityTransitionUpdates(request, pi)
+            requestUpdates(context, request, pi)
                 .addOnSuccessListener { WalkinLog.w(context, "activity subscription: active") }
                 .addOnFailureListener {
                     val status = (it as? com.google.android.gms.common.api.ApiException)?.statusCode
                     WalkinLog.w(context, "activity subscription: failed ${it.javaClass.simpleName} status=$status")
+                    if (retries > 0) {
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            start(context, retries - 1)
+                        }, 5_000L)
+                    }
                 }
         } catch (_: SecurityException) {
             WalkinLog.w(context, "activity subscription: permission revoked")

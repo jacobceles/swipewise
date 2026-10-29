@@ -335,7 +335,6 @@ Future<bool> _runGeofenceReregister() async {
 
   final settings = SettingsRepository(repo);
   final enabled = await settings.getNearbyEnabled(userId);
-  if (!enabled) return true;
   final radius = await settings.getNearbyRadiusMi(userId);
   final dwell = await settings.getDwellSecondsByCategory(userId);
   final cardOrder = await settings.getCardPreferenceOrder(userId);
@@ -349,7 +348,7 @@ Future<bool> _runGeofenceReregister() async {
   );
   return manager.ensureRegistered(
     userId: userId,
-    enabled: true,
+    enabled: enabled,
     radiusMi: radius,
     dwellByCategory: dwell,
     cardPreferenceOrder: cardOrder,

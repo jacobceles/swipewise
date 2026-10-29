@@ -26,22 +26,35 @@ class ReregisterFallbackReceiver : BroadcastReceiver() {
         if (!PendingReregister.isPending(context)) {
             return
         }
-        if (ActivityState.isLikelyDriving(context)) {
+        val now = SystemClock.elapsedRealtime()
+        if (now < PendingReregister.due(context, now)) {
             arm(context)
             return
         }
-        PendingReregister.set(context, false)
+        if (ActivityState.isLikelyDriving(context)) {
+            PendingReregister.defer(context, FootReregister.COOLDOWN_MS)
+            return
+        }
+        val remaining = FootReregister.remaining(context, now)
+        if (remaining > 0L) {
+            PendingReregister.defer(context, remaining)
+            return
+        }
+        FootReregister.mark(context, now)
+        PendingReregister.defer(context, FootReregister.COOLDOWN_MS)
         ReregisterScheduler.enqueue(context)
     }
 
     companion object {
-        private const val DELAY_MS = 5L * 60L * 1000L
+        fun cancel(context: Context) {
+            (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(pendingIntent(context))
+        }
 
         fun arm(context: Context) {
             val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             am.setAndAllowWhileIdle(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + DELAY_MS,
+                maxOf(SystemClock.elapsedRealtime(), PendingReregister.due(context)),
                 pendingIntent(context),
             )
         }
