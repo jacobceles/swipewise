@@ -16,7 +16,7 @@ class WalkinTest {
     @Test
     fun `transit and ATM candidates cannot resolve or enter fallback lists`() {
         val shop = store("shop").copy(lat = 40.0, lng = -74.0, placeType = "store")
-        for (type in listOf("bus_stop", "bus_station", "transit_station", "atm")) {
+        for (type in listOf("bus_stop", "lodging", "apartment_building", "apartment_complex", "atm")) {
             val transit = store(type).copy(lat = 40.0, lng = -74.0, placeType = type)
             assertFalse(transit.walkinEligible)
             assertEquals(listOf(shop), StoreResolver.candidates(listOf(transit, shop), 40.0, -74.0, 100.0).map { it.option })
@@ -27,6 +27,9 @@ class WalkinTest {
             assertTrue(StoreResolver.capped(listOf(transit), 40.0, -74.0).isEmpty())
         }
         assertTrue(store("train").copy(placeType = "train_station").walkinEligible)
+        for (type in listOf("bus_station", "transit_station", "subway_station", "hotel")) {
+            assertTrue(store(type).copy(placeType = type).walkinEligible)
+        }
         assertFalse(store("legacy").copy(category = "Transit").walkinEligible)
     }
 

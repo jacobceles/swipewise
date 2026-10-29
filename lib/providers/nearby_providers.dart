@@ -144,9 +144,7 @@ final alertChecksProvider = FutureProvider<Map<AlertCheck, bool>>((ref) async {
 /// Capped at 2 retries so network/search failures surface promptly with a
 /// Retry button instead of spinning through 10 backoff attempts.
 Duration? _retryUnlessLocationOff(int count, Object error) =>
-    count >= 2 ||
-        error is LocationDenied ||
-        error is LocationServiceDisabled
+    count >= 2 || error is LocationDenied || error is LocationServiceDisabled
     ? null
     : ProviderContainer.defaultRetry(count, error);
 
@@ -182,7 +180,13 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
   }
   final cache = ref.read(tileCacheProvider);
 
-  final cached = await cache.read(lat: fix.lat, lng: fix.lng);
+  final queryKey = nearbyQueryKey(categoryIds, radiusMi);
+  final cached = await cache.read(
+    lat: fix.lat,
+    lng: fix.lng,
+    queryKey: queryKey,
+    allowDegraded: true,
+  );
   var raw = cached?.merchants ?? const <NearbyMerchant>[];
   if (cached == null) {
     if (kDebugMode) {
@@ -201,7 +205,12 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
       // ignore: avoid_print
       print('[nearby] Google Places returned ${raw.length} merchants');
     }
-    await cache.write(lat: fix.lat, lng: fix.lng, result: result);
+    await cache.write(
+      lat: fix.lat,
+      lng: fix.lng,
+      result: result,
+      queryKey: queryKey,
+    );
   } else if (kDebugMode) {
     // ignore: avoid_print
     print('[nearby] cache hit (${raw.length} merchants)');

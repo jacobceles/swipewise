@@ -158,7 +158,7 @@ class DatabaseHelper {
         return await openDatabase(
           path,
           options: OpenDatabaseOptions(
-            version: 21,
+            version: 22,
             onConfigure: _onConfigure,
             onCreate: _onCreate,
             onUpgrade: _onUpgrade,
@@ -184,6 +184,21 @@ class DatabaseHelper {
   /// list. The native dwell check puts the most recent pick first, so two
   /// stores sharing one address stop being a guess after the first tap.
   /// Device-level like `muted_merchants`; capped by [DataRepository.recordStorePick].
+  static const String _createMerchantSearchCacheSql = '''
+    CREATE TABLE IF NOT EXISTS merchant_search_cache (
+      cell_id TEXT NOT NULL,
+      query_key TEXT NOT NULL,
+      center_lat REAL NOT NULL,
+      center_lng REAL NOT NULL,
+      covered_m REAL NOT NULL,
+      partial INTEGER NOT NULL,
+      merchants_json TEXT NOT NULL,
+      fetched_at INTEGER NOT NULL,
+      last_accessed_at INTEGER NOT NULL,
+      PRIMARY KEY (cell_id, query_key, center_lat, center_lng)
+    )
+  ''';
+
   static const String _createStorePicksSql = '''
     CREATE TABLE IF NOT EXISTS store_picks (
       merchant_id TEXT PRIMARY KEY,
@@ -515,6 +530,14 @@ class DatabaseHelper {
     // upgrades from before v15.
     if (oldVersion < 21) {
       await db.execute('DROP TABLE IF EXISTS dwell_outcomes');
+    }
+    if (oldVersion < 22 && newVersion >= 22) {
+      await db.execute(_createMerchantSearchCacheSql);
+      // Search data is disposable; wallets and user choices are not.
+      final oldCache = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE name = 'merchant_tile_cache'",
+      );
+      if (oldCache.isNotEmpty) await db.delete('merchant_tile_cache');
     }
   }
 
@@ -895,7 +918,9 @@ class DatabaseHelper {
       )
     ''');
 
-    // Nearby stores: cached Google Places merchants per ~1km grid cell.
+    await db.execute(_createMerchantSearchCacheSql);
+
+    // Legacy cache retained for old migration compatibility, no longer read.
     // `last_accessed_at` tracks read recency for the LRU eviction policy
     // (`TileCache.evictTo(maxCells:)`).
     await db.execute('''

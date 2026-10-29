@@ -162,7 +162,13 @@ class GeofenceManager {
     }
     try {
       final fix = await location.getOneShot(ask: false);
-      var area = await cache.read(lat: fix.lat, lng: fix.lng);
+      final queryKey = nearbyQueryKey(categoryIds, radiusMi);
+      var area = await cache.read(
+        lat: fix.lat,
+        lng: fix.lng,
+        queryKey: queryKey,
+        allowDegraded: true,
+      );
       var source = 'cache';
       Object? searchError;
       if (area == null) {
@@ -174,9 +180,18 @@ class GeofenceManager {
             radiusMi: radiusMi,
             categoryIds: categoryIds,
           );
-          await cache.write(lat: fix.lat, lng: fix.lng, result: area);
+          await cache.write(
+            lat: fix.lat,
+            lng: fix.lng,
+            result: area,
+            queryKey: queryKey,
+          );
         } catch (e) {
-          final fallback = await cache.readFallback(lat: fix.lat, lng: fix.lng);
+          final fallback = await cache.readFallback(
+            lat: fix.lat,
+            lng: fix.lng,
+            queryKey: queryKey,
+          );
           if (fallback == null) rethrow;
           area = fallback;
           source = 'stale_cache';

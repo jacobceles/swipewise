@@ -29,7 +29,13 @@ NearbyMerchant _m(String id, double lat, double lng, double distanceMi) =>
 
 void main() {
   test('transit pins stay searchable but are not walk-in candidates', () {
-    for (final type in ['atm', 'bus_stop', 'bus_station', 'transit_station']) {
+    for (final type in [
+      'atm',
+      'bus_stop',
+      'lodging',
+      'apartment_building',
+      'apartment_complex',
+    ]) {
       final merchant = NearbyMerchant(
         id: type,
         name: type,

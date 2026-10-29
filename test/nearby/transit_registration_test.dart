@@ -46,6 +46,10 @@ void main() {
               'transit_station',
               'atm',
               'store',
+              'lodging',
+              'hotel',
+              'train_station',
+              'subway_station',
             ])
               NearbyMerchant(
                 id: type,
@@ -58,7 +62,15 @@ void main() {
           ],
         );
         final cache = TileCache();
-        if (cached) await cache.write(lat: 39.74, lng: -104.99, result: result);
+        final key = nearbyQueryKey(null, 1);
+        if (cached) {
+          await cache.write(
+            lat: 39.74,
+            lng: -104.99,
+            result: result,
+            queryKey: key,
+          );
+        }
         Map<Object?, Object?>? payload;
         const channel = MethodChannel('com.appsoflife/geofence');
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -105,11 +117,22 @@ void main() {
         final options = (payload!['zones'] as List).expand(
           (z) => (z as Map)['options'] as List,
         );
-        expect(options.map((o) => (o as Map)['place_type']), ['store']);
+        expect(options.map((o) => (o as Map)['place_type']).toSet(), {
+          'store',
+          'bus_station',
+          'transit_station',
+          'hotel',
+          'train_station',
+          'subway_station',
+        });
         // Filtering is walk-in-only: cached search results still contain transit.
         expect(
-          (await cache.read(lat: 39.74, lng: -104.99))!.merchants,
-          hasLength(5),
+          (await cache.read(
+            lat: 39.74,
+            lng: -104.99,
+            queryKey: key,
+          ))!.merchants,
+          hasLength(9),
         );
       },
     );

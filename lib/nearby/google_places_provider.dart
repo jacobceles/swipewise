@@ -133,6 +133,7 @@ class GooglePlacesProvider extends MerchantSearchProvider {
   static const int _failureThreshold = 3;
   // The API's hard cap per request; there is no next page.
   static const int _maxResultCount = 20;
+  static const int maxRefinementRequests = 6;
   static const Duration _cooldown = Duration(minutes: 5);
 
   Future<void> resetCircuitBreaker() => _repo.resetCircuitBreaker(_serviceName);
@@ -277,14 +278,90 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       throw upstream.isNotEmpty ? upstream.first : errors.first;
     }
 
+    final targetM = 300 + distanceMeters(lat, lng, coarseLat, coarseLng);
+    var partial = outcomes.any((o) => o.error != null);
+    var extra = 0;
+    final known = outcomes.expand((o) => o.merchants).toList();
+    final typeBudget = maxRefinementRequests - math.min(2, batches.length);
+    Future<({List<NearbyMerchant> merchants, double coveredM})> fetchExtra(
+      List<String> subset,
+      double atLat,
+      double atLng,
+    ) {
+      extra++;
+      return _fetchBatch(
+        coarseLat: atLat,
+        coarseLng: atLng,
+        radiusM: radiusM,
+        originLat: lat,
+        originLng: lng,
+        types: subset,
+      );
+    }
+
+    Future<double> refine(List<String> subset, double coverage) async {
+      if (coverage >= targetM || subset.length < 2 || extra + 2 > typeBudget) {
+        return coverage;
+      }
+      final middle = subset.length ~/ 2;
+      final halves = [subset.sublist(0, middle), subset.sublist(middle)];
+      final covered = <double>[];
+      for (final half in halves) {
+        try {
+          final r = await fetchExtra(half, coarseLat, coarseLng);
+          known.addAll(r.merchants);
+          covered.add(r.coveredM);
+        } catch (_) {
+          partial = true;
+          covered.add(coverage); // Parent still proves this smaller circle.
+        }
+      }
+      for (var i = 0; i < halves.length; i++) {
+        covered[i] = await refine(halves[i], covered[i]);
+      }
+      return covered.reduce(math.min);
+    }
+
+    final coverage = <double>[];
+    for (var i = 0; i < outcomes.length; i++) {
+      coverage.add(
+        outcomes[i].error != null
+            ? 0
+            : await refine(batches[i], outcomes[i].coveredM),
+      );
+    }
+    if (coverage.isNotEmpty && coverage.reduce(math.min) < targetM) {
+      // Offset requests discover additional known places, but do not magically
+      // enlarge the complete circle at the original centre.
+      const offsets = [
+        (0.001, 0.0),
+        (-0.001, 0.0),
+        (0.0, 0.001),
+        (0.0, -0.001),
+      ];
+      var i = 0;
+      while (extra < maxRefinementRequests && i < offsets.length) {
+        final offset = offsets[i];
+        try {
+          final r = await fetchExtra(
+            batches[i % batches.length],
+            double.parse((coarseLat + offset.$1).toStringAsFixed(3)),
+            double.parse((coarseLng + offset.$2).toStringAsFixed(3)),
+          );
+          known.addAll(r.merchants);
+        } catch (_) {
+          partial = true;
+        }
+        i++;
+      }
+    }
+
     // Merge, dedup by place id, preserve closest occurrence.
     final seen = <String, NearbyMerchant>{};
-    for (final o in outcomes) {
-      for (final m in o.merchants) {
-        final existing = seen[m.id];
-        if (existing == null || m.distanceMi < existing.distanceMi) {
-          seen[m.id] = m;
-        }
+    for (final m in known) {
+      final existing = seen[m.id];
+      if (existing == null || m.distanceMi < existing.distanceMi) {
+        seen[m.id] = m;
       }
     }
     return NearbySearchResult(
@@ -292,9 +369,8 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       centerLat: coarseLat,
       centerLng: coarseLng,
       // A failed batch covered nothing for its types.
-      coveredM: outcomes.isEmpty
-          ? 0
-          : outcomes.map((o) => o.coveredM).reduce(math.min),
+      coveredM: coverage.isEmpty ? 0 : coverage.reduce(math.min),
+      partial: partial,
     );
   }
 

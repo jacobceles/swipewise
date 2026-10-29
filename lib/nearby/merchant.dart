@@ -36,8 +36,9 @@ class NearbyMerchant {
   bool get walkinEligible => !const {
     'atm',
     'bus_stop',
-    'bus_station',
-    'transit_station',
+    'lodging',
+    'apartment_building',
+    'apartment_complex',
   }.contains(placeType);
 }
 
