@@ -77,6 +77,10 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             "getRegisteredCount" -> result.success(store.count())
             "accountEpoch" -> result.success(accountEpoch)
             "consumePendingMerchant" -> result.success(PendingMerchantStore.consume())
+            "startActivityUpdates" -> {
+                ActivitySubscriber.start(context)
+                result.success(null)
+            }
             "fireTestNotification" -> fireTestNotification(call, result)
             "walkinLog" -> {
                 WalkinLog.w(context, call.arguments as? String ?: "")

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../util/logger.dart';
+import 'geofence_channel.dart';
 
 /// Every OS permission store alerts need, asked one at a time.
 ///
@@ -77,10 +80,13 @@ class NearbyPermissionGate {
     if (before.isGranted) return true;
     if (before.isPermanentlyDenied) {
       await openAppSettings();
-      return (await Permission.activityRecognition.status).isGranted;
+      final granted = (await Permission.activityRecognition.status).isGranted;
+      if (granted) unawaited(GeofenceChannel.startActivityUpdates());
+      return granted;
     }
     final after = await Permission.activityRecognition.request();
     Log.i('permissions', 'Physical activity: before=$before → after=$after');
+    if (after.isGranted) unawaited(GeofenceChannel.startActivityUpdates());
     return after.isGranted;
   }
 

@@ -3,7 +3,9 @@ package com.appsoflife.swipewise
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import com.google.android.gms.location.ActivityTransition
+import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.ActivityTransitionResult
 import com.google.android.gms.location.DetectedActivity
 
@@ -11,43 +13,78 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!ActivityTransitionResult.hasResult(intent)) return
         val result = ActivityTransitionResult.extractResult(intent) ?: return
-        // Latest event wins.
-        val latest = result.transitionEvents.lastOrNull() ?: return
-        val wasWalking = ActivityState.isLikelyWalking(context)
-        // An IN_VEHICLE *EXIT* means the drive ended; storing its bare
-        // activity type read as "still driving".
-        val leftVehicle = latest.activityType == DetectedActivity.IN_VEHICLE &&
-            latest.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT
-        ActivityState.set(
-            context,
-            if (leftVehicle) DetectedActivity.UNKNOWN else latest.activityType,
-            System.currentTimeMillis(),
-        )
-        WalkinLog.w(
-            context,
-            "activity type=${latest.activityType} transition=${latest.transitionType} " +
-                "pending_reregister=${PendingReregister.isPending(context)}",
-        )
+        handleTransitions(context, result.transitionEvents)
+    }
 
-        // The user just settled (parked / on foot). If a boundary crossing was
-        // deferred while driving, this is when we run it — geofences catch up to
-        // the destination without any mid-drive churn.
-        val settled = latest.transitionType ==
-            ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
-            (latest.activityType == DetectedActivity.STILL ||
-                latest.activityType == DetectedActivity.WALKING)
-        if (settled && PendingReregister.isPending(context)) {
+    fun handleTransitions(
+        context: Context,
+        rawEvents: List<ActivityTransitionEvent>,
+        nowElapsedNanos: Long = SystemClock.elapsedRealtimeNanos(),
+    ) {
+        if (rawEvents.isEmpty()) return
+
+        // Filter future-invalid events BEFORE updating lastEvent
+        val validTimeEvents = rawEvents.filter { it.elapsedRealTimeNanos in 1..(nowElapsedNanos + 1_000_000_000L) }
+        if (validTimeEvents.isEmpty()) return
+
+        val ordered = validTimeEvents.sortedBy { it.elapsedRealTimeNanos }
+        val lastNanos = ActivityState.lastEventElapsedRealtimeNanos(context)
+        val freshEvents = ordered.filter { it.elapsedRealTimeNanos > lastNanos }
+        if (freshEvents.isEmpty()) return
+
+        val initialObs = ActivityState.getObservation(context, nowElapsedNanos)
+        var currentActivity = initialObs?.type ?: DetectedActivity.UNKNOWN
+        var currentTransition = initialObs?.transitionType ?: ActivityTransition.ACTIVITY_TRANSITION_EXIT
+
+        var sawWalkingToStill = false
+        var pendingReregisterNeeded = false
+
+        for (event in freshEvents) {
+            val prevActivity = currentActivity
+
+            val leftVehicle = event.activityType == DetectedActivity.IN_VEHICLE &&
+                event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT
+            currentActivity = if (leftVehicle) DetectedActivity.UNKNOWN else event.activityType
+            currentTransition = event.transitionType
+
+            // Latch walking-to-still; unlatch if user begins walking or driving again
+            if (prevActivity == DetectedActivity.WALKING &&
+                currentActivity == DetectedActivity.STILL &&
+                currentTransition == ActivityTransition.ACTIVITY_TRANSITION_ENTER
+            ) {
+                sawWalkingToStill = true
+            } else if (currentActivity == DetectedActivity.IN_VEHICLE || currentActivity == DetectedActivity.WALKING) {
+                sawWalkingToStill = false
+            }
+
+            val settled = currentTransition == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
+                (currentActivity == DetectedActivity.STILL || currentActivity == DetectedActivity.WALKING)
+            if (settled && PendingReregister.isPending(context)) {
+                pendingReregisterNeeded = true
+            }
+
+            ActivityState.set(
+                context,
+                currentActivity,
+                event.transitionType,
+                event.elapsedRealTimeNanos,
+                System.currentTimeMillis(),
+            )
+
+            WalkinLog.w(
+                context,
+                "activity type=${event.activityType} transition=${event.transitionType} " +
+                    "nanos=${event.elapsedRealTimeNanos} pending_reregister=${PendingReregister.isPending(context)}",
+            )
+        }
+
+        if (pendingReregisterNeeded) {
             PendingReregister.set(context, false)
             ReregisterScheduler.enqueue(context)
         }
-
-        // Stopped after walking, during a visit: maybe the shop next door,
-        // whose fence was entered (and its alert held back) on arrival, so no
-        // new ENTER will come. One dwell check from the visit's fence; it
-        // posts only if the fix names a store this visit hasn't alerted for.
-        val stopped = latest.activityType == DetectedActivity.STILL &&
-            latest.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER
-        if (stopped && wasWalking) armNextDoorCheck(context)
+        if (sawWalkingToStill && currentActivity == DetectedActivity.STILL) {
+            armNextDoorCheck(context)
+        }
     }
 
     private fun armNextDoorCheck(context: Context) {

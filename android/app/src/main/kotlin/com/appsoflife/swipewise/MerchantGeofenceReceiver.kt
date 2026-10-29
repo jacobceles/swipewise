@@ -3,6 +3,7 @@ package com.appsoflife.swipewise
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
@@ -29,33 +30,50 @@ class MerchantGeofenceReceiver : BroadcastReceiver() {
             }
             return
         }
-        val transition = event.geofenceTransition
-        val triggered = event.triggeringGeofences ?: return
+        handleTransition(
+            context = context,
+            transition = event.geofenceTransition,
+            triggeredGeofenceIds = event.triggeringGeofences?.map { it.requestId } ?: emptyList(),
+            triggeringLocation = event.triggeringLocation,
+        )
+    }
+
+    fun handleTransition(
+        context: Context,
+        transition: Int,
+        triggeredGeofenceIds: List<String>,
+        triggeringLocation: Location?,
+    ) {
         val store = GeofenceMetadataStore(context)
         WalkinLog.w(
             context,
             "fence ${if (transition == Geofence.GEOFENCE_TRANSITION_ENTER) "ENTER" else "EXIT"} " +
-                triggered.joinToString(",") { g ->
-                    g.requestId + if (store.read(g.requestId) == null) "(no_meta)" else ""
-                } + " acc=${event.triggeringLocation?.accuracy?.toInt()}",
+                triggeredGeofenceIds.joinToString(",") { id ->
+                    id + if (store.read(id) == null) "(no_meta)" else ""
+                } + " acc=${triggeringLocation?.accuracy?.toInt()}",
         )
 
         when (transition) {
             Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                VisitLock.clearLeft(context, triggered.map { it.requestId })
-                for (g in triggered) {
-                    val meta = store.read(g.requestId)
-                    if (meta == null || DwellAlarms.isArmed(context, g.requestId)) {
+                VisitLock.clearLeft(context, triggeredGeofenceIds)
+                for (gid in triggeredGeofenceIds) {
+                    val meta = store.read(gid)
+                    if (meta == null || DwellAlarms.isArmed(context, gid)) {
                         continue
                     }
-                    DwellAlarms.arm(context, g.requestId, meta.dwellSeconds)
+                    DwellAlarms.arm(
+                        context,
+                        gid,
+                        meta.dwellSeconds,
+                        triggeringLocation = triggeringLocation,
+                    )
                 }
             }
             Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                for (g in triggered) {
-                    DwellAlarms.cancel(context, g.requestId)
+                for (gid in triggeredGeofenceIds) {
+                    DwellAlarms.cancel(context, gid)
                 }
-                VisitLock.markLeft(context, triggered.map { it.requestId })
+                VisitLock.markLeft(context, triggeredGeofenceIds)
             }
         }
     }

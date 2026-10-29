@@ -47,6 +47,12 @@ class GeofenceChannel {
   static Future<int> accountEpoch() async =>
       await _channel.invokeMethod<int>('accountEpoch') ?? 0;
 
+  static Future<void> startActivityUpdates() async {
+    try {
+      await _channel.invokeMethod('startActivityUpdates');
+    } catch (_) {}
+  }
+
   static Future<int> getRegisteredCount() async {
     final c = await _channel.invokeMethod<int>('getRegisteredCount');
     return c ?? 0;

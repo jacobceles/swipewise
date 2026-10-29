@@ -20,6 +20,19 @@ enum class DwellOutcome(val wire: String) {
     /// often sit on a business's registered address rather than its storefront.
     OUTSIDE_FENCE("outside_fence"),
 
+    /// No fix obtainable in time; distinct fail-closed reasons.
+    NO_FIX("no_fix"),
+    NO_FIX_TIMEOUT("no_fix_timeout"),
+    NO_FIX_NULL("no_fix_null"),
+    NO_FIX_ERROR("no_fix_error"),
+    NO_FIX_SECURITY("no_fix_security"),
+
+    /// Fix coordinates, accuracy, or timestamps were invalid, non-finite, or negative.
+    INVALID_FIX("invalid_fix"),
+
+    /// Fix was older than the freshness threshold or from the future.
+    STALE_FIX("stale_fix"),
+
     /// No fix in time AND activity recognition still says driving, so this is
     /// treated as a drive-by rather than an arrival.
     NO_FIX_DRIVING("no_fix_driving"),

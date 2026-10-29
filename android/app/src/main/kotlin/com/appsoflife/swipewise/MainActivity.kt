@@ -19,6 +19,11 @@ class MainActivity : FlutterActivity() {
         ActivitySubscriber.start(applicationContext)
     }
 
+    override fun onResume() {
+        super.onResume()
+        ActivitySubscriber.start(applicationContext)
+    }
+
     override fun onDestroy() {
         uiAlive = false
         super.onDestroy()

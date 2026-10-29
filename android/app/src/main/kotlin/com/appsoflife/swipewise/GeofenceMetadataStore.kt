@@ -67,8 +67,8 @@ data class MerchantMeta(
     val options: List<MerchantOption>,
     // Fence geometry + dwell, needed by DwellCheckReceiver to time the
     // app-side dwell alarm and verify a fresh fix against the fence circle.
-    // Nullable so metas written by older builds still parse (they get the
-    // fail-open verification path until the next registerSet rewrites them).
+    // Nullable so metas written by older builds still parse; arrivals fail
+    // closed until the next registerSet supplies geometry.
     val lat: Double? = null,
     val lng: Double? = null,
     val radiusM: Float? = null,
@@ -85,7 +85,7 @@ data class MerchantMeta(
     }
 }
 
-class GeofenceMetadataStore(context: Context) {
+class GeofenceMetadataStore(private val context: Context) {
     private val prefs =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -114,6 +114,22 @@ class GeofenceMetadataStore(context: Context) {
     }
 
     fun write(meta: MerchantMeta) {
+        val existing = read(meta.geofenceId)
+        val unchanged = existing != null &&
+            existing.lat == meta.lat &&
+            existing.lng == meta.lng &&
+            existing.radiusM == meta.radiusM &&
+            existing.dwellSeconds == meta.dwellSeconds &&
+            existing.options == meta.options
+
+        val currentFenceGen = prefs.getLong(genKey(meta.geofenceId), 0L)
+        val newFenceGen = if (unchanged) currentFenceGen else currentFenceGen + 1L
+
+        if (!unchanged && existing != null) {
+            // Relevant metadata replacement: cancel and erase obsolete attempt
+            DwellAlarms.cancel(context, meta.geofenceId)
+        }
+
         val arr = JSONArray()
         for (opt in meta.options) arr.put(opt.toJson())
         val o = JSONObject().put("options", arr)
@@ -121,20 +137,45 @@ class GeofenceMetadataStore(context: Context) {
         if (meta.lng != null) o.put("lng", meta.lng)
         if (meta.radiusM != null) o.put("radius_m", meta.radiusM.toDouble())
         o.put("dwell_seconds", meta.dwellSeconds)
-        prefs.edit().putString(meta.geofenceId, o.toString()).apply()
+        prefs.edit()
+            .putString(meta.geofenceId, o.toString())
+            .putLong(genKey(meta.geofenceId), newFenceGen)
+            .apply()
+    }
+
+    fun remove(geofenceId: String) {
+        DwellAlarms.cancel(context, geofenceId)
+        val next = prefs.getLong(genKey(geofenceId), 0L) + 1L
+        prefs.edit()
+            .remove(geofenceId)
+            .putLong(genKey(geofenceId), next)
+            .apply()
     }
 
     /// Every registered merchant fence.
-    fun readAll(): List<MerchantMeta> = prefs.all.keys.mapNotNull { read(it) }
+    fun readAll(): List<MerchantMeta> = prefs.all.keys
+        .filter { !it.startsWith(GEN_PREFIX) && it != KEY_GLOBAL_GENERATION }
+        .mapNotNull { read(it) }
 
     fun clear() {
-        prefs.edit().clear().apply()
+        DwellAlarms.cancelAll(context)
+        val next = globalGeneration() + 1L
+        prefs.edit().clear().putLong(KEY_GLOBAL_GENERATION, next).apply()
     }
 
-    fun count(): Int = prefs.all.size
+    fun count(): Int = prefs.all.keys.count { !it.startsWith(GEN_PREFIX) && it != KEY_GLOBAL_GENERATION }
+
+    fun generation(geofenceId: String): Long =
+        globalGeneration() * 1_000_000L + prefs.getLong(genKey(geofenceId), 0L)
+
+    fun globalGeneration(): Long = prefs.getLong(KEY_GLOBAL_GENERATION, 0L)
+
+    private fun genKey(geofenceId: String) = "$GEN_PREFIX$geofenceId"
 
     companion object {
         private const val PREFS = "swipewise_geofence_meta"
+        private const val GEN_PREFIX = "_gen_"
+        private const val KEY_GLOBAL_GENERATION = "_global_gen"
 
         fun parseOptions(o: JSONObject): List<MerchantOption> {
             val arr = o.optJSONArray("options") ?: return emptyList()

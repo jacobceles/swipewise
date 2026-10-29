@@ -9,55 +9,129 @@ import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionRequest
 import com.google.android.gms.location.DetectedActivity
 
-/// In-memory cache of the user's latest activity. Updated by
-/// `ActivityTransitionReceiver` whenever the OS reports a transition.
-/// Defaults to STILL if we've never received a transition (don't punish
-/// users for a fresh install).
+object BootIdentity {
+    const val UNKNOWN_BOOT_COUNT = -1
+
+    @Volatile
+    var testBootCount: Int? = null
+
+    fun getBootCount(context: Context): Int {
+        testBootCount?.let { return it }
+        return try {
+            val count = android.provider.Settings.Global.getInt(
+                context.contentResolver,
+                android.provider.Settings.Global.BOOT_COUNT,
+                UNKNOWN_BOOT_COUNT,
+            )
+            if (count < 0) UNKNOWN_BOOT_COUNT else count
+        } catch (_: Exception) {
+            UNKNOWN_BOOT_COUNT
+        }
+    }
+}
+
+/// In-memory and persisted cache of the user's latest activity.
+/// Updated by `ActivityTransitionReceiver` whenever the OS reports a transition.
+/// Defaults to UNKNOWN if we've never received a transition. Missing or
+/// stale activity state is treated as unknown, not stationary.
 object ActivityState {
     private const val PREFS = "swipewise_activity_state"
+    private const val KEY_BOOT_COUNT = "boot_count"
     private const val KEY_TYPE = "type"
+    private const val KEY_TRANSITION = "transition"
+    private const val KEY_EVENT_ELAPSED_NANOS = "event_elapsed_nanos"
     private const val KEY_AT = "at"
 
-    fun set(context: Context, activityType: Int, atMillis: Long) {
+    fun set(
+        context: Context,
+        activityType: Int,
+        transitionType: Int,
+        eventElapsedRealtimeNanos: Long,
+        atWallMillis: Long,
+    ) {
+        val bootCount = BootIdentity.getBootCount(context)
+        if (bootCount == BootIdentity.UNKNOWN_BOOT_COUNT) {
+            WalkinLog.w(context, "activity set: unknown boot count -> failing closed")
+            return
+        }
         context
             .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
+            .putInt(KEY_BOOT_COUNT, bootCount)
             .putInt(KEY_TYPE, activityType)
-            .putLong(KEY_AT, atMillis)
+            .putInt(KEY_TRANSITION, transitionType)
+            .putLong(KEY_EVENT_ELAPSED_NANOS, eventElapsedRealtimeNanos)
+            .putLong(KEY_AT, atWallMillis)
             .apply()
     }
 
-    /// True iff the latest reported activity is IN_VEHICLE and recent.
-    ///
-    /// Transitions arrive only on a change, so a long drive produces one
-    /// IN_VEHICLE ENTER and then silence; the old 30-min cutoff read every
-    /// drive past half an hour as "not driving". Parking ends it explicitly
-    /// (IN_VEHICLE EXIT / STILL / WALKING, see ActivityTransitionReceiver), so
-    /// the cutoff is only a backstop for a lost transition.
-    fun isLikelyDriving(context: Context): Boolean {
+    fun lastEventElapsedRealtimeNanos(context: Context): Long {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val type = prefs.getInt(KEY_TYPE, DetectedActivity.STILL)
-        val at = prefs.getLong(KEY_AT, 0L)
-        if (type != DetectedActivity.IN_VEHICLE) return false
-        return System.currentTimeMillis() - at < 2L * 60L * 60L * 1000L
+        val bootCount = prefs.getInt(KEY_BOOT_COUNT, BootIdentity.UNKNOWN_BOOT_COUNT)
+        val currentBoot = BootIdentity.getBootCount(context)
+        if (currentBoot == BootIdentity.UNKNOWN_BOOT_COUNT || bootCount != currentBoot) return 0L
+        return prefs.getLong(KEY_EVENT_ELAPSED_NANOS, 0L)
     }
 
-    /// True iff the latest reported activity is WALKING, within 30 min.
-    /// Activity recognition also reports stop-and-go city driving as
-    /// walking (seen 2026-10-17: "walking" while crossing a 300 m boundary
-    /// every minute), so the dwell check treats it as moving, not arrived.
-    fun isLikelyWalking(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val type = prefs.getInt(KEY_TYPE, DetectedActivity.STILL)
-        val at = prefs.getLong(KEY_AT, 0L)
-        return type == DetectedActivity.WALKING &&
-            System.currentTimeMillis() - at < 30L * 60L * 1000L
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
     }
 
-    fun diagnostic(context: Context): String {
+    fun getObservation(
+        context: Context,
+        nowElapsedNanos: Long = android.os.SystemClock.elapsedRealtimeNanos(),
+    ): ActivityObservation? {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val at = prefs.getLong(KEY_AT, 0L)
-        return "activity=${prefs.getInt(KEY_TYPE, DetectedActivity.UNKNOWN)} activity_age_ms=${if (at == 0L) null else System.currentTimeMillis() - at}"
+        if (!prefs.contains(KEY_TYPE)) return null
+        val bootCount = prefs.getInt(KEY_BOOT_COUNT, BootIdentity.UNKNOWN_BOOT_COUNT)
+        val currentBoot = BootIdentity.getBootCount(context)
+        if (currentBoot == BootIdentity.UNKNOWN_BOOT_COUNT || bootCount != currentBoot) return null
+        val eventNanos = prefs.getLong(KEY_EVENT_ELAPSED_NANOS, 0L)
+        if (eventNanos > nowElapsedNanos || eventNanos <= 0L) return null
+        val type = prefs.getInt(KEY_TYPE, DetectedActivity.UNKNOWN)
+        val transition = prefs.getInt(KEY_TRANSITION, ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+        return ActivityObservation(type, transition, eventNanos)
+    }
+
+    /// True iff the latest reported activity is IN_VEHICLE ENTER within 2h.
+    fun isLikelyDriving(
+        context: Context,
+        nowElapsedNanos: Long = android.os.SystemClock.elapsedRealtimeNanos(),
+    ): Boolean {
+        val obs = getObservation(context, nowElapsedNanos) ?: return false
+        if (obs.type != DetectedActivity.IN_VEHICLE || obs.transitionType != ActivityTransition.ACTIVITY_TRANSITION_ENTER) return false
+        val ageNanos = nowElapsedNanos - obs.elapsedRealtimeNanos
+        return ageNanos < 2L * 3600L * 1_000_000_000L
+    }
+
+    /// True iff the latest reported activity is WALKING ENTER within 30 min.
+    fun isLikelyWalking(
+        context: Context,
+        nowElapsedNanos: Long = android.os.SystemClock.elapsedRealtimeNanos(),
+    ): Boolean {
+        val obs = getObservation(context, nowElapsedNanos) ?: return false
+        if (obs.type != DetectedActivity.WALKING || obs.transitionType != ActivityTransition.ACTIVITY_TRANSITION_ENTER) return false
+        val ageNanos = nowElapsedNanos - obs.elapsedRealtimeNanos
+        return ageNanos < 30L * 60L * 1_000_000_000L
+    }
+
+    fun isStationary(
+        context: Context,
+        nowElapsedNanos: Long = android.os.SystemClock.elapsedRealtimeNanos(),
+    ): Boolean {
+        val obs = getObservation(context, nowElapsedNanos) ?: return false
+        if (obs.type != DetectedActivity.STILL || obs.transitionType != ActivityTransition.ACTIVITY_TRANSITION_ENTER) return false
+        val ageNanos = nowElapsedNanos - obs.elapsedRealtimeNanos
+        return ageNanos < 15L * 60L * 1_000_000_000L
+    }
+
+    fun diagnostic(
+        context: Context,
+        nowElapsedNanos: Long = android.os.SystemClock.elapsedRealtimeNanos(),
+    ): String {
+        val obs = getObservation(context, nowElapsedNanos) ?: return "activity=UNKNOWN activity_age_ms=null"
+        val ageMs = (nowElapsedNanos - obs.elapsedRealtimeNanos) / 1_000_000L
+        return "activity=${obs.type} transition=${obs.transitionType} activity_age_ms=$ageMs"
     }
 }
 
@@ -94,7 +168,6 @@ object ActivitySubscriber {
                 }
         } catch (_: SecurityException) {
             WalkinLog.w(context, "activity subscription: permission revoked")
-            // permission was revoked between the check and the call; skip
         }
     }
 
