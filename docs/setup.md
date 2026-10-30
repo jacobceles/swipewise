@@ -3,45 +3,59 @@
 Building and running SwipeWise locally. The essentials are in the
 [README](../README.md#get-started); this is the detail.
 
-## Tiers — one binary, runtime entitlement
+## Feature availability: one binary, server authorization
 
 There are **no product flavors**. One `applicationId` (`com.appsoflife.swipewise`, with a
 `.dev` suffix on debug), one APK, both tiers inside it.
 
-Pro is sold as an in-app subscription, which means one app on Play whose features unlock at
-runtime — nobody subscribes in app A and installs app B. So the Pro code is *present and
-dormant* for everyone and `proEntitlementProvider` decides whether to show it. Today that
-provider answers from a `--dart-define`; when the entitlement service exists it asks the
-server, and only that provider's body changes.
+The public offering is the free card picker: manually add cards, rank them and optionally
+enable nearby alerts. No bank connection or account is required. Optional Google sign-in
+and opt-in wallet backup are separate from bank linking.
 
-Which tier a local build behaves as is chosen entirely by the keys file:
+The source also includes bank-linking and transaction features used personally by the
+maintainer, internally called Pro. There is no public subscription or bank-sync enrollment.
+`proEntitlementProvider` reads a cached answer and refreshes it from the account service
+for signed-in users. The service independently checks authorization before proxying bank
+requests; the UI is not a security boundary.
+
+An independent integration needs your own bank-aggregator/provider access and credentials,
+a compatible backend, authentication configuration and integration work. The hosted
+account-service implementation and its credentials are not included in this app repo.
+This is not a turnkey bank-sync self-hosting guide.
+
+Local configuration controls service URLs and can seed the UI for development, not grant
+hosted-service access:
 
 | Keys file | Behaves as | Used for |
 |---|---|---|
-| `keys.free.json` | 3 tabs, no sign-in, no bank connectivity | **the published release** |
-| `keys.pro.json` | 5 tabs, sign-in, bank sync | local development |
+| `keys.free.json` | Free UI by default; optional sign-in/backup; server-entitled accounts can show personal-use features | **the published release** and normal development |
+| Optional `SWIPEWISE_PRO=true` in local config | Previews Pro UI; does not authorize bank requests | UI development only |
 
-⚠️ **Build releases from `keys.free.json`.** A release built from `keys.pro.json` forces the
-Pro UI on, shipping tabs the entitlement service will not fill — and nothing about the artifact
-looks wrong. `tool/verify_release_apk.py` checks the keys file a release was built from, and CI
-runs it on every push to main.
+⚠️ **Build releases from `keys.free.json`.** Forcing the Pro UI on does not provide the
+service access needed to fill those screens. `tool/verify_release_apk.py` checks release
+configuration and scans the APK for credentials; CI runs it on matching pushes and PRs.
 
 ## Keys
 
-Keys are baked in at build time via `--dart-define`, from two files at the project root.
+Build configuration is supplied through `--dart-define` files at the project root.
+The standard release configuration contains public URLs, not provider credentials.
 
-**`keys.free.json` is committed.** It carries no credential — only two URLs that are already
-in every published APK — so a fresh clone builds a working app with nothing to obtain:
+**`keys.free.json` is committed.** It carries three public URLs and no credential. A fresh
+clone can build the app and use bundled catalog/manual ranking; live hosted features have
+their own authentication/attestation requirements, including App Check for nearby search:
 
 ```json
 {
   "R2_BASE_URL": "https://swipewise-api.<subdomain>.workers.dev",
-  "PLACES_PROXY_URL": "https://swipewise-api.<subdomain>.workers.dev/places/nearby"
+  "PLACES_PROXY_URL": "https://swipewise-api.<subdomain>.workers.dev/places/nearby",
+  "ACCOUNT_API_URL": "https://swipewise-account.<subdomain>.workers.dev"
 }
 ```
 
-**`keys.pro.json` is gitignored** (`.gitignore` covers `keys*.json`, with an exception for the
-free file). It adds only the tier flag — there are no credentials left to add:
+**`keys.pro.json` is an optional, gitignored UI-development config.** A minimal example
+adds the UI flag below. Older local copies may contain obsolete settings or keys; do not
+use them as release inputs. Neither this flag nor provider keys added to the app authorize
+requests through the maintainer's account service:
 
 ```json
 {
@@ -60,10 +74,10 @@ file is optional.
 ⛔ **Never add a Google Places key to either file.** Nearby search goes through the Worker,
 which holds that key server-side. `tool/verify_release_apk.py` fails the build if
 `GOOGLE_PLACES_KEY` appears in the keys file or if any unaccounted Google API key reaches the
-APK, and it runs on every pull request.
+APK, and it runs on matching app/workflow pull requests.
 
-The Pro *code* does ship — it has to, for a subscription to unlock it — but it ships with
-nothing to authenticate with, and a value that isn't in the binary can't be extracted from it.
+The additional client code ships in the same binary, but aggregator credentials stay on
+the server. Signing in can authenticate a user; it does not itself grant bank-sync access.
 
 - `PLACES_PROXY_URL` — the Worker's `/places/nearby` route. The app posts a Google-shaped
   body plus a Firebase App Check token; the Worker verifies the token, adds the Places key it
@@ -159,9 +173,8 @@ a live 410 before anyone looked. Refresh it by copying the backend engine's buil
 ## Run & build
 
 ```bash
-# debug — the keys file picks the tier
-flutter run --dart-define-from-file=keys.pro.json     # with bank sync
-flutter run --dart-define-from-file=keys.free.json    # as it ships
+# debug — normal app configuration plus your authorized App Check debug token
+flutter run --dart-define-from-file=keys.free.json --dart-define-from-file=keys.debug.json
 
 # release — APK for the gate, AAB for Play. Same source, same defines.
 flutter clean

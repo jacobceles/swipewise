@@ -16,6 +16,9 @@
 
 ---
 
+I built SwipeWise for my own use. It's been useful to me, so I'm sharing it in case it
+helps someone else. The card picker is free, and the app and its reward data are open source.
+
 Most rewards apps stop at the category: *"use this card for groceries."* SwipeWise goes one
 level deeper, to the **store and the brand**. Walk into Whole Foods and it tells you to tap
 your Prime Visa for **5%**, not just "a grocery card."
@@ -105,6 +108,12 @@ behind the recommendations is where contributions help most:
 Good first contributions: add the stores you shop at. Start with the
 [architecture overview](docs/architecture.md) to see how the pieces fit.
 
+**Other code in the repo:** the app also contains bank-linking and transaction features I
+use personally. These are not a public bank-sync offering. Provider credentials and the
+hosted account-service implementation are not included here. Reusing those integrations
+requires your own provider access and credentials, a compatible backend and integration
+work; a local UI flag does not grant access to my hosted service. See [setup](docs/setup.md).
+
 ## Get started
 
 Requires the Dart SDK 3.12 or later (built with Flutter 3.47, stable channel).
@@ -116,7 +125,7 @@ flutter run --dart-define-from-file=keys.free.json
 `keys.free.json` is committed: it holds three public URLs and no credential. The Places key
 lives in a Cloudflare Worker, and the app talks to that rather than to Google directly.
 `tool/verify_release_apk.py` verifies that no Places or bank-aggregator credentials can reach the
-APK, and runs as an automated gate on every pull request.
+APK, and runs as an automated gate on app/workflow pull requests.
 
 > **Local builds:** Live `/places/nearby` calls require Firebase App Check. Local debug builds
 > need a registered Firebase debug token; arbitrary sideloaded release builds may fail Play
