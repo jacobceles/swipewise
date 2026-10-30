@@ -480,6 +480,28 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
+    fun `permission revoked synchronously in the default location request fails closed`() {
+        val originalRequest = DefaultLocationProvider.requestLocation
+        val attempt = DwellAlarms.arm(context, testGid, 60)!!
+        SystemClock.sleep(60_000L)
+        DwellCheckReceiver.locationProvider = DefaultLocationProvider
+        var calls = 0
+        DefaultLocationProvider.requestLocation = { _, _, _ ->
+            calls++
+            throw SecurityException("Permission revoked")
+        }
+        try {
+            DwellCheckReceiver().onReceive(context, dwellIntent(attempt.token))
+            assertEquals(1, calls)
+            assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
+            assertNull(VisitLock.read(context))
+            assertNull(DwellAlarms.getAttempt(context, testGid))
+        } finally {
+            DefaultLocationProvider.requestLocation = originalRequest
+        }
+    }
+
+    @Test
     fun `missing metadata geometry fails closed without notification`() {
         val metaNoGeo = MerchantMeta(
             geofenceId = testGid,

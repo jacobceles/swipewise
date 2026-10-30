@@ -5,7 +5,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import android.os.SystemClock
+import androidx.core.app.NotificationCompat
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -20,20 +22,24 @@ class NotificationLifecycleTest {
         MerchantOption(id, id, "Dining", "Card", 3.0),
     ))
 
-    @Test fun `one current arrival replaces old advice but preserves other notification channels`() {
+    @Test
+    @Config(sdk = [24, 25, 34])
+    fun `one current arrival replaces old advice and disable cleanup preserves other notifications`() {
         val context = RuntimeEnvironment.getApplication() as Context
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.createNotificationChannel(NotificationChannel("other", "Other", NotificationManager.IMPORTANCE_DEFAULT))
-        nm.notify("other", 17, Notification.Builder(context, "other").setSmallIcon(android.R.drawable.ic_dialog_info).build())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            nm.createNotificationChannel(NotificationChannel("other", "Other", NotificationManager.IMPORTANCE_DEFAULT))
+        }
+        nm.notify("other", 17, NotificationCompat.Builder(context, "other").setSmallIcon(android.R.drawable.ic_dialog_info).build())
         val helper = NotificationHelper(context)
         assertTrue(helper.postDwell(meta("A")))
         assertTrue(helper.postDwell(meta("B")))
-        val arrivals = nm.activeNotifications.filter { it.notification.channelId == NotificationHelper.CHANNEL_ID }
+        val arrivals = nm.activeNotifications.filter { it.tag == "swipewise.arrival" }
         assertEquals(1, arrivals.size)
         assertEquals("You're near B", arrivals.single().notification.extras.getString(Notification.EXTRA_TITLE))
         assertEquals(2, nm.activeNotifications.size)
         NotificationHelper.cancelDwell(context)
-        assertEquals("other", nm.activeNotifications.single().notification.channelId)
+        assertEquals("other", nm.activeNotifications.single().tag)
     }
 
     @Test fun `expiry is anchored to original verification not a later post`() {
@@ -49,7 +55,9 @@ class NotificationLifecycleTest {
         assertEquals(verified, nm.activeNotifications.single().notification.`when`)
     }
 
-    @Test fun `confirmed departure cancels advice but a noisy nearby exit does not`() {
+    @Test
+    @Config(sdk = [24, 25, 34])
+    fun `confirmed departure cancels advice but a noisy nearby exit does not`() {
         val context = RuntimeEnvironment.getApplication() as Context
         SystemClock.sleep(1_000_000L)
         NotificationHelper(context).postDwell(meta("A"))
@@ -64,5 +72,15 @@ class NotificationLifecycleTest {
         VisitLock.observeDeparture(context, fix(40.01))
         assertTrue(nm.activeNotifications.isEmpty())
         assertTrue(VisitLock.read(context)!!.departed)
+    }
+
+    @Test fun `channel cleanup also removes old per merchant arrival IDs`() {
+        val context = RuntimeEnvironment.getApplication() as Context
+        NotificationHelper(context)
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(123, NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_map).build())
+        NotificationHelper.cancelDwell(context)
+        assertTrue(nm.activeNotifications.isEmpty())
     }
 }

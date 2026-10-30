@@ -3,7 +3,7 @@
 # Two jobs, and the second is the point of the whole file:
 #
 #   analyze-test  — Flutter analysis/tests, Python tool tests and catalog validation.
-#   release-gate  — clean release APK, credential scan and Android native tests.
+#   release-gate  — clean release APK, credential scan, native lint and native tests.
 # Both jobs run on matching pushes and pull requests.
 #
 # What the gate actually asserts, as of 2026-08-10:
@@ -147,6 +147,10 @@ jobs:
 
       # The Android build generates the gitignored wrapper and local.properties;
       # flutter pub get/test alone do not prepare a fresh checkout for Gradle.
+      - name: Lint Android native code
+        run: ./gradlew :app:lintDebug
+        working-directory: android
+
       - name: Run Android native unit tests
         run: ./gradlew :app:testDebugUnitTest
         working-directory: android

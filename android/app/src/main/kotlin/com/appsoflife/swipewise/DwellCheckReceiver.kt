@@ -7,6 +7,7 @@ import android.location.Location
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.annotation.RequiresPermission
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -27,7 +28,12 @@ interface LocationProvider {
 
 object DefaultLocationProvider : LocationProvider {
     @Volatile var requestLocation: (Context, CurrentLocationRequest, CancellationToken) -> com.google.android.gms.tasks.Task<Location> =
-        { context, request, token -> LocationServices.getFusedLocationProviderClient(context).getCurrentLocation(request, token) }
+        ::requestCurrentLocation
+
+    @RequiresPermission(anyOf = ["android.permission.ACCESS_COARSE_LOCATION", "android.permission.ACCESS_FINE_LOCATION"])
+    private fun requestCurrentLocation(context: Context, request: CurrentLocationRequest, token: CancellationToken): com.google.android.gms.tasks.Task<Location> =
+        LocationServices.getFusedLocationProviderClient(context).getCurrentLocation(request, token)
+
     private class SharedFix(val task: com.google.android.gms.tasks.Task<Location>, val cancellation: CancellationTokenSource) {
         var consumers = 0
     }

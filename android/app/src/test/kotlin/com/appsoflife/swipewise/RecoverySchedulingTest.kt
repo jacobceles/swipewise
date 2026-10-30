@@ -85,4 +85,30 @@ class RecoverySchedulingTest {
         org.robolectric.shadows.ShadowLooper.idleMainLooper(20_000L, java.util.concurrent.TimeUnit.MILLISECONDS)
         assertEquals(2, calls)
     }
+
+    @Test fun `denied activity permission never calls the SDK`() {
+        org.robolectric.Shadows.shadowOf(context as android.app.Application)
+            .denyPermissions("android.permission.ACTIVITY_RECOGNITION")
+        var calls = 0
+        ActivitySubscriber.requestUpdates = { _, _, _ ->
+            calls++
+            com.google.android.gms.tasks.Tasks.forResult<Void>(null)
+        }
+        ActivitySubscriber.start(context)
+        org.robolectric.shadows.ShadowLooper.idleMainLooper()
+        assertEquals(0, calls)
+    }
+
+    @Test fun `permission revoked at the activity SDK call is caught without retrying`() {
+        org.robolectric.Shadows.shadowOf(context as android.app.Application)
+            .grantPermissions("android.permission.ACTIVITY_RECOGNITION")
+        var calls = 0
+        ActivitySubscriber.requestUpdates = { _, _, _ ->
+            calls++
+            throw SecurityException("Permission revoked")
+        }
+        ActivitySubscriber.start(context)
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(10_000L, java.util.concurrent.TimeUnit.MILLISECONDS)
+        assertEquals(1, calls)
+    }
 }

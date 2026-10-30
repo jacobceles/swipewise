@@ -126,8 +126,13 @@ class NotificationHelper(private val context: Context) {
 
         fun cancelDwell(context: Context) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            // Includes notifications from older per-merchant-ID builds, but
-            // never cancels payment reminders or bank-link progress.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                // No channel IDs before Android 8: cancel only our known arrival.
+                nm.cancel(ARRIVAL_TAG, 0)
+                return
+            }
+            // Channel IDs also identify older per-merchant-ID arrivals without
+            // cancelling payment reminders or bank-link progress.
             nm.activeNotifications.filter { it.notification.channelId == CHANNEL_ID }
                 .forEach { nm.cancel(it.tag, it.id) }
         }

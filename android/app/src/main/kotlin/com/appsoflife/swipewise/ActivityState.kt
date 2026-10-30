@@ -3,6 +3,7 @@ package com.appsoflife.swipewise
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityTransition
@@ -142,7 +143,11 @@ object ActivityState {
 object ActivitySubscriber {
     private const val UNIQUE_REQ = 2001
     @Volatile var requestUpdates: (Context, ActivityTransitionRequest, PendingIntent) -> com.google.android.gms.tasks.Task<Void> =
-        { context, request, pi -> ActivityRecognition.getClient(context).requestActivityTransitionUpdates(request, pi) }
+        ::requestActivityTransitions
+
+    @RequiresPermission("android.permission.ACTIVITY_RECOGNITION")
+    private fun requestActivityTransitions(context: Context, request: ActivityTransitionRequest, pi: PendingIntent): com.google.android.gms.tasks.Task<Void> =
+        ActivityRecognition.getClient(context).requestActivityTransitionUpdates(request, pi)
 
     fun start(context: Context, retries: Int = 1) {
         val perm = "android.permission.ACTIVITY_RECOGNITION"
