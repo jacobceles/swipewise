@@ -70,7 +70,7 @@ class FakeNotificationPoster : NotificationPoster {
     val postedMetas = mutableListOf<MerchantMeta>()
     var shouldSucceed = true
 
-    override fun postDwell(context: Context, meta: MerchantMeta): Boolean {
+    override fun postDwell(context: Context, meta: MerchantMeta, verifiedAtMillis: Long): Boolean {
         if (shouldSucceed) {
             postedMetas.add(meta)
             return true
@@ -226,6 +226,32 @@ class DwellReceiverLifecycleTest {
         BootIdentity.testBootCount = BootIdentity.UNKNOWN_BOOT_COUNT
         assertNull(ActivityState.getObservation(context))
         assertEquals(0L, ActivityState.lastEventElapsedRealtimeNanos(context))
+    }
+
+    @Test
+    fun `next door candidate cannot reuse a sample from another boot`() {
+        VisitLock.write(context, VisitLock.Visit(testLat, testLng, System.currentTimeMillis(), testGid,
+            listOf("A"), nextDoorCandidateId = "B", candidateSampleNanos = SystemClock.elapsedRealtimeNanos()))
+        assertEquals("B", VisitLock.read(context)!!.nextDoorCandidateId)
+        BootIdentity.testBootCount = 2
+        assertNull(VisitLock.read(context)!!.nextDoorCandidateId)
+        assertEquals(0L, VisitLock.read(context)!!.candidateSampleNanos)
+    }
+
+    @Test
+    fun `late automatic confirmation cannot start an endless confirmation chain`() {
+        VisitLock.write(context, VisitLock.Visit(testLat, testLng, System.currentTimeMillis(), testGid,
+            listOf("old-store"), listOf("Old card|1.0"), nextDoorCandidateId = "store_1",
+            candidateSampleNanos = SystemClock.elapsedRealtimeNanos() - 200_000_000_000L))
+        val attempt = DwellAlarms.arm(context, testGid, 60, nextDoor = true, confirmation = true)!!
+        SystemClock.sleep(60_000L)
+        ActivityState.set(context, DetectedActivity.STILL, ActivityTransition.ACTIVITY_TRANSITION_ENTER,
+            SystemClock.elapsedRealtimeNanos(), System.currentTimeMillis())
+        fakeLocationProvider.nextFix = mockLocation()
+        DwellCheckReceiver().onReceive(context, dwellIntent(attempt.token, nextDoor = true))
+        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
+        assertNull(DwellAlarms.getAttempt(context, testGid))
+        assertEquals(listOf("old-store"), VisitLock.read(context)!!.merchantIds)
     }
 
     @Test

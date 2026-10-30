@@ -11,11 +11,11 @@ import android.os.SystemClock
 /// boundary EXIT (driving) → pending flag → activity-recognition settle →
 /// re-register. But AR transitions can lag by minutes or get dropped
 /// entirely, which would strand the pending flag forever. This alarm is
-/// armed alongside the flag and ticks every [DELAY_MS]:
+/// armed at the persisted deadline and re-arms while recovery remains owed:
 ///
 ///   - pending gone (AR handled it)  → no-op
 ///   - still driving                 → re-arm and wait another tick
-///   - settled (or AR state stale)   → consume the flag, re-register
+///   - settled (or AR state stale)   → enqueue, retain until its generation succeeds
 ///
 /// Ticks are cheap receiver wakeups; no engine spins up until we actually
 /// run. Inexact alarm on purpose — a few minutes of slip is fine for a net,

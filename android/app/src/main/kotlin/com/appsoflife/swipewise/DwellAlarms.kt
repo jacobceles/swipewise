@@ -30,6 +30,7 @@ data class DwellAttempt(
     val deadlineElapsedNanos: Long,
     val phase: AttemptPhase = AttemptPhase.ARMED,
     val isNextDoor: Boolean = false,
+    val confirmation: Boolean = false,
     val fetchingPid: Int? = null,
     val initialLat: Double? = null,
     val initialLng: Double? = null,
@@ -49,6 +50,7 @@ data class DwellAttempt(
         put("deadlineElapsedNanos", deadlineElapsedNanos)
         put("phase", phase.name)
         put("isNextDoor", isNextDoor)
+        put("confirmation", confirmation)
         if (fetchingPid != null) put("fetchingPid", fetchingPid)
         if (initialLat != null) put("initialLat", initialLat)
         if (initialLng != null) put("initialLng", initialLng)
@@ -72,6 +74,7 @@ data class DwellAttempt(
                 deadlineElapsedNanos = o.getLong("deadlineElapsedNanos"),
                 phase = AttemptPhase.valueOf(o.optString("phase", AttemptPhase.ARMED.name)),
                 isNextDoor = o.optBoolean("isNextDoor", false),
+                confirmation = o.optBoolean("confirmation", false),
                 fetchingPid = if (o.has("fetchingPid") && !o.isNull("fetchingPid")) o.getInt("fetchingPid") else null,
                 initialLat = if (o.has("initialLat") && !o.isNull("initialLat")) o.getDouble("initialLat") else null,
                 initialLng = if (o.has("initialLng") && !o.isNull("initialLng")) o.getDouble("initialLng") else null,
@@ -194,6 +197,7 @@ object DwellAlarms {
         recheck: Boolean = false,
         nextDoor: Boolean = false,
         triggeringLocation: Location? = null,
+        confirmation: Boolean = false,
         nowElapsedNanos: Long = SystemClock.elapsedRealtimeNanos(),
     ): DwellAttempt? {
         val bootCount = BootIdentity.getBootCount(context)
@@ -250,6 +254,7 @@ object DwellAlarms {
             deadlineElapsedNanos = deadline,
             phase = if (recheck) AttemptPhase.RECHECK_ARMED else AttemptPhase.ARMED,
             isNextDoor = nextDoor,
+            confirmation = confirmation,
             initialLat = initLat,
             initialLng = initLng,
             initialAccuracyM = initAcc,

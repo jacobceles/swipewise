@@ -312,6 +312,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                 }
             }
             accountEpoch++ // Invalidates an enabled search/fix that finishes after disable.
+            NotificationHelper.cancelDwell(context)
             PendingReregister.complete(context, PendingReregister.generation(context))
             lastRegisteredHash = null
             lastMerchantHash = null

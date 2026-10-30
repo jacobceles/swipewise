@@ -31,6 +31,7 @@ class WalkinTest {
             assertTrue(store(type).copy(placeType = type).walkinEligible)
         }
         assertFalse(store("legacy").copy(category = "Transit").walkinEligible)
+        assertFalse(store("legacy-hotel").copy(category = "Hotels").walkinEligible)
     }
 
     @Test
@@ -247,7 +248,7 @@ class WalkinTest {
         val visit = VisitLock.Visit(40.50, -74.85, 0L, "m_gym", listOf("gym"))
         val at1556 = 24L * 60_000L
         assertTrue(VisitLock.isActive(visit, at1556))
-        assertFalse(VisitLock.isActive(visit.copy(left = true), at1556))
+        assertTrue(VisitLock.isActive(visit.copy(left = true), at1556))
         assertFalse(VisitLock.isActive(visit.copy(fenceId = null), at1556))
         assertTrue(VisitLock.isActive(visit, 8L * 3600_000L))
         assertFalse(VisitLock.isActive(visit.copy(departed = true), at1556))

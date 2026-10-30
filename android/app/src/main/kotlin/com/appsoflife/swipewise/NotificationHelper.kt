@@ -33,10 +33,10 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    /// False when the notification can't be shown (notifications or this
-    /// channel turned off, permission missing), so the caller doesn't count a
-    /// silent drop as the visit's alert.
-    fun postDwell(meta: MerchantMeta): Boolean {
+    /// True means submitted to Android, not proof of presentation or audibility.
+    fun postDwell(meta: MerchantMeta, verifiedAtMillis: Long = System.currentTimeMillis()): Boolean {
+        val age = System.currentTimeMillis() - verifiedAtMillis
+        if (age !in 0 until ARRIVAL_TTL_MS) return false
         val nm = NotificationManagerCompat.from(context)
         if (!nm.areNotificationsEnabled()) return false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
@@ -57,7 +57,7 @@ class NotificationHelper(private val context: Context) {
             body = formatClusterBody(names)
         } else {
             val opt = meta.primary
-            title = "You're at ${opt.name}"
+            title = "You're near ${opt.name}"
             body = cardLine(opt)
         }
 
@@ -81,12 +81,18 @@ class NotificationHelper(private val context: Context) {
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setWhen(verifiedAtMillis)
+            .setTimeoutAfter(ARRIVAL_TTL_MS - age)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
             .build()
 
         return try {
-            nm.notify(meta.primary.merchantId.hashCode(), notification)
+            cancelDwell(context)
+            nm.notify(ARRIVAL_TAG, 0, notification)
+            val channel = nm.getNotificationChannel(CHANNEL_ID)
+            WalkinLog.w(context, "notification submitted age_ms=$age importance=${channel?.importance} " +
+                "sound=${channel?.sound != null} vibration=${channel?.shouldVibrate()}")
             true
         } catch (e: SecurityException) {
             // POST_NOTIFICATIONS not granted on Android 13+.
@@ -115,6 +121,16 @@ class NotificationHelper(private val context: Context) {
     companion object {
         const val CHANNEL_ID = "swipewise_dwell"
         const val EXTRA_OPTIONS_JSON = "swipewise.options_json"
+        const val ARRIVAL_TTL_MS = 30L * 60_000L
+        private const val ARRIVAL_TAG = "swipewise.arrival"
+
+        fun cancelDwell(context: Context) {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            // Includes notifications from older per-merchant-ID builds, but
+            // never cancels payment reminders or bank-link progress.
+            nm.activeNotifications.filter { it.notification.channelId == CHANNEL_ID }
+                .forEach { nm.cancel(it.tag, it.id) }
+        }
 
         /// "5%" for cash back, "5x points" / "2x miles" for a programme. A
         /// points card used to read "5%" (2026-10-19). Locale.US so a French

@@ -232,7 +232,7 @@ object VisitLock {
         if (last == null || last.departed || nowMillis < last.createdAtMillis) return false
         val age = nowMillis - last.atMillis
         if (!last.confirmed || last.merchantIds.isEmpty()) return nowMillis - last.createdAtMillis < PROVISIONAL_MS
-        return age < WINDOW_MS || (last.fenceId != null && !last.left)
+        return age < WINDOW_MS || last.fenceId != null
     }
 
     fun isActive(last: Visit?, nowMillis: Long, lat: Double, lng: Double): Boolean =
@@ -315,6 +315,8 @@ object VisitLock {
     fun read(context: Context): Visit? {
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (!p.contains("at")) return null
+        val boot = BootIdentity.getBootCount(context)
+        val sameBoot = boot != BootIdentity.UNKNOWN_BOOT_COUNT && p.getInt("sample_boot", -1) == boot
         return Visit(
             Double.fromBits(p.getLong("lat", 0L)),
             Double.fromBits(p.getLong("lng", 0L)),
@@ -323,16 +325,15 @@ object VisitLock {
             p.getString("ids", "")!!.split(',').filter { it.isNotEmpty() },
             p.getString("advice", "")!!.split('\n').filter { it.isNotEmpty() },
             p.getBoolean("left", false),
-            p.getString("candidate", null),
+            if (sameBoot) p.getString("candidate", null) else null,
             p.getLong("created", p.getLong("at", 0L)),
             p.getInt("schema", 0) == 1 && p.getBoolean("confirmed", false),
-            p.getLong("candidate_sample", 0L),
+            if (sameBoot) p.getLong("candidate_sample", 0L) else 0L,
             p.getBoolean("departed", false),
         )
     }
 
-    /// The user exited [fenceIds]; if the visit's fence is among them, the
-    /// visit no longer lingers past [WINDOW_MS].
+    /// Record raw EXIT without treating a potentially noisy fence as departure.
     fun markLeft(context: Context, fenceIds: List<String>) {
         val visit = read(context) ?: return
         if (visit.fenceId == null || visit.fenceId !in fenceIds || visit.left) return
@@ -352,12 +353,14 @@ object VisitLock {
     /// Raw EXIT can be indoor drift. Only a fresh fix well outside the visit
     /// confirms departure; it is also used by the boundary receiver.
     fun observeDeparture(context: Context, fix: android.location.Location?) {
-        if (fix == null || !fix.hasAccuracy() || fix.accuracy > StoreResolver.MAX_ACCURACY_M) return
+        if (fix == null || !fix.hasAccuracy() || !fix.accuracy.isFinite() || fix.accuracy <= 0f ||
+            fix.accuracy > StoreResolver.MAX_ACCURACY_M || !fix.latitude.isFinite() || !fix.longitude.isFinite()) return
         val age = android.os.SystemClock.elapsedRealtimeNanos() - fix.elapsedRealtimeNanos
         if (age !in 0..ArrivalPolicy.MAX_FIX_AGE_NANOS) return
         val visit = read(context) ?: return
         if (distanceM(visit.lat, visit.lng, fix.latitude, fix.longitude) > RADIUS_M + fix.accuracy) {
             write(context, visit.copy(departed = true, left = true, nextDoorCandidateId = null, candidateSampleNanos = 0L))
+            NotificationHelper.cancelDwell(context)
         }
     }
 
@@ -373,6 +376,7 @@ object VisitLock {
             .putString("advice", visit.advice.joinToString("\n"))
             .putBoolean("left", visit.left)
             .putString("candidate", visit.nextDoorCandidateId)
+            .putInt("sample_boot", BootIdentity.getBootCount(context))
             .putInt("schema", 1)
             .putLong("created", visit.createdAtMillis)
             .putBoolean("confirmed", visit.confirmed)

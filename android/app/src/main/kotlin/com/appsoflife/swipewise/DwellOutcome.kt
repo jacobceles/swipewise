@@ -1,14 +1,8 @@
 package com.appsoflife.swipewise
 
-/// Why a fired dwell timer did or didn't post.
-///
-/// [DwellCheckReceiver] has seven exits and six of them are a bare `return`, so
-/// from the outside a correctly-suppressed drive-by and an eaten real visit look
-/// identical — both are simply silence. On a device measured 2026-08-16, 12 dwell
-/// checks fired over two days and only 5 produced a notification; nothing on the
-/// device could say which of the six paths ate the other 7.
+/// Why a dwell check did or did not submit an arrival notification to Android.
 enum class DwellOutcome(val wire: String) {
-    POSTED("posted"),
+    POSTED("posted"), // Submission is not proof that the user saw/heard it.
 
     /// Fence set was replaced while this timer was in flight, so the metadata it
     /// needed is gone. Expected occasionally (a re-register lands mid-dwell);
@@ -21,7 +15,6 @@ enum class DwellOutcome(val wire: String) {
     OUTSIDE_FENCE("outside_fence"),
 
     /// No fix obtainable in time; distinct fail-closed reasons.
-    NO_FIX("no_fix"),
     NO_FIX_TIMEOUT("no_fix_timeout"),
     NO_FIX_NULL("no_fix_null"),
     NO_FIX_ERROR("no_fix_error"),
@@ -32,10 +25,6 @@ enum class DwellOutcome(val wire: String) {
 
     /// Fix was older than the freshness threshold or from the future.
     STALE_FIX("stale_fix"),
-
-    /// No fix in time AND activity recognition still says driving, so this is
-    /// treated as a drive-by rather than an arrival.
-    NO_FIX_DRIVING("no_fix_driving"),
 
     MUTED("muted"),
     MERCHANT_COOLDOWN("merchant_cooldown"),
@@ -52,16 +41,11 @@ enum class DwellOutcome(val wire: String) {
     /// is in ([StoreResolver.AT_STORE_M]): a red light, a car park, a street.
     NOT_AT_STORE("not_at_store"),
 
-    /// [ResidentGuard]: this fence keeps firing, so the user lives or works
-    /// beside it. Suppressed without taking a fix.
-    RESIDENT("resident"),
-
     /// The post was attempted but notifications are off, so nothing showed and
     /// no cooldown or visit lock was set.
     NOTIFICATIONS_OFF("notifications_off"),
 
-    /// Another store alert already posted near here within [VisitLock.WINDOW_MS]
-    /// — the same walk-in, seen through an overlapping fence.
+    /// The same inferred stay, including overlapping fences and quiet long visits.
     SAME_VISIT("same_visit"),
 }
 

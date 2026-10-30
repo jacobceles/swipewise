@@ -26,6 +26,15 @@ interface LocationProvider {
 }
 
 object DefaultLocationProvider : LocationProvider {
+    @Volatile var requestLocation: (Context, CurrentLocationRequest, CancellationToken) -> com.google.android.gms.tasks.Task<Location> =
+        { context, request, token -> LocationServices.getFusedLocationProviderClient(context).getCurrentLocation(request, token) }
+    private class SharedFix(val task: com.google.android.gms.tasks.Task<Location>, val cancellation: CancellationTokenSource) {
+        var consumers = 0
+    }
+    // Receivers and task listeners run on the main thread. Share only requests
+    // with identical bounds; one fence EXIT must not cancel another's verifier.
+    private val inFlight = mutableMapOf<Triple<Int, Long, Long>, SharedFix>()
+
     override fun getCurrentLocation(
         context: Context,
         priority: Int,
@@ -35,25 +44,36 @@ object DefaultLocationProvider : LocationProvider {
         onSuccess: (Location?) -> Unit,
         onFailure: (Exception) -> Unit,
     ) {
-        val client = LocationServices.getFusedLocationProviderClient(context)
-        val request = CurrentLocationRequest.Builder()
-            .setPriority(priority)
-            .setDurationMillis(durationMillis)
-            .setMaxUpdateAgeMillis(maxUpdateAgeMillis)
-            .build()
-        client.getCurrentLocation(request, cancellationToken)
-            .addOnSuccessListener { fix -> onSuccess(fix) }
-            .addOnFailureListener { e -> onFailure(e) }
+        val key = Triple(priority, durationMillis, maxUpdateAgeMillis)
+        val shared = inFlight[key]?.takeUnless { it.task.isComplete || it.cancellation.token.isCancellationRequested } ?: run {
+            val cancellation = CancellationTokenSource()
+            val request = CurrentLocationRequest.Builder().setPriority(priority)
+                .setDurationMillis(durationMillis).setMaxUpdateAgeMillis(maxUpdateAgeMillis).build()
+            SharedFix(requestLocation(context, request, cancellation.token), cancellation).also { job ->
+                inFlight[key] = job
+                job.task.addOnCompleteListener { if (inFlight[key] === job) inFlight.remove(key) }
+            }
+        }
+        shared.consumers++
+        cancellationToken.onCanceledRequested {
+            shared.consumers--
+            if (shared.consumers == 0) {
+                shared.cancellation.cancel()
+                if (inFlight[key] === shared) inFlight.remove(key)
+            }
+        }
+        shared.task.addOnSuccessListener { fix -> if (!cancellationToken.isCancellationRequested) onSuccess(fix) }
+            .addOnFailureListener { e -> if (!cancellationToken.isCancellationRequested) onFailure(e) }
     }
 }
 
 interface NotificationPoster {
-    fun postDwell(context: Context, meta: MerchantMeta): Boolean
+    fun postDwell(context: Context, meta: MerchantMeta, verifiedAtMillis: Long): Boolean
 }
 
 object DefaultNotificationPoster : NotificationPoster {
-    override fun postDwell(context: Context, meta: MerchantMeta): Boolean =
-        NotificationHelper(context).postDwell(meta)
+    override fun postDwell(context: Context, meta: MerchantMeta, verifiedAtMillis: Long): Boolean =
+        NotificationHelper(context).postDwell(meta, verifiedAtMillis)
 }
 
 /// Fires when a dwell timer armed on fence ENTER survives its full delay
@@ -131,12 +151,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
 
         val timeoutRunnable = Runnable {
             finishOnce {
-                val outcome = if (ActivityState.isLikelyDriving(context)) {
-                    DwellOutcome.NO_FIX_DRIVING
-                } else {
-                    DwellOutcome.NO_FIX_TIMEOUT
-                }
-                verdictWithoutFix(context, meta, fetchingAttempt, outcome)
+                verdictWithoutFix(context, meta, fetchingAttempt, DwellOutcome.NO_FIX_TIMEOUT)
             }
         }
         handler.postDelayed(timeoutRunnable, FIX_TIMEOUT_MS)
@@ -153,25 +168,18 @@ class DwellCheckReceiver : BroadcastReceiver() {
                     handler.removeCallbacks(timeoutRunnable)
                     finishOnce {
                         if (fix == null) {
-                            val outcome = if (ActivityState.isLikelyDriving(context)) {
-                                DwellOutcome.NO_FIX_DRIVING
-                            } else {
-                                DwellOutcome.NO_FIX_NULL
-                            }
-                            verdictWithoutFix(context, meta, fetchingAttempt, outcome)
+                            verdictWithoutFix(context, meta, fetchingAttempt, DwellOutcome.NO_FIX_NULL)
                         } else {
                             verdictWithFix(context, meta, fix, fetchingAttempt)
                         }
                     }
                 },
-                onFailure = {
+                onFailure = { error ->
                     handler.removeCallbacks(timeoutRunnable)
                     finishOnce {
-                        val outcome = if (ActivityState.isLikelyDriving(context)) {
-                            DwellOutcome.NO_FIX_DRIVING
-                        } else {
-                            DwellOutcome.NO_FIX_ERROR
-                        }
+                        val status = (error as? com.google.android.gms.common.api.ApiException)?.statusCode
+                        WalkinLog.w(context, "dwell location failed ${error.javaClass.simpleName} status=$status")
+                        val outcome = if (error is SecurityException) DwellOutcome.NO_FIX_SECURITY else DwellOutcome.NO_FIX_ERROR
                         verdictWithoutFix(context, meta, fetchingAttempt, outcome)
                     }
                 },
@@ -356,8 +364,10 @@ class DwellCheckReceiver : BroadcastReceiver() {
             val refreshed = VisitLock.refresh(lastVisit!!, now, resolved, meta.geofenceId, sampleNanos, visitLat, visitLng)
             VisitLock.write(context, refreshed)
             DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
-            if (refreshed.nextDoorCandidateId != null && !DwellAlarms.isArmed(context, meta.geofenceId)) {
-                DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, nextDoor = true)
+            if (refreshed.nextDoorCandidateId != null &&
+                !attempt.confirmation &&
+                !DwellAlarms.isArmed(context, meta.geofenceId)) {
+                DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, nextDoor = true, confirmation = true)
             }
             done(context, meta, DwellOutcome.SAME_VISIT, fix)
             return
@@ -368,7 +378,8 @@ class DwellCheckReceiver : BroadcastReceiver() {
             done(context, meta, DwellOutcome.MERCHANT_COOLDOWN, fix)
             return
         }
-        if (!notificationPoster.postDwell(context, meta)) {
+        val verifiedAt = now - ((SystemClock.elapsedRealtimeNanos() - sampleNanos).coerceAtLeast(0L) / 1_000_000L)
+        if (!notificationPoster.postDwell(context, meta, verifiedAt)) {
             DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
             done(context, meta, DwellOutcome.NOTIFICATIONS_OFF, fix)
             return

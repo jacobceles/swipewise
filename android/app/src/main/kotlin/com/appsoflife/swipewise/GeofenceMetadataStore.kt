@@ -41,7 +41,7 @@ data class MerchantOption(
     // Old native metadata did not retain place type. Conservatively suppress
     // legacy Transit options until the next registration supplies precise types.
     val walkinEligible: Boolean get() = placeType !in setOf("atm", "bus_stop", "lodging", "apartment_building", "apartment_complex") &&
-        !(placeType == null && category in setOf("Transit", "Transportation", "ATMs"))
+        !(placeType == null && category in setOf("Transit", "Transportation", "ATMs", "Hotels"))
     companion object {
         fun fromChannelMap(opt: Map<String, Any?>): MerchantOption = MerchantOption(
             merchantId = opt["merchant_id"] as String,
