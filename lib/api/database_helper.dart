@@ -165,9 +165,9 @@ class DatabaseHelper {
             onOpen: _onOpen,
             // Internal testers can side-load an older build over a newer DB.
             // sqflite's default onDowngrade throws (hard crash on open);
-            // delete-and-recreate is safe here because every local table is
-            // re-derivable — the catalog rehydrates from the API/bundled
-            // fallback and bank data re-syncs.
+            // Delete-and-recreate wipes the local wallet as well as the catalog
+            // and bank data. Use a disposable test copy for downgrade testing;
+            // never downgrade an owner's wallet to compare builds.
             onDowngrade: onDatabaseDowngradeDelete,
             rollbackActiveTransactionOnOpen: false,
           ),
