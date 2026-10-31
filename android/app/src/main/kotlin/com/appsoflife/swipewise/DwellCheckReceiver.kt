@@ -13,6 +13,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.TaskExecutors
+import com.google.android.gms.tasks.Tasks
 
 interface LocationProvider {
     fun getCurrentLocation(
@@ -55,7 +57,29 @@ object DefaultLocationProvider : LocationProvider {
             val cancellation = CancellationTokenSource()
             val request = CurrentLocationRequest.Builder().setPriority(priority)
                 .setDurationMillis(durationMillis).setMaxUpdateAgeMillis(maxUpdateAgeMillis).build()
-            SharedFix(requestLocation(context, request, cancellation.token), cancellation).also { job ->
+            val startedAt = SystemClock.elapsedRealtime()
+            // Keep the first SDK call synchronous so permission errors still reach the receiver.
+            val initial = requestLocation(context, request, cancellation.token)
+            val task = initial.continueWithTask(TaskExecutors.MAIN_THREAD) { result ->
+                if (cancellation.token.isCancellationRequested) {
+                    return@continueWithTask Tasks.forCanceled<Location>()
+                }
+                if (!result.isSuccessful) return@continueWithTask result
+                val fix = result.result ?: return@continueWithTask result
+                val ageMillis = (SystemClock.elapsedRealtimeNanos() - fix.elapsedRealtimeNanos) / 1_000_000L
+                val remainingMillis = durationMillis - (SystemClock.elapsedRealtime() - startedAt)
+                if (ageMillis <= maxUpdateAgeMillis || remainingMillis <= 0L) {
+                    return@continueWithTask result
+                }
+                WalkinLog.w(context, "location: stale SDK fix age_ms=$ageMillis; fresh retry remaining_ms=$remainingMillis")
+                ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.FRESH_RETRY, ageMillis)
+                val freshRequest = CurrentLocationRequest.Builder()
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                    .setDurationMillis(remainingMillis).setMaxUpdateAgeMillis(0L).build()
+                // One retry shared by all consumers; the arrival policy still validates its result.
+                requestLocation(context, freshRequest, cancellation.token)
+            }
+            SharedFix(task, cancellation).also { job ->
                 inFlight[key] = job
                 job.task.addOnCompleteListener { if (inFlight[key] === job) inFlight.remove(key) }
             }
@@ -409,6 +433,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
     }
 
     private fun done(context: Context, meta: MerchantMeta, outcome: DwellOutcome, fix: DwellFix? = null) {
+        ArrivalDiagnostics.outcome(context, outcome)
         WalkinLog.w(
             context,
             "dwell ${meta.geofenceId}: ${outcome.wire} " +

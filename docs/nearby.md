@@ -64,6 +64,25 @@ guarantee. EV charging is distinct from gas.
 
 ## Location & permissions
 
+### Field-test diagnostics
+
+Release and debug builds retain up to 500 arrival diagnostic events in app-private,
+non-backed-up storage. Only timestamps, fixed event/outcome codes and numeric retry ages,
+registration counts or SDK status codes are stored: no coordinates, store/place IDs,
+merchant names, wallet data or account identifiers. Entries older than 48 hours are
+discarded on the next read/write. Signing out clears this file. Nothing is uploaded.
+
+After an outing, connect authorized ADB, open the app, then collect:
+
+```bash
+adb shell dumpsys activity com.appsoflife.swipewise/.MainActivity --arrival-diagnostics
+```
+
+The header identifies the installed version; timestamps are UTC epoch milliseconds.
+`OUTCOME_POSTED` means submitted to Android, not proof of sound, display or watch delivery.
+Debug builds separately retain their existing, more detailed `files/walkin.log`; do not
+publish that file because it includes merchant information.
+
 [`location_service.dart`](../lib/nearby/location_service.dart) obtains an area-level
 Geolocator fix (medium accuracy, ten-second timeout). Its registration-only timeout
 fallback permits last-known positions up to five minutes old, otherwise retries with

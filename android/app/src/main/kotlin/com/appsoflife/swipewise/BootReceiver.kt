@@ -33,6 +33,7 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         WalkinLog.w(context, "boot: restarting activity recognition, enqueueing re-register")
+        ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.BOOT)
         ActivityState.clear(context)
         ActivitySubscriber.start(context)
         DwellAlarms.clearAll(context)

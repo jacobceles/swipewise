@@ -4,8 +4,11 @@ import '../api/data_repository.dart';
 import '../api/settings_repository.dart';
 import '../sync/wallet_backup_client.dart';
 import '../sync/wallet_snapshot.dart';
+import 'activation_reminder_provider.dart';
 import 'auth_provider.dart';
 import 'data_providers.dart';
+import 'payment_reminder_provider.dart';
+import 'settings_provider.dart';
 
 final _settings = SettingsRepository(DataRepository());
 
@@ -296,7 +299,23 @@ class WalletBackupController {
         .read(walletBackupRepositoryProvider)
         .apply(snapshot, userId: userId);
     await _recordSynced(userId, snapshot, uploaded: false);
-    for (final p in syncInvalidatedProviders) {
+    // Restore also replaces preferences; bank-sync invalidation alone leaves
+    // their already-loaded defaults visible until the next app launch.
+    for (final p in [
+      ...syncInvalidatedProviders,
+      defaultScreenProvider,
+      advisorViewProvider,
+      nearbyEnabledProvider,
+      nearbyRadiusProvider,
+      nearbyDwellProvider,
+      nearbyPlaceTypesProvider,
+      cardPreferenceOrderProvider,
+      dismissedRecurringTipsProvider,
+      includeDebitAccountsProvider,
+      paymentRemindersEnabledProvider,
+      paymentReminderLeadDaysProvider,
+      activationRemindersEnabledProvider,
+    ]) {
       _ref.invalidate(p);
     }
     return RestoreOutcome.restored;

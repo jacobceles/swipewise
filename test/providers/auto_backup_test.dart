@@ -8,6 +8,7 @@ import 'package:swipewise/api/database_helper.dart';
 import 'package:swipewise/api/settings_repository.dart';
 import 'package:swipewise/providers/auth_provider.dart';
 import 'package:swipewise/providers/backup_provider.dart';
+import 'package:swipewise/providers/settings_provider.dart';
 import 'package:swipewise/sync/wallet_backup_client.dart';
 import 'package:swipewise/sync/wallet_snapshot.dart';
 
@@ -262,6 +263,52 @@ void main() {
       'local',
     );
   });
+
+  test(
+    'restore refreshes already-loaded wallet preferences without restarting',
+    () async {
+      await addCard('x');
+      await settings.setDefaultScreen(userId, DefaultScreen.cards);
+      await settings.setDefaultAdvisorView(userId, AdvisorView.categories);
+      await settings.setNearbyRadiusMi(userId, 25);
+      await settings.setCardPreferenceOrder(userId, ['x']);
+      client.stored = await WalletBackupRepository().capture(userId);
+      final db = await DatabaseHelper().database;
+      await db.delete('cards', where: 'user_id = ?', whereArgs: [userId]);
+      await db.delete('settings', where: 'user_id = ?', whereArgs: [userId]);
+
+      final c = container();
+      final subscriptions = [
+        c.listen(defaultScreenProvider, (_, _) {}),
+        c.listen(advisorViewProvider, (_, _) {}),
+        c.listen(nearbyRadiusProvider, (_, _) {}),
+        c.listen(cardPreferenceOrderProvider, (_, _) {}),
+      ];
+      addTearDown(() {
+        for (final sub in subscriptions) {
+          sub.close();
+        }
+      });
+      await c.read(cardPreferenceOrderProvider.future);
+      await c.pump();
+      await settings.getNearbyRadiusMi(userId);
+      expect(c.read(defaultScreenProvider), DefaultScreen.transactions);
+      expect(c.read(advisorViewProvider), AdvisorView.stores);
+      expect(c.read(nearbyRadiusProvider), 10);
+
+      expect(
+        await c.read(walletBackupControllerProvider).restoreNow(),
+        RestoreOutcome.restored,
+      );
+      await c.pump();
+      expect(await c.read(cardPreferenceOrderProvider.future), ['x']);
+      await settings.getNearbyRadiusMi(userId);
+      await c.pump();
+      expect(c.read(defaultScreenProvider), DefaultScreen.cards);
+      expect(c.read(advisorViewProvider), AdvisorView.categories);
+      expect(c.read(nearbyRadiusProvider), 25);
+    },
+  );
 
   test(
     'a retired owner cannot restore cards or replace the guest mute list',

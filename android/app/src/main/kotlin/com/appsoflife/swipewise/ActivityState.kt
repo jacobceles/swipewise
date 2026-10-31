@@ -155,6 +155,7 @@ object ActivitySubscriber {
             android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
             WalkinLog.w(context, "activity subscription: permission denied")
+            ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.ACTIVITY_FAILED)
             return
         }
         val transitions = listOf(
@@ -167,10 +168,14 @@ object ActivitySubscriber {
         val pi = pendingIntent(context)
         try {
             requestUpdates(context, request, pi)
-                .addOnSuccessListener { WalkinLog.w(context, "activity subscription: active") }
+                .addOnSuccessListener {
+                    WalkinLog.w(context, "activity subscription: active")
+                    ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.ACTIVITY_ACTIVE)
+                }
                 .addOnFailureListener {
                     val status = (it as? com.google.android.gms.common.api.ApiException)?.statusCode
                     WalkinLog.w(context, "activity subscription: failed ${it.javaClass.simpleName} status=$status")
+                    ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.ACTIVITY_FAILED, status?.toLong())
                     if (retries > 0) {
                         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                             start(context, retries - 1)
@@ -179,6 +184,7 @@ object ActivitySubscriber {
                 }
         } catch (_: SecurityException) {
             WalkinLog.w(context, "activity subscription: permission revoked")
+            ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.ACTIVITY_FAILED)
         }
     }
 

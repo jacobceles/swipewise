@@ -257,6 +257,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       await Future<void>.delayed(const Duration(milliseconds: 400));
     }
     if (!mounted || !ref.read(permissionGateCompleteProvider)) return;
+    // Setup may have finished while this offer waited behind another route.
+    if (await settings.getPermissionsAsked(userId)) return;
+    if (!mounted || ref.read(authProvider).userId != userId) return;
     await _runSetup(userId, FlowStep.notifications);
   }
 

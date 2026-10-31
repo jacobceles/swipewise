@@ -68,6 +68,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                 DwellAlarms.cancelAll(context)
                 PendingMerchantStore.consume()
                 WalkinLog.clear(context)
+                ArrivalDiagnostics.clear(context)
                 for (name in listOf("swipewise_visit_lock", "swipewise_resident", "swipewise_reregister")) {
                     context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply()
                 }
@@ -256,11 +257,13 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     adds.add(client.addGeofences(bReq, boundaryPendingIntent))
                 }
             } catch (e: SecurityException) {
+                ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                 lastRegisteredHash = null
                 result.error("PERMISSION_DENIED", e.message, null)
                 done()
                 return@addOnCompleteListener
             } catch (e: Exception) {
+                ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                 lastRegisteredHash = null
                 result.error("ADD_FAILED", e.message, null)
                 done()
@@ -286,11 +289,13 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             Tasks.whenAllComplete(adds).addOnCompleteListener { completed ->
                 val failed = completed.result.firstOrNull { !it.isSuccessful }
                 if (failed == null) {
+                    ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_OK, merchantGeofences.size.toLong())
                     lastRegisteredHash = hash
                     lastMerchantHash = merchantHash
                     PendingReregister.complete(context, recoveryGeneration)
                     result.success(merchantGeofences.size)
                 } else {
+                    ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                     lastRegisteredHash = null
                     result.error("ADD_FAILED", failed.exception?.message, null)
                 }

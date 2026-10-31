@@ -450,6 +450,7 @@ class DwellReceiverLifecycleTest {
 
     @Test
     fun `stale or future fix fails closed on receiver path with zero side effects`() {
+        ArrivalDiagnostics.clear(context)
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
         fakeLocationProvider.nextFix = mockLocation(
@@ -463,6 +464,9 @@ class DwellReceiverLifecycleTest {
         assertFalse(DwellAlarms.isArmed(context, testGid))
         assertNull(VisitLock.read(context))
         assertTrue(context.getSharedPreferences("swipewise_resident", Context.MODE_PRIVATE).all.isEmpty())
+        val diagnostic = ArrivalDiagnostics.read(context)
+        assertTrue(diagnostic.contains("OUTCOME_STALE_FIX"))
+        assertFalse(diagnostic.contains(testGid))
     }
 
     @Test

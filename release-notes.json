@@ -1,6 +1,6 @@
 [
   {
     "language": "en-US",
-    "text": "• Store alerts now catch the shop next door, even after a long stay at the first one\n• At Costco, ShopRite and similar stores, the alert names the store itself, not the pharmacy or tire center inside it\n• No more alerts for ATMs"
+    "text": "• Improved arrival verification and nearby-store discovery\n• One fresh-location retry when an arrival check receives an old fix\n• Bounded arrival diagnostics without store names or coordinates\n• Store alerts expire after 30 minutes and clear on confirmed departure\n• Improved wallet and backup isolation when signing out\n• Updated local recommendations and offline US/Canada travel detection\n• Restored preferences refresh without restarting, and setup no longer repeats"
   }
 ]

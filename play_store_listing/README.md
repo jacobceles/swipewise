@@ -91,7 +91,8 @@ everything in `swipewise.db` stays on the phone unless the user signs in and swi
 
 Account creation gates the deletion question: answering "no" makes that answer unreachable.
 On-device, `swipewise.db` relies on Android's full-disk encryption, not an app-level layer — say so
-rather than implying a second one. **Sign-out never deletes anything**, locally or server-side.
+rather than implying a second one. **Sign-out clears this device's wallet/account data**, but keeps
+the remote account and its existing server backup.
 
 ## Permission declarations
 

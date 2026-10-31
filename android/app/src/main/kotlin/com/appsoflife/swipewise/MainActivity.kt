@@ -8,8 +8,21 @@ import androidx.work.WorkManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import java.util.concurrent.TimeUnit
+import java.io.FileDescriptor
+import java.io.PrintWriter
 
 class MainActivity : FlutterActivity() {
+
+    override fun dump(prefix: String, fd: FileDescriptor?, writer: PrintWriter, args: Array<out String>?) {
+        if (args?.contains("--arrival-diagnostics") == true) {
+            val info = packageManager.getPackageInfo(packageName, 0)
+            val versionCode = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(info)
+            writer.println("${prefix}SwipeWise ${info.versionName}+$versionCode arrival diagnostics (UTC epoch ms)")
+            writer.print(ArrivalDiagnostics.read(applicationContext))
+        } else {
+            super.dump(prefix, fd, writer, args)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         uiAlive = true
