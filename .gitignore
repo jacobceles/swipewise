@@ -17,6 +17,8 @@ build/
 android/app/src/main/res/generated/
 android/key.properties
 android/local.properties
+.kotlin/
+*.apk
 releases/*.apk
 
 # Local-only, Tools & Logs

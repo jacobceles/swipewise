@@ -204,13 +204,13 @@ class WalkinTest {
     private fun advised(id: String, card: String?, rate: Double?) = MerchantOption(id, id, null, card, rate)
 
     @Test
-    fun `places with the same card advice fold into the nearest`() {
+    fun `same-brand counters fold into their main store when advice matches`() {
         // Costco's bakery and kiosk get the Costco card; Starbucks inside a
         // Target earns differently, so it stays.
         val picked = StoreResolver.resolve(
             listOf(
-                StoreResolver.Candidate(advised("costco", "Costco Visa", 2.0), 0.0),
-                StoreResolver.Candidate(advised("bakery", "Costco Visa", 2.0), 29.0),
+                StoreResolver.Candidate(advised("costco", "Costco Visa", 2.0).copy(brandId = "costco", mainStore = true), 0.0),
+                StoreResolver.Candidate(advised("bakery", "Costco Visa", 2.0).copy(brandId = "costco"), 29.0),
                 StoreResolver.Candidate(advised("starbucks", "Gold", 4.0), 20.0),
             ),
         )
@@ -239,7 +239,52 @@ class WalkinTest {
                 StoreResolver.Candidate(acme, 20.0),
             ),
         )
-        assertEquals(listOf("pharmacy"), other.map { it.merchantId })
+        assertEquals(listOf("pharmacy", "acme"), other.map { it.merchantId })
+    }
+
+    @Test
+    fun `independent restaurants with identical advice remain separate choices`() {
+        val picked = StoreResolver.resolve(listOf(
+            StoreResolver.Candidate(advised("thai", "Dining Card", 3.0), 0.0),
+            StoreResolver.Candidate(advised("chicken", "Dining Card", 3.0), 5.6),
+            StoreResolver.Candidate(advised("pizza", "Dining Card", 3.0).copy(brandId = "pizza", mainStore = true), 11.0),
+        ))
+        assertEquals(listOf("thai", "chicken", "pizza"), picked.map { it.merchantId })
+    }
+
+    @Test
+    fun `fallback in mixed plaza keeps independent dining choices instead of card groups`() {
+        fun shop(id: String, offset: Double, card: String) =
+            advised(id, card, 3.0).copy(lat = 40.0 + offset, lng = -74.0)
+        val choices = StoreResolver.capped(listOf(
+            shop("thai", 0.0, "Dining Card"),
+            shop("mobile", 0.0003, "Other Card"),
+            shop("pizza", 0.0001, "Dining Card"),
+            shop("carwash", 0.00045, "Other Card"),
+            shop("doner", 0.00015, "Dining Card"),
+            shop("chicken", 0.00005, "Dining Card"),
+        ), 40.0, -74.0)
+        assertEquals(listOf("thai", "chicken", "pizza", "doner"), choices.map { it.merchantId })
+        val (remembered, reordered) = StoreResolver.preferPicked(choices, mapOf("chicken" to 10L))
+        assertTrue(reordered)
+        assertEquals("chicken", remembered.first().merchantId)
+        assertEquals(choices.map { it.merchantId }.toSet(), remembered.map { it.merchantId }.toSet())
+    }
+
+    @Test
+    fun `same-brand standalone stores without a main store remain distinct`() {
+        val a = advised("a", "Card", 3.0).copy(brandId = "brand")
+        val b = a.copy(merchantId = "b")
+        assertEquals(listOf("a", "b"), StoreResolver.foldSameAdvice(listOf(a, b)).map { it.merchantId })
+        assertEquals(listOf("a", "b"), StoreResolver.foldSameAdvice(listOf(a.copy(mainStore = true), b.copy(mainStore = true))).map { it.merchantId })
+    }
+
+    @Test
+    fun `main store never absorbs a counter with different rewards or currency`() {
+        val main = advised("main", "Card", 3.0).copy(brandId = "brand", mainStore = true, bestCurrency = "USD")
+        val counter = main.copy(merchantId = "counter", mainStore = false, bestCurrency = "POINTS")
+        assertEquals(listOf("counter", "main"), StoreResolver.foldSameAdvice(listOf(counter, main)).map { it.merchantId })
+        assertEquals(listOf("counter", "main"), StoreResolver.foldSameAdvice(listOf(counter.copy(bestCurrency = "USD", bestRate = 4.0), main)).map { it.merchantId })
     }
 
     @Test

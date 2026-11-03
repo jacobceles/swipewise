@@ -26,6 +26,7 @@ data class ActivityObservation(
 
 enum class ArrivalVerdict {
     VERIFIED,
+    FALLBACK,
     RECHECK,
     REJECT,
 }
@@ -46,14 +47,13 @@ object ArrivalPolicy {
     const val MAX_FIX_AGE_NANOS = 15_000L * 1_000_000L // 15 seconds
     const val FUTURE_SLACK_NANOS = 1_000L * 1_000_000L // 1 second
     const val SLACK_M = 50.0f
-    const val MOVING_SPEED_MPS = 1.0f // Walking pace cutoff (~1.0 - 1.2 m/s)
+    const val MOVING_SPEED_MPS = 2.0f // Restore the working baseline's brisk-walk cutoff.
     const val STATIONARY_SPEED_CEILING_MPS = 0.5f
     const val MAX_STABLE_DISPLACEMENT_M = 20.0
     const val MAX_STABLE_IMPLIED_SPEED_MPS = 0.4f
     const val MIN_INDEPENDENT_INTERVAL_NANOS = 10_000L * 1_000_000L // 10 seconds
     const val MAX_BASELINE_INTERVAL_NANOS = 150_000L * 1_000_000L // 150 seconds baseline ceiling
-    const val AR_STILL_WINDOW_NANOS = 15L * 60L * 1_000_000_000L // 15 minutes
-    const val AR_MOTION_WINDOW_NANOS = 5L * 60L * 1_000_000_000L // 5 minutes
+    const val AR_MOTION_WINDOW_NANOS = 30L * 60L * 1_000_000_000L // Walking transition may lag a stop.
     const val AR_DRIVE_LONG_WINDOW_NANOS = 2L * 3600L * 1_000_000_000L // 2 hours
 
     private fun isInvalidFix(fix: FixObservation): Boolean =
@@ -63,7 +63,7 @@ object ArrivalPolicy {
             (fix.speedMps != null && (fix.speedMps.isNaN() || fix.speedMps < 0f || !fix.speedMps.isFinite())) ||
             fix.elapsedRealtimeNanos <= 0L
 
-    private fun isInvalidFence(fence: FenceGeometry): Boolean =
+    fun isInvalidFence(fence: FenceGeometry): Boolean =
         fence.lat.isNaN() || fence.lng.isNaN() || !fence.lat.isFinite() || !fence.lng.isFinite() ||
             fence.lat < -90.0 || fence.lat > 90.0 || fence.lng < -180.0 || fence.lng > 180.0 ||
             fence.radiusM.isNaN() || !fence.radiusM.isFinite() || fence.radiusM <= 0f
@@ -94,15 +94,15 @@ object ArrivalPolicy {
         }
 
         val ageNanos = nowElapsedNanos - currentFix.elapsedRealtimeNanos
-        if (ageNanos > MAX_FIX_AGE_NANOS || ageNanos < -FUTURE_SLACK_NANOS) {
-            val reason = if (ageNanos > MAX_FIX_AGE_NANOS) "stale_fix_age_${ageNanos / 1_000_000}ms" else "future_fix"
-            return decision(ArrivalVerdict.REJECT, DwellOutcome.STALE_FIX, reason)
+        if (ageNanos < -FUTURE_SLACK_NANOS) {
+            return decision(ArrivalVerdict.REJECT, DwellOutcome.STALE_FIX, "future_fix")
         }
-
-        if (currentFix.accuracyM > MAX_ACCURACY_M) {
-            val (verdict, reason) = if (!isRecheck) ArrivalVerdict.RECHECK to "coarse_fix_initial"
-            else ArrivalVerdict.REJECT to "coarse_fix_recheck_rejected"
-            return decision(verdict, DwellOutcome.COARSE_RECHECK, reason)
+        if (ageNanos > MAX_FIX_AGE_NANOS) {
+            val driving = activity != null && activity.type == DetectedActivity.IN_VEHICLE &&
+                activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
+                nowElapsedNanos - activity.elapsedRealtimeNanos in 0 until AR_DRIVE_LONG_WINDOW_NANOS
+            return if (driving) decision(ArrivalVerdict.REJECT, DwellOutcome.MOVING_RECHECK, "stale_fix_while_driving")
+            else decision(ArrivalVerdict.FALLBACK, DwellOutcome.STALE_FIX, "fence_advice_stale_fix_${ageNanos / 1_000_000}ms")
         }
 
         val distance = distanceM(currentFix.lat, currentFix.lng, fence.lat, fence.lng).toFloat()
@@ -149,21 +149,13 @@ object ArrivalPolicy {
             }
         }
 
-        val hasDefiniteMotion = hasDefiniteHighSpeed || isFreshWalking || isFreshDriving || hasDisplacementMotion
+        val hasDefiniteMotion = hasDefiniteHighSpeed || (!isRecheck && isFreshWalking) || isFreshDriving || hasDisplacementMotion
 
         if (hasDefiniteMotion) {
             val (verdict, reason) = if (!isRecheck) ArrivalVerdict.RECHECK to "definite_motion_initial"
             else ArrivalVerdict.REJECT to "definite_motion_recheck_rejected"
             return decision(verdict, DwellOutcome.MOVING_RECHECK, reason, distance, allowed)
         }
-
-        val hasWalkingSpeed = currentFix.speedMps != null && currentFix.speedMps > STATIONARY_SPEED_CEILING_MPS
-
-        val isRecentStill = activity != null &&
-            activity.type == DetectedActivity.STILL &&
-            activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
-            (nowElapsedNanos - activity.elapsedRealtimeNanos) < AR_STILL_WINDOW_NANOS &&
-            !hasWalkingSpeed
 
         val isStaleDriving = activity != null &&
             activity.type == DetectedActivity.IN_VEHICLE &&
@@ -180,12 +172,12 @@ object ArrivalPolicy {
             return decision(verdict, DwellOutcome.MOVING_RECHECK, reason, distance, allowed)
         }
 
-        if (isRecentStill) {
-            return decision(ArrivalVerdict.VERIFIED, DwellOutcome.POSTED, "verified_ar_still", distance, allowed)
+        if (currentFix.accuracyM > MAX_ACCURACY_M) {
+            return if (!isRecheck) decision(ArrivalVerdict.RECHECK, DwellOutcome.COARSE_RECHECK, "coarse_fix_initial", distance, allowed)
+            else decision(ArrivalVerdict.FALLBACK, DwellOutcome.COARSE_RECHECK, "fence_advice_coarse_recheck", distance, allowed)
         }
-
-        val (verdict, reason) = if (!isRecheck) ArrivalVerdict.RECHECK to "awaiting_stability_recheck"
-        else ArrivalVerdict.REJECT to "unresolved_stability_on_recheck"
-        return decision(verdict, DwellOutcome.MOVING_RECHECK, reason, distance, allowed)
+        // A surviving live dwell plus a usable in-fence fix is the MVP baseline.
+        // Missing STILL or an imperfect second sample must not silently eat it.
+        return decision(ArrivalVerdict.VERIFIED, DwellOutcome.POSTED, "verified_fence_dwell", distance, allowed)
     }
 }

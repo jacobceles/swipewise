@@ -3,6 +3,7 @@ package com.appsoflife.swipewise
 /// Why a dwell check did or did not submit an arrival notification to Android.
 enum class DwellOutcome(val wire: String) {
     POSTED("posted"), // Submission is not proof that the user saw/heard it.
+    POSTED_APPROXIMATE("posted_approximate"), // Live fence advice, not a precise location claim.
 
     /// Fence set was replaced while this timer was in flight, so the metadata it
     /// needed is gone. Expected occasionally (a re-register lands mid-dwell);

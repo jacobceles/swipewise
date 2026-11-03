@@ -231,12 +231,12 @@ class SettingsRepository {
   // Per-category dwell seconds. Stored as a CSV "<category>:<seconds>,..." to
   // keep the settings table value column simple. Defaults are baked in here.
   static const Map<String, int> defaultDwellSeconds = {
-    'Dining': 60,
-    'Coffee': 60,
-    'Shopping': 60,
-    'Big-box': 60,
-    'Grocery': 60,
-    'Gas': 60,
+    'Dining': 30,
+    'Coffee': 30,
+    'Shopping': 30,
+    'Big-box': 30,
+    'Grocery': 30,
+    'Gas': 30,
   };
 
   /// Stored as JSON now: `{"Dining": 60, "Coffee": 60, ...}`. Replaced
@@ -259,6 +259,10 @@ class SettingsRepository {
             if (key.isEmpty || secs == null) continue;
             out[key] = secs;
           }
+          // Upgrade uncustomized legacy 60s default across all categories to the new 30s default.
+          if (out.values.toSet().length == 1 && out.values.first == 60) {
+            return Map.of(defaultDwellSeconds);
+          }
           return out;
         }
       } catch (e) {
@@ -273,6 +277,9 @@ class SettingsRepository {
       final secs = int.tryParse(pair.substring(i + 1).trim());
       if (key.isEmpty || secs == null) continue;
       out[key] = secs;
+    }
+    if (out.values.toSet().length == 1 && out.values.first == 60) {
+      return Map.of(defaultDwellSeconds);
     }
     return out;
   }

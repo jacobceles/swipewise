@@ -152,21 +152,20 @@ object StoreResolver {
         return if (atStore(nearest, accuracyM)) picked else null
     }
 
-    /// Drops any store whose card advice equals a nearer one's: telling them
-    /// apart changes nothing about which card to use. Costco's bakery, food
-    /// court and kiosk fold into Costco; Starbucks inside a Target stays,
-    /// because coffee earns differently. Keeps order (nearest first), but a
-    /// group is named by its brand's main store when the nearest is a counter
-    /// inside it: ShopRite's pharmacy shares the supermarket's pin, and only
-    /// list order picked between them (2026-10-22).
-    fun foldSameAdvice(options: List<MerchantOption>): List<MerchantOption> =
-        options.distinctBy { it.merchantId }
-            .groupBy { it.bestCardName to it.bestRate }
-            .values
-            .map { same ->
-                val nearest = same.first()
-                same.firstOrNull { it.mainStore && nearest.brandId != null && it.brandId == nearest.brandId } ?: nearest
-            }
+    /// A matching same-brand main store may name its counters (Costco/pharmacy,
+    /// ShopRite/pharmacy). Equal rewards alone never make independent businesses
+    /// interchangeable. Keep their names and choices, in nearest-first order.
+    fun foldSameAdvice(options: List<MerchantOption>): List<MerchantOption> {
+        val unique = options.distinctBy { it.merchantId }
+        return unique.map { option ->
+            if (option.mainStore || option.brandId.isNullOrBlank()) option
+            else unique.firstOrNull {
+                it.mainStore && it.brandId == option.brandId &&
+                    it.bestCardName == option.bestCardName && it.bestRate == option.bestRate &&
+                    it.bestCurrency == option.bestCurrency
+            } ?: option
+        }.distinctBy { it.merchantId }
+    }
 
     /// [options] with the one the user last picked from a "one of these" list
     /// moved to the front ([picks]: merchant id -> when picked; most recent
@@ -224,6 +223,7 @@ object VisitLock {
         val confirmed: Boolean = merchantIds.isNotEmpty(),
         val candidateSampleNanos: Long = 0L,
         val departed: Boolean = false,
+        val brandIds: List<String> = emptyList(),
     )
 
     fun adviceOf(o: MerchantOption): String = "${o.bestCardName}|${o.bestRate}"
@@ -246,6 +246,7 @@ object VisitLock {
     fun nextDoorCandidate(last: Visit, resolved: List<MerchantOption>?): String? {
         if (resolved.isNullOrEmpty() || last.merchantIds.isEmpty()) return null
         if (resolved.any { it.merchantId in last.merchantIds }) return null
+        if (resolved.any { it.brandId != null && it.brandId in last.brandIds }) return null
         val first = resolved.first()
         if (adviceOf(first) in last.advice) return null
         return first.merchantId
@@ -297,6 +298,7 @@ object VisitLock {
                 fenceId = fenceId, merchantIds = resolved.map { it.merchantId },
                 advice = resolved.map(::adviceOf), confirmed = true, left = false,
                 nextDoorCandidateId = null, candidateSampleNanos = 0L,
+                brandIds = resolved.mapNotNull { it.brandId },
             ) else last
         }
         val candidate = nextDoorCandidate(last, resolved)
@@ -330,6 +332,7 @@ object VisitLock {
             p.getInt("schema", 0) == 1 && p.getBoolean("confirmed", false),
             if (sameBoot) p.getLong("candidate_sample", 0L) else 0L,
             p.getBoolean("departed", false),
+            p.getString("brands", "")!!.split(',').filter { it.isNotEmpty() },
         )
     }
 
@@ -382,6 +385,7 @@ object VisitLock {
             .putBoolean("confirmed", visit.confirmed)
             .putLong("candidate_sample", visit.candidateSampleNanos)
             .putBoolean("departed", visit.departed)
+            .putString("brands", visit.brandIds.joinToString(","))
             .commit()
     }
 }

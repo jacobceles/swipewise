@@ -97,6 +97,8 @@ class DwellReceiverLifecycleTest {
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
+        org.robolectric.Shadows.shadowOf(context as android.app.Application)
+            .grantPermissions("android.permission.ACCESS_COARSE_LOCATION", "android.permission.ACCESS_FINE_LOCATION")
         SystemClock.sleep(1_000_000L) // Advance monotonic clock past boot
         BootIdentity.testBootCount = 1
 
@@ -264,7 +266,7 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
-    fun `null fix on dwell check fails closed and asserts request parameters`() {
+    fun `null fix on live dwell restores uncertain advice and asserts request bounds`() {
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
         fakeLocationProvider.nextFix = null
@@ -272,14 +274,14 @@ class DwellReceiverLifecycleTest {
         val receiver = DwellCheckReceiver()
         receiver.onReceive(context, dwellIntent(attempt.token))
 
-        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
+        assertTrue(fakeNotificationPoster.postedMetas.single().approximate)
         assertFalse(DwellAlarms.isArmed(context, testGid))
         assertEquals(15_000L, fakeLocationProvider.lastMaxUpdateAge)
         assertEquals(8_000L, fakeLocationProvider.lastDuration)
     }
 
     @Test
-    fun `real looper timeout on held callback fails closed without side effects`() {
+    fun `real looper timeout posts uncertain advice once and ignores late callback`() {
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
         fakeLocationProvider.holdCallback = true
@@ -290,13 +292,14 @@ class DwellReceiverLifecycleTest {
         // Request is in-flight; advance main looper past 8s timeout
         ShadowLooper.idleMainLooper(8001, TimeUnit.MILLISECONDS)
 
-        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
+        assertTrue(fakeNotificationPoster.postedMetas.single().approximate)
         assertFalse(DwellAlarms.isArmed(context, testGid))
 
-        // If held callback returns after timeout, it must abort without side effects
+        // A late callback cannot post again or promote approximate advice to a confirmed visit.
         fakeLocationProvider.heldSuccessCallback?.invoke(mockLocation())
-        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
-        assertNull(VisitLock.read(context))
+        assertEquals(1, fakeNotificationPoster.postedMetas.size)
+        assertTrue(VisitLock.read(context)!!.confirmed)
+        assertEquals(listOf("store_1"), VisitLock.read(context)!!.merchantIds)
     }
 
     @Test
@@ -344,7 +347,7 @@ class DwellReceiverLifecycleTest {
     fun `replay of old initial intent while waiting for recheck delay is ignored`() {
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
-        fakeLocationProvider.nextFix = mockLocation(accuracy = 12f, speedMps = null)
+        fakeLocationProvider.nextFix = mockLocation(accuracy = 12f, speedMps = 2.5f)
 
         val receiver = DwellCheckReceiver()
         receiver.onReceive(context, dwellIntent(attempt.token, recheck = false))
@@ -449,12 +452,12 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
-    fun `stale or future fix fails closed on receiver path with zero side effects`() {
+    fun `future fix fails closed on receiver path with zero side effects`() {
         ArrivalDiagnostics.clear(context)
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
         fakeLocationProvider.nextFix = mockLocation(
-            elapsedNanos = SystemClock.elapsedRealtimeNanos() - 20_000_000_000L,
+            elapsedNanos = SystemClock.elapsedRealtimeNanos() + 2_000_000_000L,
         )
 
         val receiver = DwellCheckReceiver()
@@ -559,7 +562,7 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
-    fun `repeated coarse fix on recheck fails closed without notification`() {
+    fun `repeated coarse fix on recheck restores uncertain advice`() {
         val attempt = DwellAlarms.arm(context, testGid, 60)!!
         DwellAlarms.updatePhase(context, testGid, attempt.token, AttemptPhase.RECHECK_ARMED)
         SystemClock.sleep(60_000L)
@@ -568,7 +571,7 @@ class DwellReceiverLifecycleTest {
         val receiver = DwellCheckReceiver()
         receiver.onReceive(context, dwellIntent(attempt.token, recheck = true))
 
-        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
+        assertTrue(fakeNotificationPoster.postedMetas.single().approximate)
         assertFalse(DwellAlarms.isArmed(context, testGid))
     }
 
@@ -930,7 +933,7 @@ class DwellReceiverLifecycleTest {
     }
 
     @Test
-    fun `next-door check with no AR first check arms recheck and verifies on stable second check`() {
+    fun `next-door check without AR needs only the two real confirmation samples`() {
         val storeA = MerchantOption("store_a", "Store A", "Dining", "Card 1", 3.0, lat = testLat, lng = testLng)
         val storeB = MerchantOption("store_b", "Store B", "Retail", "Card 2", 2.0, lat = testLat + 0.0006, lng = testLng)
         GeofenceMetadataStore(context).write(
@@ -942,7 +945,7 @@ class DwellReceiverLifecycleTest {
             VisitLock.Visit(testLat, testLng, System.currentTimeMillis(), testGid, listOf("store_a"), listOf("Card 1|3.0")),
         )
 
-        // 1. Initial check arrives next-door (no AR) -> arms recheck to confirm stability
+        // First sharp sample names the next-door shop; visit identity asks for confirmation.
         val attempt1 = DwellAlarms.arm(context, testGid, 60)!!
         SystemClock.sleep(60_000L)
         fakeLocationProvider.nextFix = mockLocation(lat = testLat + 0.0006, lng = testLng, accuracy = 12f)
@@ -950,35 +953,18 @@ class DwellReceiverLifecycleTest {
         val receiver = DwellCheckReceiver()
         receiver.onReceive(context, dwellIntent(attempt1.token))
 
-        val initialRecheck = DwellAlarms.getAttempt(context, testGid)
-        assertNotNull(initialRecheck)
-        assertEquals(AttemptPhase.RECHECK_ARMED, initialRecheck!!.phase)
-
-        // 2. Recheck fires with stable fix -> verified arrival! Reaches maybePost and arms next-door confirmation
-        SystemClock.sleep(60_000L)
-        fakeLocationProvider.nextFix = mockLocation(lat = testLat + 0.0006, lng = testLng, accuracy = 12f)
-        receiver.onReceive(context, dwellIntent(initialRecheck.token, recheck = true))
-
         val confirmationAttempt = DwellAlarms.getAttempt(context, testGid)
         assertNotNull(confirmationAttempt)
         assertTrue(confirmationAttempt!!.isNextDoor)
+        assertTrue(fakeNotificationPoster.postedMetas.isEmpty())
 
-        // 3. Next-door confirmation check fires with no AR -> arms recheck
+        // A second independently timed sharp sample confirms the move, without two extra rechecks.
         SystemClock.sleep(60_000L)
         fakeLocationProvider.nextFix = mockLocation(lat = testLat + 0.0006, lng = testLng, accuracy = 12f)
         receiver.onReceive(context, dwellIntent(confirmationAttempt.token, nextDoor = true))
 
-        val nextDoorRecheck = DwellAlarms.getAttempt(context, testGid)
-        assertNotNull(nextDoorRecheck)
-        assertEquals(AttemptPhase.RECHECK_ARMED, nextDoorRecheck!!.phase)
-        assertTrue(nextDoorRecheck.isNextDoor)
-
-        // 4. Second check 60s later with stable fix -> verified and posts!
-        SystemClock.sleep(60_000L)
-        fakeLocationProvider.nextFix = mockLocation(lat = testLat + 0.0006, lng = testLng, accuracy = 12f)
-        receiver.onReceive(context, dwellIntent(nextDoorRecheck.token, recheck = true, nextDoor = true))
-
         assertEquals(1, fakeNotificationPoster.postedMetas.size)
+        assertEquals(2, fakeLocationProvider.callCount)
         assertEquals("store_b", fakeNotificationPoster.postedMetas.first().primary.merchantId)
     }
 

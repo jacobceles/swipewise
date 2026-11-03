@@ -76,12 +76,14 @@ data class MerchantMeta(
     // Not stored: set at post time when the first option is the user's past
     // pick, so the notification says "probably" rather than "one of these".
     val usualFirst: Boolean = false,
+    // Not persisted: the live fence survived dwell, but no precise current fix did.
+    val approximate: Boolean = false,
 ) {
     val primary: MerchantOption get() = options.first()
     val isCluster: Boolean get() = options.size > 1
 
     companion object {
-        const val DEFAULT_DWELL_SECONDS = 60
+        const val DEFAULT_DWELL_SECONDS = 30
     }
 }
 
@@ -119,14 +121,14 @@ class GeofenceMetadataStore(private val context: Context) {
             existing.lat == meta.lat &&
             existing.lng == meta.lng &&
             existing.radiusM == meta.radiusM &&
-            existing.dwellSeconds == meta.dwellSeconds &&
-            existing.options == meta.options
+            existing.dwellSeconds == meta.dwellSeconds
 
         val currentFenceGen = prefs.getLong(genKey(meta.geofenceId), 0L)
         val newFenceGen = if (unchanged) currentFenceGen else currentFenceGen + 1L
 
         if (!unchanged && existing != null) {
-            // Relevant metadata replacement: cancel and erase obsolete attempt
+            // Only geometry/dwell replacement invalidates the countdown. Advice
+            // is refreshed at posting without removing the unchanged OS fence.
             DwellAlarms.cancel(context, meta.geofenceId)
         }
 

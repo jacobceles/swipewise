@@ -46,7 +46,10 @@ class NotificationHelper(private val context: Context) {
         }
         val title: String
         val body: String
-        if (meta.isCluster && meta.usualFirst) {
+        if (meta.approximate) {
+            title = if (meta.isCluster) "Nearby card advice" else "You may be near ${meta.primary.name}"
+            body = if (meta.isCluster) formatClusterBody(meta.options.map { it.name }) else cardLine(meta.primary)
+        } else if (meta.isCluster && meta.usualFirst) {
             // The user picked this store here before; the others stay one tap away.
             val opt = meta.primary
             title = "You're probably at ${opt.name}"

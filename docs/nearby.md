@@ -79,7 +79,9 @@ adb shell dumpsys activity com.appsoflife.swipewise/.MainActivity --arrival-diag
 ```
 
 The header identifies the installed version; timestamps are UTC epoch milliseconds.
-`OUTCOME_POSTED` means submitted to Android, not proof of sound, display or watch delivery.
+`OUTCOME_POSTED` and `OUTCOME_POSTED_APPROXIMATE` mean submitted to Android, not proof of
+sound, display or watch delivery. Approximate posts use live fence advice, not stale fix
+coordinates; `FALLBACK_STALE`, `FALLBACK_COARSE` and `FALLBACK_NO_FIX` identify why.
 Debug builds separately retain their existing, more detailed `files/walkin.log`; do not
 publish that file because it includes merchant information.
 
@@ -141,36 +143,44 @@ register an empty merchant set **with a current boundary**, avoiding a stranded 
 [`DwellAlarms.kt`](../android/app/src/main/kotlin/com/appsoflife/swipewise/DwellAlarms.kt)
 and `DwellCheckReceiver.kt` implement bounded ENTER→verification episodes:
 
-1. ENTER arms the configured dwell (60 s by default). A repeated ENTER preserves the
+1. ENTER arms the configured dwell (30 s by default). Settings offer 10 s–15 min in
+   10-second steps; saved custom waits are preserved. Android detection/delivery may be
+   later than the physical arrival. A repeated ENTER preserves the
    token/deadline, including while a location request is in flight. A fresh ENTER location
    may seed a baseline observation.
 2. EXIT cancels the pending episode immediately. Tokens, phase, account epoch, metadata
    revision, boot count and in-flight process ownership guard late callbacks and retries.
    Replayed initial intents cannot trigger a recheck early. An overdue episode is discarded.
 3. A location request has an eight-second budget and explicit maximum cached age of 15 s.
-   Monotonic freshness, valid coordinates/accuracy and actual merchant candidates are checked
-   independently. The recheck uses higher accuracy, not weaker acceptance rules.
+   A fresh usable result refines the advice; an older SDK result is not used to claim current
+   coordinates. The delayed recheck uses higher accuracy. There is no immediate stale-result
+   retry: on the field-tested phone it returned another stale result within milliseconds.
    Overlapping requests with identical bounds share one in-flight SDK request; cancelling
    one consumer cannot cancel another, and the shared fix never counts as two timed samples.
 4. [`ArrivalPolicy.kt`](../android/app/src/main/kotlin/com/appsoflife/swipewise/ArrivalPolicy.kt)
-   applies the same policy on both attempts: accuracy must be at most 50 m, and motion or
-   uncertainty cannot become notification permission merely by waiting. There is at most one
-   existing delayed recheck. Null, timeout, exception, missing geometry, stale/coarse final fix
-   or empty resolution fails closed without creating visit/cooldown state.
-5. Stop evidence is recent STILL corroboration without contradictory speed/displacement,
-   or independent stable observations. The latter require 10–150 s separation, each accuracy
-   at most 25 m, combined uncertainty at most 40 m, displacement at most 20 m, implied speed
-   at most 0.4 m/s and `(displacement + both accuracies)/seconds <= 0.6 m/s`. Reported speed
-   above 0.5 m/s cannot establish stationarity. These are conservative heuristics, not exact
-   physical bounds. Long custom waits can lack a usable baseline and be skipped without AR.
-6. Resolution considers all registered eligible merchants, preserving muted candidates so a
+   restores the practical MVP policy: a live dwell and usable in-fence fix need not also
+   prove STILL or a perfect pair of GPS samples. Known driving, fresh speed above 2 m/s or
+   displacement motion still defers once and rejects a moving recheck. A walking transition
+   defers the first fresh check but does not veto the second look just because STILL lagged.
+5. Missing, timed-out, stale or repeatedly coarse fixes can produce **uncertain fence advice**
+   when not known to be driving. This deliberately restores the old fallback rather than
+   silently dropping the arrival. The advice uses current registered options and says
+   "You may be near…" / "Nearby card advice"; it does not use stale coordinates or establish
+   a confirmed merchant identity. Permission failure, invalid/future fixes, missing geometry,
+   invalidated attempts and empty precise resolution still fail closed. Sharp, independently
+   timed observations remain useful for next-door confirmation and superseding old driving
+   evidence, but are not a universal precondition for an ordinary alert.
+6. Precise resolution considers all registered eligible merchants, preserving muted candidates so a
    muted shop cannot be replaced by an unmuted neighbour. The nearest non-plaza footprint
    must be within 60 m plus accuracy. Options within 35 m of the nearest are ambiguous,
-   capped at four and folded when card advice matches. A brand's main store can name its
-   matching folded counters. Remembered picks reorder ambiguity, not proof of presence.
+   capped at four. Independent businesses keep their identities even when card advice
+   matches. Only a counter with the same brand, card, rate and currency can fold into a
+   matching main store; unrelated restaurants or standalone stores do not disappear.
+   Remembered picks reorder ambiguity, not proof of presence.
 
 Temporary baseline records are removed on completion/invalidation and pruned on lifecycle
-access after expiry; removed/replaced metadata purges associated attempts. Only current
+access after expiry; removed fences or changed geometry/dwell purge associated attempts.
+Advice-only changes preserve the countdown and posting reads the latest advice/mute flags. Only current
 inferred visit state is retained, not a production chronological visit log.
 
 ### Visit identity and suppression

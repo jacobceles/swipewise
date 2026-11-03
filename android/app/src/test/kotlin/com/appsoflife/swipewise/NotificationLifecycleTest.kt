@@ -55,6 +55,19 @@ class NotificationLifecycleTest {
         assertEquals(verified, nm.activeNotifications.single().notification.`when`)
     }
 
+    @Test fun `fallback advice does not claim a precise store or remembered presence`() {
+        val context = RuntimeEnvironment.getApplication() as Context
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val helper = NotificationHelper(context)
+        assertTrue(helper.postDwell(meta("A").copy(approximate = true)))
+        assertEquals("You may be near A", nm.activeNotifications.single().notification.extras.getString(Notification.EXTRA_TITLE))
+        val cluster = meta("A").copy(options = meta("A").options + meta("B").options,
+            usualFirst = true, approximate = true)
+        assertTrue(helper.postDwell(cluster))
+        assertEquals("Nearby card advice", nm.activeNotifications.single().notification.extras.getString(Notification.EXTRA_TITLE))
+        assertEquals(30 * 60_000L, nm.activeNotifications.single().notification.timeoutAfter)
+    }
+
     @Test
     @Config(sdk = [24, 25, 34])
     fun `confirmed departure cancels advice but a noisy nearby exit does not`() {

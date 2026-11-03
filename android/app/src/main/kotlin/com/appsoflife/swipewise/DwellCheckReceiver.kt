@@ -13,8 +13,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.TaskExecutors
-import com.google.android.gms.tasks.Tasks
 
 interface LocationProvider {
     fun getCurrentLocation(
@@ -57,28 +55,7 @@ object DefaultLocationProvider : LocationProvider {
             val cancellation = CancellationTokenSource()
             val request = CurrentLocationRequest.Builder().setPriority(priority)
                 .setDurationMillis(durationMillis).setMaxUpdateAgeMillis(maxUpdateAgeMillis).build()
-            val startedAt = SystemClock.elapsedRealtime()
-            // Keep the first SDK call synchronous so permission errors still reach the receiver.
-            val initial = requestLocation(context, request, cancellation.token)
-            val task = initial.continueWithTask(TaskExecutors.MAIN_THREAD) { result ->
-                if (cancellation.token.isCancellationRequested) {
-                    return@continueWithTask Tasks.forCanceled<Location>()
-                }
-                if (!result.isSuccessful) return@continueWithTask result
-                val fix = result.result ?: return@continueWithTask result
-                val ageMillis = (SystemClock.elapsedRealtimeNanos() - fix.elapsedRealtimeNanos) / 1_000_000L
-                val remainingMillis = durationMillis - (SystemClock.elapsedRealtime() - startedAt)
-                if (ageMillis <= maxUpdateAgeMillis || remainingMillis <= 0L) {
-                    return@continueWithTask result
-                }
-                WalkinLog.w(context, "location: stale SDK fix age_ms=$ageMillis; fresh retry remaining_ms=$remainingMillis")
-                ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.FRESH_RETRY, ageMillis)
-                val freshRequest = CurrentLocationRequest.Builder()
-                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                    .setDurationMillis(remainingMillis).setMaxUpdateAgeMillis(0L).build()
-                // One retry shared by all consumers; the arrival policy still validates its result.
-                requestLocation(context, freshRequest, cancellation.token)
-            }
+            val task = requestLocation(context, request, cancellation.token)
             SharedFix(task, cancellation).also { job ->
                 inFlight[key] = job
                 job.task.addOnCompleteListener { if (inFlight[key] === job) inFlight.remove(key) }
@@ -107,9 +84,9 @@ object DefaultNotificationPoster : NotificationPoster {
 }
 
 /// Fires when a dwell timer armed on fence ENTER survives its full delay
-/// (no EXIT cancelled it). Before posting, verifies the user is genuinely
-/// still at the fence with one shared arrival verification policy on
-/// initial check AND recheck.
+/// (no EXIT cancelled it). Fresh fixes refine the advice; unavailable/stale
+/// fixes use uncertain fence advice unless driving. The live attempt, account
+/// and geometry checks still apply on every path.
 class DwellCheckReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -151,8 +128,9 @@ class DwellCheckReceiver : BroadcastReceiver() {
             DwellAlarms.cancel(context, geofenceId, token)
             return
         }
-        if (meta.lat == null || meta.lng == null || meta.radiusM == null) {
-            WalkinLog.w(context, "dwell $geofenceId: missing geometry -> fail closed")
+        if (meta.lat == null || meta.lng == null || meta.radiusM == null ||
+            ArrivalPolicy.isInvalidFence(FenceGeometry(meta.lat, meta.lng, meta.radiusM))) {
+            WalkinLog.w(context, "dwell $geofenceId: missing or invalid geometry -> fail closed")
             done(context, meta, DwellOutcome.NO_META)
             DwellAlarms.cancel(context, geofenceId, token)
             return
@@ -272,6 +250,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
         )
 
         when (decision.verdict) {
+            ArrivalVerdict.FALLBACK -> fallbackAdvice(context, attempt, decision.outcome)
             ArrivalVerdict.RECHECK -> {
                 val rearmed = DwellAlarms.armRecheck(
                     context = context,
@@ -347,8 +326,39 @@ class DwellCheckReceiver : BroadcastReceiver() {
         outcome: DwellOutcome,
     ) {
         WalkinLog.w(context, "dwell no fix $outcome ${ActivityState.diagnostic(context)}")
-        DwellAlarms.cancel(context, meta.geofenceId, attempt.token)
-        done(context, meta, outcome)
+        if (outcome == DwellOutcome.NO_FIX_SECURITY) {
+            DwellAlarms.cancel(context, meta.geofenceId, attempt.token)
+            done(context, meta, outcome)
+        } else {
+            fallbackAdvice(context, attempt, outcome)
+        }
+    }
+
+    private fun fallbackAdvice(context: Context, attempt: DwellAttempt, reason: DwellOutcome) {
+        if (DwellAlarms.validateAttempt(context, attempt.geofenceId, attempt.token) == null) return
+        val meta = GeofenceMetadataStore(context).read(attempt.geofenceId) ?: return
+        val granted = android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, "android.permission.ACCESS_COARSE_LOCATION") != granted &&
+            androidx.core.content.ContextCompat.checkSelfPermission(context, "android.permission.ACCESS_FINE_LOCATION") != granted) {
+            DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
+            done(context, meta, DwellOutcome.NO_FIX_SECURITY)
+            return
+        }
+        if (ActivityState.isLikelyDriving(context)) {
+            DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
+            done(context, meta, DwellOutcome.MOVING_RECHECK)
+            return
+        }
+        val event = when (reason) {
+            DwellOutcome.STALE_FIX -> ArrivalDiagnostics.Event.FALLBACK_STALE
+            DwellOutcome.COARSE_RECHECK -> ArrivalDiagnostics.Event.FALLBACK_COARSE
+            else -> ArrivalDiagnostics.Event.FALLBACK_NO_FIX
+        }
+        ArrivalDiagnostics.record(context, event)
+        WalkinLog.w(context, "dwell ${attempt.geofenceId}: uncertain fence advice after ${reason.wire}")
+        val options = StoreResolver.capped(meta.options, meta.lat, meta.lng)
+        maybePost(context, meta.copy(options = options, approximate = true), attempt = attempt,
+            sampleNanos = SystemClock.elapsedRealtimeNanos())
     }
 
     private fun maybePost(
@@ -408,13 +418,15 @@ class DwellCheckReceiver : BroadcastReceiver() {
             done(context, meta, DwellOutcome.MERCHANT_COOLDOWN, fix)
             return
         }
-        val verifiedAt = now - ((SystemClock.elapsedRealtimeNanos() - sampleNanos).coerceAtLeast(0L) / 1_000_000L)
+        val verifiedAt = if (meta.approximate) now else
+            now - ((SystemClock.elapsedRealtimeNanos() - sampleNanos).coerceAtLeast(0L) / 1_000_000L)
         if (!notificationPoster.postDwell(context, meta, verifiedAt)) {
             DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
             done(context, meta, DwellOutcome.NOTIFICATIONS_OFF, fix)
             return
         }
         if (visitLat != null && visitLng != null) {
+            val notifiedOptions = meta.options
             VisitLock.write(
                 context,
                 VisitLock.Visit(
@@ -422,14 +434,16 @@ class DwellCheckReceiver : BroadcastReceiver() {
                     visitLng,
                     now,
                     meta.geofenceId,
-                    resolved.orEmpty().map { it.merchantId },
-                    resolved.orEmpty().map { VisitLock.adviceOf(it) },
+                    notifiedOptions.map { it.merchantId },
+                    notifiedOptions.map { VisitLock.adviceOf(it) },
+                    confirmed = true,
+                    brandIds = notifiedOptions.mapNotNull { it.brandId },
                 ),
             )
         }
         cooldown.markNotified(primary, now)
         DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
-        done(context, meta, DwellOutcome.POSTED, fix)
+        done(context, meta, if (meta.approximate) DwellOutcome.POSTED_APPROXIMATE else DwellOutcome.POSTED, fix)
     }
 
     private fun done(context: Context, meta: MerchantMeta, outcome: DwellOutcome, fix: DwellFix? = null) {

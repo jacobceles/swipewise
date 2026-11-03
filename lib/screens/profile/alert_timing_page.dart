@@ -25,7 +25,9 @@ class AlertTimingPage extends ConsumerStatefulWidget {
 }
 
 class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
-  static const _waits = [60, 120, 180, 300, 480, 600, 900];
+  static final _waits = [
+    for (var seconds = 10; seconds <= 900; seconds += 10) seconds,
+  ];
 
   static const _kindIcons = {
     'Dining': LucideIcons.utensils,
@@ -112,7 +114,7 @@ class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
                 ],
         ),
         const GroupCaption(
-          'How long you stay somewhere before we send one alert (1–15 min).',
+          'Wait after your phone detects arrival (10 s–15 min, in 10-second steps). Android may deliver alerts later.',
         ),
         const SizedBox(height: kGroupGap),
 
@@ -226,7 +228,7 @@ class WaitStepper extends StatelessWidget {
             'Shorter wait for $label',
           ),
           SizedBox(
-            width: 50,
+            width: 72,
             child: Text(
               formatWait(seconds),
               textAlign: TextAlign.center,

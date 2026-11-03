@@ -9,6 +9,7 @@ object ArrivalDiagnostics {
     enum class Event {
         BOOT, ACTIVITY_ACTIVE, ACTIVITY_FAILED, REGISTRATION_OK, REGISTRATION_FAILED,
         FRESH_RETRY,
+        FALLBACK_STALE, FALLBACK_COARSE, FALLBACK_NO_FIX,
     }
 
     private const val FILE = "arrival-diagnostics.log"

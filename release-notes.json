@@ -1,6 +1,6 @@
 [
   {
     "language": "en-US",
-    "text": "• Improved arrival verification and nearby-store discovery\n• One fresh-location retry when an arrival check receives an old fix\n• Bounded arrival diagnostics without store names or coordinates\n• Store alerts expire after 30 minutes and clear on confirmed departure\n• Improved wallet and backup isolation when signing out\n• Updated local recommendations and offline US/Canada travel detection\n• Restored preferences refresh without restarting, and setup no longer repeats"
+    "text": "• Prevents repeated alerts inside warehouse stores and shopping centers\n• Nearby businesses stay separate even when recommended cards match\n• Alert waits start at 10 seconds in 10-second steps; default is 30 seconds\n• Upgrades legacy 1-minute default to 30 seconds automatically\n• Keeps uncertain fence advice, driving/cancellation guards and 30-minute expiry"
   }
 ]

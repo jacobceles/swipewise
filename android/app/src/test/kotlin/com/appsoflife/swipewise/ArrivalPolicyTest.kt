@@ -76,7 +76,7 @@ class ArrivalPolicyTest {
     }
 
     @Test
-    fun `stale fix older than 15 seconds fails closed with STALE_FIX`() {
+    fun `stale fix uses uncertain fence advice instead of stale coordinates`() {
         val staleAgeNanos = 16_000L * 1_000_000L
         val decision = ArrivalPolicy.evaluate(
             currentFix = fix(elapsedNanos = baseNanos - staleAgeNanos),
@@ -86,7 +86,7 @@ class ArrivalPolicyTest {
             isRecheck = false,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
+        assertEquals(ArrivalVerdict.FALLBACK, decision.verdict)
         assertEquals(DwellOutcome.STALE_FIX, decision.outcome)
     }
 
@@ -120,7 +120,7 @@ class ArrivalPolicyTest {
     }
 
     @Test
-    fun `coarse fix on recheck rejects and does not notify`() {
+    fun `coarse fix on recheck restores uncertain fence advice`() {
         val decision = ArrivalPolicy.evaluate(
             currentFix = fix(acc = 55f),
             priorFix = fix(acc = 60f, elapsedNanos = baseNanos - 60_000_000_000L),
@@ -129,12 +129,12 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
+        assertEquals(ArrivalVerdict.FALLBACK, decision.verdict)
         assertEquals(DwellOutcome.COARSE_RECHECK, decision.outcome)
     }
 
     @Test
-    fun `coarse but under ceiling coordinates do not prove stability without AR`() {
+    fun `usable 45m in-fence fix does not require STILL or perfect stability`() {
         // Two 45m accuracy fixes at identical coordinates (ceiling is 50m, but stability needs <= 25m each)
         val prior = fix(lat = 40.5014, lng = -74.8549, acc = 45f, elapsedNanos = baseNanos - 60_000_000_000L)
         val current = fix(lat = 40.5014, lng = -74.8549, acc = 45f, elapsedNanos = baseNanos)
@@ -147,9 +147,8 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        // Two coarse fixes overlapping in uncertainty do NOT prove stability; rejected on recheck
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, decision.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
+        assertEquals(DwellOutcome.POSTED, decision.outcome)
     }
 
     @Test
@@ -171,7 +170,7 @@ class ArrivalPolicyTest {
     }
 
     @Test
-    fun `two 20m fixes over short 10s interval fail uncertainty rate`() {
+    fun `live dwell does not require a perfect uncertainty-rate pair`() {
         // (0 + 20 + 20)/10 = 4.0 m/s > 0.6 m/s uncertainty rate ceiling
         val prior = fix(lat = 40.50140, lng = -74.85490, acc = 20f, elapsedNanos = baseNanos - 10_000_000_000L)
         val current = fix(lat = 40.50140, lng = -74.85490, acc = 20f, elapsedNanos = baseNanos)
@@ -184,9 +183,8 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        // Over short interval of 10s, 20m uncertainty is too large to prove stationarity
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, decision.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
+        assertEquals(DwellOutcome.POSTED, decision.outcome)
     }
 
     @Test
@@ -212,12 +210,12 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        // Cannot use invalid prior fix; stability unproven on recheck -> reject
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
+        // The current usable fix and live dwell suffice; invalid prior data is ignored.
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
     }
 
     @Test
-    fun `too-old baseline does not prove uninterrupted stationarity`() {
+    fun `old baseline does not block a new usable in-fence fix after dwell`() {
         // Prior fix 15 minutes ago (900s > 150s max baseline)
         val prior = fix(lat = 40.50140, lng = -74.85490, acc = 10f, elapsedNanos = baseNanos - 900_000_000_000L)
         val current = fix(lat = 40.50140, lng = -74.85490, acc = 10f, elapsedNanos = baseNanos)
@@ -230,12 +228,11 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        // Cannot prove uninterrupted stationarity across 15 min without intervening evidence
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
     }
 
     @Test
-    fun `stable coordinates with walking sensor speed fails`() {
+    fun `restored brisk-walk cutoff does not reject 1 point 4 mps on second look`() {
         // Stable coordinates across 60s, but sensor speed is 1.4 m/s (walking pace)
         val prior = fix(lat = 40.50140, lng = -74.85490, acc = 10f, elapsedNanos = baseNanos - 60_000_000_000L)
         val current = fix(lat = 40.50140, lng = -74.85490, acc = 10f, elapsedNanos = baseNanos, speedMps = 1.4f)
@@ -248,8 +245,8 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, decision.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, decision.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
+        assertEquals(DwellOutcome.POSTED, decision.outcome)
     }
 
     @Test
@@ -269,7 +266,7 @@ class ArrivalPolicyTest {
 
     @Test
     fun `high speed on fix is moving and rejected on recheck`() {
-        val movingFix = fix(speedMps = 1.5f)
+        val movingFix = fix(speedMps = 2.5f)
         val initial = ArrivalPolicy.evaluate(
             currentFix = movingFix,
             priorFix = null,
@@ -294,7 +291,7 @@ class ArrivalPolicyTest {
     }
 
     @Test
-    fun `fresh walking AR is moving and rejected on recheck`() {
+    fun `walking transition defers once but does not veto a stopped second look`() {
         val walkingAR = activity(type = DetectedActivity.WALKING, elapsedNanos = baseNanos - 10_000_000_000L)
         val initial = ArrivalPolicy.evaluate(
             currentFix = fix(),
@@ -315,12 +312,12 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, recheck.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, recheck.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, recheck.verdict)
+        assertEquals(DwellOutcome.POSTED, recheck.outcome)
     }
 
     @Test
-    fun `same cached timestamp returned twice is not independent evidence`() {
+    fun `usable five second old fix does not need an independent second sample`() {
         val sameTimestamp = baseNanos - 5_000_000_000L
         val prior = fix(elapsedNanos = sameTimestamp)
         val current = fix(elapsedNanos = sameTimestamp)
@@ -333,8 +330,8 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, recheck.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, recheck.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, recheck.verdict)
+        assertEquals(DwellOutcome.POSTED, recheck.outcome)
     }
 
     @Test

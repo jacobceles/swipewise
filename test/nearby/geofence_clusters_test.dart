@@ -115,12 +115,15 @@ void main() {
   );
 
   test('Big-box stores take the Big-box wait; unknown kinds fall back', () {
+    expect(GeofenceManager.fallbackDwellSeconds, 30);
     const dwell = {'Big-box': 300, 'Shopping': 120};
     expect(dwellSecondsFor('Department Stores', dwell), 300);
     expect(dwellSecondsFor('Wholesale', dwell), 300);
     expect(dwellSecondsFor('Shopping', dwell), 120);
     expect(dwellSecondsFor('ATM', dwell), GeofenceManager.fallbackDwellSeconds);
     expect(dwellSecondsFor(null, dwell), GeofenceManager.fallbackDwellSeconds);
+    expect(dwellSecondsFor('Dining', const {'Dining': 10}), 10);
+    expect(dwellSecondsFor('Coffee', const {'Coffee': 20}), 20);
   });
 
   test('a cached search covers only the user standing well inside it', () {
