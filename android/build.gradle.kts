@@ -1,5 +1,6 @@
 allprojects {
     repositories {
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
         google()
         mavenCentral()
     }
@@ -17,6 +18,11 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    plugins.withId("com.android.library") {
+        extensions.configure<com.android.build.gradle.LibraryExtension> {
+            lint.ignoreTestSources = true
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
