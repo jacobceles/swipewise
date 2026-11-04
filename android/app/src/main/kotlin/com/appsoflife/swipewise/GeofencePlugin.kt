@@ -63,7 +63,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             "registerSet" -> registerSet(call, result)
             "unregisterAll" -> unregisterAll(result, call.arguments as? Map<*, *>)
             "clearAccountState" -> {
-                accountEpoch++
+                incrementAccountEpoch(context)
                 store.clear()
                 DwellAlarms.cancelAll(context)
                 PendingMerchantStore.consume()
@@ -76,11 +76,11 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                 unregisterAll(result)
             }
             "getRegisteredCount" -> result.success(store.count())
-            "accountEpoch" -> result.success(accountEpoch)
+            "accountEpoch" -> result.success(currentAccountEpoch(context))
             "recoveryGeneration" -> result.success(PendingReregister.generation(context))
             "requestRefresh" -> {
                 val args = call.arguments as Map<*, *>
-                val owner = if ((args["account_epoch"] as? Number)?.toLong() == accountEpoch)
+                val owner = if ((args["account_epoch"] as? Number)?.toLong() == currentAccountEpoch(context))
                     isCurrentUser(args["user_id"] as? String) else false
                 if (owner != true) result.error(if (owner == null) "ACCOUNT_CHECK_FAILED" else "STALE_ACCOUNT", "Recovery owner changed", null)
                 else {
@@ -133,7 +133,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         val args = call.arguments as Map<String, Any?>
         // A background isolate may finish a Places request after logout. Check
         // the owner inside the native registration queue, not just in Dart.
-        val currentOwner = if ((args["account_epoch"] as? Number)?.toLong() != accountEpoch) false
+        val currentOwner = if ((args["account_epoch"] as? Number)?.toLong() != currentAccountEpoch(context)) false
             else isCurrentUser(args["user_id"] as? String)
         if (currentOwner != true) {
             result.error(if (currentOwner == null) "ACCOUNT_CHECK_FAILED" else "STALE_ACCOUNT",
@@ -150,13 +150,13 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         val merchantHash = registrationHash(zones, null, RESPONSIVENESS_MS)
         val recoveryGeneration = (args["recovery_generation"] as? Number)?.toLong() ?: -1L
         val force = PendingReregister.forceRecovery(context)
-        val keepMerchants = merchantHash == lastMerchantHash && !force
-        val unchanged = hash == lastRegisteredHash &&
+        val effectiveLastMerchantHash = lastMerchantHash ?: store.readLastMerchantHash()
+        val effectiveLastRegisteredHash = lastRegisteredHash ?: store.readLastHash()
+        val keepMerchants = merchantHash == effectiveLastMerchantHash && !force
+        val unchanged = hash == effectiveLastRegisteredHash &&
             !force && (store.count() > 0 || zones.isEmpty())
 
-        if (!keepMerchants) {
-            store.clear()
-        }
+        val incomingIds = mutableSetOf<String>()
         val merchantGeofences = mutableListOf<Geofence>()
         for (z in zones) {
             val gid = z["geofence_id"] as String
@@ -166,6 +166,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             val options = rawOptions.map(MerchantOption::fromChannelMap).filter { it.walkinEligible }
             if (options.isEmpty()) continue
 
+            incomingIds.add(gid)
             val lat = (z["lat"] as Number).toDouble()
             val lng = (z["lng"] as Number).toDouble()
             val radius = (z["radius_m"] as Number).toFloat()
@@ -198,6 +199,10 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     )
                     .build(),
             )
+        }
+        val existingIds = store.readAll().map { it.geofenceId }.toSet()
+        for (removedId in existingIds - incomingIds) {
+            store.remove(removedId)
         }
 
         if (unchanged) {
@@ -243,6 +248,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     val blng = (boundary["lng"] as Number).toDouble()
                     val brad = (boundary["radius_m"] as Number).toFloat()
                     val bgid = boundary["geofence_id"] as String
+                    store.writeBoundary(blat, blng, brad)
                     val bGeofence = Geofence.Builder()
                         .setRequestId(bgid)
                         .setCircularRegion(blat, blng, brad)
@@ -251,7 +257,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                         .setNotificationResponsiveness(RESPONSIVENESS_MS)
                         .build()
                     val bReq = GeofencingRequest.Builder()
-                        .setInitialTrigger(0)
+                        .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                         .addGeofences(listOf(bGeofence))
                         .build()
                     adds.add(client.addGeofences(bReq, boundaryPendingIntent))
@@ -259,12 +265,16 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             } catch (e: SecurityException) {
                 ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                 lastRegisteredHash = null
+                lastMerchantHash = null
+                store.writeHashes(null, null)
                 result.error("PERMISSION_DENIED", e.message, null)
                 done()
                 return@addOnCompleteListener
             } catch (e: Exception) {
                 ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                 lastRegisteredHash = null
+                lastMerchantHash = null
+                store.writeHashes(null, null)
                 result.error("ADD_FAILED", e.message, null)
                 done()
                 return@addOnCompleteListener
@@ -272,6 +282,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
             if (adds.isEmpty()) {
                 lastRegisteredHash = hash
                 lastMerchantHash = merchantHash
+                store.writeHashes(hash, merchantHash)
                 PendingReregister.complete(context, recoveryGeneration)
                 result.success(0)
                 done()
@@ -292,11 +303,14 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_OK, merchantGeofences.size.toLong())
                     lastRegisteredHash = hash
                     lastMerchantHash = merchantHash
+                    store.writeHashes(hash, merchantHash)
                     PendingReregister.complete(context, recoveryGeneration)
                     result.success(merchantGeofences.size)
                 } else {
                     ArrivalDiagnostics.record(context, ArrivalDiagnostics.Event.REGISTRATION_FAILED)
                     lastRegisteredHash = null
+                    lastMerchantHash = null
+                    store.writeHashes(null, null)
                     result.error("ADD_FAILED", failed.exception?.message, null)
                 }
                 done()
@@ -307,7 +321,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     private fun unregisterAll(result: MethodChannel.Result, owner: Map<*, *>? = null) {
         runSerialized { done ->
             if (owner != null) {
-                val currentOwner = if ((owner["account_epoch"] as? Number)?.toLong() != accountEpoch) false
+                val currentOwner = if ((owner["account_epoch"] as? Number)?.toLong() != currentAccountEpoch(context)) false
                     else isCurrentUser(owner["user_id"] as? String)
                 if (currentOwner != true) {
                     if (currentOwner == null) result.error("ACCOUNT_CHECK_FAILED", "Could not validate fence owner", null)
@@ -316,11 +330,12 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
                     return@runSerialized
                 }
             }
-            accountEpoch++ // Invalidates an enabled search/fix that finishes after disable.
+            incrementAccountEpoch(context) // Invalidates an enabled search/fix that finishes after disable.
             NotificationHelper.cancelDwell(context)
             PendingReregister.complete(context, PendingReregister.generation(context))
             lastRegisteredHash = null
             lastMerchantHash = null
+            store.writeHashes(null, null)
             store.clear()
             try {
                 Tasks.whenAllComplete(
@@ -383,6 +398,26 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
 
     companion object {
         @Volatile var accountEpoch: Long = 0
+
+        fun currentAccountEpoch(context: Context): Long {
+            val prefs = context.getSharedPreferences("swipewise_geofence_meta", Context.MODE_PRIVATE)
+            val stored = prefs.getLong("_account_epoch", 0L)
+            val current = maxOf(accountEpoch, stored)
+            if (stored != current) {
+                prefs.edit().putLong("_account_epoch", current).apply()
+            }
+            accountEpoch = current
+            return current
+        }
+
+        fun incrementAccountEpoch(context: Context): Long {
+            val next = currentAccountEpoch(context) + 1L
+            accountEpoch = next
+            context.getSharedPreferences("swipewise_geofence_meta", Context.MODE_PRIVATE)
+                .edit().putLong("_account_epoch", next).commit()
+            return next
+        }
+
         const val CHANNEL = "com.appsoflife/geofence"
         private const val REQ_MERCHANT = 1001
         private const val REQ_BOUNDARY = 1002

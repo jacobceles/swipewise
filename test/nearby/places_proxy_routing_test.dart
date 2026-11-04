@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:swipewise/api/app_check_service.dart';
 import 'package:swipewise/api/data_repository.dart';
 import 'package:swipewise/api/database_helper.dart';
 import 'package:swipewise/nearby/google_places_provider.dart';
@@ -131,6 +132,76 @@ void main() {
           expect(req.headers['X-Goog-FieldMask'], contains('places.id'));
         }
       });
+
+      if (viaProxy) {
+        test('401 triggers a retry with force-refreshed App Check token', () async {
+          final repo = DataRepository();
+          var calls = 0;
+          final seenTokens = <String?>[];
+          var refreshCalls = 0;
+          AppCheckService.getTokenForTest = () async => 'initial-token';
+          AppCheckService.getTokenForceRefreshForTest = () async {
+            refreshCalls++;
+            return 'refreshed-token';
+          };
+          addTearDown(AppCheckService.resetForTest);
+
+          final provider = GooglePlacesProvider(
+            repo: repo,
+            proxyUrl: proxyUrl,
+            apiKey: '',
+            client: MockClient((req) async {
+              calls++;
+              seenTokens.add(req.headers['X-Firebase-AppCheck']);
+              if (calls == 1) {
+                return http.Response('Unauthorized', 401);
+              }
+              return http.Response(jsonEncode({'places': []}), 200);
+            }),
+          );
+
+          final result = await provider.nearby(
+            lat: 40.748,
+            lng: -73.986,
+            radiusMi: 1,
+            categoryIds: const {'grocery'},
+          );
+
+          expect(calls, 2);
+          expect(refreshCalls, 1);
+          expect(seenTokens, ['initial-token', 'refreshed-token']);
+          expect(result, isEmpty);
+        });
+
+        test('401 retry failure throws PlacesUpstreamError', () async {
+          final repo = DataRepository();
+          var calls = 0;
+          AppCheckService.getTokenForTest = () async => 'initial-token';
+          AppCheckService.getTokenForceRefreshForTest = () async => 'refreshed-token';
+          addTearDown(AppCheckService.resetForTest);
+
+          final provider = GooglePlacesProvider(
+            repo: repo,
+            proxyUrl: proxyUrl,
+            apiKey: '',
+            client: MockClient((req) async {
+              calls++;
+              return http.Response('Unauthorized', 401);
+            }),
+          );
+
+          await expectLater(
+            provider.nearby(
+              lat: 40.748,
+              lng: -73.986,
+              radiusMi: 1,
+              categoryIds: const {'grocery'},
+            ),
+            throwsA(isA<PlacesUpstreamError>()),
+          );
+          expect(calls, 2);
+        });
+      }
     });
   }
 

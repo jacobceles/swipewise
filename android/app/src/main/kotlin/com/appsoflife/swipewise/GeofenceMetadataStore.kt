@@ -156,16 +156,55 @@ class GeofenceMetadataStore(private val context: Context) {
 
     /// Every registered merchant fence.
     fun readAll(): List<MerchantMeta> = prefs.all.keys
-        .filter { !it.startsWith(GEN_PREFIX) && it != KEY_GLOBAL_GENERATION }
+        .filter { !it.startsWith("_") }
         .mapNotNull { read(it) }
 
     fun clear() {
         DwellAlarms.cancelAll(context)
         val next = globalGeneration() + 1L
-        prefs.edit().clear().putLong(KEY_GLOBAL_GENERATION, next).apply()
+        val epoch = prefs.getLong(KEY_ACCOUNT_EPOCH, 0L)
+        prefs.edit()
+            .clear()
+            .putLong(KEY_GLOBAL_GENERATION, next)
+            .putLong(KEY_ACCOUNT_EPOCH, epoch)
+            .apply()
     }
 
-    fun count(): Int = prefs.all.keys.count { !it.startsWith(GEN_PREFIX) && it != KEY_GLOBAL_GENERATION }
+    fun count(): Int = prefs.all.keys.count { !it.startsWith("_") }
+
+    fun writeBoundary(lat: Double, lng: Double, radiusM: Float) {
+        val o = JSONObject().apply {
+            put("lat", lat)
+            put("lng", lng)
+            put("radius_m", radiusM.toDouble())
+        }
+        prefs.edit().putString(KEY_BOUNDARY, o.toString()).apply()
+    }
+
+    fun readBoundary(): FenceGeometry? {
+        val raw = prefs.getString(KEY_BOUNDARY, null) ?: return null
+        return try {
+            val o = JSONObject(raw)
+            FenceGeometry(
+                lat = o.getDouble("lat"),
+                lng = o.getDouble("lng"),
+                radiusM = o.getDouble("radius_m").toFloat(),
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun writeHashes(lastHash: Int?, lastMerchantHash: Int?) {
+        val edit = prefs.edit()
+        if (lastHash != null) edit.putInt(KEY_LAST_HASH, lastHash) else edit.remove(KEY_LAST_HASH)
+        if (lastMerchantHash != null) edit.putInt(KEY_LAST_MERCHANT_HASH, lastMerchantHash) else edit.remove(KEY_LAST_MERCHANT_HASH)
+        edit.apply()
+    }
+
+    fun readLastHash(): Int? = if (prefs.contains(KEY_LAST_HASH)) prefs.getInt(KEY_LAST_HASH, 0) else null
+
+    fun readLastMerchantHash(): Int? = if (prefs.contains(KEY_LAST_MERCHANT_HASH)) prefs.getInt(KEY_LAST_MERCHANT_HASH, 0) else null
 
     fun generation(geofenceId: String): Long =
         globalGeneration() * 1_000_000L + prefs.getLong(genKey(geofenceId), 0L)
@@ -178,6 +217,10 @@ class GeofenceMetadataStore(private val context: Context) {
         private const val PREFS = "swipewise_geofence_meta"
         private const val GEN_PREFIX = "_gen_"
         private const val KEY_GLOBAL_GENERATION = "_global_gen"
+        private const val KEY_ACCOUNT_EPOCH = "_account_epoch"
+        private const val KEY_LAST_HASH = "_last_reg_hash"
+        private const val KEY_LAST_MERCHANT_HASH = "_last_merchant_hash"
+        private const val KEY_BOUNDARY = "_boundary_meta"
 
         fun parseOptions(o: JSONObject): List<MerchantOption> {
             val arr = o.optJSONArray("options") ?: return emptyList()

@@ -285,13 +285,11 @@ class GooglePlacesProvider extends MerchantSearchProvider {
     final typeBudget = maxRefinementRequests - math.min(2, batches.length);
     Future<({List<NearbyMerchant> merchants, double coveredM})> fetchExtra(
       List<String> subset,
-      double atLat,
-      double atLng,
     ) {
       extra++;
       return _fetchBatch(
-        coarseLat: atLat,
-        coarseLng: atLng,
+        coarseLat: coarseLat,
+        coarseLng: coarseLng,
         radiusM: radiusM,
         originLat: lat,
         originLng: lng,
@@ -308,11 +306,10 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       final covered = <double>[];
       for (final half in halves) {
         try {
-          final r = await fetchExtra(half, coarseLat, coarseLng);
+          final r = await fetchExtra(half);
           known.addAll(r.merchants);
           covered.add(r.coveredM);
         } catch (_) {
-          partial = true;
           covered.add(coverage); // Parent still proves this smaller circle.
         }
       }
@@ -329,31 +326,6 @@ class GooglePlacesProvider extends MerchantSearchProvider {
             ? 0
             : await refine(batches[i], outcomes[i].coveredM),
       );
-    }
-    if (coverage.isNotEmpty && coverage.reduce(math.min) < targetM) {
-      // Offset requests discover additional known places, but do not magically
-      // enlarge the complete circle at the original centre.
-      const offsets = [
-        (0.001, 0.0),
-        (-0.001, 0.0),
-        (0.0, 0.001),
-        (0.0, -0.001),
-      ];
-      var i = 0;
-      while (extra < maxRefinementRequests && i < offsets.length) {
-        final offset = offsets[i];
-        try {
-          final r = await fetchExtra(
-            batches[i % batches.length],
-            double.parse((coarseLat + offset.$1).toStringAsFixed(3)),
-            double.parse((coarseLng + offset.$2).toStringAsFixed(3)),
-          );
-          known.addAll(r.merchants);
-        } catch (_) {
-          partial = true;
-        }
-        i++;
-      }
     }
 
     // Merge, dedup by place id, preserve closest occurrence.
@@ -417,23 +389,35 @@ class GooglePlacesProvider extends MerchantSearchProvider {
       if (_kAndroidCert.isNotEmpty) headers['X-Android-Cert'] = _kAndroidCert;
     }
 
-    final http.Response resp;
-    try {
-      resp = await _client
-          .post(
-            Uri.parse(viaProxy ? _proxyUrl : _endpoint),
-            headers: headers,
-            body: body,
-          )
-          .timeout(const Duration(seconds: 15));
-    } on TimeoutException {
-      throw PlacesNetworkTransient('timeout');
-    } on SocketException catch (e) {
-      throw PlacesNetworkTransient('network: ${e.message}');
-    } on http.ClientException catch (e) {
-      // IOClient wraps a connection that dies mid-request ("Software caused
-      // connection abort") in a plain ClientException, not a SocketException.
-      throw PlacesNetworkTransient('network: ${e.message}');
+    Future<http.Response> sendRequest() async {
+      try {
+        return await _client
+            .post(
+              Uri.parse(viaProxy ? _proxyUrl : _endpoint),
+              headers: headers,
+              body: body,
+            )
+            .timeout(const Duration(seconds: 15));
+      } on TimeoutException {
+        throw PlacesNetworkTransient('timeout');
+      } on SocketException catch (e) {
+        throw PlacesNetworkTransient('network: ${e.message}');
+      } on http.ClientException catch (e) {
+        // IOClient wraps a connection that dies mid-request ("Software caused
+        // connection abort") in a plain ClientException, not a SocketException.
+        throw PlacesNetworkTransient('network: ${e.message}');
+      }
+    }
+
+    var resp = await sendRequest();
+    if (viaProxy && resp.statusCode == 401) {
+      final token = await AppCheckService.token(forceRefresh: true);
+      if (token != null) {
+        headers['X-Firebase-AppCheck'] = token;
+      } else {
+        headers.remove('X-Firebase-AppCheck');
+      }
+      resp = await sendRequest();
     }
 
     if (resp.statusCode != 200) {

@@ -86,6 +86,7 @@ class MvpArrivalRegressionTest {
             MerchantOption("tmobile", "T-Mobile at Costco", "Shopping", "Ink", 5.0, lat = 40.0004, lng = -74.0),
             MerchantOption("bakery", "Costco Bakery", "Grocery", "Costco Visa", 2.0, lat = 40.0004, lng = -74.0, brandId = "costco"),
         ), lat = 40.0004, lng = -74.0, radiusM = 100f, dwellSeconds = 30)
+        store.remove(meta.geofenceId)
         store.write(costcoMain)
         store.write(costcoCounters)
 
@@ -129,7 +130,7 @@ class MvpArrivalRegressionTest {
         val chicken = thai.copy(merchantId = "chicken", name = "Chicken Shop", lat = 40.00005)
         store.write(meta.copy(options = listOf(thai, chicken)))
         val attempt = arm()
-        location.nextFix = fix(60_000L)
+        location.nextFix = fix(130_000L)
         DwellCheckReceiver().onReceive(context, intent(attempt.token))
         val posted = notifications.postedMetas.single()
         assertTrue(posted.approximate)

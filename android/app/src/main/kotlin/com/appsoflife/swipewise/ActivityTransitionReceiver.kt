@@ -39,6 +39,7 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
 
         var sawWalkingToStill = false
         var pendingReregisterNeeded = false
+        var sawVehicleExit = false
 
         for (event in freshEvents) {
             val prevActivity = currentActivity
@@ -47,6 +48,14 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
                 event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT
             currentActivity = if (leftVehicle) DetectedActivity.UNKNOWN else event.activityType
             currentTransition = event.transitionType
+
+            if (leftVehicle || (prevActivity == DetectedActivity.IN_VEHICLE && currentActivity != DetectedActivity.IN_VEHICLE)) {
+                sawVehicleExit = true
+            }
+
+            if (sawVehicleExit && !PendingReregister.isPending(context) && GeofenceMetadataStore(context).readBoundary() != null) {
+                PendingReregister.request(context, FootReregister.COOLDOWN_MS, "post_drive")
+            }
 
             // Latch walking-to-still; unlatch if user begins walking or driving again
             if (prevActivity == DetectedActivity.WALKING &&
@@ -80,7 +89,9 @@ class ActivityTransitionReceiver : BroadcastReceiver() {
         }
 
         if (pendingReregisterNeeded) {
-            if (currentActivity != DetectedActivity.IN_VEHICLE && FootReregister.remaining(context) == 0L) {
+            val reason = PendingReregister.reason(context)
+            val bypassCooldown = reason in setOf("driving", "post_drive", "os_recovery")
+            if (currentActivity != DetectedActivity.IN_VEHICLE && (bypassCooldown || FootReregister.remaining(context) == 0L)) {
                 FootReregister.mark(context, SystemClock.elapsedRealtime())
                 PendingReregister.defer(context, FootReregister.COOLDOWN_MS)
                 ReregisterScheduler.enqueue(context)

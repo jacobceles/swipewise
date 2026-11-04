@@ -305,8 +305,11 @@ class DwellCheckReceiver : BroadcastReceiver() {
             reach,
         )
         if (candidates.isEmpty()) {
-            WalkinLog.w(context, "dwell ${meta.geofenceId}: no candidates within reach -> fail closed")
-            return null
+            if (meta.options.any { it.lat != null && it.lng != null } || meta.options.none { it.walkinEligible }) {
+                WalkinLog.w(context, "dwell ${meta.geofenceId}: no candidates within reach -> fail closed")
+                return null
+            }
+            return meta.copy(options = StoreResolver.capped(meta.options, fix.latitude, fix.longitude)) to false
         }
         val picked = StoreResolver.resolveAtStore(candidates, fix.accuracy.toDouble())
         if (picked.isNullOrEmpty()) {
@@ -337,6 +340,11 @@ class DwellCheckReceiver : BroadcastReceiver() {
     private fun fallbackAdvice(context: Context, attempt: DwellAttempt, reason: DwellOutcome) {
         if (DwellAlarms.validateAttempt(context, attempt.geofenceId, attempt.token) == null) return
         val meta = GeofenceMetadataStore(context).read(attempt.geofenceId) ?: return
+        if (attempt.isNextDoor) {
+            DwellAlarms.cancel(context, attempt.geofenceId, attempt.token)
+            done(context, meta, reason)
+            return
+        }
         val granted = android.content.pm.PackageManager.PERMISSION_GRANTED
         if (androidx.core.content.ContextCompat.checkSelfPermission(context, "android.permission.ACCESS_COARSE_LOCATION") != granted &&
             androidx.core.content.ContextCompat.checkSelfPermission(context, "android.permission.ACCESS_FINE_LOCATION") != granted) {
@@ -356,7 +364,23 @@ class DwellCheckReceiver : BroadcastReceiver() {
         }
         ArrivalDiagnostics.record(context, event)
         WalkinLog.w(context, "dwell ${attempt.geofenceId}: uncertain fence advice after ${reason.wire}")
-        val options = StoreResolver.capped(meta.options, meta.lat, meta.lng)
+        val options = if (meta.lat != null && meta.lng != null && meta.radiusM != null) {
+            val metaBrands = meta.options.mapNotNull { it.brandId }.filter { it.isNotBlank() }.toSet()
+            val reach = meta.radiusM + StoreResolver.AT_STORE_M
+            val sameBrandMainStores = GeofenceMetadataStore(context).readAll()
+                .flatMap { it.options }
+                .filter { o ->
+                    o.mainStore && o.brandId != null && o.brandId in metaBrands &&
+                        o.lat != null && o.lng != null &&
+                        distanceM(meta.lat, meta.lng, o.lat, o.lng) <= reach
+                }
+            val folded = meta.options.map { opt ->
+                StoreResolver.foldSameAdvice(listOf(opt) + sameBrandMainStores).first()
+            }.distinctBy { it.merchantId }
+            StoreResolver.capped(folded, meta.lat, meta.lng)
+        } else {
+            StoreResolver.capped(meta.options, meta.lat, meta.lng)
+        }
         maybePost(context, meta.copy(options = options, approximate = true), attempt = attempt,
             sampleNanos = SystemClock.elapsedRealtimeNanos())
     }

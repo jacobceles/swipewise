@@ -337,6 +337,75 @@ void main() {
       }
     });
   }
+
+  test('cached registration does not requestRefresh when coverage >= boundary radius', () async {
+    await db.insert('users', {'id': 'u2', 'identifier': 'User'});
+    await db.insert('cards', {
+      'id': 'c2',
+      'user_id': 'u2',
+      'name': 'Card',
+      'source': 'manual',
+    });
+    final location = _MovingLocation()..lat = 40.00049;
+    var refreshes = 0;
+    const channel = MethodChannel('com.appsoflife/geofence');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'accountEpoch') return 7;
+          if (call.method == 'recoveryGeneration') return 11;
+          if (call.method == 'requestRefresh') {
+            refreshes++;
+            return null;
+          }
+          if (call.method == 'registerSet') {
+            final args = call.arguments as Map<Object?, Object?>;
+            return (args['zones'] as List).length;
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    final cache = TileCache();
+    await cache.write(
+      lat: 40.0,
+      lng: -100.0,
+      result: NearbySearchResult(
+        centerLat: 40.0,
+        centerLng: -100.0,
+        coveredM: 1458,
+        merchants: [
+          NearbyMerchant(
+            id: 'store1',
+            name: 'Store 1',
+            lat: 40.0001,
+            lng: -100.0001,
+            distanceMi: 0.01,
+          ),
+        ],
+      ),
+    );
+
+    final manager = GeofenceManager(
+      cache: cache,
+      search: _AreaSearch('none'),
+      location: location,
+      repo: DataRepository(),
+    );
+
+    final registered = await manager.ensureRegistered(
+      userId: 'u2',
+      enabled: true,
+      radiusMi: 1,
+      dwellByCategory: {},
+      trigger: 'background',
+    );
+
+    expect(registered, isTrue);
+    expect(refreshes, 0, reason: 'Rounding of boundary coordinates must not trigger false refresh');
+  });
 }
 
 class _MovingLocation extends LocationService {

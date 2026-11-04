@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swipewise/api/reward_category_mapper.dart';
+import 'package:swipewise/models/insights.dart';
+import 'package:swipewise/models/reward_category.dart';
 import 'package:swipewise/nearby/geofence_manager.dart';
 import 'package:swipewise/nearby/merchant.dart';
 import 'package:swipewise/nearby/tile_cache.dart';
@@ -140,5 +144,34 @@ void main() {
     expect(left(0.0009), greaterThanOrEqualTo(TileCache.edgeM));
     // ~500 m away (the Flemington arrival): outside, so search afresh.
     expect(left(0.0045), lessThan(0));
+  });
+
+  test('travel subcategory falls back to travel card when specific category missing', () {
+    applyCategoriesJson(File('assets/vocab/categories.json').readAsStringSync());
+    const travelPick = BestCardEntry(
+      id: 'card-1',
+      name: 'Venture X',
+      rate: 2.0,
+      currency: 'USD',
+      category: RewardCategory.travel,
+    );
+    final lookup = BestCardLookup(
+      byCategory: {RewardCategory.travel: travelPick},
+      byBrand: {},
+    );
+    const hotel = NearbyMerchant(
+      id: 'h1',
+      name: 'Grand Hotel',
+      placeType: 'hotel',
+      lat: 40,
+      lng: -74,
+      distanceMi: 0.1,
+    );
+    final payload = buildPayloadForTest(
+      merchants: const [hotel],
+      lookup: lookup,
+    );
+    final options = (payload.single['options'] as List).cast<Map>();
+    expect(options.single['best_card_name'], 'Venture X');
   });
 }

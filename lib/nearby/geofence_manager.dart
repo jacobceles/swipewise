@@ -257,16 +257,29 @@ class GeofenceManager {
         brandResolver,
         mutedIds: mutedIds,
       );
+      final bLat = double.parse(fix.lat.toStringAsFixed(3));
+      final bLng = double.parse(fix.lng.toStringAsFixed(3));
+      final coveredAtBoundary = TileCache.coverageLeftM(
+        centerLat: area.centerLat,
+        centerLng: area.centerLng,
+        coveredM: area.coveredM,
+        lat: bLat,
+        lng: bLng,
+      );
+      final capCoverage = clusters.length > merchantCap
+          ? _haversineMeters(
+                  fix.lat,
+                  fix.lng,
+                  cappedClusters.last.primary.lat,
+                  cappedClusters.last.primary.lng,
+                ) -
+                _haversineMeters(fix.lat, fix.lng, bLat, bLng)
+          : double.infinity;
+      final effectiveCoverageM = math.min(coveredAtBoundary, capCoverage);
       final boundary = _buildBoundary(
         centerLat: fix.lat,
         centerLng: fix.lng,
-        coveredM: TileCache.coverageLeftM(
-          centerLat: area.centerLat,
-          centerLng: area.centerLng,
-          coveredM: area.coveredM,
-          lat: fix.lat,
-          lng: fix.lng,
-        ),
+        coveredM: coveredAtBoundary,
         capped: clusters.length > merchantCap ? cappedClusters : null,
       );
       final count = await GeofenceChannel.registerSet(
@@ -276,32 +289,10 @@ class GeofenceManager {
         boundary: boundary,
         recoveryGeneration: recoveryGeneration,
       );
-      final coveredAtBoundary = TileCache.coverageLeftM(
-        centerLat: area.centerLat,
-        centerLng: area.centerLng,
-        coveredM: area.coveredM,
-        lat: boundary['lat'] as double,
-        lng: boundary['lng'] as double,
-      );
-      final capCoverage = clusters.length > merchantCap
-          ? _haversineMeters(
-                  fix.lat,
-                  fix.lng,
-                  cappedClusters.last.primary.lat,
-                  cappedClusters.last.primary.lng,
-                ) -
-                _haversineMeters(
-                  fix.lat,
-                  fix.lng,
-                  boundary['lat'] as double,
-                  boundary['lng'] as double,
-                )
-          : double.infinity;
       final needsRefresh =
           area.partial ||
           searchError != null ||
-          math.min(coveredAtBoundary, capCoverage) <
-              (boundary['radius_m'] as num);
+          effectiveCoverageM.round() < (boundary['radius_m'] as num);
       if (needsRefresh) {
         await GeofenceChannel.requestRefresh(
           userId: userId,
@@ -604,7 +595,11 @@ class GeofenceManager {
                   : classifyLooseLabel(label)),
           brandId,
         );
-        final categoryBest = lookup.byCategory[category];
+        final categoryBest =
+            lookup.byCategory[category] ??
+            (category.isTravelSubcategory
+                ? lookup.byCategory[RewardCategory.travel]
+                : null);
         final String? bestName;
         final double? bestRate;
         final String? bestCurrency;
@@ -697,6 +692,45 @@ clusterMerchantsForTest(
   for (final c in _clusterMerchants(merchants, distanceM))
     (anchor: c.primary, others: c.others),
 ];
+
+@visibleForTesting
+List<Map<String, dynamic>> buildPayloadForTest({
+  required List<NearbyMerchant> merchants,
+  required BestCardLookup lookup,
+  CardPick? catchAll,
+  BrandResolver? brandResolver,
+}) {
+  final clusters = [
+    for (final m in merchants) _MerchantCluster(primary: m, others: []),
+  ];
+  return GeofenceManager(
+    cache: TileCache(),
+    search: _DummySearch(),
+    location: LocationService(),
+    repo: DataRepository(),
+  )._buildPayload(
+    clusters,
+    lookup,
+    catchAll,
+    const {},
+    brandResolver ?? BrandResolver.fromDefaultRegistry(),
+  );
+}
+
+class _DummySearch extends MerchantSearchProvider {
+  @override
+  Future<NearbySearchResult> nearbyCovered({
+    required double lat,
+    required double lng,
+    required int radiusMi,
+    Set<String>? categoryIds,
+  }) async => NearbySearchResult(
+    centerLat: lat,
+    centerLng: lng,
+    coveredM: 0,
+    merchants: const [],
+  );
+}
 
 List<_MerchantCluster> _clusterMerchants(
   List<NearbyMerchant> merchants,

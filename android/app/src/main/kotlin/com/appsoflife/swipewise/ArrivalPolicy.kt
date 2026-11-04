@@ -45,6 +45,7 @@ object ArrivalPolicy {
     const val MAX_COMBINED_STABILITY_UNCERTAINTY_M = 40.0f
     const val MAX_STATIONARY_UNCERTAINTY_RATE_MPS = 0.6f // Heuristic (disp + acc1 + acc2)/dt <= 0.6 m/s
     const val MAX_FIX_AGE_NANOS = 15_000L * 1_000_000L // 15 seconds
+    const val MAX_IN_FENCE_FIX_AGE_NANOS = 120_000L * 1_000_000L // 120 seconds for stationary coalesced in-fence fix
     const val FUTURE_SLACK_NANOS = 1_000L * 1_000_000L // 1 second
     const val SLACK_M = 50.0f
     const val MOVING_SPEED_MPS = 2.0f // Restore the working baseline's brisk-walk cutoff.
@@ -54,6 +55,7 @@ object ArrivalPolicy {
     const val MIN_INDEPENDENT_INTERVAL_NANOS = 10_000L * 1_000_000L // 10 seconds
     const val MAX_BASELINE_INTERVAL_NANOS = 150_000L * 1_000_000L // 150 seconds baseline ceiling
     const val AR_MOTION_WINDOW_NANOS = 30L * 60L * 1_000_000_000L // Walking transition may lag a stop.
+    const val AR_WALK_WINDOW_NANOS = 2L * 60L * 1_000_000_000L // 2 minutes
     const val AR_DRIVE_LONG_WINDOW_NANOS = 2L * 3600L * 1_000_000_000L // 2 hours
 
     private fun isInvalidFix(fix: FixObservation): Boolean =
@@ -93,30 +95,51 @@ object ArrivalPolicy {
             return decision(ArrivalVerdict.REJECT, DwellOutcome.INVALID_FIX, "invalid_current_fix")
         }
 
+        val distance = distanceM(currentFix.lat, currentFix.lng, fence.lat, fence.lng).toFloat()
+        val allowed = fence.radiusM + currentFix.accuracyM + SLACK_M
+        val maxReach = if (isNextDoor) maxOf(allowed, VisitLock.RADIUS_M.toFloat() + currentFix.accuracyM) else allowed
+
         val ageNanos = nowElapsedNanos - currentFix.elapsedRealtimeNanos
         if (ageNanos < -FUTURE_SLACK_NANOS) {
             return decision(ArrivalVerdict.REJECT, DwellOutcome.STALE_FIX, "future_fix")
         }
         if (ageNanos > MAX_FIX_AGE_NANOS) {
-            val driving = activity != null && activity.type == DetectedActivity.IN_VEHICLE &&
-                activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
-                nowElapsedNanos - activity.elapsedRealtimeNanos in 0 until AR_DRIVE_LONG_WINDOW_NANOS
-            return if (driving) decision(ArrivalVerdict.REJECT, DwellOutcome.MOVING_RECHECK, "stale_fix_while_driving")
-            else decision(ArrivalVerdict.FALLBACK, DwellOutcome.STALE_FIX, "fence_advice_stale_fix_${ageNanos / 1_000_000}ms")
+            if (ageNanos <= MAX_IN_FENCE_FIX_AGE_NANOS && distance <= maxReach) {
+                // FusedLocationProvider with BALANCED_POWER_ACCURACY returns the 30-60s old entry fix
+                // when stationary inside the store: proceed with normal evaluation using this in-fence fix!
+            } else {
+                val driving = activity != null && activity.type == DetectedActivity.IN_VEHICLE &&
+                    activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
+                    nowElapsedNanos - activity.elapsedRealtimeNanos in 0 until AR_DRIVE_LONG_WINDOW_NANOS
+                return if (driving || isNextDoor) {
+                    decision(
+                        ArrivalVerdict.REJECT,
+                        if (driving) DwellOutcome.MOVING_RECHECK else DwellOutcome.STALE_FIX,
+                        if (driving) "stale_fix_while_driving" else "stale_fix_next_door",
+                        distance,
+                        maxReach,
+                    )
+                } else {
+                    decision(
+                        ArrivalVerdict.FALLBACK,
+                        DwellOutcome.STALE_FIX,
+                        "fence_advice_stale_fix_${ageNanos / 1_000_000}ms",
+                        distance,
+                        maxReach,
+                    )
+                }
+            }
         }
 
-        val distance = distanceM(currentFix.lat, currentFix.lng, fence.lat, fence.lng).toFloat()
-        val allowed = fence.radiusM + currentFix.accuracyM + SLACK_M
-
-        if (!isNextDoor && distance > allowed) {
-            return decision(ArrivalVerdict.REJECT, DwellOutcome.OUTSIDE_FENCE, "outside_fence", distance, allowed)
+        if (distance > maxReach) {
+            return decision(ArrivalVerdict.REJECT, DwellOutcome.OUTSIDE_FENCE, "outside_fence", distance, maxReach)
         }
 
         val hasDefiniteHighSpeed = currentFix.speedMps != null && currentFix.speedMps > MOVING_SPEED_MPS
         val isFreshWalking = activity != null &&
             activity.type == DetectedActivity.WALKING &&
             activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
-            (nowElapsedNanos - activity.elapsedRealtimeNanos) < AR_MOTION_WINDOW_NANOS
+            (nowElapsedNanos - activity.elapsedRealtimeNanos) < AR_WALK_WINDOW_NANOS
         val isFreshDriving = activity != null &&
             activity.type == DetectedActivity.IN_VEHICLE &&
             activity.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER &&
@@ -133,7 +156,7 @@ object ArrivalPolicy {
                 val impliedSpeed = disp / dtSec
                 val uncertaintyRate = (disp + priorFix.accuracyM + currentFix.accuracyM) / dtSec
 
-                if (impliedSpeed > 1.0 || disp > 40.0) {
+                if (impliedSpeed > MOVING_SPEED_MPS) {
                     hasDisplacementMotion = true
                 } else if (dtNanos <= MAX_BASELINE_INTERVAL_NANOS &&
                     priorFix.accuracyM <= MAX_STABLE_FIX_ACCURACY_M &&

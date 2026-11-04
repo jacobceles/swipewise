@@ -122,6 +122,8 @@ object PendingReregister {
     fun isPending(context: Context): Boolean =
         prefs(context).getBoolean(KEY_PENDING, false)
 
+    fun reason(context: Context): String? = prefs(context).getString("reason", null)
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

@@ -77,4 +77,36 @@ void main() {
     expect(await AppCheckService.token(), isNull);
     expect(calls, 2);
   });
+
+  test('forceRefresh: true calls getTokenForceRefreshForTest when provided', () async {
+    var normalCalls = 0;
+    var refreshCalls = 0;
+    AppCheckService.getTokenForTest = () async {
+      normalCalls++;
+      return 'normal';
+    };
+    AppCheckService.getTokenForceRefreshForTest = () async {
+      refreshCalls++;
+      return 'refreshed';
+    };
+
+    expect(await AppCheckService.token(), 'normal');
+    expect(normalCalls, 1);
+    expect(refreshCalls, 0);
+
+    expect(await AppCheckService.token(forceRefresh: true), 'refreshed');
+    expect(normalCalls, 1);
+    expect(refreshCalls, 1);
+  });
+
+  test('forceRefresh: true falls back to getTokenForTest when refresh setter not provided', () async {
+    var calls = 0;
+    AppCheckService.getTokenForTest = () async {
+      calls++;
+      return 'token-$calls';
+    };
+
+    expect(await AppCheckService.token(forceRefresh: true), 'token-1');
+    expect(calls, 1);
+  });
 }

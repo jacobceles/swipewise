@@ -129,7 +129,7 @@ object DwellAlarms {
         val currentBoot = BootIdentity.getBootCount(context)
         return currentBoot == BootIdentity.UNKNOWN_BOOT_COUNT ||
             attempt.bootCount != currentBoot ||
-            attempt.accountEpoch != GeofencePlugin.accountEpoch ||
+            attempt.accountEpoch != GeofencePlugin.currentAccountEpoch(context) ||
             attempt.metadataGeneration != GeofenceMetadataStore(context).generation(geofenceId) ||
             nowElapsedNanos < attempt.createdAtElapsedNanos ||
             nowElapsedNanos > attempt.deadlineElapsedNanos + OVERDUE_GRACE_NANOS ||
@@ -246,7 +246,7 @@ object DwellAlarms {
         val attempt = DwellAttempt(
             token = token,
             geofenceId = geofenceId,
-            accountEpoch = GeofencePlugin.accountEpoch,
+            accountEpoch = GeofencePlugin.currentAccountEpoch(context),
             metadataGeneration = GeofenceMetadataStore(context).generation(geofenceId),
             bootCount = bootCount,
             createdAtElapsedNanos = createdAt,

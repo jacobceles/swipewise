@@ -257,7 +257,11 @@ final nearbyMerchantsProvider = FutureProvider<List<NearbyMerchantWithReward>>((
     // `whole-foods-market` lights up Prime Visa even though the place type
     // only says "Grocery."
     final brandHit = brandId == null ? null : lookup.byBrand[brandId];
-    final categoryBest = lookup.byCategory[category];
+    final categoryBest =
+        lookup.byCategory[category] ??
+        (category.isTravelSubcategory
+            ? lookup.byCategory[RewardCategory.travel]
+            : null);
     final String? bestName;
     final double? bestRate;
     final String? bestCurrency;

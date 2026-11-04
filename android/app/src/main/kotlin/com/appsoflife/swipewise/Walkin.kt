@@ -199,6 +199,7 @@ object StoreResolver {
 /// advice as one already named stays held back too, as in [StoreResolver.foldSameAdvice].
 object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
+    const val LINGER_MS = 2L * 60L * 60L * 1000L
     const val RADIUS_M = 250.0
 
     const val PROVISIONAL_MS = 5L * 60L * 1000L
@@ -232,7 +233,7 @@ object VisitLock {
         if (last == null || last.departed || nowMillis < last.createdAtMillis) return false
         val age = nowMillis - last.atMillis
         if (!last.confirmed || last.merchantIds.isEmpty()) return nowMillis - last.createdAtMillis < PROVISIONAL_MS
-        return age < WINDOW_MS || last.fenceId != null
+        return age < WINDOW_MS || (last.fenceId != null && !last.left && age < WINDOW_MS + LINGER_MS)
     }
 
     fun isActive(last: Visit?, nowMillis: Long, lat: Double, lng: Double): Boolean =
@@ -357,9 +358,9 @@ object VisitLock {
     /// confirms departure; it is also used by the boundary receiver.
     fun observeDeparture(context: Context, fix: android.location.Location?) {
         if (fix == null || !fix.hasAccuracy() || !fix.accuracy.isFinite() || fix.accuracy <= 0f ||
-            fix.accuracy > StoreResolver.MAX_ACCURACY_M || !fix.latitude.isFinite() || !fix.longitude.isFinite()) return
+            fix.accuracy > 100f || !fix.latitude.isFinite() || !fix.longitude.isFinite()) return
         val age = android.os.SystemClock.elapsedRealtimeNanos() - fix.elapsedRealtimeNanos
-        if (age !in 0..ArrivalPolicy.MAX_FIX_AGE_NANOS) return
+        if (age !in 0..(120_000L * 1_000_000L)) return
         val visit = read(context) ?: return
         if (distanceM(visit.lat, visit.lng, fix.latitude, fix.longitude) > RADIUS_M + fix.accuracy) {
             write(context, visit.copy(departed = true, left = true, nextDoorCandidateId = null, candidateSampleNanos = 0L))

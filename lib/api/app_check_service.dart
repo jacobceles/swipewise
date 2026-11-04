@@ -43,8 +43,22 @@ class AppCheckService {
   /// so the next call goes back to the SDK (and its own cache and refresh).
   static Future<String?>? _inFlight;
 
-  static Future<String?> Function() _getToken = () =>
+  static Future<String?> _defaultGetToken() =>
       FirebaseAppCheck.instance.getToken();
+
+  static Future<String?> _defaultGetTokenForceRefresh() =>
+      FirebaseAppCheck.instance.getToken(true);
+
+  static Future<String?> Function() _getToken = _defaultGetToken;
+  static Future<String?> Function()? _getTokenForceRefresh;
+
+  static Future<String?> _getTokenForceRefreshCall() {
+    final fn = _getTokenForceRefresh ??
+        (_getToken == _defaultGetToken
+            ? _defaultGetTokenForceRefresh
+            : _getToken);
+    return fn();
+  }
 
   /// Neither call may block indefinitely.
   ///
@@ -129,14 +143,21 @@ class AppCheckService {
   /// recent in-flight request" did not hold at launch: 2026-08-13 logged two
   /// cold trips, the second starting ~26 ms before the first finished, and a
   /// 2026-10-15 launch logged ~15 slow (300–480 ms) calls inside one second.
-  static Future<String?> token() =>
-      _inFlight ??= _fetch().whenComplete(() => _inFlight = null);
+  static Future<String?> token({bool forceRefresh = false}) {
+    if (forceRefresh) {
+      return _inFlight =
+          _fetch(forceRefresh: true).whenComplete(() => _inFlight = null);
+    }
+    return _inFlight ??=
+        _fetch(forceRefresh: false).whenComplete(() => _inFlight = null);
+  }
 
-  static Future<String?> _fetch() async {
+  static Future<String?> _fetch({bool forceRefresh = false}) async {
     final started = DateTime.now();
     String? token;
     try {
-      token = await _getToken().timeout(_timeout);
+      token = await (forceRefresh ? _getTokenForceRefreshCall() : _getToken())
+          .timeout(_timeout);
       return token;
     } catch (e) {
       Log.w('appcheck', 'getToken failed', e);
@@ -164,9 +185,14 @@ class AppCheckService {
   static void resetForTest() {
     _activated = false;
     _inFlight = null;
-    _getToken = () => FirebaseAppCheck.instance.getToken();
+    _getToken = _defaultGetToken;
+    _getTokenForceRefresh = null;
   }
 
   @visibleForTesting
   static set getTokenForTest(Future<String?> Function() fn) => _getToken = fn;
+
+  @visibleForTesting
+  static set getTokenForceRefreshForTest(Future<String?> Function()? fn) =>
+      _getTokenForceRefresh = fn;
 }

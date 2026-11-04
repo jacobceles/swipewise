@@ -111,4 +111,40 @@ class RecoverySchedulingTest {
         org.robolectric.shadows.ShadowLooper.idleMainLooper(10_000L, java.util.concurrent.TimeUnit.MILLISECONDS)
         assertEquals(1, calls)
     }
+
+    @Test fun `IN_VEHICLE EXIT followed by WALKING ENTER with boundary requests post_drive and enqueues despite cooldown`() {
+        val store = GeofenceMetadataStore(context)
+        store.writeBoundary(40.50, -74.85, 1000f)
+
+        FootReregister.mark(context, SystemClock.elapsedRealtime())
+        assertTrue(FootReregister.remaining(context) > 0L)
+
+        val baseNanos = 100_000_000_000L
+        ActivityState.set(
+            context,
+            com.google.android.gms.location.DetectedActivity.IN_VEHICLE,
+            com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_ENTER,
+            baseNanos,
+            System.currentTimeMillis(),
+        )
+
+        val events = listOf(
+            com.google.android.gms.location.ActivityTransitionEvent(
+                com.google.android.gms.location.DetectedActivity.IN_VEHICLE,
+                com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_EXIT,
+                baseNanos + 1_000_000_000L,
+            ),
+            com.google.android.gms.location.ActivityTransitionEvent(
+                com.google.android.gms.location.DetectedActivity.WALKING,
+                com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_ENTER,
+                baseNanos + 2_000_000_000L,
+            ),
+        )
+
+        ActivityTransitionReceiver().handleTransitions(context, events, baseNanos + 3_000_000_000L)
+
+        assertEquals("post_drive", PendingReregister.reason(context))
+        assertTrue(PendingReregister.isPending(context))
+        assertEquals(1, enqueued)
+    }
 }

@@ -77,9 +77,40 @@ class ArrivalPolicyTest {
 
     @Test
     fun `stale fix uses uncertain fence advice instead of stale coordinates`() {
-        val staleAgeNanos = 16_000L * 1_000_000L
+        val staleAgeNanos = 125_000L * 1_000_000L
         val decision = ArrivalPolicy.evaluate(
             currentFix = fix(elapsedNanos = baseNanos - staleAgeNanos),
+            priorFix = null,
+            fence = fence,
+            activity = null,
+            isRecheck = false,
+            nowElapsedNanos = baseNanos,
+        )
+        assertEquals(ArrivalVerdict.FALLBACK, decision.verdict)
+        assertEquals(DwellOutcome.STALE_FIX, decision.outcome)
+    }
+
+    @Test
+    fun `in-fence fix older than 15s but within 120s proceeds with normal evaluation`() {
+        val ageNanos = 30_000L * 1_000_000L
+        val decision = ArrivalPolicy.evaluate(
+            currentFix = fix(elapsedNanos = baseNanos - ageNanos),
+            priorFix = null,
+            fence = fence,
+            activity = null,
+            isRecheck = false,
+            nowElapsedNanos = baseNanos,
+        )
+        assertEquals(ArrivalVerdict.VERIFIED, decision.verdict)
+        assertEquals(DwellOutcome.POSTED, decision.outcome)
+    }
+
+    @Test
+    fun `out-of-fence fix older than 15s falls back to fence advice`() {
+        val ageNanos = 20_000L * 1_000_000L
+        val outsideLat = 40.5050
+        val decision = ArrivalPolicy.evaluate(
+            currentFix = fix(lat = outsideLat, elapsedNanos = baseNanos - ageNanos),
             priorFix = null,
             fence = fence,
             activity = null,
