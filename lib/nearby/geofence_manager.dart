@@ -347,8 +347,8 @@ class GeofenceManager {
       // `trigger` (app/sync/background) names which re-registration path
       // failed in the field — the A2-F1 blind spot we couldn't see before.
       FirebaseCrashlytics.instance.setCustomKey('geofence_trigger', trigger);
-      // A network blip or breaker cooldown is not a fault: the worker retries once it's back.
-      if (e is! PlacesNetworkTransient && e is! MerchantSearchUnavailable) {
+      // A network blip is not a fault: the worker retries once it's back.
+      if (e is! PlacesNetworkTransient) {
         // ignore: unawaited_futures
         FirebaseCrashlytics.instance.recordError(
           e,

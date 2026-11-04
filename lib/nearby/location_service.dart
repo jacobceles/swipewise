@@ -136,10 +136,13 @@ class LocationService {
       // A fresh fallback is the designed recovery, not a fault: recording it
       // drowned the stale signature in hundreds of healthy events.
       if (fresh) return;
-      // Stale or absent last-known fix triggers a retry with a 30s budget. If
-      // the retry succeeds, a fresh fix was obtained (no stale fix was used).
-      // Recording a non-fatal here before the retry runs generated false
-      // positives in Crashlytics when the retry got a fresh fix.
+      // ignore: unawaited_futures
+      c.recordError(
+        StateError('location_$label'),
+        StackTrace.current,
+        reason: 'location_fallback_stale',
+        fatal: false,
+      );
     } catch (_) {
       // No Firebase (background isolate w/o init, or a unit test) — telemetry
       // is strictly optional and must never break location fetch.
