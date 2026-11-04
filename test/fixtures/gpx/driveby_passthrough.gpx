@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="SwipeWise Geofence Test Generator" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Scenario 2: Drive-by Pass Through</name>
+    <desc>Drive through 300m path at 12.0m/s without stopping.</desc>
+    <time>2026-11-04T23:28:07Z</time>
+  </metadata>
+  <trk>
+    <name>Scenario 2: Drive-by Pass Through</name>
+    <trkseg>
+      <trkpt lat="39.235798" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:07Z</time>
+        <desc>phase=driveby dist_to_target=150.0m</desc>
+      </trkpt>
+      <trkpt lat="39.235906" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:08Z</time>
+        <desc>phase=driveby dist_to_target=138.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236014" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:09Z</time>
+        <desc>phase=driveby dist_to_target=126.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236122" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:10Z</time>
+        <desc>phase=driveby dist_to_target=114.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236230" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:11Z</time>
+        <desc>phase=driveby dist_to_target=102.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236338" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:12Z</time>
+        <desc>phase=driveby dist_to_target=90.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236446" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:13Z</time>
+        <desc>phase=driveby dist_to_target=78.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236554" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:14Z</time>
+        <desc>phase=driveby dist_to_target=66.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236662" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:15Z</time>
+        <desc>phase=driveby dist_to_target=54.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236770" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:16Z</time>
+        <desc>phase=driveby dist_to_target=42.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236878" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:17Z</time>
+        <desc>phase=driveby dist_to_target=30.0m</desc>
+      </trkpt>
+      <trkpt lat="39.236986" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:18Z</time>
+        <desc>phase=driveby dist_to_target=18.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237094" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:19Z</time>
+        <desc>phase=driveby dist_to_target=6.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237202" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:20Z</time>
+        <desc>phase=driveby dist_to_target=6.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237310" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:21Z</time>
+        <desc>phase=driveby dist_to_target=18.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237418" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:22Z</time>
+        <desc>phase=driveby dist_to_target=30.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237526" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:23Z</time>
+        <desc>phase=driveby dist_to_target=42.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237634" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:24Z</time>
+        <desc>phase=driveby dist_to_target=54.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237742" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:25Z</time>
+        <desc>phase=driveby dist_to_target=66.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237850" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:26Z</time>
+        <desc>phase=driveby dist_to_target=78.0m</desc>
+      </trkpt>
+      <trkpt lat="39.237958" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:27Z</time>
+        <desc>phase=driveby dist_to_target=90.0m</desc>
+      </trkpt>
+      <trkpt lat="39.238066" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:28Z</time>
+        <desc>phase=driveby dist_to_target=102.0m</desc>
+      </trkpt>
+      <trkpt lat="39.238174" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:29Z</time>
+        <desc>phase=driveby dist_to_target=114.0m</desc>
+      </trkpt>
+      <trkpt lat="39.238282" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:30Z</time>
+        <desc>phase=driveby dist_to_target=126.0m</desc>
+      </trkpt>
+      <trkpt lat="39.238390" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:31Z</time>
+        <desc>phase=driveby dist_to_target=138.0m</desc>
+      </trkpt>
+      <trkpt lat="39.238498" lon="-123.176090">
+        <ele>35.0</ele>
+        <time>2026-11-04T23:28:32Z</time>
+        <desc>phase=driveby dist_to_target=150.0m</desc>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
