@@ -119,7 +119,7 @@ void main() {
   );
 
   test('Big-box stores take the Big-box wait; unknown kinds fall back', () {
-    expect(GeofenceManager.fallbackDwellSeconds, 30);
+    expect(GeofenceManager.fallbackDwellSeconds, 10);
     const dwell = {'Big-box': 300, 'Shopping': 120};
     expect(dwellSecondsFor('Department Stores', dwell), 300);
     expect(dwellSecondsFor('Wholesale', dwell), 300);

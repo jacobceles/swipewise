@@ -33,7 +33,7 @@ class GeofenceManager {
 
   static const int merchantCap = 50;
   static const int defaultMerchantRadiusM = 100;
-  static const int fallbackDwellSeconds = 30;
+  static const int fallbackDwellSeconds = 10;
   // The boundary is the searched area's real coverage (see _buildBoundary),
   // ~300 m in a dense town; below this a GPS wobble alone would trip it.
   static const int boundaryMinM = 300;

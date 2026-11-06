@@ -47,7 +47,7 @@ void main() {
         await settings.getDwellSecondsByCategory('timing-user'),
         SettingsRepository.defaultDwellSeconds,
       );
-      expect(SettingsRepository.defaultDwellSeconds['Gas'], 10);
+      expect(SettingsRepository.defaultDwellSeconds.values.toSet(), {10});
       await settings.setDwellSecondsByCategory('timing-user', {
         'Dining': 10,
         'Coffee': 20,
@@ -57,7 +57,7 @@ void main() {
       expect(restored['Dining'], 10);
       expect(restored['Coffee'], 20);
       expect(restored['Gas'], 90);
-      expect(restored['Shopping'], 30);
+      expect(restored['Shopping'], 10);
     },
   );
 
@@ -103,8 +103,8 @@ void main() {
         repo,
       ).getDwellSecondsByCategory('timing-user');
       expect(result['Gas'], 10);
-      expect(result['Coffee'], 30);
-      expect(result['Dining'], raw == '{broken' ? 30 : 40);
+      expect(result['Coffee'], 10);
+      expect(result['Dining'], raw == '{broken' ? 10 : 40);
     });
   }
 

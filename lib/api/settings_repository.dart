@@ -231,11 +231,11 @@ class SettingsRepository {
   // Per-category dwell seconds. Stored as a CSV "<category>:<seconds>,..." to
   // keep the settings table value column simple. Defaults are baked in here.
   static const Map<String, int> defaultDwellSeconds = {
-    'Dining': 30,
-    'Coffee': 30,
-    'Shopping': 30,
-    'Big-box': 30,
-    'Grocery': 30,
+    'Dining': 10,
+    'Coffee': 10,
+    'Shopping': 10,
+    'Big-box': 10,
+    'Grocery': 10,
     'Gas': 10,
   };
 
