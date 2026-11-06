@@ -5,7 +5,6 @@ import 'package:swipewise/models/card.dart';
 import 'package:swipewise/providers/nearby_providers.dart';
 import 'package:swipewise/providers/settings_provider.dart';
 import 'package:swipewise/screens/profile/account_page.dart';
-import 'package:swipewise/screens/profile/alert_timing_page.dart';
 import 'package:swipewise/screens/profile/card_preference_page.dart';
 import 'package:swipewise/screens/profile/profile_ui.dart';
 import 'package:swipewise/screens/profile/store_alerts_card.dart';
@@ -138,11 +137,6 @@ void main() {
   });
 
   group('helpers', () {
-    test('uniformDwell is the shared wait, or null once any kind differs', () {
-      expect(uniformDwell({'Dining': 60, 'Gas': 60}), 60);
-      expect(uniformDwell({'Dining': 60, 'Gas': 300}), isNull);
-    });
-
     test(
       'orderCards follows the saved order, then keeps the rest in place',
       () {

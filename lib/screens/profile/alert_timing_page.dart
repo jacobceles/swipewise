@@ -38,10 +38,6 @@ class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
     'Gas': LucideIcons.fuel,
   };
 
-  /// Null until the user picks; then their pick, even when every kind
-  /// happens to hold the same value.
-  bool? _byKind;
-
   Future<void> _unmute(String merchantId) async {
     await ref.read(dataRepositoryProvider).unmuteMerchant(merchantId);
     ref.invalidate(mutedMerchantsListProvider);
@@ -54,8 +50,6 @@ class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final dwell = ref.watch(nearbyDwellProvider);
-    final uniform = uniformDwell(dwell);
-    final byKind = _byKind ?? uniform == null;
     final defaults = SettingsRepository.defaultDwellSeconds;
     final notifier = ref.read(nearbyDwellProvider.notifier);
     final muted = ref.watch(mutedMerchantsListProvider);
@@ -66,52 +60,23 @@ class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
         SectionHeader(
           'Alert after',
           action: 'Reset',
-          onAction: () {
-            setState(() => _byKind = false);
-            notifier.setAll(defaults.values.first);
-          },
-        ),
-        SegmentedChoice<bool>(
-          options: const [false, true],
-          selected: byKind,
-          labelOf: (k) => k ? 'By kind of visit' : 'Same for all',
-          onChanged: (k) {
-            setState(() => _byKind = k);
-            // Back to one value: the shortest current wait, so no kind's
-            // alert gets later than the user set it.
-            if (!k && uniform == null) {
-              notifier.setAll(dwell.values.reduce((a, b) => a < b ? a : b));
-            }
-          },
+          onAction: notifier.resetToDefault,
         ),
         const SizedBox(height: 12),
         SettingsGroup(
-          children: byKind
-              ? [
-                  for (final kind in defaults.keys)
-                    SettingsRow(
-                      icon: _kindIcons[kind],
-                      title: kind,
-                      trailing: WaitStepper(
-                        label: kind,
-                        seconds: dwell[kind] ?? defaults[kind]!,
-                        options: _waits,
-                        onChanged: (s) => notifier.setSeconds(kind, s),
-                      ),
-                    ),
-                ]
-              : [
-                  SettingsRow(
-                    icon: LucideIcons.timer,
-                    title: 'Every visit',
-                    trailing: WaitStepper(
-                      label: 'every visit',
-                      seconds: uniform ?? dwell.values.first,
-                      options: _waits,
-                      onChanged: notifier.setAll,
-                    ),
-                  ),
-                ],
+          children: [
+            for (final kind in defaults.keys)
+              SettingsRow(
+                icon: _kindIcons[kind],
+                title: kind,
+                trailing: WaitStepper(
+                  label: kind,
+                  seconds: dwell[kind] ?? defaults[kind]!,
+                  options: _waits,
+                  onChanged: (s) => notifier.setSeconds(kind, s),
+                ),
+              ),
+          ],
         ),
         const GroupCaption(
           'Wait after your phone detects arrival (10 s–15 min, in 10-second steps). Android may deliver alerts later.',
@@ -169,12 +134,6 @@ class _AlertTimingPageState extends ConsumerState<AlertTimingPage> {
       ],
     );
   }
-}
-
-/// The single wait every kind of visit shares, or null when they differ.
-int? uniformDwell(Map<String, int> dwell) {
-  final values = dwell.values.toSet();
-  return values.length == 1 ? values.single : null;
 }
 
 /// − value + pill. Snaps an off-list stored value to its nearest option.

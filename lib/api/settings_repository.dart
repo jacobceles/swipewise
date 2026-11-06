@@ -236,7 +236,7 @@ class SettingsRepository {
     'Shopping': 30,
     'Big-box': 30,
     'Grocery': 30,
-    'Gas': 30,
+    'Gas': 10,
   };
 
   /// Stored as JSON now: `{"Dining": 60, "Coffee": 60, ...}`. Replaced
@@ -259,10 +259,6 @@ class SettingsRepository {
             if (key.isEmpty || secs == null) continue;
             out[key] = secs;
           }
-          // Upgrade uncustomized legacy 60s default across all categories to the new 30s default.
-          if (out.values.toSet().length == 1 && out.values.first == 60) {
-            return Map.of(defaultDwellSeconds);
-          }
           return out;
         }
       } catch (e) {
@@ -277,9 +273,6 @@ class SettingsRepository {
       final secs = int.tryParse(pair.substring(i + 1).trim());
       if (key.isEmpty || secs == null) continue;
       out[key] = secs;
-    }
-    if (out.values.toSet().length == 1 && out.values.first == 60) {
-      return Map.of(defaultDwellSeconds);
     }
     return out;
   }

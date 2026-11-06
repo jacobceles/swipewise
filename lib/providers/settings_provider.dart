@@ -145,11 +145,9 @@ class NearbyDwellNotifier extends Notifier<Map<String, int>> {
     }
   }
 
-  /// One wait for every kind of visit — the common answer; per-kind values
-  /// are the exception.
-  Future<void> setAll(int seconds) async {
+  Future<void> resetToDefault() async {
     final userId = ref.read(authProvider).userId;
-    final next = {for (final k in state.keys) k: seconds};
+    final next = Map<String, int>.of(SettingsRepository.defaultDwellSeconds);
     state = next;
     if (userId != null) {
       await _settings.setDwellSecondsByCategory(userId, next);
