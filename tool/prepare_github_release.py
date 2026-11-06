@@ -130,6 +130,9 @@ def main() -> int:
         output = Path(tempfile.mkdtemp(prefix=f"swipewise-release-{version}-"))
 
     if args.no_apk:
+        if args.publish:
+            releases = json.loads(run("gplay", "tracks", "releases", "list", "--package", PACKAGE, "--track", "production"))
+            require_production(releases, version_code)
         release_notes = (
             f"# SwipeWise {version}\n\n{changelog}\n\n"
             "## Download\n\n"

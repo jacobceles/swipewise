@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -60,6 +61,86 @@ class PrepareReleaseTest(unittest.TestCase):
         tools = prepare.find_build_tools()
         if tools:
             self.assertTrue((tools / "apksigner").exists())
+
+
+class NotesOnlyPublicationTest(unittest.TestCase):
+    def setUp(self):
+        self.calls = []
+        self.releases = {"releases": []}
+        self.provider_error = None
+
+    def run_command(self, *args):
+        self.calls.append(args)
+        if args[:2] == ("git", "rev-parse"):
+            return "a" * 40
+        if args[:2] == ("git", "show"):
+            if args[2].endswith(":pubspec.yaml"):
+                return "version: 1.0.22+32\n"
+            if args[2].endswith(":release-notes.json"):
+                return json.dumps([{"language": "en-US", "text": "Synthetic release"}])
+        if args[:4] == ("gplay", "tracks", "releases", "list"):
+            if self.provider_error:
+                raise self.provider_error
+            return json.dumps(self.releases)
+        if args[:2] in (("git", "tag"), ("git", "push"), ("gh", "release")):
+            return ""
+        raise AssertionError(f"Unexpected command: {args}")
+
+    def invoke(self, publish=True):
+        with tempfile.TemporaryDirectory() as directory:
+            argv = ["prepare_github_release.py", "--no-apk", "--output",
+                    str(Path(directory) / "release")]
+            if publish:
+                argv.append("--publish")
+            with patch.object(sys, "argv", argv), \
+                    patch.object(prepare, "run", side_effect=self.run_command), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                return prepare.main()
+
+    def assert_no_publication(self):
+        self.assertFalse(any(
+            call[:2] in (("git", "tag"), ("git", "push"), ("gh", "release"))
+            for call in self.calls
+        ), self.calls)
+
+    def test_notes_only_publish_refuses_missing_wrong_or_draft_production(self):
+        cases = [{}, {"releases": []}]
+        for state, code in [("RELEASE_LIFECYCLE_STATE_PUBLISHED", 31), ("DRAFT", 32)]:
+            cases.append({"releases": [{
+                "releaseLifecycleState": state,
+                "activeArtifacts": [{"versionCode": code}],
+            }]})
+        for releases in cases:
+            with self.subTest(releases=releases):
+                self.calls.clear()
+                self.releases = releases
+                with self.assertRaisesRegex(ValueError, "active published production"):
+                    self.invoke()
+                self.assert_no_publication()
+
+    def test_notes_only_publish_refuses_provider_failure_before_side_effects(self):
+        self.provider_error = subprocess.CalledProcessError(1, ["gplay"])
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.invoke()
+        self.assert_no_publication()
+
+    def test_notes_only_publish_checks_production_before_tag_or_push(self):
+        self.releases = {"releases": [{
+            "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED",
+            "activeArtifacts": [{"versionCode": 32}],
+        }]}
+        self.assertEqual(self.invoke(), 0)
+        checks = [i for i, call in enumerate(self.calls) if call[0] == "gplay"]
+        self.assertEqual(len(checks), 1)
+        writes = [i for i, call in enumerate(self.calls)
+                  if call[:2] in (("git", "tag"), ("git", "push"), ("gh", "release"))]
+        self.assertEqual(len(writes), 3)
+        self.assertTrue(all(checks[0] < i for i in writes))
+
+    def test_notes_only_preview_needs_no_provider_or_publication(self):
+        self.assertEqual(self.invoke(publish=False), 0)
+        self.assertFalse(any(call[0] == "gplay" for call in self.calls))
+        self.assert_no_publication()
 
 
 class ReleaseGateTest(unittest.TestCase):

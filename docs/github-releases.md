@@ -24,6 +24,8 @@ python3 tool/prepare_github_release.py \
 
 This creates and pushes the Git tag `v1.0.14` pointing to commit `ad87840`, and creates
 the GitHub release. To preview the release without publishing, omit `--publish`.
+Notes-only publication also requires the requested version to be an active published
+production release. Preview mode does not need a Play lookup.
 
 ### 2. Releasing 1.0.15+ (With official Play-signed Universal APK)
 
