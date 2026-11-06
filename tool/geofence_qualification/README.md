@@ -1,4 +1,4 @@
-# Geofence qualification — first checkpoint
+# Geofence qualification — oracle and capability probe
 
 `../test_geofence_e2e.py` is now an **offline, fail-closed oracle**, not a working
 device qualification suite. Its `device` command writes an infrastructure block
@@ -79,18 +79,71 @@ no event-free negative case can pass. In particular, two centres 70 m apart with
 overlapping circles do not imply another ENTER. Future replay must use W3's
 `parse_gpx` / `replay_route`, not a second parser/speed/timing implementation.
 
+## Actual run-owned capability collector
+
+```sh
+python3 -B tool/geofence_qualification/probe_device.py
+```
+
+This separate, explicitly device-mutating command creates **one new disposable
+AVD**, using the installed API-36.1 Google APIs ARM64 image and a free ordinary
+`-port` pair starting at 5570. It accepts no serial, existing AVD, PID or saved
+manifest. Every install/grant/start/injection/shutdown rechecks the in-memory
+run's nonce, directory inode, QEMU PID/birth/SDK executable/arguments, both owned
+ports, AVD name, serial and ADB transport. W3 replay uses its optional sender
+callback to recheck ownership before each injection. SDK-internal ADB device
+commands are disabled via `-adb-path` and the test-only shield; only its host
+`adb version` query is forwarded. Both normal and headless QEMU executable names
+are matched exactly within the installed SDK, not by an arbitrary name prefix.
+
+The standalone observer APK builds/lints offline with cached dependencies and a
+new disposable test certificate. It has no Flutter/Firebase dependency. Build
+evidence includes HEAD **plus** tracked-patch and dirty working-tree hashes,
+artifact/certificate/config hashes and the installed APK's read-back hash. Its
+NotificationListener records actual connect/disconnect, post/update/remove
+callbacks and full target-channel text, plus baseline/end snapshots. Its transient
+GPS/FLP preflight requests stop before the GMS geofence observation window.
+
+The bounded local capability execution observed fresh console-stimulated GPS and
+FLP samples, observer shutdown, real GMS add completion and listener continuity.
+GPS and FLP shared one elapsed sample identity; these were two delivery boundaries,
+not independent fixes. The run used the same AVD across explicit harness corrections,
+not an uninterrupted execution of the final committed collector.
+The later static centre stimulus produced **no platform ENTER within 120 s**.
+That lane is INFRASTRUCTURE-BLOCKED; its cause is unproven. Two static points are a
+capability stimulus, not a walking trajectory, activity-classification test or
+physical GPS claim. No controlled-FLP mock experiment has been run.
+
+The first real run exposed and preserved a headless-executable guard rejection
+and a duplicate-ADB-path guard rejection. Both were corrected; the same one AVD
+was continued under explicitly checked current-run nonce/inode/process evidence,
+not by enabling a general manifest-resume interface or silently retrying an app
+failure. Before the shield was added, SDK-internal unscoped `adb -e` device commands
+failed with "more than one emulator"; the shield now refuses them outright.
+All attempts remain in private evidence. Shutdown stops only the proven
+owned process and retains its AVD files for review; there is no recursive cleanup
+or global ADB/provider reset. SDK emulator logs can include host ADB public-key
+metadata: redact those lines before sharing, and never upload raw device logs.
+Cleanup cannot be reported complete if a launcher exited but its QEMU child is
+still present, or if the launched QEMU was never identified. These cases fail
+closed without signalling an unproven process.
+
+The capability collector exits 2 when a prerequisite is blocked, or 3 if its
+prerequisites pass but app qualification is still NOT-COVERED. It never claims the
+helper's own GMS registration is the main app's `GeofenceManager` registration.
+
 ## Deliberately unfinished
 
-There is **no** run-owned AVD launcher, fixture APK or NotificationListener APK in
-this checkpoint. No fresh device run, GPS→FLP→GMS chain, notification, controlled
-FLP experiment, shipping artifact, background/lifecycle claim, backend access or
-production attestation has been qualified. The oracle's context is caller-supplied
+The launcher and standalone observer now exist, but there is **no** repository/
+cache-seeded Dart fixture APK or complete app ENTER→alarm→default verification→
+precise notification proof. No shipping artifact, background/lifecycle claim,
+backend access or production attestation has been qualified. The offline oracle's context is caller-supplied
 and `identity_verified` is always false: even a complete synthetic example returns
 NOT-COVERED with `oracle_status=PASS`. W6 must never accept it as trusted provenance.
 
-Before enabling mutation, the launcher must create one new disposable AVD from the
-already-installed image and bind run ID, PID, free console/ADB ports, AVD name/path
-and serial, revalidating all of them **before every** setup/injection/cleanup call.
+The launcher creates one new disposable AVD from the already-installed image and
+binds run ID, PID, free console/ADB ports, AVD name/path and serial, revalidating
+them **before every** setup/injection/cleanup call.
 No arbitrary `--serial` escape, owner AVD, global ADB/provider reset or ordinary
 wallet is permitted. Future collectors must emit the fields they actually observe;
 current bounded diagnostics alone cannot establish this correlated protocol.

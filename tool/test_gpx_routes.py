@@ -81,6 +81,24 @@ class ReplayTests(unittest.TestCase):
             player.replay_route(self.points)
         self.assertEqual(calls, [100, 101, 102, 103])
 
+    def test_optional_sender_guards_each_injection_and_preserves_deadlines(self):
+        now = [100.0]
+        calls = []
+        def sender(serial, point, mode):
+            calls.append((serial, point, mode, now[0]))
+            now[0] += 0.3
+            if len(calls) == 3:
+                raise RuntimeError('ownership changed')
+        with mock.patch.object(player.time, 'monotonic', side_effect=lambda: now[0]), \
+             mock.patch.object(player.time, 'sleep', side_effect=lambda s: now.__setitem__(0, now[0] + s)), \
+             mock.patch.object(player, 'send_location') as default:
+            with self.assertRaisesRegex(RuntimeError, 'ownership changed'):
+                player.replay_route(self.points, 'owned-serial', 'fix', sender=sender)
+        self.assertEqual([(s, m, t) for s, _, m, t in calls],
+                         [('owned-serial', 'fix', 100), ('owned-serial', 'fix', 101), ('owned-serial', 'fix', 102)])
+        self.assertEqual([point for _, point, _, _ in calls], self.points[:3])
+        default.assert_not_called()
+
     def test_whole_interval_overrun_stops_without_burst(self):
         now = [100.0]
         calls = []

@@ -106,11 +106,13 @@ def send_location(serial: str, point: dict, mode: str = 'nmea'):
                 raise RuntimeError(f'Emulator rejected location: {line.strip()}')
 
 
-def replay_route(points, serial='', mode='nmea'):
+def replay_route(points, serial='', mode='nmea', *, sender=None):
     """Replay at 1x, aborting if a sample is a whole following interval late.
 
     For the final sample, use its preceding interval. Smaller jitter may still
     compress intervals; device-observed timing must be checked separately.
+    An optional sender(serial, point, mode) may enforce run ownership on every
+    injection; its exceptions stop replay just like the default sender's.
     """
     if not points or points[0]['speed_mps'] is None:
         raise ValueError('Route needs at least two timed points')
@@ -125,7 +127,7 @@ def replay_route(points, serial='', mode='nmea'):
             interval = point['time_offset_s'] - points[i - 1]['time_offset_s']
         if time.monotonic() - (start + point['time_offset_s']) >= interval:
             raise RuntimeError(f'Replay schedule overrun at point {i + 1}')
-        send_location(serial, point, mode)
+        (send_location if sender is None else sender)(serial, point, mode)
 
 
 def main(argv=None):
