@@ -11,7 +11,8 @@ import '../models/reward_category.dart';
 import '../util/logger.dart';
 import 'category_label_resolver.dart';
 import 'geofence_channel.dart';
-import 'google_places_provider.dart' show PlacesNetworkTransient;
+import 'google_places_provider.dart'
+    show PlacesNetworkTransient, PlacesUpstreamError;
 import 'location_service.dart';
 import 'merchant.dart';
 import 'merchant_search_provider.dart';
@@ -120,6 +121,15 @@ class GeofenceManager {
 
   Future<bool>? _inFlight;
 
+  @visibleForTesting
+  static String discoveryFailureClass(Object error) => switch (error) {
+    PlacesNetworkTransient() => 'network_transient',
+    MerchantSearchUnavailable() => 'cooldown',
+    MissingPlacesApiKey() => 'missing_config',
+    PlacesUpstreamError() => 'upstream',
+    _ => 'unknown',
+  };
+
   /// A WARN line (survives release builds) that also lands in the native
   /// walk-in log file, so "fences were never set up here" is visible after a
   /// day out, not just in a logcat buffer that has long rolled over.
@@ -188,6 +198,7 @@ class GeofenceManager {
             queryKey: queryKey,
           );
         } catch (e) {
+          await _trace('discovery_failure=${discoveryFailureClass(e)}');
           final fallback = await cache.readFallback(
             lat: fix.lat,
             lng: fix.lng,

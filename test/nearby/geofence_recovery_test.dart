@@ -37,6 +37,7 @@ void main() {
   final repo = DataRepository();
   final crashlytics = _CrashlyticsHost();
   final registrations = <Map<Object?, Object?>>[];
+  final traces = <String>[];
   late Database db;
   late GeolocatorPlatform originalLocation;
   late _Fixes fixes;
@@ -74,6 +75,7 @@ void main() {
     GeolocatorPlatform.instance = fixes;
     crashlytics.errors.clear();
     registrations.clear();
+    traces.clear();
     registrationCalled = Completer<void>();
     nativeResult = null;
     refreshRequests = 0;
@@ -102,6 +104,7 @@ void main() {
               unregisterCalls++;
               fail('A failed enabled registration must keep the last fences');
             case 'walkinLog':
+              traces.add(call.arguments as String);
               return null;
             default:
               fail('Unexpected geofence call: ${call.method}');
@@ -361,6 +364,90 @@ void main() {
     );
   }
 
+  test('discovery failure classes use types, never exception messages', () {
+    for (final (error, expected) in <(Object, String)>[
+      (PlacesNetworkTransient('secret'), 'network_transient'),
+      (
+        MerchantSearchUnavailable(
+          retryAfter: Duration.zero,
+          lastError: 'secret',
+        ),
+        'cooldown',
+      ),
+      (MissingPlacesApiKey(), 'missing_config'),
+      (PlacesUpstreamError('401 secret'), 'upstream'),
+      (StateError('timeout secret'), 'unknown'),
+    ]) {
+      expect(GeofenceManager.discoveryFailureClass(error), expected);
+    }
+  });
+
+  test(
+    'stale fallback reports typed failure and recovers with fresh coverage',
+    () async {
+      var online = true;
+      final subject = manager(
+        MockClient((_) async {
+          if (!online) throw const SocketException('synthetic-secret-value');
+          return http.Response(_merchantBody, 200);
+        }),
+      );
+      // Populate through the real provider and TileCache, then age relative to
+      // now so this remains stale as the suite ages.
+      final cached = await subject.search.nearbyCovered(
+        lat: 40,
+        lng: -100,
+        radiusMi: 1,
+        categoryIds: {'dining'},
+      );
+      await subject.cache.write(
+        lat: 40,
+        lng: -100,
+        result: cached,
+        queryKey: nearbyQueryKey({'dining'}, 1),
+      );
+      await db.update('merchant_search_cache', {
+        'fetched_at': DateTime.now()
+            .subtract(const Duration(days: 8))
+            .millisecondsSinceEpoch,
+      });
+      online = false;
+      nativeResult = Completer<int>();
+      final degraded = run(subject);
+      await registrationCalled.future.timeout(const Duration(seconds: 10));
+      expect(await successStamp(), isNull);
+      expect(refreshRequests, 0);
+      expect(traces.where((s) => s.contains('discovery_failure=')), [
+        'geofence: discovery_failure=network_transient',
+      ]);
+      expect(traces.join(), isNot(contains('synthetic-secret-value')));
+      nativeResult!.complete(1);
+      expect(await degraded.timeout(const Duration(seconds: 10)), isTrue);
+      expect(refreshRequests, 1);
+      expect(traces, contains(contains('source=stale_cache')));
+      expect(traces, contains(contains('covered=0m')));
+      expect(traces, contains(contains('needs_refresh=true')));
+      expect(await successStamp(), isNotNull);
+
+      online = true;
+      registrations.clear();
+      registrationCalled = Completer<void>();
+      nativeResult = Completer<int>();
+      final recovered = run(subject);
+      await registrationCalled.future.timeout(const Duration(seconds: 10));
+      nativeResult!.complete(1);
+      expect(await recovered.timeout(const Duration(seconds: 10)), isTrue);
+      expect(refreshRequests, 1);
+      expect(traces, contains(contains('source=search')));
+      expect(traces, contains(contains('needs_refresh=false')));
+      expect((registrations.single['zones'] as List), hasLength(1));
+      expect(
+        traces.where((s) => s.contains('discovery_failure=')),
+        hasLength(1),
+      );
+    },
+  );
+
   test(
     'offline registration retries after network recovery without opening breaker',
     () async {
@@ -375,6 +462,9 @@ void main() {
         }),
       );
       expect(await run(subject), isFalse);
+      expect(traces.where((s) => s.contains('discovery_failure=')), [
+        'geofence: discovery_failure=network_transient',
+      ]);
       expect(registrations, isEmpty);
       expect(await successStamp(), isNull);
       expect(await repo.getCircuitBreaker('google_places'), (
