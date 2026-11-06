@@ -31,6 +31,7 @@ void main() {
     DatabaseHelper.setTestDatabaseFactory(() async => db);
   });
   tearDown(() async {
+    AppCheckService.resetForTest();
     await db.close();
     DatabaseHelper.setTestDatabaseFactory(null);
   });
@@ -254,9 +255,159 @@ void main() {
     );
   }
 
+  test(
+    'persisted cooldown survives provider reconstruction, expires and resets',
+    () async {
+      final repo = DataRepository();
+      var failedCalls = 0;
+      final failing = GooglePlacesProvider(
+        repo: repo,
+        proxyUrl: '',
+        apiKey: 'test-key',
+        client: MockClient((_) async {
+          failedCalls++;
+          return http.Response('upstream failed', 500);
+        }),
+      );
+      final before = DateTime.now();
+      for (var attempt = 0; attempt < 3; attempt++) {
+        await expectLater(
+          failing.nearby(lat: 1, lng: 2, radiusMi: 1, categoryIds: {'grocery'}),
+          throwsA(isA<PlacesUpstreamError>()),
+        );
+      }
+      final opened = await repo.getCircuitBreaker('google_places');
+      expect(opened.failureCount, 3);
+      expect(
+        opened.openedUntil,
+        inInclusiveRange(
+          before.add(const Duration(minutes: 5)).millisecondsSinceEpoch,
+          DateTime.now().add(const Duration(minutes: 5)).millisecondsSinceEpoch,
+        ),
+      );
+      final persisted = await db.query('api_circuit_breakers');
+      var recoveredCalls = 0;
+      final reconstructed = GooglePlacesProvider(
+        repo: DataRepository(),
+        proxyUrl: '',
+        apiKey: 'test-key',
+        client: MockClient((_) async {
+          recoveredCalls++;
+          return http.Response(_merchantBody, 200);
+        }),
+      );
+      DatabaseHelper.resetForTesting();
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await expectLater(
+          reconstructed.nearby(
+            lat: 1,
+            lng: 2,
+            radiusMi: 1,
+            categoryIds: {'grocery'},
+          ),
+          throwsA(
+            isA<MerchantSearchUnavailable>().having(
+              (e) => e.retryAfter,
+              'remaining cooldown',
+              allOf(
+                greaterThan(Duration.zero),
+                lessThanOrEqualTo(const Duration(minutes: 5)),
+              ),
+            ),
+          ),
+        );
+      }
+      expect(recoveredCalls, 0);
+      expect(await db.query('api_circuit_breakers'), persisted);
+
+      // Advance only this synthetic persisted deadline, not wall time or policy.
+      await db.update(
+        'api_circuit_breakers',
+        {
+          'opened_until': DateTime.now()
+              .subtract(const Duration(seconds: 1))
+              .millisecondsSinceEpoch,
+        },
+        where: 'service = ?',
+        whereArgs: ['google_places'],
+      );
+      final merchants = await reconstructed.nearby(
+        lat: 1,
+        lng: 2,
+        radiusMi: 1,
+        categoryIds: {'grocery'},
+      );
+      expect(merchants.single.id, 'synthetic-grocery');
+      expect(recoveredCalls, 1);
+      expect(await repo.getCircuitBreaker('google_places'), (
+        failureCount: 0,
+        openedUntil: null,
+      ));
+      expect(await db.query('api_circuit_breakers'), isEmpty);
+      await expectLater(
+        failing.nearby(lat: 1, lng: 2, radiusMi: 1, categoryIds: {'grocery'}),
+        throwsA(isA<PlacesUpstreamError>()),
+      );
+      expect(failedCalls, 4);
+      expect(await repo.getCircuitBreaker('google_places'), (
+        failureCount: 1,
+        openedUntil: null,
+      ));
+    },
+  );
+
+  test(
+    'transient failure preserves prior failures; reconstructed provider recovers',
+    () async {
+      final repo = DataRepository();
+      for (var i = 0; i < 2; i++) {
+        await repo.recordCircuitBreakerFailure(
+          'google_places',
+          threshold: 3,
+          cooldown: const Duration(minutes: 5),
+        );
+      }
+      final persisted = await db.query('api_circuit_breakers');
+      final offline = GooglePlacesProvider(
+        repo: repo,
+        proxyUrl: '',
+        apiKey: 'test-key',
+        client: MockClient((_) async => throw const SocketException('offline')),
+      );
+      await expectLater(
+        offline.nearby(lat: 1, lng: 2, radiusMi: 1, categoryIds: {'grocery'}),
+        throwsA(isA<PlacesNetworkTransient>()),
+      );
+      expect(await db.query('api_circuit_breakers'), persisted);
+      var calls = 0;
+      final online = GooglePlacesProvider(
+        repo: DataRepository(),
+        proxyUrl: '',
+        apiKey: 'test-key',
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(_merchantBody, 200);
+        }),
+      );
+      final merchants = await online.nearby(
+        lat: 1,
+        lng: 2,
+        radiusMi: 1,
+        categoryIds: {'grocery'},
+      );
+      expect(merchants.single.name, 'Synthetic Grocery');
+      expect(calls, 1);
+      expect(await repo.getCircuitBreaker('google_places'), (
+        failureCount: 0,
+        openedUntil: null,
+      ));
+    },
+  );
+
   for (final error in [
     TimeoutException('timeout'),
     const SocketException('offline'),
+    http.ClientException('connection reset'),
   ]) {
     test(
       '$error remains off-breaker and the next request can recover',
@@ -269,7 +420,7 @@ void main() {
           apiKey: 'test-key',
           client: MockClient((_) async {
             if (++calls <= 3) throw error;
-            return http.Response('{"places":[]}', 200);
+            return http.Response(_merchantBody, 200);
           }),
         );
         for (var attempt = 0; attempt < 3; attempt++) {
@@ -286,14 +437,24 @@ void main() {
         final breaker = await repo.getCircuitBreaker('google_places');
         expect(breaker.failureCount, 0);
         expect(breaker.openedUntil, isNull);
-        await provider.nearby(
+        final merchants = await provider.nearby(
           lat: 1,
           lng: 2,
           radiusMi: 1,
           categoryIds: const {'grocery'},
         );
+        expect(merchants.single.id, 'synthetic-grocery');
+        expect(merchants.single.placeType, 'grocery_store');
         expect(calls, 4);
       },
     );
   }
 }
+
+const _merchantBody = '''{"places":[{
+  "id":"synthetic-grocery",
+  "displayName":{"text":"Synthetic Grocery"},
+  "primaryType":"grocery_store",
+  "location":{"latitude":1,"longitude":2},
+  "businessStatus":"OPERATIONAL"
+}]}''';

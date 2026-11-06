@@ -38,10 +38,11 @@ class AppCheckService {
 
   static bool _activated = false;
 
-  /// The one attestation currently on the wire, shared by every caller that
-  /// arrives while it is. Not a cache: it is cleared the moment it completes,
-  /// so the next call goes back to the SDK (and its own cache and refresh).
+  /// The latest attestation, shared by compatible callers. A forced refresh
+  /// supersedes a pending normal fetch. Not a cache: the owner clears it on
+  /// completion, so the next call goes back to the SDK and its own cache.
   static Future<String?>? _inFlight;
+  static bool _inFlightForceRefresh = false;
 
   static Future<String?> _defaultGetToken() =>
       FirebaseAppCheck.instance.getToken();
@@ -144,12 +145,19 @@ class AppCheckService {
   /// cold trips, the second starting ~26 ms before the first finished, and a
   /// 2026-10-15 launch logged ~15 slow (300–480 ms) calls inside one second.
   static Future<String?> token({bool forceRefresh = false}) {
-    if (forceRefresh) {
-      return _inFlight =
-          _fetch(forceRefresh: true).whenComplete(() => _inFlight = null);
+    final pending = _inFlight;
+    if (pending != null && (!forceRefresh || _inFlightForceRefresh)) {
+      return pending;
     }
-    return _inFlight ??=
-        _fetch(forceRefresh: false).whenComplete(() => _inFlight = null);
+    late final Future<String?> request;
+    request = _fetch(forceRefresh: forceRefresh).whenComplete(() {
+      if (identical(_inFlight, request)) {
+        _inFlight = null;
+        _inFlightForceRefresh = false;
+      }
+    });
+    _inFlightForceRefresh = forceRefresh;
+    return _inFlight = request;
   }
 
   static Future<String?> _fetch({bool forceRefresh = false}) async {
@@ -185,6 +193,7 @@ class AppCheckService {
   static void resetForTest() {
     _activated = false;
     _inFlight = null;
+    _inFlightForceRefresh = false;
     _getToken = _defaultGetToken;
     _getTokenForceRefresh = null;
   }

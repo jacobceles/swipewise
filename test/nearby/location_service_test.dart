@@ -31,6 +31,7 @@ class _FakeGeolocator extends GeolocatorPlatform {
 
   int currentCalls = 0;
   final List<LocationAccuracy> requestedAccuracies = [];
+  final List<Duration?> requestedTimeLimits = [];
 
   @override
   Future<bool> isLocationServiceEnabled() async => servicesEnabled;
@@ -54,6 +55,7 @@ class _FakeGeolocator extends GeolocatorPlatform {
     currentCalls++;
     final accuracy = locationSettings?.accuracy ?? LocationAccuracy.best;
     requestedAccuracies.add(accuracy);
+    requestedTimeLimits.add(locationSettings?.timeLimit);
     return onGetCurrent(accuracy);
   }
 }
@@ -237,5 +239,27 @@ void main() {
 
     expect(fix.lat, 3);
     expect(fake.currentCalls, 2);
+  });
+
+  test('no last-known and exhausted retry never return coordinates', () async {
+    final fake = _FakeGeolocator(
+      onGetCurrent: (_) async => throw TimeoutException('no fix'),
+    );
+    GeolocatorPlatform.instance = fake;
+
+    await expectLater(
+      LocationService().getOneShot(ask: false),
+      throwsA(isA<TimeoutException>()),
+    );
+    expect(fake.currentCalls, 2);
+    expect(fake.requestedAccuracies, [
+      LocationAccuracy.medium,
+      LocationAccuracy.high,
+    ]);
+    expect(fake.requestedTimeLimits, [
+      const Duration(seconds: 10),
+      const Duration(seconds: 30),
+    ]);
+    expect(fake.requestCalls, 0);
   });
 }
