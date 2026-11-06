@@ -18,9 +18,17 @@ from geofence_qualification import emulator_adb_guard
 
 class OwnershipTests(unittest.TestCase):
     def setUp(self):
-        self.directory = tempfile.TemporaryDirectory(prefix='swipewise-owned-', dir=owned.approved_root())
+        # Offline fixtures own their temporary root and fake client; they must
+        # not depend on a workstation's approved live-device directory or SDK.
+        self.directory = tempfile.TemporaryDirectory(prefix='swipewise-owned-')
         self.addCleanup(self.directory.cleanup)
-        self.root = Path(self.directory.name)
+        self.root = Path(self.directory.name).resolve()
+        approved = mock.patch.object(owned, 'approved_root', return_value=self.root.parent)
+        approved.start()
+        self.addCleanup(approved.stop)
+        client = mock.patch.object(owned.shutil, 'which', return_value=str(self.root / 'client/adb'))
+        client.start()
+        self.addCleanup(client.stop)
         with mock.patch.object(owned, 'free_port_pair', return_value=5570):
             self.owner = owned.OwnedAvd(self.root, self.root / 'sdk')
         owner = self.owner
@@ -234,15 +242,41 @@ class OwnershipTests(unittest.TestCase):
 
 
 class ProbeTests(unittest.TestCase):
+    def test_live_probe_accepts_only_an_existing_approved_subdirectory(self):
+        with tempfile.TemporaryDirectory() as root:
+            approved = Path(root).resolve() / 'opencode'
+            approved.mkdir()
+            for temporary in (root, str(approved)):
+                with self.subTest(temporary=temporary), \
+                        mock.patch.dict(owned.os.environ, {'TMPDIR': temporary}):
+                    self.assertEqual(owned.approved_root(), approved)
+
+    def test_live_probe_still_refuses_a_missing_approved_root(self):
+        with tempfile.TemporaryDirectory() as root, \
+                mock.patch.dict(owned.os.environ, {'TMPDIR': root}):
+            with self.assertRaisesRegex(owned.InfrastructureError, 'APPROVED_TEMP_ROOT_UNAVAILABLE'):
+                owned.approved_root()
+
+    def test_live_owner_still_requires_an_available_adb_client(self):
+        with tempfile.TemporaryDirectory(prefix='swipewise-owned-') as root:
+            path = Path(root).resolve()
+            with mock.patch.object(owned, 'approved_root', return_value=path.parent), \
+                    mock.patch.object(owned, 'free_port_pair', return_value=5570), \
+                    mock.patch.object(owned.shutil, 'which', return_value=None):
+                with self.assertRaisesRegex(owned.InfrastructureError, 'ADB_CLIENT_UNAVAILABLE'):
+                    owned.OwnedAvd(path, path / 'sdk')
+
     def test_emulator_shield_version_query_is_host_only(self):
-        with mock.patch.object(emulator_adb_guard.subprocess, 'run',
-                               return_value=subprocess.CompletedProcess([], 0)) as run:
+        with mock.patch.dict(emulator_adb_guard.os.environ, {'ANDROID_HOME': '/synthetic-sdk'}), \
+                mock.patch.object(emulator_adb_guard.subprocess, 'run',
+                                return_value=subprocess.CompletedProcess([], 0)) as run:
             self.assertEqual(emulator_adb_guard.main(['version']), 0)
         self.assertEqual(run.call_args.args[0][-1], 'version')
         self.assertEqual(len(run.call_args.args[0]), 2)
 
     def test_emulator_internal_unscoped_and_scoped_mutations_are_never_forwarded(self):
-        with mock.patch.object(emulator_adb_guard.subprocess, 'run') as run, \
+        with mock.patch.dict(emulator_adb_guard.os.environ, {'ANDROID_HOME': '/synthetic-sdk'}), \
+                mock.patch.object(emulator_adb_guard.subprocess, 'run') as run, \
                 mock.patch('sys.stderr'):
             for args in (['-e', 'shell', 'settings', 'put', 'system', 'screen_off_timeout', '999'],
                          ['-s', 'emulator-5554', 'shell', 'anything'], ['kill-server'], ['devices']):
