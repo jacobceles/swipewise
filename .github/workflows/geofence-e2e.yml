@@ -1,13 +1,11 @@
 name: geofence-e2e
 
 on:
-  pull_request:
-    paths:
-      - 'android/**'
-      - 'lib/nearby/**'
-      - 'tool/test_geofence_e2e.py'
-      - 'tool/generate_gpx_test_route.py'
-      - 'test/fixtures/gpx/**'
+  # Qualification depends on app, fixture, configuration and collector inputs;
+  # path filters can silently omit one of those dependencies.
+  push:
+    branches: [main]
+  pull_request: {}
   workflow_dispatch: {}
 
 concurrency:
