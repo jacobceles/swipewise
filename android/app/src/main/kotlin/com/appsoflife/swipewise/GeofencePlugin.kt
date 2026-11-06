@@ -21,6 +21,9 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var context: Context
     private lateinit var client: GeofencingClient
     private lateinit var store: GeofenceMetadataStore
+    internal var playServicesStatus: (Context) -> Int = {
+        GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(it)
+    }
 
     private val merchantPendingIntent: PendingIntent by lazy {
         val intent = Intent(context, MerchantGeofenceReceiver::class.java).apply {
@@ -47,11 +50,15 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        context = binding.applicationContext
-        client = LocationServices.getGeofencingClient(context)
-        store = GeofenceMetadataStore(context)
+        initialize(binding.applicationContext, LocationServices.getGeofencingClient(binding.applicationContext))
         channel = MethodChannel(binding.binaryMessenger, CHANNEL)
         channel.setMethodCallHandler(this)
+    }
+
+    internal fun initialize(context: Context, client: GeofencingClient) {
+        this.context = context
+        this.client = client
+        store = GeofenceMetadataStore(context)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -117,8 +124,7 @@ class GeofencePlugin : FlutterPlugin, MethodCallHandler {
         // addGeofences never fires and no error surfaces. Fail loudly with a
         // dedicated error code so the Dart side records the geofence_degraded
         // non-fatal instead of the miss being invisible.
-        val gmsStatus = GoogleApiAvailability.getInstance()
-            .isGooglePlayServicesAvailable(context)
+        val gmsStatus = playServicesStatus(context)
         if (gmsStatus != ConnectionResult.SUCCESS) {
             result.error(
                 "GMS_UNAVAILABLE",

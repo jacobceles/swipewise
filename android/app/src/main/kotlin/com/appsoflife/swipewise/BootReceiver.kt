@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkManager
 
 interface BootWorkScheduler {
     fun scheduleBootReregister(context: Context)
@@ -18,7 +17,8 @@ object DefaultBootWorkScheduler : BootWorkScheduler {
             .setConstraints(ReregisterScheduler.networkConstraints)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(
+        ReregisterScheduler.enqueueUniqueWork(
+            context,
             ReregisterScheduler.UNIQUE_WORK,
             ExistingWorkPolicy.KEEP,
             request,
@@ -37,6 +37,7 @@ class BootReceiver : BroadcastReceiver() {
         ActivityState.clear(context)
         ActivitySubscriber.start(context)
         DwellAlarms.clearAll(context)
+        PendingReregister.request(context, 0L, "boot", force = true)
         workScheduler.scheduleBootReregister(context)
     }
 

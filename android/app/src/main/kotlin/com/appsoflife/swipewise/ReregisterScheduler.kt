@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -22,6 +23,10 @@ import androidx.work.WorkManager
 object ReregisterScheduler {
     const val UNIQUE_WORK = "swipewise.geofence.reregister"
     @Volatile var enqueueOverride: ((Context) -> Unit)? = null
+    internal var enqueueUniqueWork: (Context, String, ExistingWorkPolicy, OneTimeWorkRequest) -> Unit =
+        { context, name, policy, request ->
+            WorkManager.getInstance(context).enqueueUniqueWork(name, policy, request)
+        }
 
     /// Every reregister path needs the Places API to find nearby merchants, so
     /// gate the work on connectivity: WorkManager defers it until a network is
@@ -39,7 +44,8 @@ object ReregisterScheduler {
             .build()
         // Never interrupt a running engine or accumulate headless engines.
         // Persisted generation/deadline state keeps later recovery owed.
-        WorkManager.getInstance(context).enqueueUniqueWork(
+        enqueueUniqueWork(
+            context,
             UNIQUE_WORK,
             ExistingWorkPolicy.KEEP,
             request,
