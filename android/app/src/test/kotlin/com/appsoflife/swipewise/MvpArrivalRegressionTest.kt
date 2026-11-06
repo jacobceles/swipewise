@@ -15,6 +15,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -224,6 +225,32 @@ class MvpArrivalRegressionTest {
         assertNotNull(DwellAlarms.validateAttempt(context, "mvp", attempt.token))
         location.heldSuccessCallback!!.invoke(null)
         assertTrue(notifications.postedMetas.isEmpty())
+    }
+
+    @Test fun `muting resolved primary while precise acquisition is held prevents posting`() {
+        var posterCalls = 0
+        DwellCheckReceiver.notificationPoster = object : NotificationPoster {
+            override fun postDwell(context: Context, meta: MerchantMeta, verifiedAtMillis: Long): Boolean {
+                posterCalls++
+                return false
+            }
+        }
+        val attempt = arm()
+        location.holdCallback = true
+        ShadowLog.clear()
+        DwellCheckReceiver().onReceive(context, intent(attempt.token))
+        assertNotNull(location.heldSuccessCallback)
+        store.write(meta.copy(options = meta.options.map { it.copy(muted = true) }))
+        assertNotNull(DwellAlarms.validateAttempt(context, "mvp", attempt.token))
+
+        location.heldSuccessCallback!!.invoke(fix())
+
+        assertTrue(ShadowLog.getLogsForTag("SW.walkin").any {
+            it.msg.contains("dwell decision ArrivalDecision(verdict=VERIFIED, outcome=POSTED,")
+        })
+        assertEquals(0, posterCalls)
+        assertNull(DwellAlarms.getAttempt(context, "mvp"))
+        assertTrue(ArrivalDiagnostics.read(context).contains("OUTCOME_MUTED"))
     }
 
     @Test fun `geometry changes still invalidate countdown`() {
