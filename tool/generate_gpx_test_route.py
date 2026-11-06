@@ -4,10 +4,10 @@ generate_gpx_test_route.py - Generate time-stamped GPX route files for Android E
 geofencing and dwell verification.
 
 Generates 4 distinct scenarios:
-1. walkin_dwell: Standard walk-in at 1.2 m/s with 35s dwell inside 100m geofence.
+1. walkin_dwell: Walk at 1.4 m/s, then pause approximately 65s inside a 100m geofence.
 2. driveby_passthrough: High-speed traversal at 12 m/s (~43 km/h) through geofence without stopping.
-3. premature_exit: Approach, enter geofence for only 12s, then exit before 30s dwell timer.
-4. adjacent_nextdoor: Dwell at Store A, then walk 40m across to adjacent Store B.
+3. premature_exit: Briefly enter the 100m circle, pause 12s, and exit within 30s of entry.
+4. adjacent_nextdoor: Hold at A, then walk 70m east to B in overlapping circles.
 """
 
 import argparse
@@ -175,8 +175,8 @@ def generate_premature_exit(
     current_time = start_time
     points = []
 
-    # Inbound to 50m inside fence
-    interior_dist = 50.0
+    # Turn around just inside the 100m circle: dwell starts at entry, not at the pause.
+    interior_dist = 95.0
     inbound_dist = start_distance_m - interior_dist
     step_m = walking_speed_mps * dt
     inbound_steps = int(round(inbound_dist / step_m))
@@ -206,7 +206,7 @@ def generate_premature_exit(
 
     return build_gpx_xml(
         name="Scenario 3: Premature Exit / Bounce",
-        desc=f"Enter geofence, stay only {dwell_duration_s}s, exit before 30s dwell alarm.",
+        desc=f"Briefly enter 100m circle, pause {dwell_duration_s}s, then exit before 30s from entry.",
         points=points,
         start_time=start_time,
     )
@@ -215,8 +215,8 @@ def generate_premature_exit(
 def generate_adjacent_nextdoor(
     target_lat: float,
     target_lng: float,
-    store_a_dist_m: float = 20.0,
-    store_b_dist_m: float = 40.0,  # 40m east of Store A
+    store_a_dist_m: float = 0.0,
+    store_b_dist_m: float = 70.0,  # 70m east of Store A
     dwell_a_s: int = 40,
     dwell_b_s: int = 30,
     walking_speed_mps: float = 1.4,
@@ -251,7 +251,7 @@ def generate_adjacent_nextdoor(
         points.append((lat_a, lng_a, store_a_dist_m, current_time, "dwell_store_a"))
         current_time += datetime.timedelta(seconds=dt)
 
-    # 2. Walk 40m East from Store A to Store B
+    # 2. Walk east from Store A to Store B; no second ENTER is implied.
     transit_steps = int(round(store_b_dist_m / step_m))
     step_east = store_b_dist_m / transit_steps
     for i in range(1, transit_steps + 1):
@@ -271,7 +271,7 @@ def generate_adjacent_nextdoor(
 
     return build_gpx_xml(
         name="Scenario 4: Adjacent Next-Door Store Walk",
-        desc=f"Dwell {dwell_a_s}s at Store A, walk {store_b_dist_m}m to Store B, dwell {dwell_b_s}s.",
+        desc=f"Hold {dwell_a_s}s at A, walk {store_b_dist_m}m east to B, hold {dwell_b_s}s; overlapping circles do not imply a second ENTER.",
         points=points,
         start_time=start_time,
     )

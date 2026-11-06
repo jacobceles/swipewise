@@ -2,295 +2,135 @@
 <gpx version="1.1" creator="SwipeWise Geofence Test Generator" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>Scenario 3: Premature Exit / Bounce</name>
-    <desc>Enter geofence, stay only 12s, exit before 30s dwell alarm.</desc>
-    <time>2026-11-04T23:28:07Z</time>
+    <desc>Briefly enter 100m circle, pause 12s, then exit before 30s from entry.</desc>
+    <time>2020-01-01T00:00:00Z</time>
   </metadata>
   <trk>
     <name>Scenario 3: Premature Exit / Bounce</name>
     <trkseg>
       <trkpt lat="39.236068" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:07Z</time>
+        <time>2020-01-01T00:00:00Z</time>
         <desc>phase=inbound dist_to_target=120.0m</desc>
       </trkpt>
       <trkpt lat="39.236093" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:09Z</time>
+        <time>2020-01-01T00:00:02Z</time>
         <desc>phase=inbound dist_to_target=117.2m</desc>
       </trkpt>
-      <trkpt lat="39.236119" lon="-123.176090">
+      <trkpt lat="39.236118" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:11Z</time>
+        <time>2020-01-01T00:00:04Z</time>
         <desc>phase=inbound dist_to_target=114.4m</desc>
       </trkpt>
-      <trkpt lat="39.236144" lon="-123.176090">
+      <trkpt lat="39.236143" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:13Z</time>
-        <desc>phase=inbound dist_to_target=111.6m</desc>
+        <time>2020-01-01T00:00:06Z</time>
+        <desc>phase=inbound dist_to_target=111.7m</desc>
       </trkpt>
-      <trkpt lat="39.236169" lon="-123.176090">
+      <trkpt lat="39.236168" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:15Z</time>
-        <desc>phase=inbound dist_to_target=108.8m</desc>
+        <time>2020-01-01T00:00:08Z</time>
+        <desc>phase=inbound dist_to_target=108.9m</desc>
       </trkpt>
-      <trkpt lat="39.236194" lon="-123.176090">
+      <trkpt lat="39.236193" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:17Z</time>
-        <desc>phase=inbound dist_to_target=106.0m</desc>
+        <time>2020-01-01T00:00:10Z</time>
+        <desc>phase=inbound dist_to_target=106.1m</desc>
       </trkpt>
-      <trkpt lat="39.236219" lon="-123.176090">
+      <trkpt lat="39.236218" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:19Z</time>
-        <desc>phase=inbound dist_to_target=103.2m</desc>
+        <time>2020-01-01T00:00:12Z</time>
+        <desc>phase=inbound dist_to_target=103.3m</desc>
       </trkpt>
-      <trkpt lat="39.236245" lon="-123.176090">
+      <trkpt lat="39.236243" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:21Z</time>
-        <desc>phase=inbound dist_to_target=100.4m</desc>
+        <time>2020-01-01T00:00:14Z</time>
+        <desc>phase=inbound dist_to_target=100.6m</desc>
       </trkpt>
-      <trkpt lat="39.236270" lon="-123.176090">
+      <trkpt lat="39.236268" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:23Z</time>
-        <desc>phase=inbound dist_to_target=97.6m</desc>
+        <time>2020-01-01T00:00:16Z</time>
+        <desc>phase=inbound dist_to_target=97.8m</desc>
       </trkpt>
-      <trkpt lat="39.236295" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:25Z</time>
-        <desc>phase=inbound dist_to_target=94.8m</desc>
+        <time>2020-01-01T00:00:18Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236320" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:27Z</time>
-        <desc>phase=inbound dist_to_target=92.0m</desc>
+        <time>2020-01-01T00:00:20Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236345" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:29Z</time>
-        <desc>phase=inbound dist_to_target=89.2m</desc>
+        <time>2020-01-01T00:00:22Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236371" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:31Z</time>
-        <desc>phase=inbound dist_to_target=86.4m</desc>
+        <time>2020-01-01T00:00:24Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236396" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:33Z</time>
-        <desc>phase=inbound dist_to_target=83.6m</desc>
+        <time>2020-01-01T00:00:26Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236421" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:35Z</time>
-        <desc>phase=inbound dist_to_target=80.8m</desc>
+        <time>2020-01-01T00:00:28Z</time>
+        <desc>phase=short_stay dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236446" lon="-123.176090">
+      <trkpt lat="39.236293" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:37Z</time>
-        <desc>phase=inbound dist_to_target=78.0m</desc>
+        <time>2020-01-01T00:00:30Z</time>
+        <desc>phase=outbound dist_to_target=95.0m</desc>
       </trkpt>
-      <trkpt lat="39.236471" lon="-123.176090">
+      <trkpt lat="39.236268" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:39Z</time>
-        <desc>phase=inbound dist_to_target=75.2m</desc>
+        <time>2020-01-01T00:00:32Z</time>
+        <desc>phase=outbound dist_to_target=97.8m</desc>
       </trkpt>
-      <trkpt lat="39.236497" lon="-123.176090">
+      <trkpt lat="39.236243" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:41Z</time>
-        <desc>phase=inbound dist_to_target=72.4m</desc>
+        <time>2020-01-01T00:00:34Z</time>
+        <desc>phase=outbound dist_to_target=100.6m</desc>
       </trkpt>
-      <trkpt lat="39.236522" lon="-123.176090">
+      <trkpt lat="39.236218" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:43Z</time>
-        <desc>phase=inbound dist_to_target=69.6m</desc>
+        <time>2020-01-01T00:00:36Z</time>
+        <desc>phase=outbound dist_to_target=103.3m</desc>
       </trkpt>
-      <trkpt lat="39.236547" lon="-123.176090">
+      <trkpt lat="39.236193" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:45Z</time>
-        <desc>phase=inbound dist_to_target=66.8m</desc>
+        <time>2020-01-01T00:00:38Z</time>
+        <desc>phase=outbound dist_to_target=106.1m</desc>
       </trkpt>
-      <trkpt lat="39.236572" lon="-123.176090">
+      <trkpt lat="39.236168" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:47Z</time>
-        <desc>phase=inbound dist_to_target=64.0m</desc>
+        <time>2020-01-01T00:00:40Z</time>
+        <desc>phase=outbound dist_to_target=108.9m</desc>
       </trkpt>
-      <trkpt lat="39.236597" lon="-123.176090">
+      <trkpt lat="39.236143" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:49Z</time>
-        <desc>phase=inbound dist_to_target=61.2m</desc>
+        <time>2020-01-01T00:00:42Z</time>
+        <desc>phase=outbound dist_to_target=111.7m</desc>
       </trkpt>
-      <trkpt lat="39.236623" lon="-123.176090">
+      <trkpt lat="39.236118" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:28:51Z</time>
-        <desc>phase=inbound dist_to_target=58.4m</desc>
-      </trkpt>
-      <trkpt lat="39.236648" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:28:53Z</time>
-        <desc>phase=inbound dist_to_target=55.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236673" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:28:55Z</time>
-        <desc>phase=inbound dist_to_target=52.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:28:57Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:28:59Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:01Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:03Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:05Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:07Z</time>
-        <desc>phase=short_stay dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236698" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:09Z</time>
-        <desc>phase=outbound dist_to_target=50.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236673" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:11Z</time>
-        <desc>phase=outbound dist_to_target=52.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236648" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:13Z</time>
-        <desc>phase=outbound dist_to_target=55.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236623" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:15Z</time>
-        <desc>phase=outbound dist_to_target=58.4m</desc>
-      </trkpt>
-      <trkpt lat="39.236597" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:17Z</time>
-        <desc>phase=outbound dist_to_target=61.2m</desc>
-      </trkpt>
-      <trkpt lat="39.236572" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:19Z</time>
-        <desc>phase=outbound dist_to_target=64.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236547" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:21Z</time>
-        <desc>phase=outbound dist_to_target=66.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236522" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:23Z</time>
-        <desc>phase=outbound dist_to_target=69.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236497" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:25Z</time>
-        <desc>phase=outbound dist_to_target=72.4m</desc>
-      </trkpt>
-      <trkpt lat="39.236471" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:27Z</time>
-        <desc>phase=outbound dist_to_target=75.2m</desc>
-      </trkpt>
-      <trkpt lat="39.236446" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:29Z</time>
-        <desc>phase=outbound dist_to_target=78.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236421" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:31Z</time>
-        <desc>phase=outbound dist_to_target=80.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236396" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:33Z</time>
-        <desc>phase=outbound dist_to_target=83.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236371" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:35Z</time>
-        <desc>phase=outbound dist_to_target=86.4m</desc>
-      </trkpt>
-      <trkpt lat="39.236345" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:37Z</time>
-        <desc>phase=outbound dist_to_target=89.2m</desc>
-      </trkpt>
-      <trkpt lat="39.236320" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:39Z</time>
-        <desc>phase=outbound dist_to_target=92.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236295" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:41Z</time>
-        <desc>phase=outbound dist_to_target=94.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236270" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:43Z</time>
-        <desc>phase=outbound dist_to_target=97.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236245" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:45Z</time>
-        <desc>phase=outbound dist_to_target=100.4m</desc>
-      </trkpt>
-      <trkpt lat="39.236219" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:47Z</time>
-        <desc>phase=outbound dist_to_target=103.2m</desc>
-      </trkpt>
-      <trkpt lat="39.236194" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:49Z</time>
-        <desc>phase=outbound dist_to_target=106.0m</desc>
-      </trkpt>
-      <trkpt lat="39.236169" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:51Z</time>
-        <desc>phase=outbound dist_to_target=108.8m</desc>
-      </trkpt>
-      <trkpt lat="39.236144" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:53Z</time>
-        <desc>phase=outbound dist_to_target=111.6m</desc>
-      </trkpt>
-      <trkpt lat="39.236119" lon="-123.176090">
-        <ele>35.0</ele>
-        <time>2026-11-04T23:29:55Z</time>
+        <time>2020-01-01T00:00:44Z</time>
         <desc>phase=outbound dist_to_target=114.4m</desc>
       </trkpt>
       <trkpt lat="39.236093" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:29:57Z</time>
+        <time>2020-01-01T00:00:46Z</time>
         <desc>phase=outbound dist_to_target=117.2m</desc>
       </trkpt>
       <trkpt lat="39.236068" lon="-123.176090">
         <ele>35.0</ele>
-        <time>2026-11-04T23:29:59Z</time>
+        <time>2020-01-01T00:00:48Z</time>
         <desc>phase=outbound dist_to_target=120.0m</desc>
       </trkpt>
     </trkseg>
