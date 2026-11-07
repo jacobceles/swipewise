@@ -1,5 +1,73 @@
 # Geofence qualification — oracle and capability probe
 
+## New executable OS smoke (debug fixture, not shipping qualification)
+
+```sh
+flutter pub get --offline
+python3 -B tool/geofence_qualification/os_smoke.py --output /new/os-smoke.json
+```
+
+`/new` must exist; the output must not. There is no serial, old-AVD, saved-owner
+or injected-receiver option. This command builds and installs a **different
+entrypoint/config/test certificate** from the shipping app, on one newly owned
+disposable AVD. It reads normal current defaults (10 s), seeds two synthetic
+cash-back products and one operational restaurant through repository/cache APIs,
+and delegates all manager registration, receiver, alarm, verifier and poster work
+to the real app. It never initializes Firebase or App Check; the opt-in fixture
+manifest removes FirebaseInitProvider and disables collection. No real account,
+bank, Places request, wallet, signing material or debug-provider token is used.
+
+The finite pair is **muted restaurant → precise no-post**, then public
+disable/unmute/enable → **precise post**. Both require actual GMS task completion,
+a new receiver ENTER/attempt, default balanced FLP verification, a precise
+decision, a terminal native outcome, cleared attempt, continuous notification
+listener with empty baseline before seed, and a complete 183 s observation after
+arm (140 s attempt life + 30 s grace + 8 s acquisition + 5 s margin). The positive
+requires exactly one real native poster call and one Android callback with exact
+content; intermediate VERIFIED/POSTED alone is insufficient. The negative must
+actually reach terminal MUTED, with zero poster calls and zero listener callbacks.
+
+Inputs are explicitly **static console GPS stimuli**, not walking, AR sensor,
+physical-arrival-latency or background-lifecycle qualification. Initial GPS and FLP
+samples are observed separately, and their transient requests stop. If real GMS
+does not ENTER during the initial 120 s centre stimulus, private location/GMS/
+broadcast/alarm state is captured, then one explicitly recorded **foreground
+companion HIGH_ACCURACY location demand** is tested for another bounded 120 s.
+It is still real console GPS/GMS, not mock FLP; any passing result records that
+environmental assistance. It must not be described as unassisted background
+geofence delivery. No ENTER remains blocked, never silently injected or passed.
+
+### CI executable contract
+
+- Entrypoint/args: the two commands above; Python 3.10+, JDK 17+, Flutter SDK from
+  this project's constraints, `adb` on PATH, `ANDROID_HOME`, `keytool`, `lsof`,
+  cached pinned Gradle distribution and Maven/pub dependencies. Builds are offline
+  and pass `android.builder.sdkDownload=false`; provision dependencies beforehand.
+- Supported host/image allowlist: local macOS/arm64 uses the **already-installed**
+  `system-images;android-36.1;google_apis;arm64-v8a`; Ubuntu 24.04/x86_64/KVM selects
+  `system-images;android-36.1;google_apis;x86_64`. Linux support is not evidence of a
+  Linux execution. CI provisioning can install its SDK; never install on the owner
+  Mac. Require compile SDK 37.0, build-tools 36.0.0 and Flutter's pinned NDK.
+- Set `TMPDIR` to an existing private runner temp directory and create its
+  `opencode/` subdirectory first. The launcher creates its own nonce/path/inode,
+  PID/birth, port-pair, serial and transport binding there. Retain the executable
+  `emulator_adb_guard.py` (0755). No emulator-runner action may also own this AVD.
+- Budget: one AVD, two scenarios, bounded acquisition/ENTER and full post/no-post
+  windows; allow 25 minutes including offline builds/boot. There are no behavioral
+  retries that convert failure to pass.
+- Output: sanitized `--output` JSON with candidate/dirty-source, config, seed,
+  classifier, image/GMS, installed-APK readback, route and artifact/certificate
+  bindings plus stage outcomes and cleanup. Private raw JSONL/logs/AVD/test keys
+  stay in the run directory **outside checkout**. Upload only the summary, never
+  raw emulator logs (host ADB metadata), coordinates, notification logs or keys.
+- Exit codes: 0 = both narrow debug scenarios PASS; 1 = assertion failure;
+  2 = prerequisite/infrastructure/cancellation/cleanup block. A skipped, absent,
+  cancelled, wrong-source or incomplete summary is not qualification. This local
+  runner is not a trusted publication attestation; CI provenance is a separate gate.
+
+The older capability command and offline oracle below retain their intentionally
+limited meanings. Neither substitutes for executing this main-fixture pair.
+
 `../test_geofence_e2e.py` is now an **offline, fail-closed oracle**, not a working
 device qualification suite. Its `device` command writes an infrastructure block
 and makes **no device calls**. Legacy `--serial`, scenario-number and automatic
@@ -132,11 +200,12 @@ The capability collector exits 2 when a prerequisite is blocked, or 3 if its
 prerequisites pass but app qualification is still NOT-COVERED. It never claims the
 helper's own GMS registration is the main app's `GeofenceManager` registration.
 
-## Deliberately unfinished
+## Historical capability-only boundary (`b6c96a7`)
 
-The launcher and standalone observer now exist, but there is **no** repository/
-cache-seeded Dart fixture APK or complete app ENTER→alarm→default verification→
-precise notification proof. No shipping artifact, background/lifecycle claim,
+At that checkpoint the launcher/observer existed, but the repository/cache fixture
+and complete app ENTER→alarm→verification→notification proof were absent. Use the
+new smoke's actual result, not existence of source, to assess that proof now.
+No shipping artifact, background/lifecycle claim,
 backend access or production attestation has been qualified. The offline oracle's context is caller-supplied
 and `identity_verified` is always false: even a complete synthetic example returns
 NOT-COVERED with `oracle_status=PASS`. W6 must never accept it as trusted provenance.

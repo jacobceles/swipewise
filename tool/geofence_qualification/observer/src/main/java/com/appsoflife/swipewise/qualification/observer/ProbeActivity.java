@@ -14,10 +14,17 @@ import android.os.Handler;
 import android.os.Looper;
 import com.google.android.gms.common.GoogleApiAvailabilityLight;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.CurrentLocationRequest;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 
@@ -31,6 +38,9 @@ public final class ProbeActivity extends Activity {
     private boolean gpsReceived;
     private boolean flpReceived;
     private boolean finished;
+    private static ProbeActivity demandActivity;
+    private LocationCallback demand;
+    private long lastDemandSample;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -52,10 +62,39 @@ public final class ProbeActivity extends Activity {
         } else if ("snapshot".equals(mode)) {
             ArrivalListener.snapshot(this);
             finish();
+        } else if ("supply".equals(mode) && fine) {
+            supply();
+        } else if ("stop-supply".equals(mode)) {
+            if (demandActivity != null) demandActivity.finish();
+            finish();
         } else {
             Trace.emit(this, "unsupported_or_denied", Trace.object());
             finish();
         }
+    }
+
+    // Explicit companion demand, NOT mock FLP and NOT the app's verifier.
+    // Kept visible so GPS-only emulator input can be consumed continuously.
+    @SuppressLint("MissingPermission")
+    private void supply() {
+        if (demandActivity != null) throw new IllegalStateException("Duplicate demand");
+        demandActivity = this;
+        demand = new LocationCallback() {
+            @Override public void onLocationResult(LocationResult result) {
+                long now = android.os.SystemClock.elapsedRealtime();
+                if (now - lastDemandSample >= 10_000) {
+                    Trace.emit(ProbeActivity.this, "companion_flp_sample", Trace.fix(result.getLastLocation()));
+                    lastDemandSample = now;
+                }
+            }
+        };
+        Trace.emit(this, "companion_demand_start", Trace.object("priority", "HIGH_ACCURACY",
+            "interval_ms", 2_000, "mock", false));
+        LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(
+            new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2_000).build(), demand, Looper.getMainLooper())
+            .addOnFailureListener(error -> Trace.emit(this, "companion_demand_failure",
+                Trace.object("error_class", error.getClass().getSimpleName())));
+        handler.postDelayed(this::finish, 1_200_000);
     }
 
     @SuppressLint("MissingPermission")
@@ -79,6 +118,26 @@ public final class ProbeActivity extends Activity {
         CurrentLocationRequest request = new CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
             .setMaxUpdateAgeMillis(0).setDurationMillis(20_000).build();
+        LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
+            .addLocationRequest(new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 2_000).build())
+            .build();
+        LocationServices.getSettingsClient(this).checkLocationSettings(settingsRequest)
+            .addOnSuccessListener(response -> {
+                LocationSettingsStates states = response.getLocationSettingsStates();
+                Trace.emit(ProbeActivity.this, "location_settings_status", Trace.object(
+                    "status_code", 0,
+                    "gps_usable", states != null && states.isGpsUsable(),
+                    "network_usable", states != null && states.isNetworkLocationUsable()
+                ));
+            })
+            .addOnFailureListener(error -> {
+                int code = error instanceof ApiException ? ((ApiException) error).getStatusCode() : -1;
+                Trace.emit(ProbeActivity.this, "location_settings_status", Trace.object(
+                    "status_code", code,
+                    "error_class", error.getClass().getSimpleName(),
+                    "resolvable", error instanceof ResolvableApiException
+                ));
+            });
         LocationServices.getFusedLocationProviderClient(this).getCurrentLocation(request, cancellation.getToken())
             .addOnSuccessListener(fix -> {
                 if (finished) return;
@@ -104,6 +163,22 @@ public final class ProbeActivity extends Activity {
         Trace.emit(this, "location_observers_stopped", Trace.object("gps_received", gpsReceived,
             "flp_received", flpReceived));
         finish();
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        String mode = intent.getStringExtra("mode");
+        if ("snapshot".equals(mode)) {
+            ArrivalListener.snapshot(this);
+        } else if ("stop-supply".equals(mode)) {
+            if (demand != null) {
+                LocationServices.getFusedLocationProviderClient(this).removeLocationUpdates(demand);
+                Trace.emit(this, "companion_demand_stopped", Trace.object());
+                demandActivity = null;
+            }
+            finish();
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -134,6 +209,11 @@ public final class ProbeActivity extends Activity {
 
     @Override public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
+        if (demand != null) {
+            LocationServices.getFusedLocationProviderClient(this).removeLocationUpdates(demand);
+            Trace.emit(this, "companion_demand_stopped", Trace.object());
+            demandActivity = null;
+        }
         if (locations != null && !finished) stopObservation();
         super.onDestroy();
     }

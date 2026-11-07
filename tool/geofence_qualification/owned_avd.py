@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -15,7 +16,17 @@ import uuid
 from pathlib import Path
 
 IMAGE = 'system-images;android-36.1;google_apis;arm64-v8a'
-QEMU_NAMES = {'qemu-system-aarch64', 'qemu-system-aarch64-headless'}
+QEMU_NAMES = {'qemu-system-aarch64', 'qemu-system-aarch64-headless',
+              'qemu-system-x86_64', 'qemu-system-x86_64-headless'}
+
+
+def image_spec():
+    host = (platform.system(), platform.machine())
+    if host == ('Darwin', 'arm64'):
+        return IMAGE, 'arm64-v8a', 'android-arm64'
+    if host == ('Linux', 'x86_64'):
+        return 'system-images;android-36.1;google_apis;x86_64', 'x86_64', 'android-x64'
+    raise InfrastructureError('UNSUPPORTED_QUALIFICATION_HOST')
 
 
 class InfrastructureError(RuntimeError):
@@ -34,6 +45,14 @@ def command(args, *, env=None, timeout=10, input=None):
 
 
 def process_info(pid):
+    if platform.system() == 'Linux':
+        proc = Path('/proc') / str(pid)
+        # Linux ps comm is a short name, not an executable path. Bind the actual
+        # SDK executable and kernel birth ticks (a reused PID is not this run).
+        state = (proc / 'stat').read_text().rsplit(')', 1)[1].split()
+        return {'pid': pid, 'parent': int(state[1]), 'started': state[19],
+                'executable': str((proc / 'exe').resolve(strict=True)),
+                'argv': (proc / 'cmdline').read_bytes().decode().rstrip('\0').split('\0')}
     return {
         'pid': pid,
         'parent': int(command(['ps', '-p', str(pid), '-o', 'ppid='])),
@@ -88,6 +107,7 @@ class OwnedAvd:
                 not self.evidence.name.startswith('swipewise-owned-') or any(self.evidence.iterdir())):
             raise InfrastructureError('NEW_RUN_DIRECTORY_REQUIRED')
         self.sdk = Path(sdk).resolve()
+        self.image, self.abi, self.flutter_platform = image_spec()
         self.root_identity = (self.evidence.stat().st_dev, self.evidence.stat().st_ino)
         self.run_id = 'q-' + uuid.uuid4().hex
         self.name = self.run_id
@@ -140,7 +160,7 @@ class OwnedAvd:
 
     def start(self):
         self.files_owned()
-        image = self.sdk / 'system-images/android-36.1/google_apis/arm64-v8a'
+        image = self.sdk / f'system-images/android-36.1/google_apis/{self.abi}'
         if not (image / 'system.img').is_file():
             raise InfrastructureError('INSTALLED_IMAGE_REQUIRED')
         if self.process and self.process.poll() is None:
@@ -149,7 +169,7 @@ class OwnedAvd:
             if self.avd.exists():
                 raise InfrastructureError('NEW_AVD_REQUIRED')
             manager = self.sdk / 'cmdline-tools/latest/bin/avdmanager'
-            output = command([manager, 'create', 'avd', '-n', self.name, '-k', IMAGE, '-p', self.avd],
+            output = command([manager, 'create', 'avd', '-n', self.name, '-k', self.image, '-p', self.avd],
                              env=self.env, timeout=60, input='no\n')
             (self.evidence / 'avd-create.txt').write_text(output + '\n')
             stat = self.avd.lstat()
@@ -274,7 +294,7 @@ class OwnedAvd:
                 'qemu': self.qemu, 'home_identity': self.home_identity,
                 'avd_identity': self.avd_identity, 'actions': self.actions,
                 'emulator_log': str(self.log_path) if self.log_path else None,
-                'closed': self.closed, 'not_resumable': True}
+                 'closed': self.closed, 'image': self.image, 'not_resumable': True}
         (self.evidence / 'owner.json').write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
 
     def close(self):

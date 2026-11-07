@@ -29,8 +29,11 @@ public final class ArrivalListener extends NotificationListenerService {
 
     private JSONArray active() {
         JSONArray result = new JSONArray();
-        for (StatusBarNotification item : getActiveNotifications()) {
-            if (arrival(item)) result.put(item(item));
+        StatusBarNotification[] active = getActiveNotifications();
+        if (active != null) {
+            for (StatusBarNotification item : active) {
+                if (arrival(item)) result.put(item(item));
+            }
         }
         return result;
     }

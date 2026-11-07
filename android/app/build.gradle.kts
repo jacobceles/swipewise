@@ -63,6 +63,8 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Custom framework Instrumentation: no new test dependency or shipping API.
+        testInstrumentationRunner = "com.appsoflife.swipewise.GeofenceSmokeInstrumentation"
     }
 
     // There is deliberately NO free/pro product flavor.
@@ -117,6 +119,16 @@ android {
             // NAME (getIdentifier), so resource shrinking could delete them. Not needed for
             // the obfuscation score either.
             isShrinkResources = false
+        }
+    }
+    if (providers.gradleProperty("qualificationFixture").orNull == "true") {
+        // Opt-in debug fixture only; ordinary debug/release manifests stay unchanged.
+        sourceSets.getByName("debug").manifest.srcFile("../../tool/geofence_qualification/fixture/AndroidManifest.xml")
+        signingConfigs.getByName("debug") {
+            storeFile = file(providers.gradleProperty("qualificationKeystore").get())
+            storePassword = "android"
+            keyAlias = "qualification"
+            keyPassword = "android"
         }
     }
 }
