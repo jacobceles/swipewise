@@ -139,7 +139,7 @@ class MvpArrivalRegressionTest {
     }
 
     @Test fun `ten second dwell reaches receiver without a hidden minute minimum`() {
-        assertEquals(10, MerchantMeta.DEFAULT_DWELL_SECONDS)
+        assertEquals(30, MerchantMeta.DEFAULT_DWELL_SECONDS)
         val started = SystemClock.elapsedRealtimeNanos()
         val attempt = DwellAlarms.arm(context, "mvp", 10)!!
         assertEquals(started + 10_000_000_000L, attempt.scheduledDueElapsedNanos)

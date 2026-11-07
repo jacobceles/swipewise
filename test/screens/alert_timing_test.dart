@@ -63,14 +63,14 @@ void main() {
       expect(find.text(kind), findsOneWidget);
     }
     expect(container.read(nearbyDwellProvider)['Gas'], 10);
-    expect(container.read(nearbyDwellProvider).values.toSet(), {10});
+    expect(container.read(nearbyDwellProvider)['Dining'], 30);
     expect(
       tester.widget<WaitStepper>(find.byType(WaitStepper).first).options,
       List.generate(90, (i) => (i + 1) * 10),
     );
     await tester.tap(find.bySemanticsLabel('Longer wait for Dining'));
     await tester.pumpAndSettle();
-    expect(container.read(nearbyDwellProvider)['Dining'], 20);
+    expect(container.read(nearbyDwellProvider)['Dining'], 40);
     expect(container.read(nearbyDwellProvider)['Gas'], 10);
     await tester.ensureVisible(find.bySemanticsLabel('Shorter wait for Gas'));
     await tester.tap(find.bySemanticsLabel('Shorter wait for Gas'));
@@ -79,7 +79,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Longer wait for Gas'));
     await tester.pumpAndSettle();
     expect(container.read(nearbyDwellProvider)['Gas'], 20);
-    expect(container.read(nearbyDwellProvider)['Dining'], 20);
+    expect(container.read(nearbyDwellProvider)['Dining'], 40);
     semantics.dispose();
   });
 
@@ -101,7 +101,7 @@ void main() {
         SettingsRepository.defaultDwellSeconds,
       );
       expect(container.read(nearbyDwellProvider)['Gas'], 10);
-      expect(container.read(nearbyDwellProvider).values.toSet(), {10});
+      expect(container.read(nearbyDwellProvider)['Dining'], 30);
     },
   );
 

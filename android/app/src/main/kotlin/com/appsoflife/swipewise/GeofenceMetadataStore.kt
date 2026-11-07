@@ -83,7 +83,7 @@ data class MerchantMeta(
     val isCluster: Boolean get() = options.size > 1
 
     companion object {
-        const val DEFAULT_DWELL_SECONDS = 10
+        const val DEFAULT_DWELL_SECONDS = 30
     }
 }
 
