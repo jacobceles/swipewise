@@ -100,6 +100,10 @@ Exact-alarm permission controls scheduling precision, not correctness. Inexact a
 WorkManager can run late. Battery exemption does not prove timely location or AR delivery.
 Activity subscriptions are reasserted on boot, app resume, permission enablement and worker
 startup. A failed subscription gets one bounded five-second retry, not perpetual polling.
+Vendor-specific battery management on certain devices (e.g. non-standard background process
+termination) can delay or batch background broadcast delivery until the screen turns on.
+Production App Check attestation similarly relies on Google Play Integrity via Play-signed
+store distribution, while local development and automated qualification use isolated fixtures.
 
 ## Geofence registration
 

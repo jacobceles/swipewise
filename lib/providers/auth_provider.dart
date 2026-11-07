@@ -111,6 +111,7 @@ const String kLocalUserIdPrefix = 'local:';
 /// exact failure this design exists to avoid. Nobody can revoke a local UUID.
 class AuthNotifier extends Notifier<AuthState> {
   final _dbHelper = DatabaseHelper();
+  int _statusEpoch = 0;
 
   /// `google_sign_in` 7 requires exactly one `initialize()` before any other
   /// call on the singleton. Done lazily rather than from `main()` because
@@ -141,6 +142,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> checkStatus() async {
+    final epoch = ++_statusEpoch;
     state = state.copyWith(isLoading: true);
     final db = await _dbHelper.database;
     var rows = await db.query('users', limit: 1);
@@ -159,7 +161,7 @@ class AuthNotifier extends Notifier<AuthState> {
     // `build` kicks this off in an unawaited microtask, so the provider can
     // be gone by the time the database answers. Riverpod throws on a write to
     // a disposed Ref; the identity itself is already committed either way.
-    if (!ref.mounted) return;
+    if (!ref.mounted || epoch != _statusEpoch) return;
 
     if (rows.isNotEmpty) {
       final user = rows.first;
@@ -420,6 +422,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     // Stop new account work immediately. Existing backup requests finish under
     // the old Firebase identity, never the next account's credentials.
+    _statusEpoch++;
     state = AuthState(isLoading: true);
     await ref.read(walletBackupControllerProvider).waitUntilIdle();
     // BankSyncEngine runs only through this notifier. Drain it before deleting
