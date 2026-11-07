@@ -101,8 +101,10 @@ class TileCache {
         selected['center_lng'],
       ],
     );
+    final coarseLat = double.parse(lat.toStringAsFixed(3));
+    final coarseLng = double.parse(lng.toStringAsFixed(3));
     return NearbySearchResult(
-      merchants: _merchants(rows, lat, lng),
+      merchants: _merchants(rows, coarseLat, coarseLng),
       centerLat: (selected['center_lat'] as num).toDouble(),
       centerLng: (selected['center_lng'] as num).toDouble(),
       coveredM: (selected['covered_m'] as num).toDouble(),

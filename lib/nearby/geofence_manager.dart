@@ -55,7 +55,14 @@ class GeofenceManager {
     'hypermarket',
     'supermarket',
     'home_improvement_store',
+    'discount_store',
     'shopping_mall',
+  };
+
+  static const Set<RewardCategory> bigBoxCategories = {
+    RewardCategory.departmentStores,
+    RewardCategory.wholesale,
+    RewardCategory.homeImprovement,
   };
 
   /// Display labels (CategoryLabelResolver) whose wait is the "Big-box" kind
@@ -581,12 +588,6 @@ class GeofenceManager {
           categoryId: m.placeType,
           categoryName: m.category,
         );
-        final wait = dwellSecondsFor(label, dwellByCategory);
-        if (dwell == 0 || wait < dwell) dwell = wait;
-        final storeFootprint = bigBoxPlaceTypes.contains(m.placeType)
-            ? bigBoxFootprintM
-            : 0;
-        footprint = math.max(footprint, storeFootprint);
         // Brand match first. The merchant name is resolved via the
         // canonical `BrandResolver` (token-level aliases out of the
         // `brands` table); we then look up the brand-best card by
@@ -606,6 +607,17 @@ class GeofenceManager {
                   : classifyLooseLabel(label)),
           brandId,
         );
+        final effectiveLabel = bigBoxCategories.contains(category)
+            ? category.label
+            : label;
+        final wait = dwellSecondsFor(effectiveLabel, dwellByCategory);
+        if (dwell == 0 || wait < dwell) dwell = wait;
+        final storeFootprint =
+            (bigBoxPlaceTypes.contains(m.placeType) ||
+                bigBoxCategories.contains(category))
+            ? bigBoxFootprintM
+            : 0;
+        footprint = math.max(footprint, storeFootprint);
         final categoryBest =
             lookup.byCategory[category] ??
             (category.isTravelSubcategory
@@ -709,6 +721,7 @@ List<Map<String, dynamic>> buildPayloadForTest({
   required List<NearbyMerchant> merchants,
   required BestCardLookup lookup,
   CardPick? catchAll,
+  Map<String, int> dwellByCategory = const {},
   BrandResolver? brandResolver,
 }) {
   final clusters = [
@@ -723,7 +736,7 @@ List<Map<String, dynamic>> buildPayloadForTest({
     clusters,
     lookup,
     catchAll,
-    const {},
+    dwellByCategory,
     brandResolver ?? BrandResolver.fromDefaultRegistry(),
   );
 }

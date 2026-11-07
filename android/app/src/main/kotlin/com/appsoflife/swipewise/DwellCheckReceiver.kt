@@ -165,12 +165,14 @@ class DwellCheckReceiver : BroadcastReceiver() {
         handler.postDelayed(timeoutRunnable, FIX_TIMEOUT_MS)
 
         try {
-            val priority = if (intentIsRecheck) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY
+            val needsFreshHighAccuracy = intentIsRecheck || fetchingAttempt.isNextDoor
+            val priority = if (needsFreshHighAccuracy) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY
+            val maxUpdateAgeMillis = if (needsFreshHighAccuracy) 0L else MAX_UPDATE_AGE_MS
             locationProvider.getCurrentLocation(
                 context = context,
                 priority = priority,
                 durationMillis = FIX_TIMEOUT_MS,
-                maxUpdateAgeMillis = MAX_UPDATE_AGE_MS,
+                maxUpdateAgeMillis = maxUpdateAgeMillis,
                 cancellationToken = cts.token,
                 onSuccess = { fix ->
                     handler.removeCallbacks(timeoutRunnable)
@@ -431,7 +433,7 @@ class DwellCheckReceiver : BroadcastReceiver() {
             if (refreshed.nextDoorCandidateId != null &&
                 !attempt.confirmation &&
                 !DwellAlarms.isArmed(context, meta.geofenceId)) {
-                DwellAlarms.arm(context, meta.geofenceId, meta.dwellSeconds, nextDoor = true, confirmation = true)
+                DwellAlarms.arm(context, meta.geofenceId, maxOf(meta.dwellSeconds, 15), nextDoor = true, confirmation = true)
             }
             done(context, meta, DwellOutcome.SAME_VISIT, fix)
             return

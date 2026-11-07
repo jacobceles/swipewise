@@ -9,6 +9,7 @@ import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationToken
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -1037,5 +1038,75 @@ class DwellReceiverLifecycleTest {
 
         val cooldown = CooldownStore(context)
         assertNotNull(cooldown.lastMerchantNotified("store_1"))
+    }
+
+    @Test
+    fun `ten second fence arms thirty second recheck and uses high accuracy zero age for recheck and next door`() {
+        val options = listOf(
+            MerchantOption(
+                merchantId = "store_1",
+                name = "Best Coffee",
+                category = "Dining",
+                bestCardName = "Gold Card",
+                bestRate = 4.0,
+                lat = testLat,
+                lng = testLng,
+            ),
+        )
+        val meta10s = MerchantMeta(
+            geofenceId = testGid,
+            options = options,
+            lat = testLat,
+            lng = testLng,
+            radiusM = testRadius,
+            dwellSeconds = 10,
+        )
+        GeofenceMetadataStore(context).write(meta10s)
+
+        val initialAttempt = DwellAlarms.arm(context, testGid, dwellSeconds = 10)!!
+        assertEquals(10_000_000_000L, initialAttempt.scheduledDueElapsedNanos - initialAttempt.createdAtElapsedNanos)
+
+        SystemClock.sleep(10_000L)
+        val receiver = DwellCheckReceiver()
+        fakeLocationProvider.nextFix = mockLocation(speedMps = 2.5f)
+        receiver.onReceive(context, dwellIntent(initialAttempt.token, recheck = false))
+
+        assertEquals(Priority.PRIORITY_BALANCED_POWER_ACCURACY, fakeLocationProvider.lastPriority)
+        assertEquals(15_000L, fakeLocationProvider.lastMaxUpdateAge)
+
+        val recheckAttempt = DwellAlarms.getAttempt(context, testGid)
+        assertNotNull(recheckAttempt)
+        assertEquals(AttemptPhase.RECHECK_ARMED, recheckAttempt!!.phase)
+        val nowNanos = SystemClock.elapsedRealtimeNanos()
+        val recheckDelaySeconds = TimeUnit.NANOSECONDS.toSeconds(recheckAttempt.scheduledDueElapsedNanos - nowNanos)
+        assertEquals(DwellAlarms.MIN_RECHECK_SECONDS.toLong(), recheckDelaySeconds)
+
+        SystemClock.sleep(DwellAlarms.MIN_RECHECK_SECONDS * 1000L)
+        fakeLocationProvider.nextFix = mockLocation()
+        receiver.onReceive(context, dwellIntent(recheckAttempt.token, recheck = true))
+
+        assertEquals(Priority.PRIORITY_HIGH_ACCURACY, fakeLocationProvider.lastPriority)
+        assertEquals(0L, fakeLocationProvider.lastMaxUpdateAge)
+
+        val nextDoorAttempt = DwellAlarms.arm(context, otherGid, dwellSeconds = 10, nextDoor = true)!!
+        val otherMeta = MerchantMeta(
+            geofenceId = otherGid,
+            options = options,
+            lat = testLat,
+            lng = testLng,
+            radiusM = testRadius,
+            dwellSeconds = 10,
+        )
+        GeofenceMetadataStore(context).write(otherMeta)
+        SystemClock.sleep(10_000L)
+        val nextDoorIntent = Intent(context, DwellCheckReceiver::class.java).apply {
+            action = "com.appsoflife.swipewise.DWELL_CHECK:$otherGid"
+            putExtra("token", nextDoorAttempt.token)
+            putExtra("recheck", false)
+            putExtra("next_door", true)
+        }
+        receiver.onReceive(context, nextDoorIntent)
+        assertEquals(Priority.PRIORITY_HIGH_ACCURACY, fakeLocationProvider.lastPriority)
+        assertEquals(0L, fakeLocationProvider.lastMaxUpdateAge)
     }
 }

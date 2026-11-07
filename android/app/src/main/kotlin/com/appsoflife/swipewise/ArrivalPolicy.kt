@@ -172,7 +172,9 @@ object ArrivalPolicy {
             }
         }
 
-        val hasDefiniteMotion = hasDefiniteHighSpeed || (!isRecheck && isFreshWalking) || isFreshDriving || hasDisplacementMotion
+        val isUnchangedWalkingSample = isRecheck && isFreshWalking &&
+            priorFix != null && currentFix.elapsedRealtimeNanos <= priorFix.elapsedRealtimeNanos
+        val hasDefiniteMotion = hasDefiniteHighSpeed || ((!isRecheck || isUnchangedWalkingSample) && isFreshWalking) || isFreshDriving || hasDisplacementMotion
 
         if (hasDefiniteMotion) {
             val (verdict, reason) = if (!isRecheck) ArrivalVerdict.RECHECK to "definite_motion_initial"

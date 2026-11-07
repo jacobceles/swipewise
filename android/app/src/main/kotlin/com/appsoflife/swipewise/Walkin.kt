@@ -195,8 +195,9 @@ object StoreResolver {
 /// of the closest, so it stays in [resolved]. Only a visit whose own alert was
 /// named by a sharp fix remembers its stores: a coarse first alert is a guess,
 /// and the sharper look minutes later is a correction, not a new store (Costco
-/// Tire Service, then Costco Wholesale, 2026-10-17). A store with the same card
-/// advice as one already named stays held back too, as in [StoreResolver.foldSameAdvice].
+/// Tire Service, then Costco Wholesale, 2026-10-17). Same-brand stores stay held
+/// back as the same visit, while independent businesses with equal card advice
+/// can confirm as a next-door visit.
 object VisitLock {
     const val WINDOW_MS = 20L * 60L * 1000L
     const val LINGER_MS = 2L * 60L * 60L * 1000L
@@ -208,7 +209,7 @@ object VisitLock {
     /// [fenceId]: the fence the visit alerted from. [merchantIds] / [advice]:
     /// the store(s) it named and their "card|rate", when a sharp fix named them.
     /// [left]: the user has exited [fenceId] since. [nextDoorCandidateId]: the
-    /// different-advice store named by the previous check, awaiting a second
+    /// independent store named by the previous check, awaiting a second
     /// consecutive check before breaking the visit lock (guards against a
     /// single indoor-drift fix).
     data class Visit(
@@ -242,21 +243,19 @@ object VisitLock {
     fun isActive(context: Context, nowMillis: Long, lat: Double, lng: Double): Boolean =
         isActive(read(context), nowMillis, lat, lng)
 
-    /// Returns the merchantId of the new different-advice store if [resolved]
+    /// Returns the merchantId of the new independent store if [resolved]
     /// names a store not yet alerted for in [last], or null otherwise.
     fun nextDoorCandidate(last: Visit, resolved: List<MerchantOption>?): String? {
         if (resolved.isNullOrEmpty() || last.merchantIds.isEmpty()) return null
         if (resolved.any { it.merchantId in last.merchantIds }) return null
         if (resolved.any { it.brandId != null && it.brandId in last.brandIds }) return null
-        val first = resolved.first()
-        if (adviceOf(first) in last.advice) return null
-        return first.merchantId
+        return resolved.first().merchantId
     }
 
     /// [resolved]: the stores a sharp fix put the user in, or null when the
     /// fix couldn't tell (no fix, coarse fix, fence options as a fallback).
-    /// Requires two consecutive checks naming the same new different-advice
-    /// store before treating it as a next-door move.
+    /// Requires two consecutive checks naming the same new independent store
+    /// before treating it as a next-door move.
     fun isSameVisit(
         last: Visit?,
         lat: Double,
@@ -267,11 +266,11 @@ object VisitLock {
     ): Boolean {
         if (last == null || last.departed) return false
         if (distanceM(last.lat, last.lng, lat, lng) >= RADIUS_M) return false
-        if (!last.confirmed || last.merchantIds.isEmpty()) return isActive(last, nowMillis)
-        if (!resolved.isNullOrEmpty() &&
-            (resolved.any { it.merchantId in last.merchantIds } || adviceOf(resolved.first()) in last.advice)
-        ) return true
         if (!isActive(last, nowMillis)) return false
+        if (!last.confirmed || last.merchantIds.isEmpty()) return true
+        if (!resolved.isNullOrEmpty() &&
+            (resolved.any { it.merchantId in last.merchantIds } || resolved.any { it.brandId != null && it.brandId in last.brandIds })
+        ) return true
         val candidate = nextDoorCandidate(last, resolved)
         val interval = sampleNanos - last.candidateSampleNanos
         val movedNextDoor = candidate != null && candidate == last.nextDoorCandidateId &&

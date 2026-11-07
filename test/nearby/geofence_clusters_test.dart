@@ -146,32 +146,88 @@ void main() {
     expect(left(0.0045), lessThan(0));
   });
 
-  test('travel subcategory falls back to travel card when specific category missing', () {
-    applyCategoriesJson(File('assets/vocab/categories.json').readAsStringSync());
-    const travelPick = BestCardEntry(
-      id: 'card-1',
-      name: 'Venture X',
-      rate: 2.0,
-      currency: 'USD',
-      category: RewardCategory.travel,
-    );
-    final lookup = BestCardLookup(
-      byCategory: {RewardCategory.travel: travelPick},
-      byBrand: {},
-    );
-    const hotel = NearbyMerchant(
-      id: 'h1',
-      name: 'Grand Hotel',
-      placeType: 'hotel',
-      lat: 40,
-      lng: -74,
-      distanceMi: 0.1,
-    );
-    final payload = buildPayloadForTest(
-      merchants: const [hotel],
-      lookup: lookup,
-    );
-    final options = (payload.single['options'] as List).cast<Map>();
-    expect(options.single['best_card_name'], 'Venture X');
-  });
+  test(
+    'travel subcategory falls back to travel card when specific category missing',
+    () {
+      applyCategoriesJson(
+        File('assets/vocab/categories.json').readAsStringSync(),
+      );
+      const travelPick = BestCardEntry(
+        id: 'card-1',
+        name: 'Venture X',
+        rate: 2.0,
+        currency: 'USD',
+        category: RewardCategory.travel,
+      );
+      final lookup = BestCardLookup(
+        byCategory: {RewardCategory.travel: travelPick},
+        byBrand: {},
+      );
+      const hotel = NearbyMerchant(
+        id: 'h1',
+        name: 'Grand Hotel',
+        placeType: 'hotel',
+        lat: 40,
+        lng: -74,
+        distanceMi: 0.1,
+      );
+      final payload = buildPayloadForTest(
+        merchants: const [hotel],
+        lookup: lookup,
+      );
+      final options = (payload.single['options'] as List).cast<Map>();
+      expect(options.single['best_card_name'], 'Venture X');
+    },
+  );
+
+  test(
+    'merchant whose brand resolves to departmentStores receives big-box footprint and fence radius',
+    () {
+      applyCategoriesJson(
+        File('assets/vocab/categories.json').readAsStringSync(),
+      );
+      applyBrandsJson(File('assets/vocab/brands.json').readAsStringSync());
+
+      const lookup = BestCardLookup(byCategory: {}, byBrand: {});
+      const burlingtonClothing = NearbyMerchant(
+        id: 'burlington_clothing',
+        name: 'Burlington',
+        placeType: 'clothing_store',
+        lat: 40.5014,
+        lng: -74.8549,
+        distanceMi: 0.05,
+      );
+      const burlingtonDiscount = NearbyMerchant(
+        id: 'burlington_discount',
+        name: 'Burlington',
+        placeType: 'discount_store',
+        lat: 40.5015,
+        lng: -74.8549,
+        distanceMi: 0.05,
+      );
+      const marshalls = NearbyMerchant(
+        id: 'marshalls_dept',
+        name: 'Marshalls',
+        placeType: 'department_store',
+        lat: 40.5016,
+        lng: -74.8549,
+        distanceMi: 0.06,
+      );
+
+      final payload = buildPayloadForTest(
+        merchants: const [burlingtonClothing, burlingtonDiscount, marshalls],
+        lookup: lookup,
+        dwellByCategory: const {'Big-box': 90, 'Shopping': 10},
+      );
+
+      expect(payload.length, 3);
+      for (final fence in payload) {
+        expect(fence['radius_m'], 180);
+        expect(fence['dwell_seconds'], 90);
+        final options = (fence['options'] as List).cast<Map>();
+        expect(options.single['footprint_m'], 80);
+        expect(options.single['category_enum'], 'departmentStores');
+      }
+    },
+  );
 }

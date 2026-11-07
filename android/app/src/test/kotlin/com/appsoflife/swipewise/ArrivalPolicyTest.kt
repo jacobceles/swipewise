@@ -348,6 +348,38 @@ class ArrivalPolicyTest {
     }
 
     @Test
+    fun `reused cached fix during walking recheck is rejected while newer fix verifies`() {
+        val walkingAR = activity(type = DetectedActivity.WALKING, elapsedNanos = baseNanos - 10_000_000_000L)
+        val cachedTimestamp = baseNanos - 30_000_000_000L
+        val prior = fix(elapsedNanos = cachedTimestamp)
+        val cachedCurrent = fix(elapsedNanos = cachedTimestamp)
+
+        val rejected = ArrivalPolicy.evaluate(
+            currentFix = cachedCurrent,
+            priorFix = prior,
+            fence = fence,
+            activity = walkingAR,
+            isRecheck = true,
+            nowElapsedNanos = baseNanos,
+        )
+        assertEquals(ArrivalVerdict.REJECT, rejected.verdict)
+        assertEquals(DwellOutcome.MOVING_RECHECK, rejected.outcome)
+        assertEquals("definite_motion_recheck_rejected", rejected.reason)
+
+        val newer = fix(elapsedNanos = baseNanos)
+        val verified = ArrivalPolicy.evaluate(
+            currentFix = newer,
+            priorFix = prior,
+            fence = fence,
+            activity = walkingAR,
+            isRecheck = true,
+            nowElapsedNanos = baseNanos,
+        )
+        assertEquals(ArrivalVerdict.VERIFIED, verified.verdict)
+        assertEquals(DwellOutcome.POSTED, verified.outcome)
+    }
+
+    @Test
     fun `usable five second old fix does not need an independent second sample`() {
         val sameTimestamp = baseNanos - 5_000_000_000L
         val prior = fix(elapsedNanos = sameTimestamp)

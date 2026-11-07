@@ -91,6 +91,7 @@ data class DwellAttempt(
 /// Armed on geofence ENTER (or next-door check), cancelled on EXIT; firing wakes
 /// [DwellCheckReceiver], which verifies the user is still at the fence before posting.
 object DwellAlarms {
+    const val MIN_RECHECK_SECONDS = 30
     private const val ACTION_PREFIX = "com.appsoflife.swipewise.DWELL_CHECK:"
     private const val EXTRA_TOKEN = "token"
     private const val EXTRA_RECHECK = "recheck"
@@ -221,7 +222,8 @@ object DwellAlarms {
         val deadline = if (recheck && existing != null) {
             existing.deadlineElapsedNanos
         } else {
-            val totalSeconds = dwellSeconds * 2 + 120
+            val recheckBudget = maxOf(dwellSeconds, MIN_RECHECK_SECONDS)
+            val totalSeconds = dwellSeconds + recheckBudget + 120
             createdAt + totalSeconds * 1_000_000_000L
         }
         val scheduledDue = nowElapsedNanos + dwellSeconds * 1_000_000_000L
@@ -281,9 +283,10 @@ object DwellAlarms {
         val validated = validateAttempt(context, geofenceId, attempt.token, nowElapsedNanos) ?: return null
         if (validated.phase != AttemptPhase.FETCHING_INITIAL) return null
 
+        val recheckSeconds = maxOf(dwellSeconds, MIN_RECHECK_SECONDS)
         val updated = validated.copy(
             phase = AttemptPhase.RECHECK_ARMED,
-            scheduledDueElapsedNanos = nowElapsedNanos + dwellSeconds * 1_000_000_000L,
+            scheduledDueElapsedNanos = nowElapsedNanos + recheckSeconds * 1_000_000_000L,
             initialLat = priorObservation?.lat ?: validated.initialLat,
             initialLng = priorObservation?.lng ?: validated.initialLng,
             initialAccuracyM = priorObservation?.accuracyM ?: validated.initialAccuracyM,
@@ -291,10 +294,10 @@ object DwellAlarms {
         )
         saveAttempt(context, updated)
         prefs(context).edit()
-            .putLong(geofenceId, System.currentTimeMillis() + dwellSeconds * 1000L)
+            .putLong(geofenceId, System.currentTimeMillis() + recheckSeconds * 1000L)
             .apply()
 
-        scheduleAlarm(context, geofenceId, dwellSeconds, updated)
+        scheduleAlarm(context, geofenceId, recheckSeconds, updated)
         return updated
     }
 

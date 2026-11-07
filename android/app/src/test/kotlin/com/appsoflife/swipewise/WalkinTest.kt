@@ -109,13 +109,52 @@ class WalkinTest {
 
     @Test
     fun `a next-door store with the same card advice stays held back`() {
+        // Same-brand counter/store (e.g. Costco Wholesale -> Costco Bakery) stays held back even after two consecutive checks.
+        val costcoWholesale = MerchantOption("costco_main", "Costco Wholesale", null, "Costco Visa", 2.0, brandId = "costco")
+        val costcoBakery = MerchantOption("costco_bakery", "Costco Bakery", null, "Costco Visa", 2.0, brandId = "costco")
+        val costcoVisit = VisitLock.Visit(
+            40.5014, -74.8549, 1_000_000L, "m_costco",
+            listOf("costco_main"), listOf(VisitLock.adviceOf(costcoWholesale)),
+            brandIds = listOf("costco"), confirmed = true,
+        )
+        val sample1 = 1_000_000_000_000L
+        val check1Time = 1_000_000L + 60_000L
+        assertTrue(VisitLock.isSameVisit(costcoVisit, 40.5016, -74.8549, check1Time, listOf(costcoBakery), sample1))
+        val costcoRefreshed = VisitLock.refresh(costcoVisit, check1Time, listOf(costcoBakery), "m_costco", sample1)
+        assertNull(costcoRefreshed.nextDoorCandidateId)
+        val sample2 = sample1 + 60_000_000_000L
+        val check2Time = check1Time + 60_000L
+        assertTrue(VisitLock.isSameVisit(costcoRefreshed, 40.5016, -74.8549, check2Time, listOf(costcoBakery), sample2))
+
+        // Independent next-door store with the same card advice (e.g. Starbucks -> Dunkin)
+        // is held back on the first check and breaks the visit lock on the second consecutive check.
         val coffee = MerchantOption("starbucks", "Starbucks", null, "Gold", 4.0)
         val other = MerchantOption("dunkin", "Dunkin", null, "Gold", 4.0)
         val last = VisitLock.Visit(
             40.5014, -74.8549, 1_000_000L, "m_s",
             listOf("starbucks"), listOf(VisitLock.adviceOf(coffee)),
+            confirmed = true,
         )
-        assertTrue(VisitLock.isSameVisit(last, 40.5016, -74.8549, 1_100_000L, listOf(other)))
+        val sample = 1_000_000_000_000L
+        val later = 1_000_000L + 60_000L
+        assertTrue(VisitLock.isSameVisit(last, 40.5016, -74.8549, later, listOf(other), sample))
+        val afterFirst = VisitLock.refresh(last, later, listOf(other), "m_d", sample)
+        assertEquals("dunkin", afterFirst.nextDoorCandidateId)
+        assertFalse(VisitLock.isSameVisit(afterFirst, 40.5016, -74.8549, later + 60_000L, listOf(other), sample + 60_000_000_000L))
+    }
+
+    @Test
+    fun `an expired visit lock does not suppress a later visit even for the same store`() {
+        val s = store("store_a")
+        val last = VisitLock.Visit(
+            40.5014, -74.8549, 1_000_000L, "m_a",
+            listOf("store_a"), listOf(VisitLock.adviceOf(s)),
+            confirmed = true,
+        )
+        assertTrue(VisitLock.isSameVisit(last, 40.5014, -74.8549, 1_000_000L + 5 * 60_000L, listOf(s)))
+        val expiredTime = 1_000_000L + VisitLock.WINDOW_MS + VisitLock.LINGER_MS + 1_000L
+        assertFalse(VisitLock.isActive(last, expiredTime))
+        assertFalse(VisitLock.isSameVisit(last, 40.5014, -74.8549, expiredTime, listOf(s)))
     }
 
     @Test
