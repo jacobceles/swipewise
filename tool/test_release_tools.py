@@ -11,8 +11,11 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+import os
 import prepare_github_release as prepare
 import verify_release_apk as gate
+
+_orig_exists = os.path.exists
 
 
 class PrepareReleaseTest(unittest.TestCase):
@@ -157,7 +160,7 @@ class ReleaseGateTest(unittest.TestCase):
             argv.append("--input-only")
         with patch.object(sys, "argv", argv), patch.object(gate, "google_services_keys", return_value=set()), \
                 patch.object(gate, "EXPECTED_KEYSET_SHA256", gate.keyset_digest(set())), \
-                patch.object(gate.os.path, "exists", side_effect=lambda p: p != "keys.pro.json" and Path(p).exists()), \
+                patch.object(gate.os.path, "exists", side_effect=lambda p: p != "keys.pro.json" and _orig_exists(p)), \
                 contextlib.redirect_stdout(io.StringIO()):
             return gate.main()
 
