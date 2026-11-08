@@ -111,7 +111,7 @@ const String kLocalUserIdPrefix = 'local:';
 /// exact failure this design exists to avoid. Nobody can revoke a local UUID.
 class AuthNotifier extends Notifier<AuthState> {
   final _dbHelper = DatabaseHelper();
-  int _statusEpoch = 0;
+  Future<void>? _pendingStatusCheck;
 
   /// `google_sign_in` 7 requires exactly one `initialize()` before any other
   /// call on the singleton. Done lazily rather than from `main()` because
@@ -141,8 +141,13 @@ class AuthNotifier extends Notifier<AuthState> {
     return AuthState();
   }
 
-  Future<void> checkStatus() async {
-    final epoch = ++_statusEpoch;
+  Future<void> checkStatus() {
+    return _pendingStatusCheck ??= _checkStatus().whenComplete(() {
+      _pendingStatusCheck = null;
+    });
+  }
+
+  Future<void> _checkStatus() async {
     state = state.copyWith(isLoading: true);
     final db = await _dbHelper.database;
     var rows = await db.query('users', limit: 1);
@@ -161,7 +166,7 @@ class AuthNotifier extends Notifier<AuthState> {
     // `build` kicks this off in an unawaited microtask, so the provider can
     // be gone by the time the database answers. Riverpod throws on a write to
     // a disposed Ref; the identity itself is already committed either way.
-    if (!ref.mounted || epoch != _statusEpoch) return;
+    if (!ref.mounted) return;
 
     if (rows.isNotEmpty) {
       final user = rows.first;
@@ -420,9 +425,13 @@ class AuthNotifier extends Notifier<AuthState> {
   /// Clears this device's wallet/account and creates a new empty guest.
   /// The remote account and its existing backup are not deleted.
   Future<void> logout() async {
+    // If an initial or background check is currently querying the database,
+    // drain it first so its late completion cannot overwrite the logged-out state.
+    if (_pendingStatusCheck != null) {
+      await _pendingStatusCheck;
+    }
     // Stop new account work immediately. Existing backup requests finish under
     // the old Firebase identity, never the next account's credentials.
-    _statusEpoch++;
     state = AuthState(isLoading: true);
     await ref.read(walletBackupControllerProvider).waitUntilIdle();
     // BankSyncEngine runs only through this notifier. Drain it before deleting
