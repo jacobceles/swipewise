@@ -348,13 +348,16 @@ class ArrivalPolicyTest {
     }
 
     @Test
-    fun `reused cached fix during walking recheck is rejected while newer fix verifies`() {
-        val walkingAR = activity(type = DetectedActivity.WALKING, elapsedNanos = baseNanos - 10_000_000_000L)
+    fun `reused in-fence fix during walking recheck verifies when inside the store`() {
+        // Old York Cellars regression (2026-11-08): user walked from car (walking AR 64s old),
+        // entered building; indoors GPS locked out so FLP returned the last in-fence fix on recheck.
+        // Missing a brand-new satellite lock indoors must not veto an in-fence dwell.
+        val walkingAR = activity(type = DetectedActivity.WALKING, elapsedNanos = baseNanos - 64_000_000_000L)
         val cachedTimestamp = baseNanos - 30_000_000_000L
         val prior = fix(elapsedNanos = cachedTimestamp)
         val cachedCurrent = fix(elapsedNanos = cachedTimestamp)
 
-        val rejected = ArrivalPolicy.evaluate(
+        val recheck = ArrivalPolicy.evaluate(
             currentFix = cachedCurrent,
             priorFix = prior,
             fence = fence,
@@ -362,21 +365,9 @@ class ArrivalPolicyTest {
             isRecheck = true,
             nowElapsedNanos = baseNanos,
         )
-        assertEquals(ArrivalVerdict.REJECT, rejected.verdict)
-        assertEquals(DwellOutcome.MOVING_RECHECK, rejected.outcome)
-        assertEquals("definite_motion_recheck_rejected", rejected.reason)
-
-        val newer = fix(elapsedNanos = baseNanos)
-        val verified = ArrivalPolicy.evaluate(
-            currentFix = newer,
-            priorFix = prior,
-            fence = fence,
-            activity = walkingAR,
-            isRecheck = true,
-            nowElapsedNanos = baseNanos,
-        )
-        assertEquals(ArrivalVerdict.VERIFIED, verified.verdict)
-        assertEquals(DwellOutcome.POSTED, verified.outcome)
+        assertEquals(ArrivalVerdict.VERIFIED, recheck.verdict)
+        assertEquals(DwellOutcome.POSTED, recheck.outcome)
+        assertEquals("verified_fence_dwell", recheck.reason)
     }
 
     @Test
